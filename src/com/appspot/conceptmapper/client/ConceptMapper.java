@@ -1,7 +1,5 @@
 package com.appspot.conceptmapper.client;
 
-
-
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 
@@ -20,9 +18,13 @@ public class ConceptMapper implements EntryPoint {
 	private Tree tree = new Tree();
 	private Label messageLabel = new Label();
 
-	private PropositionServiceAsync propositionService = GWT.create(PropositionService.class);
-	
+	private PropositionServiceAsync propositionService = GWT
+			.create(PropositionService.class);
+
 	public void onModuleLoad() {
+		// TODO: make server persistent data update according to local changes
+		// TODO: implement breaking and merging proposition content by adding
+		// and removing newlines
 
 		tree.addItem(new PropositionView());
 
@@ -34,13 +36,33 @@ public class ConceptMapper implements EntryPoint {
 
 		// Associate the Main panel with the HTML host page.
 		RootPanel.get("mappingWidget").add(mainPanel);
-		
-		
-		testAddProposition();
+
+		// testAddProposition();
+		testDeleteProposition();
 	}
-	
-	private void testAddProposition(){
-		AsyncCallback<Void> addCallback = new AsyncCallback<Void>() {
+
+	private void testDeleteProposition() {
+		AsyncCallback<Void> callback = new AsyncCallback<Void>() {
+			public void onFailure(Throwable caught) {
+				// If the stock code is in the list of delisted codes, display
+				// an error message.
+				String details = caught.getMessage();
+				messageLabel.setText("Error: " + details);
+				messageLabel.setVisible(true);
+			}
+
+			@Override
+			public void onSuccess(Void result) {
+				messageLabel.setText("Deleted Proposition");
+			}
+		};
+
+		propositionService.deleteProposition(
+				((PropositionView) tree.getItem(1)).getProposition(), callback);
+	}
+
+	private void testAddProposition() {
+		AsyncCallback<Void> callback = new AsyncCallback<Void>() {
 			public void onFailure(Throwable caught) {
 				// If the stock code is in the list of delisted codes, display
 				// an error message.
@@ -54,12 +76,13 @@ public class ConceptMapper implements EntryPoint {
 				testGetProposition();
 			}
 		};
-		
-		propositionService.addRootProposition( new Proposition("Round Trip w/ Persistence!!"), addCallback );
+
+		propositionService.addRootProposition(new Proposition(
+				"Round Trip w/ Persistence!!", null ), callback);
 	}
-	
-	private  void testGetProposition(){
-		AsyncCallback<Proposition[]> getCallback = new AsyncCallback<Proposition[]>() {
+
+	private void testGetProposition() {
+		AsyncCallback<Proposition[]> callback = new AsyncCallback<Proposition[]>() {
 			public void onFailure(Throwable caught) {
 				// If the stock code is in the list of delisted codes, display
 				// an error message.
@@ -69,15 +92,13 @@ public class ConceptMapper implements EntryPoint {
 			}
 
 			public void onSuccess(Proposition[] result) {
-				for( int i = 0; i < result.length; i++ ){
-					PropositionView prop = new PropositionView();
-					prop.setContent( result[ i ].getContent() );
-					tree.addItem( prop );
+				for (int i = 0; i < result.length; i++) {
+					tree.addItem(new PropositionView(result[i]));
 				}
 			}
 		};
 
 		// Make the call to the stock price service.
-		propositionService.getRootPropositions( getCallback );
+		propositionService.getRootPropositions(callback);
 	}
 }

@@ -19,10 +19,11 @@ public class PropositionPersistent {
 
 	public PropositionPersistent(Proposition proposition) {
 		content = proposition.getContent();
+		key = proposition.getKey();
 	}
 	
 	public Proposition getProposition(){
-		return new Proposition( content );
+		return new Proposition( content, key );
 	}
 	
 	public String getContent(){

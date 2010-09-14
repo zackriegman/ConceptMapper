@@ -9,4 +9,6 @@ public interface PropositionServiceAsync {
 	void addRootProposition(Proposition proposition,
 			AsyncCallback<Void> callback);
 
+	void deleteProposition(Proposition proposition, AsyncCallback<Void> callback);
+
 }

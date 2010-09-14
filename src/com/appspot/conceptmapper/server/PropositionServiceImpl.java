@@ -43,4 +43,15 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
+	@Override
+	public void deleteProposition(Proposition proposition) {
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try {
+			pm.deletePersistent(new PropositionPersistent( proposition ));
+		} finally {
+			pm.close();
+		}
+		
+	}
+
 }

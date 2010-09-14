@@ -17,21 +17,23 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class PropositionView extends TreeItem implements ClickHandler,
 		KeyPressHandler, FocusHandler {
-	// TODO: synchronize arguments with server
 
 	private static PropositionView lastPropositionWithFocus = null;
 	private TextAreaSloppyGrow textArea = new TextAreaSloppyGrow();
 	private Button proButton = new Button("For");
 	private Button conButton = new Button("Against");
 	private TreeItem parentArgument;
+	private Proposition proposition;
 
 	public PropositionView(TreeItem parentArgument) {
 		this();
 		this.parentArgument = parentArgument;
 	}
 	
-	public void setContent( String content ){
-		textArea.setText( content );
+	public PropositionView( Proposition proposition ){
+		this();
+		this.proposition = proposition;
+		setContent( proposition.getContent() );
 	}
 
 	public PropositionView() {
@@ -55,6 +57,14 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		conButton.addFocusHandler(this);
 		// conButton.addBlurHandler( this );
 		setState(true);
+	}
+	
+	public void setContent( String content ){
+		textArea.setText( content );
+	}
+	
+	public Proposition getProposition(){
+		return proposition;
 	}
 
 	@Override
