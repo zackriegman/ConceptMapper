@@ -18,5 +18,7 @@
   <!-- Specify the paths for translatable code                    -->
   <source path='client'/>
   <source path='shared'/>
+  
+  <inherits name="com.googlecode.objectify.Objectify" />
 
 </module>

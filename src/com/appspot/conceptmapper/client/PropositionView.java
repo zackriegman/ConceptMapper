@@ -22,10 +22,10 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	private TextAreaSloppyGrow textArea = new TextAreaSloppyGrow();
 	private Button proButton = new Button("For");
 	private Button conButton = new Button("Against");
-	private TreeItem parentArgument;
+	private ArgumentView parentArgument;
 	private Proposition proposition;
 
-	public PropositionView(TreeItem parentArgument) {
+	public PropositionView(ArgumentView parentArgument) {
 		this();
 		this.parentArgument = parentArgument;
 	}
@@ -78,11 +78,11 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	}
 
 	public void addArgument(String labelText) {
-		TreeItem argumentTreeItem = new TreeItem(labelText);
-		PropositionView newProposition = new PropositionView(argumentTreeItem);
-		argumentTreeItem.addItem(newProposition);
-		this.addItem(argumentTreeItem);
-		argumentTreeItem.setState(true);
+		ArgumentView argumentView = new ArgumentView(labelText);
+		PropositionView newProposition = new PropositionView(argumentView);
+		argumentView.addItem(newProposition);
+		this.addItem(argumentView);
+		argumentView.setState(true);
 		this.setState(true);
 		newProposition.textArea.setFocus(true);
 	}

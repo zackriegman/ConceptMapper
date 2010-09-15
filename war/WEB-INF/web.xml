@@ -27,7 +27,7 @@
   
   <!-- Default page to serve -->
   <welcome-file-list>
-    <welcome-file>ConceptMapper.html</welcome-file>
+    <welcome-file>ConceptMapper.jsp</welcome-file>
   </welcome-file-list>
 
 </web-app>

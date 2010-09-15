@@ -1,3 +1,17 @@
+<%@ page import="com.appspot.conceptmapper.client.Argument" %>
+<%@ page import="com.appspot.conceptmapper.client.Proposition" %>
+<%@ page import="com.googlecode.objectify.ObjectifyService" %>
+
+<%
+ObjectifyService.register(Proposition.class);
+ObjectifyService.register(Argument.class);
+%>
+
+
+
+
+
+
 <!doctype html>
 <!-- The DOCTYPE declaration above will set the    -->
 <!-- browser's rendering engine into               -->
