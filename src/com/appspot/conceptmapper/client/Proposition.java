@@ -1,20 +1,20 @@
 package com.appspot.conceptmapper.client;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.persistence.Id;
 import javax.persistence.Transient;
 
-import com.googlecode.objectify.Key;
-
-
 public class Proposition implements Serializable {
+	
+	private static final long serialVersionUID = 1L;
 	@Id
+	
 	public Long id;
 	public String content;
+	public boolean topLevel;
 	
 	public @Transient List<Argument> args = new LinkedList<Argument>();
 	

@@ -1,47 +1,34 @@
 package com.appspot.conceptmapper.server;
 
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Map;
 
-import javax.jdo.PersistenceManager;
-
-import org.mortbay.log.Log;
-
-import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
-import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
+import com.googlecode.objectify.Query;
 import com.appspot.conceptmapper.client.Argument;
 import com.appspot.conceptmapper.client.Proposition;
 import com.appspot.conceptmapper.client.PropositionService;
 
 public class PropositionServiceImpl extends RemoteServiceServlet implements
 		PropositionService {
-	private static final Logger log = Logger
-			.getLogger(PropositionServiceImpl.class.getName());
 
+	private static final long serialVersionUID = 1L; // just to get rid of the
+	// warnings...
 	private Objectify ofy;
+
+	@Override
+	public void test() {
+		// printAllPropsAndArgs();
+		// deleteAllArgsAndProps();
+		// printAllPropsAndArgs();
+
+	}
 
 	@Override
 	public Proposition[] getRootPropositions() {
 		return null;
-	}
-
-	@Override
-	public void addRootProposition(Proposition proposition) {
-		ofy = ObjectifyService.begin();
-		ofy.put(proposition);
-
-		try {
-			Proposition prop = ofy.get(Proposition.class, proposition.getID());
-			print(prop.getContent());
-		} catch (EntityNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
 	}
 
 	public void print(String message) {
@@ -55,34 +42,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		ofy.delete(ofy.query(Proposition.class));
 	}
 
-	/*
-	 * @Override public Proposition[] getRootPropositions() { // Proposition[]
-	 * propositions = new Proposition[1]; // propositions[0] = new
-	 * Proposition(); // propositions[0].setContent("Message Received!!!"); //
-	 * return propositions;
-	 * 
-	 * PersistenceManager pm = PMF.get().getPersistenceManager(); String query =
-	 * "select from " + PropositionPersistent.class.getName() +
-	 * " order by content"; List<PropositionPersistent> propositions =
-	 * (List<PropositionPersistent>) pm .newQuery(query).execute();
-	 * 
-	 * Proposition[] returnProps = new Proposition[ propositions.size()]; for(
-	 * int i = 0; i < propositions.size(); i++){ returnProps[ i ] =
-	 * propositions.get(i).getProposition(); } pm.close(); return returnProps; }
-	 */
-
-	/*
-	 * @Override public void addRootProposition(Proposition proposition) {
-	 * 
-	 * PersistenceManager pm = PMF.get().getPersistenceManager(); try {
-	 * pm.makePersistent(new PropositionPersistent(proposition)); } finally {
-	 * pm.close(); } }
-	 */
-
-	@Override
-	public void deleteProposition(Proposition proposition) {
-	}
-
+	
 	@Override
 	public void makePropChanges(Proposition[] newProps,
 			Proposition[] changedProps, Proposition[] deletedProps,
@@ -92,67 +52,62 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		if (changedProps != null)
 			ofy.put(changedProps);
 
-		// TODO: should check to make sure that deleted Props and Args have no
-		// children before deleting them
-		// theoretically, the client should prevent deleting/merging of props
-		// with
-		// arguments for them because what do you do with the arguments.
-		// similarly, to delete an argument you should first delete all the
-		// props
+
 		if (deletedProps != null)
 			ofy.delete(deletedProps);
 		if (deletedArgs != null)
 			ofy.delete(deletedArgs);
 
-		// TODO: check to make sure that the whole tree of new props and args
-		// serializes intact
 		if (newProps != null)
 			for (Proposition prop : newProps) {
-				recursiveAddProp(prop);
+				recursivePutProp(prop);
 			}
 
 		if (newArgs != null)
 			for (Argument arg : newArgs) {
-				recursiveAddArg(arg);
+				recursivePutArg(arg);
 			}
 
-		// printAllPropsAndArgs();
-		// deleteAllArgsAndProps();
-		printAllPropsAndArgs();
-
-		// TODO: for new Props and Args must get the new ids back to client!!!
+		// TO DO: for new Props and Args must get the new ids back to client!!!
 	}
+	
 
 	public void printAllPropsAndArgs() {
 		print("Arguments: ");
 		for (Argument arg : ofy.query(Argument.class)) {
-			print("id:" + arg.id + " - propKeys:" + arg.propKeys
-					+ " - aboutPropKey" + arg.aboutPropKey + " - pro:"
-					+ arg.pro);
+			printArgument(arg);
 		}
 		print("Propositions: ");
 		for (Proposition prop : ofy.query(Proposition.class)) {
-			print("id:" + prop.id + " - content:" + prop.content);
+			printProposition(prop);
 		}
 
 	}
 
-	public Key<Proposition> recursiveAddProp(Proposition prop) {
+	public void printArgument(Argument arg) {
+		print("id:" + arg.id + " - propKeys:" + arg.propIDs
+				+ " - aboutPropKey:" + arg.aboutPropID + " - pro:" + arg.pro);
+	}
+
+	public void printProposition(Proposition prop) {
+		print("id:" + prop.id + " - content:" + prop.content + " - topLevel:"
+				+ prop.topLevel);
+	}
+
+	public Long recursivePutProp(Proposition prop) {
 		ofy.put(prop);
-		Key<Proposition> propKey = new Key<Proposition>(Proposition.class, prop
-				.getID());
 		List<Argument> args = prop.getArgs();
 		for (Argument arg : args) {
-			arg.aboutPropKey = propKey;
-			recursiveAddArg(arg);
+			arg.aboutPropID = prop.getID();
+			recursivePutArg(arg);
 		}
-		return propKey;
+		return prop.getID();
 	}
 
-	public void recursiveAddArg(Argument arg) {
+	public void recursivePutArg(Argument arg) {
 		List<Proposition> props = arg.getProps();
 		for (Proposition prop : props) {
-			arg.propKeys.add(recursiveAddProp(prop));
+			arg.propIDs.add(recursivePutProp(prop));
 		}
 		ofy.put(arg);
 	}
@@ -160,11 +115,124 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public Proposition[] getAllProps() {
 		ofy = ObjectifyService.begin();
+		Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
+				"topLevel", true);
+		Proposition[] returnProps = new Proposition[propQuery.countAll()];
+		print("propQuery.countAll(): " + propQuery.countAll());
+		int i = 0;
+		for (Proposition prop : propQuery) {
+			returnProps[i] = prop;
+			recursiveBuildProp(prop);
+			i++;
+		}
+
 		printAllPropsAndArgs();
-		// TODO: hmmm... how to find just the root propositions? This brings up
-		// data structure question. Should each proposition hold a list of the
-		// arguments it is a part of, or vice-versa, or both?
-		return null;
+		return returnProps;
+	}
+
+	public void recursiveBuildProp(Proposition prop) {
+		if (prop == null)
+			print("prop is null?");
+		Query<Argument> argQuery = ofy.query(Argument.class).filter(
+				"aboutPropID", prop.id);
+		for (Argument arg : argQuery) {
+			print("processing argument:");
+			printArgument(arg);
+			prop.args.add(arg);
+			Map<Long, Proposition> propMap = ofy.get(Proposition.class,
+					arg.propIDs);
+			for (Long id : arg.propIDs) {
+				Proposition gotProp = propMap.get(id);
+				arg.props.add(gotProp);
+				recursiveBuildProp(gotProp);
+			}
+
+		}
+	}
+
+	public Long addProposition(Long parentArgID, int position) throws Exception {
+		ofy = ObjectifyService.begin();
+		Argument parentArg = null;
+		if (parentArgID != null) {
+			parentArg = ofy.get(Argument.class, parentArgID);
+		}
+
+		Proposition newProposition = new Proposition();
+		if (parentArg == null)
+			newProposition.topLevel = true;
+		else
+			newProposition.topLevel = false;
+
+		ofy.put(newProposition);
+		if (parentArg != null) {
+			parentArg.propIDs.add(position, newProposition.id);
+			ofy.put(parentArg);
+		}
+
+		print("added proposition:");
+		printProposition(newProposition);
+		print("updated argument:");
+		printArgument(parentArg);
+
+		return newProposition.id;
+
+	}
+
+	@Override
+	public void removeProposition(Long propID) throws Exception {
+		ofy = ObjectifyService.begin();
+		if( ofy.query(Argument.class).filter("aboutPropID", propID).countAll() != 0){
+			throw new Exception( "cannot delete proposition with arguments; delete arguments first");
+		}
+			
+		print("Proposition ID to delete:" + propID);
+		print("Arguments that use this proposition:");
+		for (Argument arg : ofy.query(Argument.class).filter("propIDs",
+				propID)) {
+			print("before");
+			printArgument(arg);
+
+			arg.propIDs.remove(propID);
+
+			print("after");
+			printArgument(arg);
+			if (arg.propIDs.isEmpty()) {
+				ofy.delete(arg);
+			} else {
+				ofy.put(arg);
+			}
+		}
+
+		ofy.delete( Proposition.class, propID );
+
+	}
+
+	@Override
+	public Argument addArgument(Long parentPropID, boolean pro) throws Exception {
+		ofy = ObjectifyService.begin();
+		ofy.get(Proposition.class, parentPropID); //trigger an exception if the ID is valid
+
+		Proposition newProp = new Proposition();
+		newProp.topLevel = false;
+		ofy.put(newProp);
+		
+		Argument newArg = new Argument();
+		newArg.aboutPropID = parentPropID;
+		newArg.propIDs.add(newProp.id);
+		newArg.pro = pro;
+		
+		ofy.put(newArg);
+		
+		newArg.props.add(newProp);
+		return newArg;
+	}
+
+	@Override
+	public void updateProposition(Long propID, String content) throws Exception {
+		ofy = ObjectifyService.begin();
+		Proposition prop = ofy.get( Proposition.class, propID );
+		prop.setContent( content );
+		ofy.put(prop);
 	}
 
 }

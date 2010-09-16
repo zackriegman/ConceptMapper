@@ -3,6 +3,8 @@ package com.appspot.conceptmapper.client;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
@@ -16,7 +18,7 @@ import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class PropositionView extends TreeItem implements ClickHandler,
-		KeyPressHandler, FocusHandler {
+		KeyPressHandler, FocusHandler, BlurHandler {
 
 	private static PropositionView lastPropositionWithFocus = null;
 	private TextAreaSloppyGrow textArea = new TextAreaSloppyGrow();
@@ -26,14 +28,14 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	private Proposition proposition;
 
 	public PropositionView(ArgumentView parentArgument) {
-		this();
-		this.parentArgument = parentArgument;
+		this(new Proposition(), parentArgument);
 	}
-	
-	public PropositionView( Proposition proposition ){
+
+	public PropositionView(Proposition proposition, ArgumentView parentArgument) {
 		this();
 		this.proposition = proposition;
-		setContent( proposition.getContent() );
+		this.parentArgument = parentArgument;
+		setContent(proposition.getContent());
 	}
 
 	public PropositionView() {
@@ -51,40 +53,43 @@ public class PropositionView extends TreeItem implements ClickHandler,
 
 		textArea.addKeyPressHandler(this);
 		textArea.addFocusHandler(this);
-		// textArea.addBlurHandler(this);
+		textArea.addBlurHandler(this);
 		proButton.addFocusHandler(this);
 		// proButton.addBlurHandler( this);
 		conButton.addFocusHandler(this);
 		// conButton.addBlurHandler( this );
 		setState(true);
+		proButton.setVisible(false);
+		conButton.setVisible(false);
 	}
-	
-	public void setContent( String content ){
-		textArea.setText( content );
+
+	public void setContent(String content) {
+		textArea.setText(content);
 	}
-	
-	public Proposition getProposition(){
+
+	public Proposition getProposition() {
 		return proposition;
 	}
 
 	@Override
 	public void onClick(ClickEvent event) {
 		if (event.getSource() == proButton) {
-			addArgument("Argument For");
+			addArgument( true );
 
 		} else if (event.getSource() == conButton) {
-			addArgument("Argument Against");
+			addArgument( false );
 		}
 	}
 
-	public void addArgument(String labelText) {
-		ArgumentView argumentView = new ArgumentView(labelText);
-		PropositionView newProposition = new PropositionView(argumentView);
-		argumentView.addItem(newProposition);
-		this.addItem(argumentView);
-		argumentView.setState(true);
+	public void addArgument(boolean pro) {
+		ArgumentView newArgView = new ArgumentView(pro);
+		PropositionView newPropView = new PropositionView(newArgView);
+		newArgView.addItem(newPropView);
+		this.addItem(newArgView);
+		newArgView.setState(true);
 		this.setState(true);
-		newProposition.textArea.setFocus(true);
+		newPropView.textArea.setFocus(true);
+		ServerComm.addArgument( pro, this.proposition, newArgView.argument, newPropView.proposition );
 	}
 
 	@Override
@@ -94,46 +99,59 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		String textAreaContent = textArea.getText();
 		if (source == textArea && (charCode == '\n' || charCode == '\r')
 				&& parentArgument != null) {
-			PropositionView newProposition = new PropositionView(parentArgument);
-
-			/*
-			 * can't figure out how to insert an item at a specific point
-			 * (instead items just get inserted as the last of the current
-			 * TreeItem's children). So, instead, I'm removing all subsequent
-			 * TreeItem children, then adding the new TreeItem (the new
-			 * proposition) and then adding back all the subsequent tree items!
-			 */
-
-			// first remove subsequent children
-			int treePosition = parentArgument.getChildIndex(this);
-			Queue<TreeItem> removeQueue = new LinkedList<TreeItem>();
-			TreeItem currentItem;
-			while ((currentItem = parentArgument.getChild(treePosition + 1)) != null) {
-				removeQueue.add(currentItem);
-				parentArgument.removeItem(currentItem);
-			}
-
-			// then add the new one
-			parentArgument.addItem(newProposition);
-
-			// then add back the rest
-			while (!removeQueue.isEmpty()) {
-				TreeItem toRemove = removeQueue.poll();
-				parentArgument.addItem(toRemove);
-			}
-
-			newProposition.textArea.setFocus(true);
-
-			// Window.alert( "splitting proposition for your convenience");
+			addPropositionAfterThisOne();
 		} else if (source == textArea && (charCode == '\b')
 				&& parentArgument != null && textAreaContent.equals("")) {
-			if (parentArgument.getChildCount() > 1) {
-				parentArgument.removeItem(this);
-			} else {
-				parentArgument.remove();
-			}
+			removePropositionAndParentArgument();
+
 		}
 	}
+
+	public void removePropositionAndParentArgument() {
+		if (parentArgument.getChildCount() > 1) {
+			parentArgument.removeItem(this);
+		} else {
+			parentArgument.remove();
+		}
+		ServerComm.removeProposition( this.proposition );
+	}
+
+	public void addPropositionAfterThisOne() {
+		PropositionView newProposition = new PropositionView(parentArgument);
+
+		/*
+		 * can't figure out how to insert an item at a specific point (instead
+		 * items just get inserted as the last of the current TreeItem's
+		 * children). So, instead, I'm removing all subsequent TreeItem
+		 * children, then adding the new TreeItem (the new proposition) and then
+		 * adding back all the subsequent tree items!
+		 */
+
+		// first remove subsequent children
+		int treePosition = parentArgument.getChildIndex(this);
+		Queue<TreeItem> removeQueue = new LinkedList<TreeItem>();
+		TreeItem currentItem;
+		while ((currentItem = parentArgument.getChild(treePosition + 1)) != null) {
+			removeQueue.add(currentItem);
+			parentArgument.removeItem(currentItem);
+		}
+
+		// then add the new one
+		parentArgument.addItem(newProposition);
+
+		// then add back the rest
+		while (!removeQueue.isEmpty()) {
+			TreeItem toRemove = removeQueue.poll();
+			parentArgument.addItem(toRemove);
+		}
+
+		newProposition.textArea.setFocus(true);
+
+		ServerComm.addProposition(newProposition.proposition,
+				parentArgument.argument, treePosition);
+	}
+	
+
 
 	@Override
 	public void onFocus(FocusEvent event) {
@@ -191,5 +209,11 @@ public class PropositionView extends TreeItem implements ClickHandler,
 				}
 			});
 		}
+	}
+
+	@Override
+	public void onBlur(BlurEvent event) {
+		this.proposition.setContent( textArea.getText() );
+		ServerComm.updateProposition( this.proposition );
 	}
 }

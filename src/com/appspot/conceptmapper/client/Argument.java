@@ -7,13 +7,17 @@ import java.util.List;
 import javax.persistence.Id;
 import javax.persistence.Transient;
 
-import com.googlecode.objectify.Key;
 
 public class Argument implements Serializable {
+
+	private static final long serialVersionUID = 1L; //to suppress warnings
+	
 	@Id
 	public Long id;
-	public List<Key<Proposition>> propKeys = new LinkedList<Key<Proposition>>();
-	public Key<Proposition> aboutPropKey;
+	//TODO: don't need to send propIDs list over the wire, mark as nosend
+	public List<Long> propIDs = new LinkedList<Long>();
+	//TODO: don't need to send aboutPropID over the wire, mark as nosend
+	public Long aboutPropID;
 	public boolean pro;
 	
 	@Transient
