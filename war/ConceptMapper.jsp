@@ -61,6 +61,9 @@ ObjectifyService.register(Argument.class);
 
     <h1>ConceptMapper Development</h1>
 
-    <div id="mappingWidget"></div>
+  <div id="mappingWidget"></div>
+
+  <div id="outputWidget"></div> 
+    
   </body>
 </html>

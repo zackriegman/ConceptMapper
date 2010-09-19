@@ -32,3 +32,8 @@ h1 {
 #closeButton {
   margin: 15px 6px 6px;
 }
+
+.propositionTextArea{
+	border:1px dotted #00f;
+	padding: .5em;
+}

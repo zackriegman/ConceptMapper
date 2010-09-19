@@ -2,22 +2,17 @@ package com.appspot.conceptmapper.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Label;
 
 public class ServerComm {
 	private static PropositionServiceAsync propositionService = GWT
 			.create(PropositionService.class);
-	private static Label message;
 
-	public static void init(Label label) {
-		message = label;
-		//TODO: comment out test function
-		test();
+	public static void init() {
+		//test();
 	}
 
 	private static void message(String string) {
-		message.setText(string);
-		message.setVisible(true);
+		ConceptMapper.println( string  );
 	}
 
 	private static void test() {
@@ -35,14 +30,15 @@ public class ServerComm {
 
 		propositionService.test(callback);
 	}
-	
+
 	public interface FetchPropsCallback {
-		public void call( Proposition[] props);
+		public void call(Proposition[] props);
 	}
-	
-	public static void fetchProps( FetchPropsCallback fetchCallback ){
+
+	public static void fetchProps(FetchPropsCallback fetchCallback) {
 		class ThisCallback implements AsyncCallback<Proposition[]> {
 			public FetchPropsCallback fetch;
+
 			public void onFailure(Throwable caught) {
 				String details = caught.getMessage();
 				message("Error: " + details);
@@ -51,14 +47,15 @@ public class ServerComm {
 			@Override
 			public void onSuccess(Proposition[] result) {
 				message("Server Reports Success Fetching Props");
-				fetch.call( result );
+				fetch.call(result);
 			}
-		};
-		
+		}
+		;
+
 		ThisCallback callback = new ThisCallback();
 		callback.fetch = fetchCallback;
 
-		propositionService.getAllProps( callback );
+		propositionService.getAllProps(callback);
 	}
 
 	public static void addArgument(boolean pro, Proposition parentProp,
@@ -102,8 +99,8 @@ public class ServerComm {
 
 		propositionService.removeProposition(prop.id, callback);
 	}
-	
-	public static void updateProposition( Proposition prop ){
+
+	public static void updateProposition(Proposition prop) {
 		AsyncCallback<Void> callback = new AsyncCallback<Void>() {
 			public void onFailure(Throwable caught) {
 				message("Error: " + caught.getMessage());
@@ -115,7 +112,8 @@ public class ServerComm {
 			}
 		};
 
-		propositionService.updateProposition(prop.id, prop.getContent(), callback);
+		propositionService.updateProposition(prop.id, prop.getContent(),
+				callback);
 	}
 
 	public static void addProposition(Proposition newProposition,
@@ -151,10 +149,13 @@ public class ServerComm {
 		AddCallback addCallback = new AddCallback();
 		addCallback.newProposition = newProposition;
 
-		propositionService.addProposition(parentArgument.id, position,
-				addCallback);
+		if (parentArgument != null)
+			propositionService.addProposition(parentArgument.id, position,
+					addCallback);
+		else
+			propositionService.addProposition(null, 0, addCallback);
 	}
-	
+
 	private void testMakePropChanges() {
 		// create an argument hiearchy
 		Proposition rootProp = new Proposition("rootProp");
@@ -188,27 +189,21 @@ public class ServerComm {
 			}
 		};
 		Proposition[] newProps = new Proposition[1];
-		newProps[0]= rootProp;
+		newProps[0] = rootProp;
 		propositionService.makePropChanges(newProps, null, null, null, null,
 				callback);
 	}
-	
+
 	/*
-	private void testGetProposition() {
-		AsyncCallback<Proposition[]> callback = new AsyncCallback<Proposition[]>() {
-			public void onFailure(Throwable caught) {
-				message("Error: " + caught.getMessage());
-			}
-
-			public void onSuccess(Proposition[] result) {
-				for (int i = 0; i < result.length; i++) {
-					tree.addItem(new PropositionView(result[i], null));
-				}
-			}
-		};
-
-		// Make the call to the stock price service.
-		propositionService.getRootPropositions(callback);
-	}
-	*/
+	 * private void testGetProposition() { AsyncCallback<Proposition[]> callback
+	 * = new AsyncCallback<Proposition[]>() { public void onFailure(Throwable
+	 * caught) { message("Error: " + caught.getMessage()); }
+	 * 
+	 * public void onSuccess(Proposition[] result) { for (int i = 0; i <
+	 * result.length; i++) { tree.addItem(new PropositionView(result[i], null));
+	 * } } };
+	 * 
+	 * // Make the call to the stock price service.
+	 * propositionService.getRootPropositions(callback); }
+	 */
 }

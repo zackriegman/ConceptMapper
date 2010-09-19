@@ -42,7 +42,6 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		ofy.delete(ofy.query(Proposition.class));
 	}
 
-	
 	@Override
 	public void makePropChanges(Proposition[] newProps,
 			Proposition[] changedProps, Proposition[] deletedProps,
@@ -51,7 +50,6 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 		if (changedProps != null)
 			ofy.put(changedProps);
-
 
 		if (deletedProps != null)
 			ofy.delete(deletedProps);
@@ -70,7 +68,6 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 		// TO DO: for new Props and Args must get the new ids back to client!!!
 	}
-	
 
 	public void printAllPropsAndArgs() {
 		print("Arguments: ");
@@ -152,27 +149,28 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 	public Long addProposition(Long parentArgID, int position) throws Exception {
 		ofy = ObjectifyService.begin();
-		Argument parentArg = null;
-		if (parentArgID != null) {
-			parentArg = ofy.get(Argument.class, parentArgID);
-		}
 
 		Proposition newProposition = new Proposition();
-		if (parentArg == null)
-			newProposition.topLevel = true;
-		else
-			newProposition.topLevel = false;
+		Argument parentArg = null;
 
-		ofy.put(newProposition);
-		if (parentArg != null) {
+		if (parentArgID != null) {
+			// exception will be generated if there is a bogus parentArgID
+			parentArg = ofy.get(Argument.class, parentArgID);
+			newProposition.topLevel = false;
+			ofy.put(newProposition);
 			parentArg.propIDs.add(position, newProposition.id);
 			ofy.put(parentArg);
+		} else {
+			newProposition.topLevel = true;
+			ofy.put(newProposition);
 		}
 
 		print("added proposition:");
 		printProposition(newProposition);
-		print("updated argument:");
-		printArgument(parentArg);
+		if (parentArg != null) {
+			print("updated argument:");
+			printArgument(parentArg);
+		}
 
 		return newProposition.id;
 
@@ -181,14 +179,14 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public void removeProposition(Long propID) throws Exception {
 		ofy = ObjectifyService.begin();
-		if( ofy.query(Argument.class).filter("aboutPropID", propID).countAll() != 0){
-			throw new Exception( "cannot delete proposition with arguments; delete arguments first");
+		if (ofy.query(Argument.class).filter("aboutPropID", propID).countAll() != 0) {
+			throw new Exception(
+					"cannot delete proposition with arguments; delete arguments first");
 		}
-			
+
 		print("Proposition ID to delete:" + propID);
 		print("Arguments that use this proposition:");
-		for (Argument arg : ofy.query(Argument.class).filter("propIDs",
-				propID)) {
+		for (Argument arg : ofy.query(Argument.class).filter("propIDs", propID)) {
 			print("before");
 			printArgument(arg);
 
@@ -203,26 +201,28 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			}
 		}
 
-		ofy.delete( Proposition.class, propID );
+		ofy.delete(Proposition.class, propID);
 
 	}
 
 	@Override
-	public Argument addArgument(Long parentPropID, boolean pro) throws Exception {
+	public Argument addArgument(Long parentPropID, boolean pro)
+			throws Exception {
 		ofy = ObjectifyService.begin();
-		ofy.get(Proposition.class, parentPropID); //trigger an exception if the ID is valid
+		ofy.get(Proposition.class, parentPropID); // trigger an exception if the
+													// ID is valid
 
 		Proposition newProp = new Proposition();
 		newProp.topLevel = false;
 		ofy.put(newProp);
-		
+
 		Argument newArg = new Argument();
 		newArg.aboutPropID = parentPropID;
 		newArg.propIDs.add(newProp.id);
 		newArg.pro = pro;
-		
+
 		ofy.put(newArg);
-		
+
 		newArg.props.add(newProp);
 		return newArg;
 	}
@@ -230,8 +230,8 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public void updateProposition(Long propID, String content) throws Exception {
 		ofy = ObjectifyService.begin();
-		Proposition prop = ofy.get( Proposition.class, propID );
-		prop.setContent( content );
+		Proposition prop = ofy.get(Proposition.class, propID);
+		prop.setContent(content);
 		ofy.put(prop);
 	}
 
