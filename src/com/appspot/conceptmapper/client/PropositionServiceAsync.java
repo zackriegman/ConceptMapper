@@ -4,18 +4,9 @@ package com.appspot.conceptmapper.client;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public interface PropositionServiceAsync {
-
-	void getRootPropositions(AsyncCallback<Proposition[]> callback);
-
-	void makePropChanges(Proposition[] newProps, Proposition[] changedProps,
-			Proposition[] deletedProps, Argument[] newArgs,
-			Argument[] deletedArgs, AsyncCallback<Void> callback);
-
+	
+	
 	void getAllProps(AsyncCallback<Proposition[]> callback);
-
-
-	void test(AsyncCallback<Void> callback);
-
 	
 
 	void removeProposition(Long propID, AsyncCallback<Void> callback);
@@ -28,6 +19,14 @@ public interface PropositionServiceAsync {
 			AsyncCallback<Argument> callback);
 
 	void updateProposition(Long propID, String content,
+			AsyncCallback<Void> callback);
+
+
+	void linkProposition(Long parentArgID, int position, Long propositionID,
+			AsyncCallback<Void> callback);
+
+
+	void unlinkProposition(Long parentArgID, Long propositionID,
 			AsyncCallback<Void> callback);
 
 

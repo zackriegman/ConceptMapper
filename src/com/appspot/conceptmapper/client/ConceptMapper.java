@@ -13,6 +13,7 @@ import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
+// TODO: get rid of JSP
 
 // TODO: implement versioning
 // TODO: put the thing in a frame, add helpful message along the side
@@ -28,7 +29,6 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 // TO DO: give people a way to specify logical structure (first order predicate calculus structure of each proposition
 // TO DO: add definitions (as a special kind of proposition?)
 // TO DO: integrate logic engine to verify validity of arguments
-// TO DO: implement change message queue to keep things consistent?  maybe not why bother with this unless its being a problem... a few propositions reappearing after they are deleted won't kill anybody...they can just delete them again...
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -40,8 +40,6 @@ public class ConceptMapper implements EntryPoint {
 	public static HTML messageArea = new HTML();
 
 	public void onModuleLoad() {
-
-		ServerComm.init();
 
 		/**
 		 * annoyingly, by default the Tree eats the arrow key events so they
@@ -71,6 +69,17 @@ public class ConceptMapper implements EntryPoint {
 				super.onBrowserEvent(event);
 			}
 		};
+		
+		ServerComm.fetchProps(new ServerComm.FetchPropsCallback() {
+
+			@Override
+			public void call(Proposition[] props) {
+				for (Proposition prop : props) {
+					tree.addItem(recursiveBuildPropositionView(prop, null));
+				}
+				openTree();
+			}
+		});
 
 		tree.setAnimationEnabled(false);
 
@@ -100,16 +109,6 @@ public class ConceptMapper implements EntryPoint {
 		// Associate the Main panel with the HTML host page.
 		RootPanel.get("mappingWidget").add(mainPanel);
 
-		ServerComm.fetchProps(new ServerComm.FetchPropsCallback() {
-
-			@Override
-			public void call(Proposition[] props) {
-				for (Proposition prop : props) {
-					tree.addItem(recursiveBuildPropositionView(prop, null));
-				}
-				openTree();
-			}
-		});
 
 		VerticalPanel outputPanel = new VerticalPanel();
 		outputPanel.add(messageArea);

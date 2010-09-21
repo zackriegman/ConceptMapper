@@ -7,6 +7,9 @@ import java.util.List;
 import javax.persistence.Id;
 import javax.persistence.Transient;
 
+import com.googlecode.objectify.annotation.Cached;
+
+@Cached
 public class Proposition implements Serializable {
 	
 	private static final long serialVersionUID = 1L;

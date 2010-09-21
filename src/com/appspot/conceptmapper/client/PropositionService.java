@@ -6,15 +6,7 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
 @RemoteServiceRelativePath("propServ")
 public interface PropositionService extends RemoteService {
-	Proposition[] getRootPropositions();
 
-	void test();
-
-	public void makePropChanges(Proposition[] newProps,
-			Proposition[] changedProps, Proposition[] deletedProps,
-			Argument[] newArgs, Argument[] deletedArgs);
-	
-	
 	
 	public Long addProposition( Long parentArgID, int position ) throws Exception;
 	
@@ -23,6 +15,10 @@ public interface PropositionService extends RemoteService {
 	public Argument addArgument( Long parentPropID, boolean pro ) throws Exception;
 	
 	public void updateProposition( Long propID, String content ) throws Exception;
+	
+	public void linkProposition( Long parentArgID, int position, Long propositionID);
+	
+	public void unlinkProposition( Long parentArgID, Long propositionID );
 	
 	public Proposition[] getAllProps();
 }

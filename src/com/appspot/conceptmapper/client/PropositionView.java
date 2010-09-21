@@ -3,8 +3,6 @@ package com.appspot.conceptmapper.client;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -16,8 +14,6 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextArea;
@@ -25,9 +21,10 @@ import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class PropositionView extends TreeItem implements ClickHandler,
-		KeyDownHandler, FocusHandler, BlurHandler, ChangeHandler {
+		KeyDownHandler, FocusHandler, ChangeHandler {
 
 	private static PropositionView lastPropositionWithFocus = null;
+	
 	private TextArea textArea = new TextAreaSloppyGrow();
 	private Button proButton = new Button("For");
 	private Button conButton = new Button("Against");
@@ -67,7 +64,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		textArea.addKeyDownHandler(this);
 		textArea.addFocusHandler(this);
 		textArea.addChangeHandler(this);
-		textArea.addBlurHandler(this);
+		//textArea.addBlurHandler(this);
 		textArea.setStylePrimaryName("propositionTextArea");
 		// proButton.addFocusHandler(this);
 		// proButton.addBlurHandler( this);
@@ -232,6 +229,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 
 		// first remove all subsequent children
 		int treePosition = parentArgView().getChildIndex(this);
+		ConceptMapper.println("addPropAfterThisOne.treePosition:"+treePosition);
 		Queue<TreeItem> removeQueue = new LinkedList<TreeItem>();
 		TreeItem currentItem;
 		while ((currentItem = parentArgView().getChild(treePosition + 1)) != null) {
@@ -260,19 +258,27 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		newProposition.textArea.setFocus(true);
 
 		ServerComm.addProposition(newProposition.proposition,
-				parentArgView().argument, treePosition);
+				parentArgView().argument, treePosition + 1);
 	}
 
 	@Override
 	public void onFocus(FocusEvent event) {
 		Object source = event.getSource();
 		if (source == textArea) {
+			// if another Proposition's buttons are visible hide them
+			if ( lastPropositionWithFocus != this
+					&& lastPropositionWithFocus != null) {
+				lastPropositionWithFocus.proButton.setVisible(false);
+				lastPropositionWithFocus.conButton.setVisible(false);
+			}
 			// make this proposition's button's visible
 			proButton.setVisible(true);
 			conButton.setVisible(true);
+			lastPropositionWithFocus = this;
 		}
 	}
 
+	/*
 	@Override
 	public void onBlur(BlurEvent event) {
 		// must add this as a deferred command otherwise buttons disappear
@@ -290,6 +296,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		}
 
 	}
+	*/		
 
 	private static class TextAreaSloppyGrow extends TextArea {
 		public TextAreaSloppyGrow() {

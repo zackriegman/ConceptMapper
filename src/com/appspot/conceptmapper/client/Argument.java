@@ -7,21 +7,32 @@ import java.util.List;
 import javax.persistence.Id;
 import javax.persistence.Transient;
 
+import com.googlecode.objectify.annotation.Cached;
 
+@Cached
 public class Argument implements Serializable {
 
 	private static final long serialVersionUID = 1L; //to suppress warnings
 	
 	@Id
 	public Long id;
-	//TODO: don't need to send propIDs list over the wire, mark as nosend
-	public List<Long> propIDs = new LinkedList<Long>();
-	//TODO: don't need to send aboutPropID over the wire, mark as nosend
-	public Long aboutPropID;
+	
+
+	/* note the difference between 'transient' and '@Transient'
+	 * 'transient' will not be sent over the wire, but will be saved to the datastore.
+	 * '@Transient' will not be saved to the datastore, but will be sent over the wire.
+	 * Here the propIDs and aboutPropID don't need to be sent over the wire because
+	 * that info is stored in the Argument.props and Propsition.args lists (which
+	 * in turn are not stored in the datastore.
+	 */
+	transient public List<Long> propIDs = new LinkedList<Long>();
+	transient public Long aboutPropID;
+	
 	public boolean pro;
 	
 	@Transient
 	public List<Proposition> props = new LinkedList<Proposition>();
+	
 	
 	public List<Proposition> getProps(){
 		return props;
