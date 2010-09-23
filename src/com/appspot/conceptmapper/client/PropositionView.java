@@ -1,7 +1,5 @@
 package com.appspot.conceptmapper.client;
 
-import java.util.LinkedList;
-import java.util.Queue;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -28,7 +26,15 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	private TextArea textArea = new TextAreaSloppyGrow();
 	private Button proButton = new Button("For");
 	private Button conButton = new Button("Against");
-	private Proposition proposition;
+	public Proposition proposition;
+	
+	public PropositionView createClone(){
+		PropositionView cloneView = new PropositionView();
+		cloneView.textArea.setText( textArea.getText() );
+		cloneView.proposition = new Proposition( proposition );
+		cloneView.setState( getState() );
+		return cloneView;
+	}
 
 	public ArgumentView parentArgView() {
 		if (!isTopLevel())
@@ -219,32 +225,9 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		PropositionView newProposition = new PropositionView();
 		int cursorPosition = textArea.getCursorPos();
 
-		/*
-		 * can't figure out how to insert an item at a specific point (instead
-		 * items just get inserted as the last of the current TreeItem's
-		 * children). So, instead, I'm removing all subsequent TreeItem
-		 * children, then adding the new TreeItem (the new proposition) and then
-		 * adding back all the subsequent tree items!
-		 */
-
-		// first remove all subsequent children
 		int treePosition = parentArgView().getChildIndex(this);
-		ConceptMapper.println("addPropAfterThisOne.treePosition:"+treePosition);
-		Queue<TreeItem> removeQueue = new LinkedList<TreeItem>();
-		TreeItem currentItem;
-		while ((currentItem = parentArgView().getChild(treePosition + 1)) != null) {
-			removeQueue.add(currentItem);
-			parentArgView().removeItem(currentItem);
-		}
-
-		// then add the new one
-		parentArgView().addItem(newProposition);
-
-		// then add back the rest
-		while (!removeQueue.isEmpty()) {
-			TreeItem toRemove = removeQueue.poll();
-			parentArgView().addItem(toRemove);
-		}
+		parentArgView().insertPropositionViewAt( treePosition, newProposition);
+	
 
 		// then split the text between the current and new proposition
 		String content = textArea.getText();
@@ -276,27 +259,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 			conButton.setVisible(true);
 			lastPropositionWithFocus = this;
 		}
-	}
-
-	/*
-	@Override
-	public void onBlur(BlurEvent event) {
-		// must add this as a deferred command otherwise buttons disappear
-		// before they are clicked...
-		if (event.getSource() == textArea) {
-			DeferredCommand.addCommand(new Command() {
-
-				@Override
-				public void execute() {
-					proButton.setVisible(false);
-					conButton.setVisible(false);
-
-				}
-			});
-		}
-
-	}
-	*/		
+	}		
 
 	private static class TextAreaSloppyGrow extends TextArea {
 		public TextAreaSloppyGrow() {

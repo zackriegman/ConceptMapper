@@ -1,6 +1,8 @@
 package com.appspot.conceptmapper.client;
 
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public interface PropositionServiceAsync {
@@ -30,4 +32,6 @@ public interface PropositionServiceAsync {
 			AsyncCallback<Void> callback);
 
 
+	void getRevisions(Long changeID, List<Long> propIDs, List<Long> argIDs,
+			AsyncCallback<List<Change>> callback);
 }

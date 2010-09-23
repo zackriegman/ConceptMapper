@@ -25,6 +25,12 @@ public class Proposition implements Serializable {
 	
 	}
 	
+	public Proposition( Proposition prop ){
+		id = prop.id;
+		content = prop.content;
+		topLevel = prop.topLevel;
+	}
+	
 	public Proposition( String content ){
 		this.content = content;
 	}

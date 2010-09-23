@@ -33,6 +33,14 @@ public class Argument implements Serializable {
 	@Transient
 	public List<Proposition> props = new LinkedList<Proposition>();
 	
+	public Argument(){
+	}
+	
+	public Argument( Argument argument ){
+		id = argument.id;
+		pro = argument.pro;
+	}
+	
 	
 	public List<Proposition> getProps(){
 		return props;

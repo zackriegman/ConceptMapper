@@ -1,6 +1,7 @@
 package com.appspot.conceptmapper.client;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 import com.google.gwt.core.client.GWT;
@@ -46,8 +47,7 @@ public class ServerComm {
 			public FetchPropsCallback fetch;
 
 			public void onFailure(Throwable caught) {
-				String details = caught.getMessage();
-				message("Error: " + details);
+				message("Error: " + caught.getMessage() );
 			}
 
 			@Override
@@ -63,7 +63,47 @@ public class ServerComm {
 
 		propositionService.getAllProps(callback);
 	}
-	
+
+	public interface GetChangesCallback {
+		public void call(List<Change> changes);
+	}
+
+	public static void getChanges(Change change, List<Proposition> props,
+			List<Argument> args, GetChangesCallback localCallback) {
+		
+		class ThisCallback implements AsyncCallback<List<Change>> {
+
+			GetChangesCallback getChangesCallback;
+			
+			@Override
+			public void onSuccess(List<Change> result) {
+				message("Server Reports Success Fetching Changes");
+				getChangesCallback.call( result );
+			}
+
+			@Override
+			public void onFailure(Throwable caught) {
+				caught.printStackTrace();
+				//message("Error: " + s.toString() );
+			}
+		}
+
+		Long changeID = (change == null) ? null : change.id;
+		ThisCallback serverCallback = new ThisCallback();
+		serverCallback.getChangesCallback = localCallback;
+		List<Long> propIDs = new LinkedList<Long>();
+		for( Proposition prop : props ){
+			propIDs.add( prop.id );
+		}
+		List<Long> argIDs = new LinkedList<Long>();
+		for( Argument arg : args ){
+			argIDs.add( arg.id );
+		}
+
+		propositionService.getRevisions(changeID, propIDs, argIDs,
+				serverCallback);
+	}
+
 	public static void addArgument(boolean pro, Proposition parentProp,
 			Argument newArg, Proposition newProp) {
 		class CommandAdd implements Command {
@@ -71,10 +111,10 @@ public class ServerComm {
 			Proposition parentProp;
 			Argument newArg;
 			Proposition newProp;
-			
+
 			@Override
 			public void execute() {
-				addArgumentCmd( pro, parentProp, newArg, newProp );
+				addArgumentCmd(pro, parentProp, newArg, newProp);
 			}
 		}
 		CommandAdd command = new CommandAdd();
@@ -82,7 +122,7 @@ public class ServerComm {
 		command.parentProp = parentProp;
 		command.newArg = newArg;
 		command.newProp = newProp;
-		queueCommand( command );
+		queueCommand(command);
 	}
 
 	public static void addArgumentCmd(boolean pro, Proposition parentProp,
@@ -113,14 +153,14 @@ public class ServerComm {
 
 		propositionService.addArgument(parentProp.id, pro, addCallback);
 	}
-	
+
 	public static void removeProposition(Proposition prop) {
-		class CommandRemove implements Command{
+		class CommandRemove implements Command {
 			Proposition prop;
 
 			@Override
 			public void execute() {
-				removePropositionCmd( prop );
+				removePropositionCmd(prop);
 			}
 		}
 		CommandRemove command = new CommandRemove();
@@ -144,20 +184,20 @@ public class ServerComm {
 
 		propositionService.removeProposition(prop.id, callback);
 	}
-	
+
 	public static void updateProposition(Proposition prop) {
 		class CommandUpdate implements Command {
 			Proposition prop;
 
 			@Override
 			public void execute() {
-				updatePropositionCmd( prop );
+				updatePropositionCmd(prop);
 			}
 		}
 		CommandUpdate command = new CommandUpdate();
 		command.prop = prop;
-		
-		queueCommand( command );
+
+		queueCommand(command);
 	}
 
 	public static void updatePropositionCmd(Proposition prop) {
@@ -177,31 +217,31 @@ public class ServerComm {
 		propositionService.updateProposition(prop.id, prop.getContent(),
 				callback);
 	}
-	
+
 	public static void addProposition(Proposition newProposition,
 			Argument parentArgument, int position) {
 		class CommandAdd implements Command {
 			Proposition newProposition;
 			Argument parentArgument;
 			int position;
+
 			@Override
 			public void execute() {
-				addPropositionCmd( newProposition, parentArgument, position);
+				addPropositionCmd(newProposition, parentArgument, position);
 			}
-			
+
 		}
-		
+
 		CommandAdd command = new CommandAdd();
 		command.newProposition = newProposition;
 		command.parentArgument = parentArgument;
 		command.position = position;
-		
-		queueCommand( command );
+
+		queueCommand(command);
 	}
 
 	public static void addPropositionCmd(Proposition newProposition,
 			Argument parentArgument, int position) {
-
 
 		class AddCallback implements AsyncCallback<Long> {
 			Proposition newProposition;

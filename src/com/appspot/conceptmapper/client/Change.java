@@ -3,7 +3,6 @@ package com.appspot.conceptmapper.client;
 import java.io.Serializable;
 import java.util.Date;
 
-import javax.persistence.Embedded;
 import javax.persistence.Id;
 
 import com.googlecode.objectify.annotation.Cached;
@@ -71,8 +70,9 @@ public class Change implements Serializable {
 	 * that was updated in it's pre-updated state. When a change is an addition,
 	 * proposition will be empty.
 	 */
-	@Embedded
-	public Proposition proposition;
+	public Long propID;
+	public String propContent;
+	public boolean propTopLevel;
 	
 
 	/* if the change type is a proposition deletion or a proposition de-linking
