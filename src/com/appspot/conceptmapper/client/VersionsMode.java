@@ -80,9 +80,10 @@ public class VersionsMode extends HorizontalPanel {
 				ArgumentView argView = argViewIndex.get(change.argID);
 				//PropositionView bizzaro = new PropositionView(false);
 				//argView.insertPropositionViewAt(1 , bizzaro );
-				println( "\n[tree]\n");
-				printPropRecursive( (PropositionView) argView.getParentItem(), 0);
-				println( "\n[/tree]");
+				//println( "\n[tree]\n");
+				//printPropRecursive( (PropositionView) argView.getParentItem(), 0);
+				//println( "\n[/tree]");
+				println( "change: " + change.toString());
 				PropositionView bizzaro = new PropositionView(false);
 				propViewIndex.put(change.propID, bizzaro);
 				bizzaro.setContent(change.propContent);
@@ -196,8 +197,8 @@ public class VersionsMode extends HorizontalPanel {
 						for (Change change : changes) {
 							versionList.addItem("" + change.date + " ["
 									+ change.changeType + "]", "" + change.id);
-							println("\nChange Logged -- "
-									+ changeToString(change));
+							println("\ndisplayVersions -- "
+									+ change.toString() );
 						}
 						versionList.addChangeHandler(listBoxChangeHandler);
 						versionList.setSelectedIndex(0);
@@ -205,16 +206,4 @@ public class VersionsMode extends HorizontalPanel {
 					}
 				});
 	}
-
-	private String changeToString(Change change) {
-		return "changeType:" + change.changeType + "; argID:" + change.argID
-				+ "; argPropIndex:" + change.argPropIndex + "; argPro:"
-				+ change.argPro + "; propID:" + change.propID
-				+ "; propContent:" + change.propContent + "; propTopLevel:"
-				+ change.propTopLevel + "; date:" + change.date
-				+ "; remoteAddr:" + change.remoteAddr + "; remoteHost:"
-				+ change.remoteHost + "; remotePort:" + change.remotePort
-				+ "; remoteUser:" + change.remoteUser;
-	}
-
 }

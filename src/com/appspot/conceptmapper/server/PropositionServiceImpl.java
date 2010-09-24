@@ -189,20 +189,9 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		change.remotePort = getThreadLocalRequest().getRemotePort();
 		change.remoteUser = getThreadLocalRequest().getRemoteUser();
 
-		print("\nChange Logged -- " + changeToString(change));
+		print("\nChange Logged -- " + change.toString() );
 
 		ofy.put(change);
-	}
-
-	public String changeToString(Change change) {
-		return "changeType:" + change.changeType + "; argID:" + change.argID
-				+ "; argPropIndex:" + change.argPropIndex + "; argPro:"
-				+ change.argPro + "; propID:" + change.propID
-				+ "; propContent:" + change.propContent + "; propTopLevel:"
-				+ change.propTopLevel + "; date:" + change.date
-				+ "; remoteAddr:" + change.remoteAddr + "; remoteHost:"
-				+ change.remoteHost + "; remotePort:" + change.remotePort
-				+ "; remoteUser:" + change.remoteUser;
 	}
 
 	@Override
@@ -215,6 +204,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		/* first get the stuff that we'll need for version control */
 		Change change = new Change(ChangeType.PROP_DELETION);
 		Proposition prop = ofy.get(Proposition.class, propID);
+		print( "\n##########PROP" + propositionToString( prop ) + "\n" );
 		change.propID = prop.id;
 		change.propContent = prop.content;
 		change.propTopLevel = prop.topLevel;
@@ -491,7 +481,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			}
 		}
 
-		// printAllChanges();
+		printAllChanges();
 
 		// reverse the order of the list
 		List<Change> returnList = new LinkedList<Change>();
@@ -505,6 +495,6 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	public void printAllChanges() {
 		println("");
 		for (Change change : ofy.query(Change.class))
-			println(changeToString(change));
+			println("" + change);
 	}
 }

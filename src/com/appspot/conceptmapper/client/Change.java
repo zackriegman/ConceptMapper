@@ -91,4 +91,17 @@ public class Change implements Serializable {
 	public Change( ChangeType changeType ){
 		this.changeType = changeType;
 	}
+	
+	public String toString(Change change) {
+		return "id:" + change.id+ "; changeType:" + change.changeType + "; argID:" + change.argID
+				+ "; argPropIndex:" + change.argPropIndex + "; argPro:"
+				+ change.argPro + "; propID:" + change.propID
+				+ "; propContent:" + change.propContent + "; propTopLevel:"
+				+ change.propTopLevel + "; date:" + change.date
+				+ "; remoteAddr:" + change.remoteAddr + "; remoteHost:"
+				+ change.remoteHost + "; remotePort:" + change.remotePort
+				+ "; remoteUser:" + change.remoteUser;
+	}
+	
+
 }
