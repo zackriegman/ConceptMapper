@@ -21,7 +21,7 @@ public class EditMode extends VerticalPanel {
 		addPropButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				PropositionView newPropView = new PropositionView();
+				PropositionView newPropView = new PropositionView(true);
 
 				// close the other tree items
 				for (int i = 0; i < tree.getItemCount(); i++) {
@@ -81,32 +81,38 @@ public class EditMode extends VerticalPanel {
 		tree.setAnimationEnabled(false);
 	}
 
-	public Tree buildTreeCloneWithIndexes(Tree cloneTree,
+	public Tree buildTreeCloneOfOpenNodesWithIndexes(Tree cloneTree,
 			Map<Long, PropositionView> propIndex,
 			Map<Long, ArgumentView> argIndex) {
-		//TODO build the index
+		// TODO build the index
 		for (int i = 0; i < tree.getItemCount(); i++) {
-			PropositionView clonedPropView = recursiveTreeClone((PropositionView) tree
-					.getItem(i), propIndex, argIndex);
-			cloneTree.addItem( clonedPropView );
+			PropositionView clonedPropView = recursiveTreeClone(
+					(PropositionView) tree.getItem(i), propIndex, argIndex);
+			cloneTree.addItem(clonedPropView);
 		}
 		return cloneTree;
 	}
 
-	public PropositionView recursiveTreeClone(PropositionView realPropView, Map<Long, PropositionView> propIndex,
+	public PropositionView recursiveTreeClone(PropositionView realPropView,
+			Map<Long, PropositionView> propIndex,
 			Map<Long, ArgumentView> argIndex) {
 		// TODO make prop view non-editable
 		PropositionView clonePropView = realPropView.createClone();
-		propIndex.put( clonePropView.getProposition().id, clonePropView );
-		for (int i = 0; i < realPropView.getChildCount(); i++) {
-			ArgumentView realArgView = (ArgumentView) realPropView.getChild(i);
-			ArgumentView cloneArgView = realArgView.createClone();
-			argIndex.put( cloneArgView.argument.id, cloneArgView );
-			clonePropView.addItem(cloneArgView);
-			for (int j = 0; j < realArgView.getChildCount(); j++) {
-				cloneArgView
-						.addItem(recursiveTreeClone((PropositionView) realArgView
-								.getChild(j), propIndex, argIndex));
+		propIndex.put(clonePropView.getProposition().id, clonePropView);
+		if (realPropView.getState()) {
+			for (int i = 0; i < realPropView.getChildCount(); i++) {
+				ArgumentView realArgView = (ArgumentView) realPropView
+						.getChild(i);
+				ArgumentView cloneArgView = realArgView.createClone();
+				argIndex.put(cloneArgView.argument.id, cloneArgView);
+				clonePropView.addItem(cloneArgView);
+				if (realArgView.getState()) {
+					for (int j = 0; j < realArgView.getChildCount(); j++) {
+						cloneArgView.addItem(recursiveTreeClone(
+								(PropositionView) realArgView.getChild(j),
+								propIndex, argIndex));
+					}
+				}
 			}
 		}
 		return clonePropView;
@@ -155,7 +161,7 @@ public class EditMode extends VerticalPanel {
 
 	private PropositionView recursiveBuildPropositionView(Proposition prop,
 			ArgumentView argView) {
-		PropositionView propView = new PropositionView(prop);
+		PropositionView propView = new PropositionView(prop, true);
 		for (Argument arg : prop.args) {
 			propView.addItem(recursiveBuildArgumentView(arg));
 		}

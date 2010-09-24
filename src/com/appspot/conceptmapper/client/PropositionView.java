@@ -28,10 +28,14 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	private Button conButton = new Button("Against");
 	public Proposition proposition;
 	
+	
+	public String toString(){
+		return "textArea:" + textArea.getText() + "; id:" + proposition.id;
+	}
+	
 	public PropositionView createClone(){
-		PropositionView cloneView = new PropositionView();
+		PropositionView cloneView = new PropositionView(new Proposition( proposition ), false );
 		cloneView.textArea.setText( textArea.getText() );
-		cloneView.proposition = new Proposition( proposition );
 		cloneView.setState( getState() );
 		return cloneView;
 	}
@@ -48,11 +52,11 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		// return getTree().equals( getParentItem() );
 	}
 
-	public PropositionView() {
-		this(new Proposition());
+	public PropositionView( boolean editable) {
+		this(new Proposition(), editable );
 	}
 
-	public PropositionView(Proposition prop) {
+	public PropositionView(Proposition prop, boolean editable) {
 		super();
 		this.proposition = prop;
 		setContent(proposition.getContent());
@@ -70,12 +74,10 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		textArea.addKeyDownHandler(this);
 		textArea.addFocusHandler(this);
 		textArea.addChangeHandler(this);
-		//textArea.addBlurHandler(this);
 		textArea.setStylePrimaryName("propositionTextArea");
-		// proButton.addFocusHandler(this);
-		// proButton.addBlurHandler( this);
-		// conButton.addFocusHandler(this);
-		// conButton.addBlurHandler( this );
+		textArea.setReadOnly( !editable );
+		//textArea.setEnabled(editable); //blacks out the wideget entirely
+		
 		setState(true);
 		proButton.setVisible(false);
 		conButton.setVisible(false);
@@ -83,6 +85,10 @@ public class PropositionView extends TreeItem implements ClickHandler,
 
 	public void setContent(String content) {
 		textArea.setText(content);
+	}
+	
+	public String getContent(  ){
+		return textArea.getText();
 	}
 
 	public Proposition getProposition() {
@@ -105,7 +111,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 
 	public void addArgument(boolean pro) {
 		ArgumentView newArgView = new ArgumentView(pro);
-		PropositionView newPropView = new PropositionView();
+		PropositionView newPropView = new PropositionView( true );
 		newArgView.addItem(newPropView);
 		this.addItem(newArgView);
 		newArgView.setState(true);
@@ -222,11 +228,11 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	}
 
 	public void addPropositionAfterThisOne() {
-		PropositionView newProposition = new PropositionView();
+		PropositionView newProposition = new PropositionView( true );
 		int cursorPosition = textArea.getCursorPos();
 
 		int treePosition = parentArgView().getChildIndex(this);
-		parentArgView().insertPropositionViewAt( treePosition, newProposition);
+		parentArgView().insertPropositionViewAt( treePosition + 1, newProposition);
 	
 
 		// then split the text between the current and new proposition
@@ -255,9 +261,14 @@ public class PropositionView extends TreeItem implements ClickHandler,
 				lastPropositionWithFocus.conButton.setVisible(false);
 			}
 			// make this proposition's button's visible
-			proButton.setVisible(true);
-			conButton.setVisible(true);
-			lastPropositionWithFocus = this;
+			if( ! textArea.isReadOnly()){
+				proButton.setVisible(true);
+				conButton.setVisible(true);
+				lastPropositionWithFocus = this;
+			}
+			else{
+				//textArea.setFocus(false);
+			}
 		}
 	}		
 

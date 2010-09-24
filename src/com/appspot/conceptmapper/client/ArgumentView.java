@@ -15,6 +15,10 @@ public class ArgumentView extends TreeItem {
 		
 	}
 	
+	public String toString(){
+		return "text:" +  getText() + "; id:" + argument.id;
+	}
+	
 	public ArgumentView( Argument arg ){
 		super();
 		setLabel( arg.pro );
@@ -49,7 +53,7 @@ public class ArgumentView extends TreeItem {
 		// first remove all subsequent children
 		Queue<TreeItem> removeQueue = new LinkedList<TreeItem>();
 		TreeItem currentItem;
-		while ((currentItem = getChild(index + 1)) != null) {
+		while ((currentItem = getChild(index)) != null) {
 			removeQueue.add(currentItem);
 			removeItem(currentItem);
 		}
