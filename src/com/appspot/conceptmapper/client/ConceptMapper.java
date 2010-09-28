@@ -10,6 +10,8 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
+// TODO: modify move forward and backward functions so that they work with subtrees
+// TODO: implement, geting the subtree with the version info, reverting to current version in the versionsmode, and integrating into the tree
 // TODO: fix: can delete an empty proposition in VersionsMode
 // TODO at least in IE can delete root level proposition without first deleting its text
 // TODO: "loading from server" place holder for nodes with children, and then lazy load

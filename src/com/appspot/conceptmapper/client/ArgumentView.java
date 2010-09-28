@@ -7,41 +7,41 @@ import com.google.gwt.user.client.ui.TreeItem;
 
 public class ArgumentView extends TreeItem {
 	public Argument argument;
-	
-	public ArgumentView createClone(){
-		ArgumentView argView = new ArgumentView( new Argument( argument ) );
-		argView.setState( getState() );
+
+	public ArgumentView createClone() {
+		ArgumentView argView = new ArgumentView(new Argument(argument));
+		argView.setState(getState());
 		return argView;
-		
+
 	}
-	
-	public String toString(){
-		return "text:" +  getText() + "; id:" + argument.id;
+
+	public String toString() {
+		return "text:" + getText() + "; id:" + argument.id;
 	}
-	
-	public ArgumentView( Argument arg ){
+
+	public ArgumentView(Argument arg) {
 		super();
-		setLabel( arg.pro );
-		
+		setLabel(arg.pro);
+
 		argument = arg;
 	}
-	
-	public ArgumentView( boolean pro ){
+
+	public ArgumentView(boolean pro) {
 		super();
-		setLabel( pro );
+		setLabel(pro);
 		argument = new Argument();
+		argument.pro = pro;
 	}
-	
-	private void setLabel( boolean pro ){
-		if( pro ){
+
+	private void setLabel(boolean pro) {
+		if (pro) {
 			setText("Argument For");
-		}
-		else{
+		} else {
 			setText("Argument Against");
 		}
 	}
-	
-	public void insertPropositionViewAt( int index, PropositionView propView ){
+
+	public void insertPropositionViewAt(int index, PropositionView propView) {
 		/*
 		 * can't figure out how to insert an item at a specific point (instead
 		 * items just get inserted as the last of the current TreeItem's

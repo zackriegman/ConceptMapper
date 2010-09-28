@@ -72,7 +72,11 @@ public class Change implements Serializable {
 	 * propID refers to the proposition whose content  has been modified
 	 * 
 	 * For change type: ARG_ADDITION, ARG_DELETION
-	 * propID refers to the parents proposition of the argument
+	 * propID refers to the parent proposition of the argument.  (But note that
+	 * it is not actually necessary to record the parent proposition for an ARG_ADDITION because
+	 * the arg knows its parent and can only have one, so we can figure out what to delete
+	 * merely with the argID. However currently it's used on the client side, so I'm
+	 * keeping it here for now.)
 	 */
 	public Long propID;
 	public String propContent;

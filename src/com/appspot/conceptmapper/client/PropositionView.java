@@ -23,8 +23,8 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	private static PropositionView lastPropositionWithFocus = null;
 
 	private TextArea textArea = new TextAreaSloppyGrow();
-	private Button proButton = new Button("For");
-	private Button conButton = new Button("Against");
+	private Button proButton;
+	private Button conButton;
 	public Proposition proposition;
 
 	public String toString() {
@@ -60,26 +60,31 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		this.proposition = prop;
 		setContent(proposition.getContent());
 		VerticalPanel verticalPanel = new VerticalPanel();
-		HorizontalPanel horizontalPanel = new HorizontalPanel();
 		verticalPanel.add(textArea);
-		verticalPanel.add(horizontalPanel);
-		horizontalPanel.add(proButton);
-		horizontalPanel.add(conButton);
 		this.setWidget(verticalPanel);
 
-		proButton.addClickHandler(this);
-		conButton.addClickHandler(this);
-
-		textArea.addKeyDownHandler(this);
-		textArea.addFocusHandler(this);
-		textArea.addChangeHandler(this);
-		textArea.setStylePrimaryName("propositionTextArea");
+		if (editable) {
+			HorizontalPanel horizontalPanel = new HorizontalPanel();
+			verticalPanel.add(horizontalPanel);
+			proButton = new Button("For");
+			conButton = new Button("Against");
+			horizontalPanel.add(proButton);
+			horizontalPanel.add(conButton);
+			proButton.addClickHandler(this);
+			conButton.addClickHandler(this);
+			proButton.setVisible(false);
+			conButton.setVisible(false);
+			
+			textArea.addKeyDownHandler(this);
+			textArea.addFocusHandler(this);
+			textArea.addChangeHandler(this);
+		}
 		textArea.setReadOnly(!editable);
 		// textArea.setEnabled(editable); //blacks out the wideget entirely
 
+		textArea.setStylePrimaryName("propositionTextArea");
 		setState(true);
-		proButton.setVisible(false);
-		conButton.setVisible(false);
+		
 	}
 
 	public void setContent(String content) {

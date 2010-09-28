@@ -307,7 +307,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 		Change change = new Change(ChangeType.ARG_ADDITION);
 		change.argID = newArg.id;
-		change.propID = newProp.id;
+		change.propID = parentPropID;
 		saveVersionInfo(change);
 
 		newArg.props.add(newProp);
