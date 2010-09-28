@@ -203,7 +203,7 @@ public class ServerComm {
 	public static void updatePropositionCmd(Proposition prop) {
 		AsyncCallback<Void> callback = new AsyncCallback<Void>() {
 			public void onFailure(Throwable caught) {
-				message("Error: " + caught.getMessage());
+				message("Error [updatePropositionCmd]: " + caught.getMessage());
 				dispatchCommand();
 			}
 

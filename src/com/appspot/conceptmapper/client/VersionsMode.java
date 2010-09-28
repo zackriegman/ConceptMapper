@@ -8,13 +8,18 @@ import java.util.Map;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.OpenEvent;
+import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
-public class VersionsMode extends HorizontalPanel {
+public class VersionsMode extends HorizontalPanel implements
+		CloseHandler<TreeItem>, OpenHandler<TreeItem>, ChangeHandler {
 
 	private ListBox versionList = new ListBox();
 	private EditMode editMode;
@@ -32,25 +37,8 @@ public class VersionsMode extends HorizontalPanel {
 		versionList.setVisibleItemCount(30);
 		versionList.setWidth("25em");
 
-		listBoxChangeHandler = new ChangeHandler() {
-
-			@Override
-			public void onChange(ChangeEvent event) {
-				if (treeClone != null) {
-					remove(treeClone);
-				}
-				treeClone = new Tree();
-				propViewIndex = new HashMap<Long, PropositionView>();
-				argViewIndex = new HashMap<Long, ArgumentView>();
-				editMode.buildTreeCloneOfOpenNodesWithIndexes(treeClone,
-						propViewIndex, argViewIndex);
-				modifyTreeToVersion();
-				add(treeClone);
-				resetState(treeClone);
-			}
-		};
 		listBoxChangeHandlerRegistration = versionList
-				.addChangeHandler(listBoxChangeHandler);
+				.addChangeHandler(this);
 	}
 
 	public void resetState(Tree tree) {
@@ -60,38 +48,41 @@ public class VersionsMode extends HorizontalPanel {
 	}
 
 	public void recursiveResetState(TreeItem item) {
-		item.setState(true);
-		for (int i = 0; i < item.getChildCount(); i++) {
-			recursiveResetState(item.getChild(i));
+		/*
+		 * if this item has children, and the first child is not a dummy node
+		 * place holder loading message
+		 */
+		if (item.getChildCount() > 0
+				&& !item.getChild(0).getStyleName().equals("loadDummy")) {
+			item.setState(true);
+			for (int i = 0; i < item.getChildCount(); i++) {
+				recursiveResetState(item.getChild(i));
+			}
 		}
 	}
 
 	public void modifyTreeToVersion() {
 		int index = versionList.getSelectedIndex();
 		// TODO shouldn't this be index + 1, rather than index? but
-		// indexOutOfBoundsException is thrown... and it seems to work the way it is...
+		// indexOutOfBoundsException is thrown... and it seems to work the way
+		// it is...
 		GWT.log("----reverting tree----");
 		for (int i = 0; i < index; i++) {
 			Change change = changes.get(i);
-			GWT.log( "processing: " + change.changeType);
+			GWT.log("processing: " + change.changeType);
 			switch (change.changeType) {
 			case PROP_DELETION: {
-				//TODO what about when an argument is deleted? how is that handled?
 				ArgumentView argView = argViewIndex.get(change.argID);
-				//PropositionView bizzaro = new PropositionView(false);
-				//argView.insertPropositionViewAt(1 , bizzaro );
-				//println( "\n[tree]\n");
-				//printPropRecursive( (PropositionView) argView.getParentItem(), 0);
-				//println( "\n[/tree]");
-				println( "change: " + change.toString());
-				PropositionView bizzaro = new PropositionView(false);
-				propViewIndex.put(change.propID, bizzaro);
-				bizzaro.setContent(change.propContent);
-				bizzaro.proposition.id = change.propID;
-				println( "propView:" + bizzaro + "; argView:" + argView + "; argPropIndex:" + change.argPropIndex );
+				// println("change: " + change.toString());
+				PropositionView deletedPropView = new PropositionView(false);
+				propViewIndex.put(change.propID, deletedPropView);
+				deletedPropView.setContent(change.propContent);
+				deletedPropView.proposition.id = change.propID;
+				println("propView:" + deletedPropView + "; argView:" + argView
+						+ "; argPropIndex:" + change.argPropIndex);
 				argView.insertPropositionViewAt(change.argPropIndex,
-						bizzaro);
-						
+						deletedPropView);
+
 				break;
 			}
 			case PROP_ADDITION: {
@@ -113,8 +104,16 @@ public class VersionsMode extends HorizontalPanel {
 				printPropRecursive(propView, 0);
 				ArgumentView argView = argViewIndex.get(change.argID);
 				argView.remove();
-				//propView.removeItem(argView);
-				println( "propView:" + propView + "; argView:" + argView);
+				// propView.removeItem(argView);
+				println("propView:" + propView + "; argView:" + argView);
+				break;
+			}
+			case ARG_DELETION: {
+				PropositionView propView = propViewIndex.get(change.propID);
+				ArgumentView argView = new ArgumentView(change.argPro);
+				argView.argument.id = change.argID;
+				propView.addItem(argView);
+				argViewIndex.put(change.argID, argView);
 				break;
 			}
 			case PROP_UNLINK: {
@@ -145,32 +144,33 @@ public class VersionsMode extends HorizontalPanel {
 
 		}
 	}
-	
+
 	public void printPropRecursive(PropositionView propViewParent, int level) {
 		for (int i = 0; i < level; i++)
 			print("  ");
-		print("propID:" + propViewParent.proposition.id + "; " + propViewParent.getContent());
+		print("propID:" + propViewParent.proposition.id + "; "
+				+ propViewParent.getContent());
 		print("\n");
 		print("\nargCount:" + propViewParent.getChildCount());
 		for (int i = 0; i < propViewParent.getChildCount(); i++) {
-			ArgumentView arg = (ArgumentView)propViewParent.getChild(i);
+			ArgumentView arg = (ArgumentView) propViewParent.getChild(i);
 			for (int j = 0; j < level + 1; j++)
 				print("  ");
 			print(arg.getText());
 			print("" + arg.argument.id);
 			print("\n");
-			for (int j = 0; j< arg.getChildCount(); j++) {
-				printPropRecursive((PropositionView)arg.getChild(j), level + 2);
+			for (int j = 0; j < arg.getChildCount(); j++) {
+				printPropRecursive((PropositionView) arg.getChild(j), level + 2);
 			}
 		}
 	}
 
 	public void println(String string) {
-		print('\n' + string);
+		print(string + '\n');
 	}
 
 	public void print(String string) {
-		System.out.print(string);
+		System.out.print("C:" + string);
 	}
 
 	public void displayVersions() {
@@ -186,10 +186,7 @@ public class VersionsMode extends HorizontalPanel {
 						println("Got back " + changes.size() + " changes");
 						listBoxChangeHandlerRegistration.removeHandler();
 						versionList.clear();
-						/*
-						 * for (int i = 0; i < versionList.getItemCount(); i++)
-						 * { versionList.removeItem(i); }
-						 */
+
 						if (treeClone != null) {
 							remove(treeClone);
 							treeClone = null;
@@ -197,13 +194,54 @@ public class VersionsMode extends HorizontalPanel {
 						for (Change change : changes) {
 							versionList.addItem("" + change.date + " ["
 									+ change.changeType + "]", "" + change.id);
-							println("\ndisplayVersions -- "
-									+ change.toString() );
+							println("\ndisplayVersions -- " + change.toString());
 						}
 						versionList.addChangeHandler(listBoxChangeHandler);
 						versionList.setSelectedIndex(0);
 						listBoxChangeHandler.onChange(null);
 					}
 				});
+	}
+
+	@Override
+	public void onClose(CloseEvent<TreeItem> event) {
+		// TODO Auto-generated method stub
+		TreeItem treeItem = event.getTarget();
+		if (treeItem.getChildCount() > 0
+				&& treeItem.getChild(0).getStyleName().equals("loadDummy")) {
+			println("VersionsMode.onClose:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
+		}
+
+	}
+
+	@Override
+	public void onOpen(OpenEvent<TreeItem> event) {
+		TreeItem treeItem = event.getTarget();
+		if (treeItem.getChildCount() > 0
+				&& treeItem.getChild(0).getStyleName().equals("loadDummy")) {
+			println("VersionsMode.onOpen:  NOT LOADING -- METHOD NOT IMPLEMENTED!");
+		}
+
+	}
+
+	@Override
+	public void onChange(ChangeEvent event) {
+		buildFreshTreeClone();
+		modifyTreeToVersion();
+		add(treeClone);
+		resetState(treeClone);
+	}
+	
+	public void buildFreshTreeClone(){
+		if (treeClone != null) {
+			remove(treeClone);
+		}
+		treeClone = new Tree();
+		treeClone.addCloseHandler(VersionsMode.this);
+		treeClone.addOpenHandler(VersionsMode.this);
+		propViewIndex = new HashMap<Long, PropositionView>();
+		argViewIndex = new HashMap<Long, ArgumentView>();
+		editMode.buildTreeCloneOfOpenNodesWithIndexes(treeClone, propViewIndex,
+				argViewIndex);
 	}
 }

@@ -10,11 +10,10 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-// TODO: when deleting propositions, the text is lost because first the user deletes the content
+// TODO: fix: can delete an empty proposition in VersionsMode
 // TODO at least in IE can delete root level proposition without first deleting its text
-// TODO: VersionMode should only show nodes open in EditMode, and should only clone open nodes
-// TODO: how to see version of deleted propositions
 // TODO: "loading from server" place holder for nodes with children, and then lazy load
+// TODO: provide a way to see deleted top level nodes
 // TODO: client should print to System.out or GWT.debug, get ride of extra panel, replace message panel
 // TODO: if the message queue gets backed up (more than 5?) give user a message that there is trouble saving changes to server, and changes may be lost
 // TODO: implement versioning

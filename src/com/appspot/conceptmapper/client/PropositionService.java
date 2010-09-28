@@ -1,6 +1,7 @@
 package com.appspot.conceptmapper.client;
 
 
+import java.io.Serializable;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.RemoteService;
@@ -8,7 +9,6 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
 @RemoteServiceRelativePath("propServ")
 public interface PropositionService extends RemoteService {
-
 	
 	public Long addProposition( Long parentArgID, int position ) throws Exception;
 	
@@ -25,4 +25,14 @@ public interface PropositionService extends RemoteService {
 	public Proposition[] getAllProps();
 	
 	public List<Change> getRevisions( Long changeID, List<Long> propIDs, List<Long> argIDs) throws Exception;
+	
+	public class PropTreeWithHistory implements Serializable {
+		
+		/* added to supress warnings */
+		private static final long serialVersionUID = 1L;
+		public Proposition proposition;
+		public List<Change> changes;
+	}
+	
+	public PropTreeWithHistory getPropositionCurrentVersionAndHistory(Long propID) throws Exception;
 }

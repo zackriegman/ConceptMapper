@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
@@ -34,11 +35,10 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		// ofy.delete(ofy.query( Change.class ));
 		// ofy.delete(Argument.class, 817);
 		// println ("deleted Argument 817");
-
 	}
 
 	public void println(String message) {
-		System.out.println(message);
+		System.out.println("S:" + message);
 		// log.log(Level.SEVERE, message);
 	}
 
@@ -51,7 +51,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		ofy.delete(ofy.query(Proposition.class));
 	}
 
-	public void printAllPropsAndArgs(Objectify ofy) {
+	public void printAllPropsAndArgs() {
 		print("Arguments: ");
 		for (Argument arg : ofy.query(Argument.class)) {
 			printArgument(arg);
@@ -89,7 +89,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		int i = 0;
 		for (Proposition prop : propQuery) {
 			returnProps[i] = prop;
-			recursiveBuildProp(prop, ofy);
+			recursiveBuildProp(prop);
 			i++;
 		}
 
@@ -126,16 +126,25 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 	}
 
-	public void recursiveBuildProp(Proposition prop, Objectify ofy) {
+	public void recursiveBuildProp(Proposition prop) {
 
+		/* get all the prop's arguments */
 		Query<Argument> argQuery = ofy.query(Argument.class).filter(
 				"aboutPropID", prop.id);
+		/* for each argument */
 		for (Argument arg : argQuery) {
-			// print("processing argument:");
-			// printArgument(arg);
+			/* add the argument to the prop */
 			prop.args.add(arg);
+
+			/* get all the props in the argument */
 			Map<Long, Proposition> propMap = ofy.get(Proposition.class,
 					arg.propIDs);
+
+			/*
+			 * for each propID check to make sure the prop actually exists, and
+			 * if it does add it to the argument, and call this function
+			 * recursively on the prop
+			 */
 			for (Long id : arg.propIDs) {
 				Proposition gotProp = propMap.get(id);
 				if (gotProp == null) {
@@ -144,7 +153,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 							+ "] references proposition which does not exist");
 				} else {
 					arg.props.add(gotProp);
-					recursiveBuildProp(gotProp, ofy);
+					recursiveBuildProp(gotProp);
 				}
 			}
 
@@ -174,7 +183,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		Change change = new Change(ChangeType.PROP_ADDITION);
 		change.propID = newProposition.id;
 		change.argID = parentArgID;
-		saveVersionInfo(change, ofy);
+		saveVersionInfo(change);
 
 		// getAllProps();
 
@@ -182,14 +191,14 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 	}
 
-	public void saveVersionInfo(Change change, Objectify ofy) {
+	public void saveVersionInfo(Change change) {
 		change.date = new Date();
 		change.remoteAddr = getThreadLocalRequest().getRemoteAddr();
 		change.remoteHost = getThreadLocalRequest().getRemoteHost();
 		change.remotePort = getThreadLocalRequest().getRemotePort();
 		change.remoteUser = getThreadLocalRequest().getRemoteUser();
 
-		print("\nChange Logged -- " + change.toString() );
+		println("Change Logged -- " + change.toString());
 
 		ofy.put(change);
 	}
@@ -204,10 +213,12 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		/* first get the stuff that we'll need for version control */
 		Change change = new Change(ChangeType.PROP_DELETION);
 		Proposition prop = ofy.get(Proposition.class, propID);
-		print( "\n##########PROP" + propositionToString( prop ) + "\n" );
 		change.propID = prop.id;
 		change.propContent = prop.content;
 		change.propTopLevel = prop.topLevel;
+
+		/* in case there is an argument deletion, create an argument change */
+		Change argDeletionChange = null;
 
 		// print("Proposition ID to delete:" + propID);
 
@@ -218,29 +229,57 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			// 1 or fewer arguments
 			throw new Exception(
 					"cannot delete a proposition used by more than one argument; delink for other arguments before deleting");
-		} else if (query.countAll() == 1) { // if the proposition is used in an
-			// argument
-			Argument argument = query.iterator().next();
-			change.argID = argument.id; // record the versioning information
-			change.argPropIndex = argument.propIDs.indexOf(propID);
-			change.argPro = argument.pro;
+		}
 
-			argument.propIDs.remove(propID); // remove the proposition from the
-			// argument
-			if (argument.propIDs.isEmpty()) { // if that's the only proposition,
-				// delete the arg
-				ofy.delete(argument); // because we are only deleting arguments
-				// when they have no propositions left,
-				// we don't have to save the argument's
-				// proposition list
-			} else { // otherwise save the updated arg
+		/* if the proposition is used in an argument */
+		else if (query.countAll() == 1) {
+			Argument argument = query.iterator().next();
+
+			/* record the versioning information */
+			change.argID = argument.id;
+			change.argPropIndex = argument.propIDs.indexOf(propID);
+			// change.argPro = argument.pro;
+
+			/* remove the proposition from the argument */
+			argument.propIDs.remove(propID);
+
+			/*
+			 * if that's the only proposition, delete the arg and prepare
+			 * versioning info for the arg deletion as well.
+			 */
+			if (argument.propIDs.isEmpty()) {
+				argDeletionChange = new Change(ChangeType.ARG_DELETION);
+				argDeletionChange.propID = argument.aboutPropID;
+				argDeletionChange.argID = argument.id;
+				argDeletionChange.argPro = argument.pro;
+				/*
+				 * because we are only deleting arguments when they have no
+				 * propositions left, we don't have to save the argument's
+				 * proposition list
+				 */
+				ofy.delete(argument);
+
+			}
+
+			/* otherwise save the updated arg */
+			else {
 				ofy.put(argument);
 			}
 		}
 
-		ofy.delete(Proposition.class, propID);// delete the proposition
+		/* delete the proposition */
+		ofy.delete(Proposition.class, propID);
 
-		saveVersionInfo(change, ofy); // save the version control information
+		/* save the version control information */
+		saveVersionInfo(change);
+
+		/*
+		 * if an argument was deleted, also save the version control information
+		 * for that deletion
+		 */
+		if (argDeletionChange != null) {
+			saveVersionInfo(argDeletionChange);
+		}
 
 	}
 
@@ -269,7 +308,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		Change change = new Change(ChangeType.ARG_ADDITION);
 		change.argID = newArg.id;
 		change.propID = newProp.id;
-		saveVersionInfo(change, ofy);
+		saveVersionInfo(change);
 
 		newArg.props.add(newProp);
 
@@ -281,8 +320,11 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	public void updateProposition(Long propID, String content) throws Exception {
 		Change change = new Change(ChangeType.PROP_MODIFICATION);
 		Proposition prop = ofy.get(Proposition.class, propID);
+		if (prop.getContent() != null && prop.getContent().equals(content)) {
+			throw new Exception(
+					"Cannot update proposition content:  content not changed!");
+		}
 
-		println("updateProposition -- " + propositionToString(prop));
 		change.propID = prop.id;
 		change.propContent = prop.content;
 		change.propTopLevel = prop.topLevel;
@@ -291,7 +333,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		 * have to save the version info before the proposition value is changed
 		 * (or alternatively, create a new Proposition)
 		 */
-		saveVersionInfo(change, ofy);
+		saveVersionInfo(change);
 
 		prop.setContent(content);
 		ofy.put(prop);
@@ -317,7 +359,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		Change change = new Change(ChangeType.PROP_LINK);
 		change.argID = argument.id;
 		change.propID = proposition.id;
-		saveVersionInfo(change, ofy);
+		saveVersionInfo(change);
 	}
 
 	@Override
@@ -352,7 +394,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		change.argID = parentArgID;
 		change.propID = proposition.id;
 		change.argPropIndex = propIndex;
-		saveVersionInfo(change, ofy);
+		saveVersionInfo(change);
 
 	}
 
@@ -428,14 +470,11 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		 * deletions should start visible, which means that you need to fetch
 		 * all the deleted descendants of a node when you fetch an opened node.
 		 * 
-		 * Steps to implementation: 
-		 * 1. fetch deleted descendants when fetching an open node 
-		 * 2. add place holders to closed nodes, and handle open/close
-		 * events to automatically load children
-		 * 3. add changes to the version list when a node is opened
-		 * 4. remove changes from the version list when a node is closed
-		 * 5. make sure that argument additions/deletions are handled properly 
-		 * (given that there is no explicit argument deletion event on the server)
+		 * Steps to implementation: 1. fetch deleted descendants when fetching
+		 * an open node 2. add place holders to closed nodes, and handle
+		 * open/close events to automatically load children 3. add changes to
+		 * the version list when a node is opened 4. remove changes from the
+		 * version list when a node is closed
 		 */
 	}
 
@@ -443,45 +482,17 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	public List<Change> getRevisions(Long changeID, List<Long> propIDs,
 			List<Long> argIDs) throws Exception {
 
-		println("\ngetRevisions propIDs:");
-		for (Long id : propIDs)
-			print(" - " + id);
-		println("\ngetRevisions argIDs:");
-		for (Long id : argIDs)
-			print(" - " + id);
-
 		SortedMap<Date, Change> map = new TreeMap<Date, Change>();
+		// HashSet<Long> processedProps = new HashSet<Long>();
+		// HashSet<Long> processedArgs = new HashSet<Long>();
 		if (changeID != null) {
 			Change changeEnd = ofy.get(Change.class, changeID);
-			if (propIDs != null && !propIDs.isEmpty()) {
-				for (Change change : ofy.query(Change.class).filter(
-						"propID in", propIDs).filter("date <", changeEnd.date)
-						.order("-date")) {
-					map.put(change.date, change);
-				}
-			}
-			if (argIDs != null && !argIDs.isEmpty()) {
-				for (Change change : ofy.query(Change.class).filter("argID in",
-						argIDs).filter("date <", changeEnd.date).order("-date")) {
-					map.put(change.date, change);
-				}
-			}
+			recursiveQueryChanges(propIDs, argIDs, map, changeEnd.date);
 		} else {
-			if (propIDs != null && !propIDs.isEmpty()) {
-				for (Change change : ofy.query(Change.class).filter(
-						"propID in", propIDs).order("-date")) {
-					map.put(change.date, change);
-				}
-			}
-			if (argIDs != null && !argIDs.isEmpty()) {
-				for (Change change : ofy.query(Change.class).filter("argID in",
-						argIDs).order("-date")) {
-					map.put(change.date, change);
-				}
-			}
+			recursiveQueryChanges(propIDs, argIDs, map, null);
 		}
 
-		printAllChanges();
+		// printAllChanges();
 
 		// reverse the order of the list
 		List<Change> returnList = new LinkedList<Change>();
@@ -492,9 +503,78 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		return returnList;
 	}
 
+	
+	public PropTreeWithHistory getPropositionCurrentVersionAndHistory(Long propID) throws Exception {
+		PropTreeWithHistory propVersions = new PropTreeWithHistory();
+		try {
+			propVersions.proposition = ofy.get(Proposition.class, propID);
+			recursiveBuildProp(propVersions.proposition);
+		} catch (EntityNotFoundException e) {
+			/*
+			 * if the prop is not found that merely means it doesn't exist in
+			 * the current version of the tree... not a problem since it might
+			 * have been deleted.
+			 */
+			propVersions.proposition = null;
+		}
+
+		List<Long> propIDs = new LinkedList<Long>();
+		propIDs.add( propID );
+		propVersions.changes = getRevisions( null, propIDs, null);
+		
+		return propVersions;
+	}
+
+	public void recursiveQueryChanges(List<Long> propIDs, List<Long> argIDs,
+			Map<Date, Change> map, Date date) {
+
+		println("\ngetRevisions propIDs:");
+		for (Long id : propIDs)
+			print(" - " + id);
+		println("\ngetRevisions argIDs:");
+		for (Long id : argIDs)
+			print(" - " + id);
+
+		List<Long> deletedProps = new LinkedList<Long>();
+		List<Long> deletedArgs = new LinkedList<Long>();
+
+		if (propIDs != null && !propIDs.isEmpty()) {
+			Query<Change> query = ofy.query(Change.class).filter("propID in",
+					propIDs).order("-date");
+			if (date != null) {
+				query = query.filter("date <", date);
+			}
+
+			for (Change change : query) {
+				map.put(change.date, change);
+				if (change.changeType == Change.ChangeType.ARG_DELETION) {
+					deletedArgs.add(change.argID);
+				}
+			}
+		}
+
+		if (argIDs != null && !argIDs.isEmpty()) {
+			Query<Change> query = ofy.query(Change.class).filter("argID in",
+					argIDs).order("-date");
+			if (date != null) {
+				query = query.filter("date <", date);
+			}
+			for (Change change : query) {
+				map.put(change.date, change);
+				// TODO must handle unlinking here as well
+				if (change.changeType == Change.ChangeType.PROP_DELETION) {
+					deletedProps.add(change.propID);
+				}
+			}
+		}
+		if (!deletedProps.isEmpty() || !deletedArgs.isEmpty()) {
+			recursiveQueryChanges(deletedProps, deletedArgs, map, date);
+		}
+	}
+
 	public void printAllChanges() {
 		println("");
 		for (Change change : ofy.query(Change.class))
-			println("" + change);
+			println("" + change.toString());
 	}
 }

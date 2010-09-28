@@ -99,6 +99,8 @@ public class EditMode extends VerticalPanel {
 		// TODO make prop view non-editable
 		PropositionView clonePropView = realPropView.createClone();
 		propIndex.put(clonePropView.getProposition().id, clonePropView);
+
+		/* if the proposition is open then clone it */
 		if (realPropView.getState()) {
 			for (int i = 0; i < realPropView.getChildCount(); i++) {
 				ArgumentView realArgView = (ArgumentView) realPropView
@@ -106,6 +108,8 @@ public class EditMode extends VerticalPanel {
 				ArgumentView cloneArgView = realArgView.createClone();
 				argIndex.put(cloneArgView.argument.id, cloneArgView);
 				clonePropView.addItem(cloneArgView);
+
+				/* if the argument is open then clone it */
 				if (realArgView.getState()) {
 					for (int j = 0; j < realArgView.getChildCount(); j++) {
 						cloneArgView.addItem(recursiveTreeClone(
@@ -113,9 +117,30 @@ public class EditMode extends VerticalPanel {
 								propIndex, argIndex));
 					}
 				}
+				/*
+				 * if the argument is not open, but does have child
+				 * propositions, then insert a place holder
+				 */
+				else if (realArgView.getChildCount() > 0) {
+					cloneArgView
+							.addItem(newLoadDummyTreeItem());
+				}
 			}
 		}
+		/*
+		 * if the proposition is not open, but does have child args, insert a
+		 * place holder
+		 */
+		else if (realPropView.getChildCount() > 0) {
+			clonePropView.addItem(newLoadDummyTreeItem());
+		}
 		return clonePropView;
+	}
+	
+	public TreeItem newLoadDummyTreeItem(){
+		TreeItem treeItem = new TreeItem("loading from server...");
+		treeItem.addStyleName("loadDummy");
+		return treeItem;
 	}
 
 	public void getOpenPropsAndArgs(List<Proposition> props, List<Argument> args) {

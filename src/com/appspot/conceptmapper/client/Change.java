@@ -53,7 +53,7 @@ public class Change implements Serializable {
 	// addition or modification
 
 	public enum ChangeType {
-		PROP_DELETION, PROP_ADDITION, PROP_MODIFICATION, ARG_ADDITION, PROP_UNLINK, PROP_LINK
+		PROP_DELETION, PROP_ADDITION, PROP_MODIFICATION, ARG_ADDITION, ARG_DELETION, PROP_UNLINK, PROP_LINK
 	}
 
 	public String remoteAddr;
@@ -65,43 +65,48 @@ public class Change implements Serializable {
 	public Long userID;
 
 	/*
-	 * When a change is a deletion, proposition holds the proposition that was
-	 * deleted. When a change is an update, proposition holds the proposition
-	 * that was updated in it's pre-updated state. When a change is an addition,
-	 * proposition will be empty.
+	 * For change types: PROP_DELETION, PROP_ADDITION, PROP_UNLINK, PROP_LINK
+	 * propID refers to the child proposition of the argument
+	 * 
+	 * For change type: PROP_MODIFICATION
+	 * propID refers to the proposition whose content  has been modified
+	 * 
+	 * For change type: ARG_ADDITION, ARG_DELETION
+	 * propID refers to the parents proposition of the argument
 	 */
 	public Long propID;
 	public String propContent;
 	public boolean propTopLevel;
-	
 
-	/* if the change type is a proposition deletion or a proposition de-linking
-	 * then argID stores the argument from which the proposition was removed
-	 *  and the argPropIndex stores the point in the arg's prop list that the proposition
-	 *  was before the removal. 
+	/*
+	 * For change types: PROP_DELETION, PROP_ADDITION, PROP_UNLINK, PROP_LINK
+	 * argID refers to a parent argument of the proposition
+	 * 
+	 * For change type: PROP_MODIFICATION
+	 * argID should be null
+	 * 
+	 * For change type: ARG_ADDITION, ARG_DELETION
+	 * argID refers to the child argument of the proposition.
 	 */
 	public Long argID;
 	public int argPropIndex = -1;
 	public boolean argPro;
-	
-	public Change(){
-		
+
+	public Change() {
+
 	}
-	
-	public Change( ChangeType changeType ){
+
+	public Change(ChangeType changeType) {
 		this.changeType = changeType;
 	}
-	
-	public String toString(Change change) {
-		return "id:" + change.id+ "; changeType:" + change.changeType + "; argID:" + change.argID
-				+ "; argPropIndex:" + change.argPropIndex + "; argPro:"
-				+ change.argPro + "; propID:" + change.propID
-				+ "; propContent:" + change.propContent + "; propTopLevel:"
-				+ change.propTopLevel + "; date:" + change.date
-				+ "; remoteAddr:" + change.remoteAddr + "; remoteHost:"
-				+ change.remoteHost + "; remotePort:" + change.remotePort
-				+ "; remoteUser:" + change.remoteUser;
+
+	public String toString() {
+		return "id:" + id + "; changeType:" + changeType + "; argID:" + argID
+				+ "; argPropIndex:" + argPropIndex + "; argPro:" + argPro
+				+ "; propID:" + propID + "; propContent:" + propContent
+				+ "; propTopLevel:" + propTopLevel + "; date:" + date
+				+ "; remoteAddr:" + remoteAddr + "; remoteHost:" + remoteHost
+				+ "; remotePort:" + remotePort + "; remoteUser:" + remoteUser;
 	}
-	
 
 }

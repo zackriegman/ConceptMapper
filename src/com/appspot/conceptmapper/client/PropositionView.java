@@ -1,6 +1,5 @@
 package com.appspot.conceptmapper.client;
 
-
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -22,21 +21,21 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		KeyDownHandler, FocusHandler, ChangeHandler {
 
 	private static PropositionView lastPropositionWithFocus = null;
-	
+
 	private TextArea textArea = new TextAreaSloppyGrow();
 	private Button proButton = new Button("For");
 	private Button conButton = new Button("Against");
 	public Proposition proposition;
-	
-	
-	public String toString(){
+
+	public String toString() {
 		return "textArea:" + textArea.getText() + "; id:" + proposition.id;
 	}
-	
-	public PropositionView createClone(){
-		PropositionView cloneView = new PropositionView(new Proposition( proposition ), false );
-		cloneView.textArea.setText( textArea.getText() );
-		cloneView.setState( getState() );
+
+	public PropositionView createClone() {
+		PropositionView cloneView = new PropositionView(new Proposition(
+				proposition), false);
+		cloneView.textArea.setText(textArea.getText());
+		cloneView.setState(getState());
 		return cloneView;
 	}
 
@@ -52,8 +51,8 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		// return getTree().equals( getParentItem() );
 	}
 
-	public PropositionView( boolean editable) {
-		this(new Proposition(), editable );
+	public PropositionView(boolean editable) {
+		this(new Proposition(), editable);
 	}
 
 	public PropositionView(Proposition prop, boolean editable) {
@@ -75,9 +74,9 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		textArea.addFocusHandler(this);
 		textArea.addChangeHandler(this);
 		textArea.setStylePrimaryName("propositionTextArea");
-		textArea.setReadOnly( !editable );
-		//textArea.setEnabled(editable); //blacks out the wideget entirely
-		
+		textArea.setReadOnly(!editable);
+		// textArea.setEnabled(editable); //blacks out the wideget entirely
+
 		setState(true);
 		proButton.setVisible(false);
 		conButton.setVisible(false);
@@ -86,8 +85,8 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	public void setContent(String content) {
 		textArea.setText(content);
 	}
-	
-	public String getContent(  ){
+
+	public String getContent() {
 		return textArea.getText();
 	}
 
@@ -111,7 +110,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 
 	public void addArgument(boolean pro) {
 		ArgumentView newArgView = new ArgumentView(pro);
-		PropositionView newPropView = new PropositionView( true );
+		PropositionView newPropView = new PropositionView(true);
 		newArgView.addItem(newPropView);
 		this.addItem(newArgView);
 		newArgView.setState(true);
@@ -184,34 +183,41 @@ public class PropositionView extends TreeItem implements ClickHandler,
 
 		ArgumentView parentArgView = parentArgView();
 		int thisIndex = parentArgView.getChildIndex(this);
-		ConceptMapper.print("point c");
-		if (thisIndex == 0) { // if this is the parent argument's first
-			// proposition
-			if (!textArea.getText().equals("")) // do nothing if textarea is not
-				// empty, user must first delete
-				// the text to delete a
-				// proposition when not
-				// combining propositions.
+
+		/* if this is the parent argument's first proposition */
+		if (thisIndex == 0) {
+			/*
+			 * do nothing if textarea is not empty, user must first delete the
+			 * text to delete a proposition when not combining propositions.
+			 */
+			if (!textArea.getText().equals(""))
 				return;
-			ConceptMapper.print("point b");
-			if (parentArgView.getChildCount() == 1) { // if this is the only
-				// proposition of the
-				// argument
-				ConceptMapper.print("point a");
+
+			/* if this is the only proposition of the argument */
+			if (parentArgView.getChildCount() == 1) {
+				/* set the focus on the parent argument's proposition */
 				((PropositionView) parentArgView().getParentItem()).textArea
-						.setFocus(true); // set the focus on the parent
-				// argument's proposition
-				parentArgView().remove(); // remove the argument (which includes
-				// the proposition) from the tree
-			} else { // if there are other childrend
-				((PropositionView) parentArgView().getChild(thisIndex + 1)).textArea
-						.setFocus(true); // set focus on the next proposition
-				parentArgView().removeItem(this); // just remove this
-				// proposition
+						.setFocus(true);
+
+				/*
+				 * remove the argument (which includes the proposition) from the
+				 * tree
+				 */
+				parentArgView().remove();
 			}
-		} else if (thisIndex != 0) { // if this is not the parent argument's
-			// first proposition we want to combine
-			// propositions
+			/* if there are other children */
+			else {
+				/* set focus on the next proposition */
+				((PropositionView) parentArgView().getChild(thisIndex + 1)).textArea
+						.setFocus(true);
+				/* just remove this proposition */
+				parentArgView().removeItem(this);
+			}
+			/*
+			 * if this is not the parent argument's first proposition we want to
+			 * combine propositions
+			 */
+		} else if (thisIndex != 0) {
 			PropositionView prePropView = ((PropositionView) parentArgView
 					.getChild(thisIndex - 1));
 			TextArea preTextArea = prePropView.textArea;
@@ -228,12 +234,12 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	}
 
 	public void addPropositionAfterThisOne() {
-		PropositionView newProposition = new PropositionView( true );
+		PropositionView newProposition = new PropositionView(true);
 		int cursorPosition = textArea.getCursorPos();
 
 		int treePosition = parentArgView().getChildIndex(this);
-		parentArgView().insertPropositionViewAt( treePosition + 1, newProposition);
-	
+		parentArgView().insertPropositionViewAt(treePosition + 1,
+				newProposition);
 
 		// then split the text between the current and new proposition
 		String content = textArea.getText();
@@ -255,22 +261,21 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		Object source = event.getSource();
 		if (source == textArea) {
 			// if another Proposition's buttons are visible hide them
-			if ( lastPropositionWithFocus != this
+			if (lastPropositionWithFocus != this
 					&& lastPropositionWithFocus != null) {
 				lastPropositionWithFocus.proButton.setVisible(false);
 				lastPropositionWithFocus.conButton.setVisible(false);
 			}
 			// make this proposition's button's visible
-			if( ! textArea.isReadOnly()){
+			if (!textArea.isReadOnly()) {
 				proButton.setVisible(true);
 				conButton.setVisible(true);
 				lastPropositionWithFocus = this;
-			}
-			else{
-				//textArea.setFocus(false);
+			} else {
+				// textArea.setFocus(false);
 			}
 		}
-	}		
+	}
 
 	private static class TextAreaSloppyGrow extends TextArea {
 		public TextAreaSloppyGrow() {
@@ -311,8 +316,10 @@ public class PropositionView extends TreeItem implements ClickHandler,
 
 	@Override
 	public void onChange(ChangeEvent event) {
-		this.proposition.setContent(textArea.getText());
-		ServerComm.updateProposition(this.proposition);
+		if (this.proposition.getContent() != textArea.getText()) {
+			this.proposition.setContent(textArea.getText());
+			ServerComm.updateProposition(this.proposition);
+		}
 	}
 
 }
