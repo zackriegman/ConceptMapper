@@ -1,1 +1,5 @@
 *.class
+*.gwt.rpc
+*.cache.html
+*.cache.png
+
