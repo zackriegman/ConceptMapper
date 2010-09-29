@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
+import java.util.NavigableMap;
 import java.util.TreeMap;
 
 import com.google.appengine.api.datastore.EntityNotFoundException;
@@ -38,12 +38,8 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	}
 
 	public void println(String message) {
-		System.out.println("S:" + message);
+		System.out.println(message);
 		// log.log(Level.SEVERE, message);
-	}
-
-	public void print(String message) {
-		System.out.print(message);
 	}
 
 	public void deleteAllArgsAndProps() {
@@ -52,11 +48,11 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	}
 
 	public void printAllPropsAndArgs() {
-		print("Arguments: ");
+		println("Arguments: ");
 		for (Argument arg : ofy.query(Argument.class)) {
 			printArgument(arg);
 		}
-		print("Propositions: ");
+		println("Propositions: ");
 		for (Proposition prop : ofy.query(Proposition.class)) {
 			printProposition(prop);
 		}
@@ -64,12 +60,12 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	}
 
 	public void printArgument(Argument arg) {
-		print("id:" + arg.id + " - propKeys:" + arg.propIDs
+		println("id:" + arg.id + " - propKeys:" + arg.propIDs
 				+ " - aboutPropKey:" + arg.aboutPropID + " - pro:" + arg.pro);
 	}
 
 	public void printProposition(Proposition prop) {
-		print(propositionToString(prop));
+		println(propositionToString(prop));
 	}
 
 	public String propositionToString(Proposition prop) {
@@ -85,7 +81,8 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
 				"topLevel", true);
 		Proposition[] returnProps = new Proposition[propQuery.countAll()];
-		println("propQuery.countAll(): " + propQuery.countAll());
+		// println("getAllProps[propQuery.countAll()]: " +
+		// propQuery.countAll());
 		int i = 0;
 		for (Proposition prop : propQuery) {
 			returnProps[i] = prop;
@@ -93,32 +90,35 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			i++;
 		}
 
-		printProps(returnProps);
+		// printProps(returnProps);
 		return returnProps;
 	}
 
 	public void printProps(Proposition[] props) {
-		print("\n");
 		for (Proposition prop : props) {
 			printPropRecursive(prop, 0);
 		}
-		print("\n");
+	}
+
+	public String spaces(int spaces) {
+		String string = "";
+		for (int i = 0; i < spaces; i++) {
+			string = string + " ";
+		}
+		return string;
 	}
 
 	public void printPropRecursive(Proposition propParent, int level) {
-		for (int i = 0; i < level; i++)
-			print("  ");
-		print(propositionToString(propParent));
-		print("\n");
+		println(spaces(level) + propositionToString(propParent));
 		for (Argument arg : propParent.args) {
-			for (int i = 0; i < level + 1; i++)
-				print("  ");
+			String printString = spaces(level + 1);
 			if (arg.pro == true)
-				print("pro - id:");
+				printString = printString + "pro - id:";
 			else
-				print("con - id:");
-			print("" + arg.id);
-			print("\n");
+				printString = printString + "con - id:";
+
+			printString = printString + arg.id;
+			println(printString);
 			for (Proposition prop : arg.props) {
 				printPropRecursive(prop, level + 2);
 			}
@@ -148,7 +148,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			for (Long id : arg.propIDs) {
 				Proposition gotProp = propMap.get(id);
 				if (gotProp == null) {
-					print("ERROR: datastore in inconsistent state; argument ["
+					println("ERROR: datastore in inconsistent state; argument ["
 							+ arg.id
 							+ "] references proposition which does not exist");
 				} else {
@@ -395,94 +395,13 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		change.propID = proposition.id;
 		change.argPropIndex = propIndex;
 		saveVersionInfo(change);
-
-	}
-
-	public void getPropAtTime() {
-		/*
-		 * TODO ok, so the main approach i'm thinking of now is that the server
-		 * will be able to return a prop or arg as it existed (or didn't) at any
-		 * time. The returned prop (or arg) will include references to it's
-		 * children, which the client can build at with stubs saying
-		 * "loading from server", and when the prop or arg is opened the client
-		 * can send a request to the server, asking for the children at that
-		 * time (i.e. lazy loading the tree at the time). Of course, to make
-		 * that more seamless to the user, the server can send not only the
-		 * proposition but its children too, or perhaps even its children's
-		 * children (etc.) with each request.
-		 * 
-		 * The issue however is how to represent that to the user in terms of an
-		 * easily digestible change list. We want to show the user the changes
-		 * relevant to the part of the tree that he is viewing. As he opens more
-		 * sublevels however, more changes become apparent. We could update the
-		 * change list as sub levels are opened to reflect the changes that can
-		 * now been seen in the sublevels. However, what about changes that add
-		 * or delete nodes. As you move through the history those nodes will
-		 * appear and dispear. When one disapears do you remove the changes from
-		 * the changeList that had to do with that node? Probably not, that
-		 * would be disorienting. Instead you have to keep track of whether a
-		 * user opened or closed a node the last time he saw it... thats getting
-		 * too complicated
-		 * 
-		 * An alternative would be to show the user all the changes for the top
-		 * level proposition that he is currently navigating from, even for
-		 * nodes that are not visible on the screen and/or that are currently
-		 * closed, or even currently deleted, etc. That might be disorienting
-		 * however, because as the user clicks through the change list, he'll
-		 * see changes that dont' seem to change anything on screen.
-		 * 
-		 * I think the ideal solution might be the complicated one, but maybe it
-		 * doesn't make sense to try to implement the ideal.
-		 * 
-		 * maybe a relatively simple, perhaps temporary, until I can think of
-		 * something better, is to show changes for things that are open in the
-		 * edit screen, and open in the version screen. As someone opens or
-		 * closes a change in the version screen, the version list is updated,
-		 * to show just the versions for those nodes showing.
-		 * 
-		 * As they walk through the version list, when new nodes are added, they
-		 * are added automatically in an open position. And there changes are
-		 * immediately added.
-		 * 
-		 * Better yet, all the changes for the currently opened nodes are added
-		 * at the beginning including changes to any descendants of open nodes,
-		 * except those descendants that are all ready closed.
-		 * 
-		 * So lets walk through this plan. We have a tree with some open nodes
-		 * and some closed nodes in the edit window. The user clicks on versions
-		 * and goes to the version window where they see that tree, as it exists
-		 * in the edit window.
-		 * 
-		 * In the versions box they see all the versions for the currently
-		 * opened nodes. As they move back in time, nodes disappear at times
-		 * preceding their creation. The versions box does not change however to
-		 * reflect the disappearance of nodes unless a node is closed. Closing a
-		 * node will remove versions from the version list and opening a node
-		 * will add versions to the version list. But moving through time never
-		 * changes the version list by itself. Lets say you move back past a
-		 * deletion, and as a consequence a new node pops up. Should the node
-		 * pop up as opened (implying that it's changes are already part of the
-		 * change list) or should it pop up as closed (meaning the changes are
-		 * not part of the change list until it is explicitly opened). Either
-		 * way, we don't need to remember it's state if we pop back to the
-		 * beginning of the list before it existed, because the change list
-		 * itself remembers its state. I think as you move backwards in time
-		 * deletions should start visible, which means that you need to fetch
-		 * all the deleted descendants of a node when you fetch an opened node.
-		 * 
-		 * Steps to implementation: 1. fetch deleted descendants when fetching
-		 * an open node 2. add place holders to closed nodes, and handle
-		 * open/close events to automatically load children 3. add changes to
-		 * the version list when a node is opened 4. remove changes from the
-		 * version list when a node is closed
-		 */
 	}
 
 	@Override
-	public List<Change> getRevisions(Long changeID, List<Long> propIDs,
+	public NavigableMap<Date, Change> getRevisions(Long changeID, List<Long> propIDs,
 			List<Long> argIDs) throws Exception {
 
-		SortedMap<Date, Change> map = new TreeMap<Date, Change>();
+		NavigableMap<Date, Change> map = new TreeMap<Date, Change>();
 		// HashSet<Long> processedProps = new HashSet<Long>();
 		// HashSet<Long> processedArgs = new HashSet<Long>();
 		if (changeID != null) {
@@ -494,17 +413,23 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 		// printAllChanges();
 
-		// reverse the order of the list
+		/* reverse the order of the list
+		println("getRevisions: changes:");
 		List<Change> returnList = new LinkedList<Change>();
 		for (Change change : map.values()) {
 			returnList.add(0, change);
+			println(change.toString());
 		}
+		*/
+		
+		//TODO make sure the map is ordered in the right direction, which it should be, oldest to newest...
 
-		return returnList;
+		return map;
 	}
 
-	
-	public PropTreeWithHistory getPropositionCurrentVersionAndHistory(Long propID) throws Exception {
+	public PropTreeWithHistory getPropositionCurrentVersionAndHistory(
+			Long propID) throws Exception {
+		println("start getPropositionCurrentVersionAndHistory()");
 		PropTreeWithHistory propVersions = new PropTreeWithHistory();
 		try {
 			propVersions.proposition = ofy.get(Proposition.class, propID);
@@ -519,21 +444,49 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		}
 
 		List<Long> propIDs = new LinkedList<Long>();
-		propIDs.add( propID );
-		propVersions.changes = getRevisions( null, propIDs, null);
-		
+		List<Long> argIDs = new LinkedList<Long>();
+		recursiveExtractPropAndArgIDs(propVersions.proposition, propIDs, argIDs);
+		propVersions.changes = getRevisions(null, propIDs, argIDs);
+
+		println("end start getPropositionCurrentVersionAndHistory()");
 		return propVersions;
 	}
+
+	public void recursiveExtractPropAndArgIDs(Proposition prop,
+			List<Long> propIDs, List<Long> argIDs) {
+		propIDs.add( prop.id );
+		for( Argument arg : prop.args ){
+			recursiveExtractPropAndArgIDs(arg, propIDs, argIDs );
+		}
+	}
+	
+	public void recursiveExtractPropAndArgIDs(Argument arg,
+			List<Long> propIDs, List<Long> argIDs) {
+		argIDs.add( arg.id );
+		for( Proposition prop : arg.props){
+			recursiveExtractPropAndArgIDs(prop, propIDs, argIDs );
+		}
+	} 
 
 	public void recursiveQueryChanges(List<Long> propIDs, List<Long> argIDs,
 			Map<Date, Change> map, Date date) {
 
-		println("\ngetRevisions propIDs:");
-		for (Long id : propIDs)
-			print(" - " + id);
-		println("\ngetRevisions argIDs:");
-		for (Long id : argIDs)
-			print(" - " + id);
+		println("recursiveQueryChanges: propIDs:");
+		if (propIDs != null) {
+			String printString = "*";
+			for (Long id : propIDs) {
+				printString = printString + " - " + id;
+			}
+			println(printString);
+		}
+		println("recursiveQueryChanges: argIDs:");
+		if (argIDs != null) {
+			String printString = "*";
+			for (Long id : argIDs) {
+				printString = printString + " - " + id;
+			}
+			println(printString);
+		}
 
 		List<Long> deletedProps = new LinkedList<Long>();
 		List<Long> deletedArgs = new LinkedList<Long>();

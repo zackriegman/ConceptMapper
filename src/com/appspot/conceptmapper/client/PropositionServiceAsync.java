@@ -1,7 +1,9 @@
 package com.appspot.conceptmapper.client;
 
 
+import java.util.Date;
 import java.util.List;
+import java.util.NavigableMap;
 
 import com.appspot.conceptmapper.client.PropositionService.PropTreeWithHistory;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -34,7 +36,7 @@ public interface PropositionServiceAsync {
 
 
 	void getRevisions(Long changeID, List<Long> propIDs, List<Long> argIDs,
-			AsyncCallback<List<Change>> callback);
+			AsyncCallback<NavigableMap<Date, Change>> callback);
 
 
 	void getPropositionCurrentVersionAndHistory(Long propID,

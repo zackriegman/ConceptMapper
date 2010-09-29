@@ -1,12 +1,22 @@
 package com.appspot.conceptmapper.client;
 
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NavigableMap;
 import java.util.Queue;
 
+import com.appspot.conceptmapper.client.PropositionService.PropTreeWithHistory;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+/* for remote calls that change data on the server (i.e. adding/removing/modifying 
+ * propositions or arguments this class queues calls so that they arrive to the 
+ * server in order, one after another.  This avoids inconsistent states, where, for instance
+ * the server receives a request to delete a proposition before it has finished adding
+ * the proposition.  For remote calls that don't change data however, I don't bother with
+ * queuing the remote calls.
+ */
 public class ServerComm {
 	private static PropositionServiceAsync propositionService = GWT
 			.create(PropositionService.class);
@@ -47,7 +57,7 @@ public class ServerComm {
 			public FetchPropsCallback fetch;
 
 			public void onFailure(Throwable caught) {
-				message("Error: " + caught.getMessage() );
+				message("Error: " + caught.getMessage());
 			}
 
 			@Override
@@ -65,26 +75,26 @@ public class ServerComm {
 	}
 
 	public interface GetChangesCallback {
-		public void call(List<Change> changes);
+		public void call(NavigableMap<Date, Change> changes);
 	}
 
 	public static void getChanges(Change change, List<Proposition> props,
 			List<Argument> args, GetChangesCallback localCallback) {
-		
-		class ThisCallback implements AsyncCallback<List<Change>> {
+
+		class ThisCallback implements AsyncCallback<NavigableMap<Date, Change>> {
 
 			GetChangesCallback getChangesCallback;
-			
+
 			@Override
-			public void onSuccess(List<Change> result) {
+			public void onSuccess(NavigableMap<Date, Change> result) {
 				message("Server Reports Success Fetching Changes");
-				getChangesCallback.call( result );
+				getChangesCallback.call(result);
 			}
 
 			@Override
 			public void onFailure(Throwable caught) {
 				caught.printStackTrace();
-				//message("Error: " + s.toString() );
+				// message("Error: " + s.toString() );
 			}
 		}
 
@@ -92,15 +102,43 @@ public class ServerComm {
 		ThisCallback serverCallback = new ThisCallback();
 		serverCallback.getChangesCallback = localCallback;
 		List<Long> propIDs = new LinkedList<Long>();
-		for( Proposition prop : props ){
-			propIDs.add( prop.id );
+		for (Proposition prop : props) {
+			propIDs.add(prop.id);
 		}
 		List<Long> argIDs = new LinkedList<Long>();
-		for( Argument arg : args ){
-			argIDs.add( arg.id );
+		for (Argument arg : args) {
+			argIDs.add(arg.id);
 		}
 
 		propositionService.getRevisions(changeID, propIDs, argIDs,
+				serverCallback);
+	}
+
+	public interface GetPropositionCurrentVersionAndHistoryCallback {
+		public void call(PropTreeWithHistory propTreeWithHistory);
+	}
+
+	public static void getPropositionCurrentVersionAndHistory(
+			Proposition prop, GetPropositionCurrentVersionAndHistoryCallback localCallback) {
+		class ServerCallback implements AsyncCallback<PropTreeWithHistory> {
+			GetPropositionCurrentVersionAndHistoryCallback localCallback;
+
+			@Override
+			public void onSuccess(PropTreeWithHistory result) {
+				message("Server Reports Success Fetching Proposition and History");
+				localCallback.call(result);
+
+			}
+
+			@Override
+			public void onFailure(Throwable caught) {
+				// TODO Auto-generated method stub
+				caught.printStackTrace();
+			}
+		}
+		ServerCallback serverCallback = new ServerCallback();
+		serverCallback.localCallback = localCallback;
+		propositionService.getPropositionCurrentVersionAndHistory(prop.id,
 				serverCallback);
 	}
 
@@ -125,7 +163,7 @@ public class ServerComm {
 		queueCommand(command);
 	}
 
-	public static void addArgumentCmd(boolean pro, Proposition parentProp,
+	private static void addArgumentCmd(boolean pro, Proposition parentProp,
 			Argument newArg, Proposition newProp) {
 		class AddCallback implements AsyncCallback<Argument> {
 			Proposition newProposition;
@@ -168,7 +206,7 @@ public class ServerComm {
 		queueCommand(command);
 	}
 
-	public static void removePropositionCmd(Proposition prop) {
+	private static void removePropositionCmd(Proposition prop) {
 		AsyncCallback<Void> callback = new AsyncCallback<Void>() {
 			public void onFailure(Throwable caught) {
 				message("Error: " + caught.getMessage());
@@ -200,7 +238,7 @@ public class ServerComm {
 		queueCommand(command);
 	}
 
-	public static void updatePropositionCmd(Proposition prop) {
+	private static void updatePropositionCmd(Proposition prop) {
 		AsyncCallback<Void> callback = new AsyncCallback<Void>() {
 			public void onFailure(Throwable caught) {
 				message("Error [updatePropositionCmd]: " + caught.getMessage());
@@ -240,7 +278,7 @@ public class ServerComm {
 		queueCommand(command);
 	}
 
-	public static void addPropositionCmd(Proposition newProposition,
+	private static void addPropositionCmd(Proposition newProposition,
 			Argument parentArgument, int position) {
 
 		class AddCallback implements AsyncCallback<Long> {

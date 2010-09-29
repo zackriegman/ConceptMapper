@@ -72,7 +72,7 @@ public class EditMode extends VerticalPanel {
 			@Override
 			public void call(Proposition[] props) {
 				for (Proposition prop : props) {
-					tree.addItem(recursiveBuildPropositionView(prop, null));
+					tree.addItem(PropositionView.recursiveBuildPropositionView(prop, true, null, null));
 				}
 				openTree();
 			}
@@ -123,7 +123,7 @@ public class EditMode extends VerticalPanel {
 				 */
 				else if (realArgView.getChildCount() > 0) {
 					cloneArgView
-							.addItem(newLoadDummyTreeItem());
+							.addItem(newLoadDummyTreeItemArg());
 				}
 			}
 		}
@@ -132,14 +132,20 @@ public class EditMode extends VerticalPanel {
 		 * place holder
 		 */
 		else if (realPropView.getChildCount() > 0) {
-			clonePropView.addItem(newLoadDummyTreeItem());
+			clonePropView.addItem(newLoadDummyTreeItemProp());
 		}
 		return clonePropView;
 	}
 	
-	public TreeItem newLoadDummyTreeItem(){
+	public TreeItem newLoadDummyTreeItemProp(){
 		TreeItem treeItem = new TreeItem("loading from server...");
-		treeItem.addStyleName("loadDummy");
+		treeItem.addStyleName("loadDummyProp");
+		return treeItem;
+	}
+	
+	public TreeItem newLoadDummyTreeItemArg(){
+		TreeItem treeItem = new TreeItem("loading from server...");
+		treeItem.addStyleName("loadDummyArg");
 		return treeItem;
 	}
 
@@ -183,22 +189,4 @@ public class EditMode extends VerticalPanel {
 			recursiveOpenTreeItem(item.getChild(i));
 		}
 	}
-
-	private PropositionView recursiveBuildPropositionView(Proposition prop,
-			ArgumentView argView) {
-		PropositionView propView = new PropositionView(prop, true);
-		for (Argument arg : prop.args) {
-			propView.addItem(recursiveBuildArgumentView(arg));
-		}
-		return propView;
-	}
-
-	private ArgumentView recursiveBuildArgumentView(Argument arg) {
-		ArgumentView argView = new ArgumentView(arg);
-		for (Proposition prop : arg.props) {
-			argView.addItem(recursiveBuildPropositionView(prop, argView));
-		}
-		return argView;
-	}
-
 }

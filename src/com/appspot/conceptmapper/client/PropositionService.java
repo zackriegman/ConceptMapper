@@ -2,7 +2,9 @@ package com.appspot.conceptmapper.client;
 
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
+import java.util.NavigableMap;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
@@ -24,14 +26,14 @@ public interface PropositionService extends RemoteService {
 	
 	public Proposition[] getAllProps();
 	
-	public List<Change> getRevisions( Long changeID, List<Long> propIDs, List<Long> argIDs) throws Exception;
+	public NavigableMap<Date, Change> getRevisions( Long changeID, List<Long> propIDs, List<Long> argIDs) throws Exception;
 	
 	public class PropTreeWithHistory implements Serializable {
 		
 		/* added to supress warnings */
 		private static final long serialVersionUID = 1L;
 		public Proposition proposition;
-		public List<Change> changes;
+		public NavigableMap<Date, Change> changes;
 	}
 	
 	public PropTreeWithHistory getPropositionCurrentVersionAndHistory(Long propID) throws Exception;

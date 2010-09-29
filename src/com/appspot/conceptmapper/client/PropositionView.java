@@ -1,5 +1,7 @@
 package com.appspot.conceptmapper.client;
 
+import java.util.Map;
+
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -74,7 +76,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 			conButton.addClickHandler(this);
 			proButton.setVisible(false);
 			conButton.setVisible(false);
-			
+
 			textArea.addKeyDownHandler(this);
 			textArea.addFocusHandler(this);
 			textArea.addChangeHandler(this);
@@ -84,7 +86,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 
 		textArea.setStylePrimaryName("propositionTextArea");
 		setState(true);
-		
+
 	}
 
 	public void setContent(String content) {
@@ -325,6 +327,33 @@ public class PropositionView extends TreeItem implements ClickHandler,
 			this.proposition.setContent(textArea.getText());
 			ServerComm.updateProposition(this.proposition);
 		}
+	}
+
+	public static PropositionView recursiveBuildPropositionView(
+			Proposition prop, boolean editable,
+			Map<Long, PropositionView> propViewIndex,
+			Map<Long, ArgumentView> argViewIndex) {
+		
+		PropositionView propView = new PropositionView(prop, editable);
+		if( propViewIndex != null ) propViewIndex.put(prop.id, propView);
+		for (Argument arg : prop.args) {
+			propView.addItem(recursiveBuildArgumentView(arg, editable,
+					propViewIndex, argViewIndex));
+		}
+		return propView;
+	}
+
+	public static ArgumentView recursiveBuildArgumentView(Argument arg,
+			boolean editable, Map<Long, PropositionView> propViewIndex,
+			Map<Long, ArgumentView> argViewIndex) {
+		
+		ArgumentView argView = new ArgumentView(arg);
+		if( argViewIndex != null ) argViewIndex.put(arg.id, argView);
+		for (Proposition prop : arg.props) {
+			argView.addItem(recursiveBuildPropositionView(prop, editable,
+					propViewIndex, argViewIndex));
+		}
+		return argView;
 	}
 
 }
