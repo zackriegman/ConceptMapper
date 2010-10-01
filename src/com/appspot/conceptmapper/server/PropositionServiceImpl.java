@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.google.appengine.api.datastore.EntityNotFoundException;
@@ -136,27 +136,30 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			/* add the argument to the prop */
 			prop.args.add(arg);
 
-			/* get all the props in the argument */
-			Map<Long, Proposition> propMap = ofy.get(Proposition.class,
-					arg.propIDs);
+			recursiveBuildArg( arg );
+		}
+	}
+	
+	public void recursiveBuildArg( Argument arg ){
+		/* get all the props in the argument */
+		Map<Long, Proposition> propMap = ofy.get(Proposition.class,
+				arg.propIDs);
 
-			/*
-			 * for each propID check to make sure the prop actually exists, and
-			 * if it does add it to the argument, and call this function
-			 * recursively on the prop
-			 */
-			for (Long id : arg.propIDs) {
-				Proposition gotProp = propMap.get(id);
-				if (gotProp == null) {
-					println("ERROR: datastore in inconsistent state; argument ["
-							+ arg.id
-							+ "] references proposition which does not exist");
-				} else {
-					arg.props.add(gotProp);
-					recursiveBuildProp(gotProp);
-				}
+		/*
+		 * for each propID check to make sure the prop actually exists, and
+		 * if it does add it to the argument, and call this function
+		 * recursively on the prop
+		 */
+		for (Long id : arg.propIDs) {
+			Proposition gotProp = propMap.get(id);
+			if (gotProp == null) {
+				println("ERROR: datastore in inconsistent state; argument ["
+						+ arg.id
+						+ "] references proposition which does not exist");
+			} else {
+				arg.props.add(gotProp);
+				recursiveBuildProp(gotProp);
 			}
-
 		}
 	}
 
@@ -398,10 +401,10 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public NavigableMap<Date, Change> getRevisions(Long changeID, List<Long> propIDs,
+	public SortedMap<Date, Change> getRevisions(Long changeID, List<Long> propIDs,
 			List<Long> argIDs) throws Exception {
 
-		NavigableMap<Date, Change> map = new TreeMap<Date, Change>();
+		SortedMap<Date, Change> map = new TreeMap<Date, Change>();
 		// HashSet<Long> processedProps = new HashSet<Long>();
 		// HashSet<Long> processedArgs = new HashSet<Long>();
 		if (changeID != null) {
@@ -450,6 +453,32 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 		println("end start getPropositionCurrentVersionAndHistory()");
 		return propVersions;
+	}
+	
+	@Override
+	public ArgTreeWithHistory getArgumentCurrentVersionAndHistory(Long argID)
+			throws Exception {
+		println("start getArgumentCurrentVersionAndHistory()");
+		ArgTreeWithHistory argVersions = new ArgTreeWithHistory();
+		try {
+			argVersions.argument = ofy.get(Argument.class, argID);
+			recursiveBuildArg(argVersions.argument);
+		} catch (EntityNotFoundException e) {
+			/*
+			 * if the arg is not found that merely means it doesn't exist in
+			 * the current version of the tree... not a problem since it might
+			 * have been deleted.
+			 */
+			argVersions.argument = null;
+		}
+
+		List<Long> propIDs = new LinkedList<Long>();
+		List<Long> argIDs = new LinkedList<Long>();
+		recursiveExtractPropAndArgIDs(argVersions.argument, propIDs, argIDs);
+		argVersions.changes = getRevisions(null, propIDs, argIDs);
+
+		println("end start getArgumentCurrentVersionAndHistory()");
+		return argVersions;
 	}
 
 	public void recursiveExtractPropAndArgIDs(Proposition prop,

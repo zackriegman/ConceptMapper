@@ -1,12 +1,14 @@
 package com.appspot.conceptmapper.client;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
+import java.util.SortedMap;
 
+import com.appspot.conceptmapper.client.PropositionService.ArgTreeWithHistory;
 import com.appspot.conceptmapper.client.PropositionService.PropTreeWithHistory;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -53,7 +55,8 @@ public class VersionsMode extends HorizontalPanel implements
 		 * place holder loading message
 		 */
 		if (item.getChildCount() > 0
-				&& !item.getChild(0).getStyleName().equals("loadDummy")) {
+				&& !item.getChild(0).getStyleName().equals("loadDummyProp")
+				&& !item.getChild(0).getStyleName().equals("loadDummyArg")) {
 			item.setState(true);
 			for (int i = 0; i < item.getChildCount(); i++) {
 				recursiveResetState(item.getChild(i));
@@ -66,11 +69,15 @@ public class VersionsMode extends HorizontalPanel implements
 				+ "; content:" + propViewParent.getContent());
 		for (int i = 0; i < propViewParent.getChildCount(); i++) {
 			ArgumentView arg = (ArgumentView) propViewParent.getChild(i);
-			GWT.log(spaces((level + 1) * 2) + arg.getText() + "; id:"
-					+ arg.argument.id);
-			for (int j = 0; j < arg.getChildCount(); j++) {
-				printPropRecursive((PropositionView) arg.getChild(j), level + 2);
-			}
+			printArgRecursive( arg, level + 1 );
+		}
+	}
+	
+	public void printArgRecursive( ArgumentView arg, int level ){
+		GWT.log(spaces(level * 2) + arg.getText() + "; id:"
+				+ arg.argument.id);
+		for (int j = 0; j < arg.getChildCount(); j++) {
+			printPropRecursive((PropositionView) arg.getChild(j), level + 1);
 		}
 	}
 
@@ -83,6 +90,11 @@ public class VersionsMode extends HorizontalPanel implements
 	}
 
 	public void displayVersions() {
+		versionList.clear();
+		versionList.addItem("Loading Revision History From Server...");
+		if (treeClone != null) {
+			remove(treeClone);
+		}
 		List<Proposition> props = new LinkedList<Proposition>();
 		List<Argument> args = new LinkedList<Argument>();
 		editMode.getOpenPropsAndArgs(props, args);
@@ -90,35 +102,69 @@ public class VersionsMode extends HorizontalPanel implements
 				new ServerComm.GetChangesCallback() {
 
 					@Override
-					public void call(NavigableMap<Date, Change> changes) {
+					public void call(SortedMap<Date, Change> changes) {
 
 						GWT.log("Got back " + changes.size() + " changes");
-						listBoxChangeHandlerRegistration.removeHandler();
-
-						versionList.clear();
 
 						Map<Long, PropositionView> propViewIndex = new HashMap<Long, PropositionView>();
 						Map<Long, ArgumentView> argViewIndex = new HashMap<Long, ArgumentView>();
-						buildFreshTreeClone(propViewIndex, argViewIndex);
+
+						treeClone = new Tree();
+						treeClone.addCloseHandler(VersionsMode.this);
+						treeClone.addOpenHandler(VersionsMode.this);
+						/*
+						 * TODO this could be done outside of the callback to
+						 * reduce the user's wait time, but would need to ensure
+						 * that it finishing before the callback proceeds. can
+						 * the callback just keep calling something like wait()
+						 * until it finds that the clone is finished?
+						 */
+						editMode.buildTreeCloneOfOpenNodesWithIndexes(
+								treeClone, propViewIndex, argViewIndex);
+						add(treeClone);
 
 						mainTT = new TimeTraveler(changes, propViewIndex,
 								argViewIndex, treeClone);
-						/*
-						 * if (treeClone != null) { remove(treeClone); treeClone
-						 * = null; }
-						 */
-						for (Change change : changes.values()) {
-							versionList.addItem("" + change.date.getTime() + " ["
-									+ change.changeType + "]", "" + change.date);
-							// println("\ndisplayVersions -- " +
-							// change.toString());
-						}
-						listBoxChangeHandlerRegistration = versionList
-								.addChangeHandler(VersionsMode.this);
+
+						loadVersionListFromTimeMachine();
+
 						versionList.setSelectedIndex(0);
+
 						onChange(null);
 					}
 				});
+	}
+
+	private void loadVersionListFromTimeMachine() {
+		listBoxChangeHandlerRegistration.removeHandler();
+		int selectedIndex = versionList.getSelectedIndex();
+		String currentDate;
+		if (selectedIndex >= 0) {
+			currentDate = versionList.getValue(selectedIndex);
+		} else {
+			currentDate = null;
+		}
+		versionList.clear();
+
+		List<Change> reverseList = mainTT.getChangeList();
+		Collections.reverse(reverseList);
+		int i = 0;
+		int newSelectionIndex = 0;
+		for (Change change : reverseList) {
+			String timeString = "" + change.date.getTime();
+			if (timeString.equals(currentDate)) {
+				GWT.log("###########   Selecting Item:" + i);
+				newSelectionIndex = i;
+			}
+			versionList.addItem("" + change.date + " [" + change.changeType
+					+ "]", "" + timeString);
+			i++;
+		}
+
+		versionList.setSelectedIndex(newSelectionIndex);
+
+		listBoxChangeHandlerRegistration = versionList
+				.addChangeHandler(VersionsMode.this);
 	}
 
 	@Override
@@ -145,68 +191,131 @@ public class VersionsMode extends HorizontalPanel implements
 		if (treeItem.getChildCount() > 0) {
 			TreeItem child = treeItem.getChild(0);
 			if (child.getStyleName().equals("loadDummyProp")) {
-				ServerComm
-						.getPropositionCurrentVersionAndHistory(
-								((PropositionView) treeItem).proposition,
-								new ServerComm.GetPropositionCurrentVersionAndHistoryCallback() {
+				class Callback
+						implements
+						ServerComm.GetPropositionCurrentVersionAndHistoryCallback {
+					PropositionView propView;
 
-									@Override
-									public void call(
-											PropTreeWithHistory propTreeWithHistory) {
-										mergeLoadedProposition(propTreeWithHistory);
-									}
-								});
+					@Override
+					public void call(PropTreeWithHistory propTreeWithHistory) {
+						mergeLoadedProposition(propView, propTreeWithHistory);
+					}
+				}
+				Callback callback = new Callback();
+				callback.propView = (PropositionView) treeItem;
+
+				ServerComm.getPropositionCurrentVersionAndHistory(
+						((PropositionView) treeItem).proposition, callback);
 			} else if (child.getStyleName().equals("loadDummyArg")) {
-				GWT
-						.log("VersionsMode.onOpen[loadDummyArg]:  NOT ADDING -- METHOD NOT IMPLEMENTED!");
+				class Callback
+						implements
+						ServerComm.GetArgumentCurrentVersionAndHistoryCallback {
+					ArgumentView argView;
+
+					@Override
+					public void call(ArgTreeWithHistory argTreeWithHistory) {
+						mergeLoadedArgument(argView, argTreeWithHistory);
+					}
+				}
+				Callback callback = new Callback();
+				callback.argView = (ArgumentView) treeItem;
+
+				ServerComm.getArgumentCurrentVersionAndHistory(
+						((ArgumentView) treeItem).argument, callback); 
 			}
 		}
 
 	}
 
-	public void mergeLoadedProposition(PropTreeWithHistory propTreeWithHistory) {
+	public void mergeLoadedProposition(PropositionView propViewParent,
+			PropTreeWithHistory propTreeWithHistory) {
 
+		GWT.log("mergeLoadedPropositon: start");
 		Map<Long, PropositionView> propViewIndex = new HashMap<Long, PropositionView>();
 		Map<Long, ArgumentView> argViewIndex = new HashMap<Long, ArgumentView>();
 
-		PropositionView propTree = PropositionView
+		PropositionView propGraft = PropositionView
 				.recursiveBuildPropositionView(propTreeWithHistory.proposition,
 						false, propViewIndex, argViewIndex);
 
+		GWT.log("propTree before timeTravel:");
+		printPropRecursive(propGraft, 0);
 		TimeTraveler timeTraveler = new TimeTraveler(
 				propTreeWithHistory.changes, propViewIndex, argViewIndex, null);
 
 		/*
-		 * TODO hmmm... maybe time travelers need to work on dates instead...
-		 * that might be more adaptable than trying to figure out at this point
-		 * what the right change index is...
+		 * propViewParent.getChild(0).remove(); while (propTree.getChildCount()
+		 * > 0) { TreeItem transplant = propTree.getChild(0);
+		 * transplant.remove(); propViewParent.addItem(transplant); }
 		 */
-		timeTraveler.travelToDate(mainTT.getCurrentDate());
-		
 
-		printPropRecursive(propTree, 0);
+		timeTraveler.travelToDate(mainTT.getCurrentDate());
+		GWT.log("propTree after timeTravel:");
+		printPropRecursive(propGraft, 0);
+
+		PropositionView view = mainTT.absorb(timeTraveler, propGraft);
+		GWT.log("old propview after grafting:");
+		printPropRecursive(view, 0);
+		GWT.log("----------------");
+
+		loadVersionListFromTimeMachine();
+
+		// GWT.log("Prop tree transplant");
+		// printPropRecursive(propTree, 0);
+		GWT.log("changes");
 		for (Change change : propTreeWithHistory.changes.values()) {
 			GWT.log(change.toString());
 		}
+		GWT.log("mergeLoadedPropositon: start");
+	}
+	
+	public void mergeLoadedArgument(ArgumentView argViewParent,
+			ArgTreeWithHistory argTreeWithHistory) {
+
+		GWT.log("mergeLoadedArgument: start");
+		Map<Long, PropositionView> propViewIndex = new HashMap<Long, PropositionView>();
+		Map<Long, ArgumentView> argViewIndex = new HashMap<Long, ArgumentView>();
+
+		ArgumentView argGraft = PropositionView
+				.recursiveBuildArgumentView(argTreeWithHistory.argument,
+						false, propViewIndex, argViewIndex);
+
+		GWT.log("propTree before timeTravel:");
+		printArgRecursive(argGraft, 0);
+		TimeTraveler timeTraveler = new TimeTraveler(
+				argTreeWithHistory.changes, propViewIndex, argViewIndex, null);
+
+		/*
+		 * propViewParent.getChild(0).remove(); while (propTree.getChildCount()
+		 * > 0) { TreeItem transplant = propTree.getChild(0);
+		 * transplant.remove(); propViewParent.addItem(transplant); }
+		 */
+
+		timeTraveler.travelToDate(mainTT.getCurrentDate());
+		GWT.log("argTree after timeTravel:");
+		printArgRecursive(argGraft, 0);
+
+		ArgumentView view = mainTT.absorb(timeTraveler, argGraft);
+		GWT.log("old propview after grafting:");
+		printArgRecursive(view, 0);
+		GWT.log("----------------");
+
+		loadVersionListFromTimeMachine();
+
+		// GWT.log("Prop tree transplant");
+		// printPropRecursive(propTree, 0);
+		GWT.log("changes");
+		for (Change change : argTreeWithHistory.changes.values()) {
+			GWT.log(change.toString());
+		}
+		GWT.log("mergeLoadedPropositon: start");
 	}
 
 	@Override
 	public void onChange(ChangeEvent event) {
-		String millisecondStr = versionList.getValue(versionList.getSelectedIndex());
-		mainTT.travelToDate( new Date(Long.parseLong(millisecondStr)) );
+		String millisecondStr = versionList.getValue(versionList
+				.getSelectedIndex());
+		mainTT.travelToDate(new Date(Long.parseLong(millisecondStr)));
 		resetState(treeClone);
-	}
-
-	public void buildFreshTreeClone(Map<Long, PropositionView> propViewIndex,
-			Map<Long, ArgumentView> argViewIndex) {
-		if (treeClone != null) {
-			remove(treeClone);
-		}
-		treeClone = new Tree();
-		treeClone.addCloseHandler(VersionsMode.this);
-		treeClone.addOpenHandler(VersionsMode.this);
-		editMode.buildTreeCloneOfOpenNodesWithIndexes(treeClone, propViewIndex,
-				argViewIndex);
-		add(treeClone);
 	}
 }

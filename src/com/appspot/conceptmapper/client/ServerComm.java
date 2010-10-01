@@ -3,9 +3,10 @@ package com.appspot.conceptmapper.client;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.NavigableMap;
+import java.util.SortedMap;
 import java.util.Queue;
 
+import com.appspot.conceptmapper.client.PropositionService.ArgTreeWithHistory;
 import com.appspot.conceptmapper.client.PropositionService.PropTreeWithHistory;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -75,18 +76,18 @@ public class ServerComm {
 	}
 
 	public interface GetChangesCallback {
-		public void call(NavigableMap<Date, Change> changes);
+		public void call(SortedMap<Date, Change> changes);
 	}
 
 	public static void getChanges(Change change, List<Proposition> props,
 			List<Argument> args, GetChangesCallback localCallback) {
 
-		class ThisCallback implements AsyncCallback<NavigableMap<Date, Change>> {
+		class ThisCallback implements AsyncCallback<SortedMap<Date, Change>> {
 
 			GetChangesCallback getChangesCallback;
 
 			@Override
-			public void onSuccess(NavigableMap<Date, Change> result) {
+			public void onSuccess(SortedMap<Date, Change> result) {
 				message("Server Reports Success Fetching Changes");
 				getChangesCallback.call(result);
 			}
@@ -139,6 +140,33 @@ public class ServerComm {
 		ServerCallback serverCallback = new ServerCallback();
 		serverCallback.localCallback = localCallback;
 		propositionService.getPropositionCurrentVersionAndHistory(prop.id,
+				serverCallback);
+	}
+	
+	public interface GetArgumentCurrentVersionAndHistoryCallback {
+		public void call(ArgTreeWithHistory argTreeWithHistory);
+	}
+
+	public static void getArgumentCurrentVersionAndHistory(
+			Argument arg, GetArgumentCurrentVersionAndHistoryCallback localCallback) {
+		class ServerCallback implements AsyncCallback<ArgTreeWithHistory> {
+			GetArgumentCurrentVersionAndHistoryCallback localCallback;
+
+			@Override
+			public void onSuccess(ArgTreeWithHistory result) {
+				message("Server Reports Success Fetching Argument and History");
+				localCallback.call(result);
+			}
+
+			@Override
+			public void onFailure(Throwable caught) {
+				// TODO Auto-generated method stub
+				caught.printStackTrace();
+			}
+		}
+		ServerCallback serverCallback = new ServerCallback();
+		serverCallback.localCallback = localCallback;
+		propositionService.getArgumentCurrentVersionAndHistory(arg.id,
 				serverCallback);
 	}
 

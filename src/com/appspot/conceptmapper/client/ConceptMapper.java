@@ -88,17 +88,17 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  * version list when a node is closed
  */
 
-// TODO: modify move forward and backward functions so that they work with subtrees
-// TODO: implement, geting the subtree with the version info, reverting to current version in the versionsmode, and integrating into the tree
-// TODO at least in IE can delete root level proposition without first deleting its text
-// TODO: "loading from server" place holder for nodes with children, and then lazy load
-// TODO: provide a way to see deleted top level nodes
-// TODO: client should print to System.out or GWT.debug, get ride of extra panel, replace message panel
-// TODO: if the message queue gets backed up (more than 5?) give user a message that there is trouble saving changes to server, and changes may be lost
-// TODO: implement versioning
-// TODO: put the thing in a frame, add helpful message along the side
+// TODO: implement arg loading in versionsMode
 // TODO: implement proposition search
 // TODO: implement linking to existing propositions (i.e. propositions can belong to multiple arguments)
+// TODO: decide how to get rid of repetative code (for propositions and args), maybe make them both subclasses of a Node class?
+// TODO: highlight last change node after time travel
+// TODO: provide a way to see deleted top level nodes
+// TODO: put the thing in a frame, add helpful message along the side
+// TODO: trim changes list when a node is closed, expand when a node is opened (maybe to implement this, change how nodes are stored... maybe with a list of all their changes... which type of changes does a node need to know about...
+// TODO at least in IE can delete root level proposition without first deleting its text
+// TODO: if the message queue gets backed up (more than 5?) give user a message that there is trouble saving changes to server, and changes may be lost
+// TODO: implement proposition strength voting, and scoring algorithm
 // TODO: maintain order of propositions? waiting to see if order gets screwed up
 
 // TO DO: test in IE, chrome, etc.

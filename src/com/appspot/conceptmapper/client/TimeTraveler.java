@@ -1,13 +1,16 @@
 package com.appspot.conceptmapper.client;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
+import java.util.SortedMap;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Tree;
+import com.google.gwt.user.client.ui.TreeItem;
 
 public class TimeTraveler {
 	private Tree tree;
@@ -22,18 +25,82 @@ public class TimeTraveler {
 	 * various maps.
 	 */
 	// private List<Change> changes;
-	private NavigableMap<Date, Change> changes;
+	private SortedMap<Date, Change> changes;
 	private Map<Long, String> mapPropContent;
 	private Map<Long, Boolean> mapArgPro;
 	private Map<Long, Integer> mapPropIndex;
 	private Map<Long, Long> mapPropID;
+	
+	public PropositionView absorb( TimeTraveler timeTraveler, PropositionView propGraft ){
+		/*Long propID = propGraft.proposition.id;
+		PropositionView oldPropView = propViewIndex.get( propID );
+		propViewIndex.remove(propID);
+		TreeItem parentItem = oldPropView.getParentItem();
+		if( parentItem != null ){
+			parentItem.getChildIndex(child)
+		}
+		*/
+		
+		Long propID = propGraft.proposition.id;
+		PropositionView oldPropView = propViewIndex.get( propID );
+		oldPropView.getChild(0).remove();
+		while (propGraft.getChildCount() > 0) {
+			GWT.log("transplanted argument" );
+			TreeItem transplant = propGraft.getChild(0);
+			transplant.remove();
+			oldPropView.addItem(transplant);
+		}
+		timeTraveler.propViewIndex.remove(propID);
+		
+		propViewIndex.putAll(timeTraveler.propViewIndex);
+		argViewIndex.putAll(timeTraveler.argViewIndex);
+		changes.putAll(timeTraveler.changes);
+		mapPropContent.putAll( timeTraveler.mapPropContent);
+		mapArgPro.putAll( timeTraveler.mapArgPro);
+		mapPropIndex.putAll( timeTraveler.mapPropIndex);
+		mapPropID.putAll( timeTraveler.mapPropID);
+		
+		return oldPropView;
+	}
+	
+	public ArgumentView absorb( TimeTraveler timeTraveler, ArgumentView argGraft ){
+		/*Long propID = propGraft.proposition.id;
+		PropositionView oldPropView = propViewIndex.get( propID );
+		propViewIndex.remove(propID);
+		TreeItem parentItem = oldPropView.getParentItem();
+		if( parentItem != null ){
+			parentItem.getChildIndex(child)
+		}
+		*/
+		
+		Long argID = argGraft.argument.id;
+		ArgumentView oldArgView = argViewIndex.get( argID );
+		oldArgView.getChild(0).remove();
+		while (argGraft.getChildCount() > 0) {
+			GWT.log("transplanted proposition" );
+			TreeItem transplant = argGraft.getChild(0);
+			transplant.remove();
+			oldArgView.addItem(transplant);
+		}
+		timeTraveler.argViewIndex.remove(argID);
+		
+		propViewIndex.putAll(timeTraveler.propViewIndex);
+		argViewIndex.putAll(timeTraveler.argViewIndex);
+		changes.putAll(timeTraveler.changes);
+		mapPropContent.putAll( timeTraveler.mapPropContent);
+		mapArgPro.putAll( timeTraveler.mapArgPro);
+		mapPropIndex.putAll( timeTraveler.mapPropIndex);
+		mapPropID.putAll( timeTraveler.mapPropID);
+		
+		return oldArgView;
+	}
 
 	/*
 	 * TimeTraveler will work with a null tree, but if it gets a top level
 	 * proposition that needs to be added to the tree it will probably throw a
 	 * null pointer exception
 	 */
-	public TimeTraveler(NavigableMap<Date, Change> changes,
+	public TimeTraveler(SortedMap<Date, Change> changes,
 			Map<Long, PropositionView> propViewIndex,
 			Map<Long, ArgumentView> argViewIndex, Tree tree) {
 		this.changes = changes;
@@ -48,12 +115,17 @@ public class TimeTraveler {
 
 		currentDate = changes.lastKey();
 	}
-	
-	public Date getCurrentDate(){
+
+	public Date getCurrentDate() {
 		return currentDate;
+	}
+	
+	public List<Change> getChangeList(){
+		return new ArrayList<Change>(changes.values());
 	}
 
 	public void travelToDate(Date newDate) {
+		
 		if (newDate.before(currentDate)) {
 			/*
 			 * here newDate is the date that the user clicked on, and is
@@ -71,8 +143,16 @@ public class TimeTraveler {
 			 * currentDate but not newDate. We then want to reverse the order so
 			 * we are undoing the newest changes first.
 			 */
-			moveTreeBackwards(changes.subMap(newDate, false,
-					currentDate, true).descendingMap().values());
+			/*
+			 * this was really simple and efficient, but until gwt supports
+			 * navigable map it won't work...
+			 * moveTreeBackwards(changes.subMap(newDate, false, currentDate,
+			 * true).descendingMap().values());
+			 */
+			GWT.log("traveling back to date:" + newDate);
+			List<Change> reverseList = valuesSubset(changes, newDate, currentDate);
+			Collections.reverse( reverseList );
+			moveTreeBackwards( reverseList );
 		} else if (newDate.after(currentDate)) {
 			/*
 			 * the current tree shows the tree after the change highlighted was
@@ -84,13 +164,52 @@ public class TimeTraveler {
 			 * Therefore we need to get a map that extends from currentDate to
 			 * newDate, not including currentDate, but including newDate.
 			 */
-			moveTreeForwards(changes.subMap(currentDate, false, newDate, true)
-					.values());
+			/*
+			 * this was really simple and efficient, but until gwt supports
+			 * navigable map it won't work...
+			 * moveTreeForwards(changes.subMap(currentDate, false, newDate,
+			 * true).values());
+			 */
+			GWT.log("traveling forward to date:" + newDate);
+			moveTreeForwards(valuesSubset(changes, currentDate, newDate));
 		}
 		currentDate = newDate;
 	}
 
-	private void moveTreeForwards(Collection<Change> changesToProcess) {
+	/*
+	 * I was using NavigableMap, and it was really elegant and simple and
+	 * includes it's own subMap function... but it is not supported in GWT. So
+	 * I'm using this ugly innefficient piece of shit instead, and crossing my
+	 * fingers that the next GWT release includes a NavigableMap (which seems
+	 * sort of essential if you ask me).
+	 * 
+	 * Anyway this simply returns a list of changes that fall within the range
+	 * date1, non-inclusive, to date2, inclusive.
+	 */
+	private List<Change> valuesSubset(SortedMap<Date, Change> map, Date date1,
+			Date date2) {
+		List<Change> list = new ArrayList<Change>(map.values());
+		int start = 0;
+		int end = 0;
+		for (int i = 0; i < list.size(); i++) {
+			if (list.get(i).date.after(date1)) {
+				start = i;
+				break;
+			}
+		}
+		for (int i = start; i < list.size(); i++) {
+			if (list.get(i).date.equals(date2)) {
+				end = i + 1;
+				break;
+			} else if (list.get(i).date.after(date2)) {
+				end = i;
+				break;
+			}
+		}
+		return list.subList(start, end);
+	}
+
+	private void moveTreeForwards(List<Change> changesToProcess) {
 		GWT.log("----re-doing changes----");
 		for (Change change : changesToProcess) {
 			GWT.log("processing: " + change.changeType);
@@ -197,7 +316,7 @@ public class TimeTraveler {
 	 * record whether the argument is pro or con. This allows the program to
 	 * move back and forth along the change list arbitrarily.
 	 */
-	private void moveTreeBackwards(Collection<Change> changesToProcess) {
+	private void moveTreeBackwards(List<Change> changesToProcess) {
 		GWT.log("----undoing changes----");
 		for (Change change : changesToProcess) {
 			GWT.log("processing: " + change.changeType);
