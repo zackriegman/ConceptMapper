@@ -3,6 +3,7 @@ package com.appspot.conceptmapper.client;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.Id;
 import javax.persistence.Transient;
@@ -17,6 +18,7 @@ public class Proposition implements Serializable {
 	
 	public Long id;
 	public String content;
+	transient public Set<String> tokens;
 	public boolean topLevel;
 	
 	public @Transient List<Argument> args = new LinkedList<Argument>();

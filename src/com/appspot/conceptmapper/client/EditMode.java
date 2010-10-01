@@ -3,6 +3,7 @@ package com.appspot.conceptmapper.client;
 import java.util.List;
 import java.util.Map;
 
+import com.appspot.conceptmapper.client.ServerComm.SearchPropositionsCallback;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
@@ -14,7 +15,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class EditMode extends VerticalPanel {
 
-	Tree tree;
+	EditModeTree tree;
 
 	public EditMode() {
 		Button addPropButton = new Button("Add A New Proposition");
@@ -36,32 +37,16 @@ public class EditMode extends VerticalPanel {
 		});
 
 		add(addPropButton);
-		/**
-		 * annoyingly, by default the Tree eats the arrow key events so they
-		 * can't be used for moving in a text box. Setting a handler on the tree
-		 * to keep the events from doing their default behavior or propagating
-		 * doesn't seem to work. I found this fix on stack overflow
-		 */
-		tree = new Tree() {
+		
+		tree = new EditModeTree();
+		tree.searchCallback = new SearchPropositionsCallback() {
+			
 			@Override
-			protected boolean isKeyboardNavigationEnabled(TreeItem inCurrentItem) {
-				return false;
-			}
-
-			@Override
-			public void onBrowserEvent(Event event) {
-				int eventType = DOM.eventGetType(event);
-
-				switch (eventType) {
-				case Event.ONKEYDOWN:
-				case Event.ONKEYPRESS:
-				case Event.ONKEYUP:
-					return;
-				default:
-					break;
+			public void call(List<Proposition> propMatches) {
+				ConceptMapper.println("Found these matching propositions:");
+				for( Proposition prop : propMatches ){
+					ConceptMapper.println(" - " + prop.getContent());
 				}
-
-				super.onBrowserEvent(event);
 			}
 		};
 
@@ -79,6 +64,37 @@ public class EditMode extends VerticalPanel {
 		});
 
 		tree.setAnimationEnabled(false);
+	}
+	
+	/**
+	 * annoyingly, by default the Tree eats the arrow key events so they
+	 * can't be used for moving in a text box. Setting a handler on the tree
+	 * to keep the events from doing their default behavior or propagating
+	 * doesn't seem to work. I found this fix on stack overflow
+	 */
+	public class EditModeTree extends Tree {
+		public SearchPropositionsCallback searchCallback;
+		
+		@Override
+		protected boolean isKeyboardNavigationEnabled(TreeItem inCurrentItem) {
+			return false;
+		}
+
+		@Override
+		public void onBrowserEvent(Event event) {
+			int eventType = DOM.eventGetType(event);
+
+			switch (eventType) {
+			case Event.ONKEYDOWN:
+			case Event.ONKEYPRESS:
+			case Event.ONKEYUP:
+				return;
+			default:
+				break;
+			}
+
+			super.onBrowserEvent(event);
+		}
 	}
 
 	public Tree buildTreeCloneOfOpenNodesWithIndexes(Tree cloneTree,

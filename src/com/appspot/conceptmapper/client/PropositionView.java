@@ -1,7 +1,10 @@
 package com.appspot.conceptmapper.client;
 
+import java.util.List;
 import java.util.Map;
 
+import com.appspot.conceptmapper.client.EditMode.EditModeTree;
+import com.appspot.conceptmapper.client.ServerComm.SearchPropositionsCallback;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -20,7 +23,7 @@ import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class PropositionView extends TreeItem implements ClickHandler,
-		KeyDownHandler, FocusHandler, ChangeHandler {
+		KeyDownHandler, KeyUpHandler, FocusHandler, ChangeHandler {
 
 	private static PropositionView lastPropositionWithFocus = null;
 
@@ -28,6 +31,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	private Button proButton;
 	private Button conButton;
 	public Proposition proposition;
+	boolean deleted = false;
 
 	public String toString() {
 		return "textArea:" + textArea.getText() + "; id:" + proposition.id;
@@ -78,6 +82,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 			conButton.setVisible(false);
 
 			textArea.addKeyDownHandler(this);
+			textArea.addKeyUpHandler(this);
 			textArea.addFocusHandler(this);
 			textArea.addChangeHandler(this);
 		}
@@ -185,6 +190,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 			// parent arguments if this proposition is top leve.
 			getTree().removeItem(this);
 			ServerComm.removeProposition(this.proposition);
+			deleted = true;
 			return;
 		}
 
@@ -238,6 +244,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 			ServerComm.updateProposition(prePropView.proposition);
 		}
 		ServerComm.removeProposition(this.proposition);
+		deleted = true;
 	}
 
 	public void addPropositionAfterThisOne() {
@@ -333,9 +340,10 @@ public class PropositionView extends TreeItem implements ClickHandler,
 			Proposition prop, boolean editable,
 			Map<Long, PropositionView> propViewIndex,
 			Map<Long, ArgumentView> argViewIndex) {
-		
+
 		PropositionView propView = new PropositionView(prop, editable);
-		if( propViewIndex != null ) propViewIndex.put(prop.id, propView);
+		if (propViewIndex != null)
+			propViewIndex.put(prop.id, propView);
 		for (Argument arg : prop.args) {
 			propView.addItem(recursiveBuildArgumentView(arg, editable,
 					propViewIndex, argViewIndex));
@@ -346,9 +354,10 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	public static ArgumentView recursiveBuildArgumentView(Argument arg,
 			boolean editable, Map<Long, PropositionView> propViewIndex,
 			Map<Long, ArgumentView> argViewIndex) {
-		
+
 		ArgumentView argView = new ArgumentView(arg);
-		if( argViewIndex != null ) argViewIndex.put(arg.id, argView);
+		if (argViewIndex != null)
+			argViewIndex.put(arg.id, argView);
 		for (Proposition prop : arg.props) {
 			argView.addItem(recursiveBuildPropositionView(prop, editable,
 					propViewIndex, argViewIndex));
@@ -356,4 +365,14 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		return argView;
 	}
 
+	@Override
+	public void onKeyUp(KeyUpEvent event) {
+		Object source = event.getSource();
+		if (source == textArea && !deleted) {
+
+			ServerComm.searchPropositions(textArea.getText(), proposition,
+					((EditModeTree) getTree()).searchCallback);
+		}
+
+	}
 }

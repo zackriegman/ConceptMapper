@@ -119,8 +119,8 @@ public class ServerComm {
 		public void call(PropTreeWithHistory propTreeWithHistory);
 	}
 
-	public static void getPropositionCurrentVersionAndHistory(
-			Proposition prop, GetPropositionCurrentVersionAndHistoryCallback localCallback) {
+	public static void getPropositionCurrentVersionAndHistory(Proposition prop,
+			GetPropositionCurrentVersionAndHistoryCallback localCallback) {
 		class ServerCallback implements AsyncCallback<PropTreeWithHistory> {
 			GetPropositionCurrentVersionAndHistoryCallback localCallback;
 
@@ -142,13 +142,13 @@ public class ServerComm {
 		propositionService.getPropositionCurrentVersionAndHistory(prop.id,
 				serverCallback);
 	}
-	
+
 	public interface GetArgumentCurrentVersionAndHistoryCallback {
 		public void call(ArgTreeWithHistory argTreeWithHistory);
 	}
 
-	public static void getArgumentCurrentVersionAndHistory(
-			Argument arg, GetArgumentCurrentVersionAndHistoryCallback localCallback) {
+	public static void getArgumentCurrentVersionAndHistory(Argument arg,
+			GetArgumentCurrentVersionAndHistoryCallback localCallback) {
 		class ServerCallback implements AsyncCallback<ArgTreeWithHistory> {
 			GetArgumentCurrentVersionAndHistoryCallback localCallback;
 
@@ -168,6 +168,37 @@ public class ServerComm {
 		serverCallback.localCallback = localCallback;
 		propositionService.getArgumentCurrentVersionAndHistory(arg.id,
 				serverCallback);
+	}
+
+	public interface SearchPropositionsCallback {
+		public void call(List<Proposition> propMatches);
+	}
+
+	public static void searchPropositions(String string, Proposition prop,
+			SearchPropositionsCallback localCallback) {
+		class ServerCallback implements AsyncCallback<List<Proposition>> {
+			SearchPropositionsCallback localCallback;
+
+			@Override
+			public void onSuccess(List<Proposition> result) {
+				//message("Server Reports Success Searching");
+				localCallback.call(result);
+			}
+
+			@Override
+			public void onFailure(Throwable caught) {
+				// TODO Auto-generated method stub
+				caught.printStackTrace();
+			}
+		}
+		ServerCallback serverCallback = new ServerCallback();
+		serverCallback.localCallback = localCallback;
+		Long id = null;
+		if( prop != null ){
+			id = prop.id;
+		}
+		
+		propositionService.searchPropositions( string, id, serverCallback );
 	}
 
 	public static void addArgument(boolean pro, Proposition parentProp,

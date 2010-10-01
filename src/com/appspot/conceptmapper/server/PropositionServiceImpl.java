@@ -1,11 +1,21 @@
 package com.appspot.conceptmapper.server;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.StopAnalyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.snowball.SnowballAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.TermAttribute;
 
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -69,8 +79,14 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	}
 
 	public String propositionToString(Proposition prop) {
+		String tokens = "";
+		if (prop.tokens != null) {
+			for (String str : prop.tokens) {
+				tokens = tokens + " " + str;
+			}
+		}
 		return "id:" + prop.id + "; content:" + prop.content + "; topLevel:"
-				+ prop.topLevel;
+				+ prop.topLevel + "; tokens: [" + tokens + "]";
 	}
 
 	@Override
@@ -136,19 +152,19 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			/* add the argument to the prop */
 			prop.args.add(arg);
 
-			recursiveBuildArg( arg );
+			recursiveBuildArg(arg);
 		}
 	}
-	
-	public void recursiveBuildArg( Argument arg ){
+
+	public void recursiveBuildArg(Argument arg) {
 		/* get all the props in the argument */
-		Map<Long, Proposition> propMap = ofy.get(Proposition.class,
-				arg.propIDs);
+		Map<Long, Proposition> propMap = ofy
+				.get(Proposition.class, arg.propIDs);
 
 		/*
-		 * for each propID check to make sure the prop actually exists, and
-		 * if it does add it to the argument, and call this function
-		 * recursively on the prop
+		 * for each propID check to make sure the prop actually exists, and if
+		 * it does add it to the argument, and call this function recursively on
+		 * the prop
 		 */
 		for (Long id : arg.propIDs) {
 			Proposition gotProp = propMap.get(id);
@@ -339,6 +355,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		saveVersionInfo(change);
 
 		prop.setContent(content);
+		prop.tokens = getTokensForIndexingOrQuery(content, 30);
 		ofy.put(prop);
 
 	}
@@ -401,8 +418,8 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public SortedMap<Date, Change> getRevisions(Long changeID, List<Long> propIDs,
-			List<Long> argIDs) throws Exception {
+	public SortedMap<Date, Change> getRevisions(Long changeID,
+			List<Long> propIDs, List<Long> argIDs) throws Exception {
 
 		SortedMap<Date, Change> map = new TreeMap<Date, Change>();
 		// HashSet<Long> processedProps = new HashSet<Long>();
@@ -416,16 +433,15 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 		// printAllChanges();
 
-		/* reverse the order of the list
-		println("getRevisions: changes:");
-		List<Change> returnList = new LinkedList<Change>();
-		for (Change change : map.values()) {
-			returnList.add(0, change);
-			println(change.toString());
-		}
-		*/
-		
-		//TODO make sure the map is ordered in the right direction, which it should be, oldest to newest...
+		/*
+		 * reverse the order of the list println("getRevisions: changes:");
+		 * List<Change> returnList = new LinkedList<Change>(); for (Change
+		 * change : map.values()) { returnList.add(0, change);
+		 * println(change.toString()); }
+		 */
+
+		// TODO make sure the map is ordered in the right direction, which it
+		// should be, oldest to newest...
 
 		return map;
 	}
@@ -454,7 +470,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		println("end start getPropositionCurrentVersionAndHistory()");
 		return propVersions;
 	}
-	
+
 	@Override
 	public ArgTreeWithHistory getArgumentCurrentVersionAndHistory(Long argID)
 			throws Exception {
@@ -465,9 +481,9 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			recursiveBuildArg(argVersions.argument);
 		} catch (EntityNotFoundException e) {
 			/*
-			 * if the arg is not found that merely means it doesn't exist in
-			 * the current version of the tree... not a problem since it might
-			 * have been deleted.
+			 * if the arg is not found that merely means it doesn't exist in the
+			 * current version of the tree... not a problem since it might have
+			 * been deleted.
 			 */
 			argVersions.argument = null;
 		}
@@ -483,19 +499,19 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 	public void recursiveExtractPropAndArgIDs(Proposition prop,
 			List<Long> propIDs, List<Long> argIDs) {
-		propIDs.add( prop.id );
-		for( Argument arg : prop.args ){
-			recursiveExtractPropAndArgIDs(arg, propIDs, argIDs );
+		propIDs.add(prop.id);
+		for (Argument arg : prop.args) {
+			recursiveExtractPropAndArgIDs(arg, propIDs, argIDs);
 		}
 	}
-	
-	public void recursiveExtractPropAndArgIDs(Argument arg,
-			List<Long> propIDs, List<Long> argIDs) {
-		argIDs.add( arg.id );
-		for( Proposition prop : arg.props){
-			recursiveExtractPropAndArgIDs(prop, propIDs, argIDs );
+
+	public void recursiveExtractPropAndArgIDs(Argument arg, List<Long> propIDs,
+			List<Long> argIDs) {
+		argIDs.add(arg.id);
+		for (Proposition prop : arg.props) {
+			recursiveExtractPropAndArgIDs(prop, propIDs, argIDs);
 		}
-	} 
+	}
 
 	public void recursiveQueryChanges(List<Long> propIDs, List<Long> argIDs,
 			Map<Date, Change> map, Date date) {
@@ -558,5 +574,76 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		println("");
 		for (Change change : ofy.query(Change.class))
 			println("" + change.toString());
+	}
+
+	@Override
+	public List<Proposition> searchPropositions(String string,
+			Long excludePropID) {
+		// System.out.println("start:  searchPropositions");
+		Set<String> tokens = getTokensForIndexingOrQuery(string, 5);
+		/*
+		 * String printString = ""; for (String str : tokens) { printString =
+		 * printString + " " + str; } System.out.println("searching for: " +
+		 * printString);
+		 */
+		Query<Proposition> query = ofy.query(Proposition.class);
+
+		for (String token : tokens) {
+			query.filter("tokens", token);
+		}
+
+		if (excludePropID != null) {
+			query.filter("id !=", excludePropID);
+		}
+		/*
+		 * System.out.println("found: "); for (Proposition proposition : query)
+		 * { System.out.println(propositionToString(proposition)); }
+		 * System.out.println("end:  searchPropositions");
+		 * printAllPropsAndArgs();
+		 */
+		List<Proposition> results = new LinkedList<Proposition>();
+		for( Proposition proposition : query ){
+			results.add( proposition );
+		}
+		return results;
+	}
+
+	/**
+	 * Uses english stemming (snowball + lucene) + stopwords for getting the
+	 * words.
+	 * 
+	 * @param index
+	 * @return
+	 */
+	public static Set<String> getTokensForIndexingOrQuery(String index_raw,
+			int maximumNumberOfTokensToReturn) {
+
+		String indexCleanedOfHTMLTags = index_raw.replaceAll("\\<.*?>", " ");
+
+		Set<String> returnSet = new HashSet<String>();
+
+		try {
+
+			Analyzer analyzer = new SnowballAnalyzer(
+					org.apache.lucene.util.Version.LUCENE_30, "English",
+					StopAnalyzer.ENGLISH_STOP_WORDS_SET);
+
+			TokenStream tokenStream = analyzer.tokenStream("content",
+					new StringReader(indexCleanedOfHTMLTags));
+
+			while (tokenStream.incrementToken()
+					&& (returnSet.size() < maximumNumberOfTokensToReturn)) {
+
+				returnSet.add(tokenStream.getAttribute(TermAttribute.class)
+						.term());
+
+			}
+
+		} catch (IOException e) {
+			System.out.println(e.getMessage());
+		}
+
+		return returnSet;
+
 	}
 }

@@ -45,4 +45,7 @@ public interface PropositionServiceAsync {
 
 	void getArgumentCurrentVersionAndHistory(Long argID,
 			AsyncCallback<ArgTreeWithHistory> callback);
+
+	void searchPropositions(String string, Long excludePropID,
+			AsyncCallback<List<Proposition>> callback);
 }

@@ -52,5 +52,7 @@ public interface PropositionService extends RemoteService {
 
 	public ArgTreeWithHistory getArgumentCurrentVersionAndHistory(Long argID)
 			throws Exception;
+	
+	public List<Proposition> searchPropositions( String string, Long excludePropID );
 
 }
