@@ -34,6 +34,10 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	public String toString() {
 		return "textArea:" + textArea.getText() + "; id:" + proposition.id;
 	}
+	
+	public static PropositionView getLastPropositionWithFocus(){
+		return lastPropositionWithFocus;
+	}
 
 	public PropositionView createClone() {
 		PropositionView cloneView = new PropositionView(new Proposition(
@@ -132,9 +136,6 @@ public class PropositionView extends TreeItem implements ClickHandler,
 
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
-		// TODO: use a lable or HTML for the text and only switch in an editor
-		// when focused?
-
 		int charCode = event.getNativeKeyCode();
 		Object source = event.getSource();
 		if (source == textArea) {
@@ -283,9 +284,9 @@ public class PropositionView extends TreeItem implements ClickHandler,
 				proButton.setVisible(true);
 				conButton.setVisible(true);
 				lastPropositionWithFocus = this;
-			} else {
-				// textArea.setFocus(false);
-			}
+				ServerComm.searchPropositions(textArea.getText(), proposition,
+						((EditModeTree) getTree()).searchCallback);
+			} 
 		}
 	}
 

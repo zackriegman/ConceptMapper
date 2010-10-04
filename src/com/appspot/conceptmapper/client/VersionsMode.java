@@ -10,6 +10,7 @@ import java.util.SortedMap;
 
 import com.appspot.conceptmapper.client.PropositionService.ArgTreeWithHistory;
 import com.appspot.conceptmapper.client.PropositionService.PropTreeWithHistory;
+import com.appspot.conceptmapper.client.ServerComm.LocalCallback;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -99,7 +100,7 @@ public class VersionsMode extends HorizontalPanel implements
 		List<Argument> args = new LinkedList<Argument>();
 		editMode.getOpenPropsAndArgs(props, args);
 		ServerComm.getChanges(null, props, args,
-				new ServerComm.GetChangesCallback() {
+				new ServerComm.LocalCallback<SortedMap<Date, Change>>() {
 
 					@Override
 					public void call(SortedMap<Date, Change> changes) {
@@ -193,7 +194,7 @@ public class VersionsMode extends HorizontalPanel implements
 			if (child.getStyleName().equals("loadDummyProp")) {
 				class Callback
 						implements
-						ServerComm.GetPropositionCurrentVersionAndHistoryCallback {
+						ServerComm.LocalCallback<PropTreeWithHistory> {
 					PropositionView propView;
 
 					@Override
@@ -209,7 +210,7 @@ public class VersionsMode extends HorizontalPanel implements
 			} else if (child.getStyleName().equals("loadDummyArg")) {
 				class Callback
 						implements
-						ServerComm.GetArgumentCurrentVersionAndHistoryCallback {
+						LocalCallback<ArgTreeWithHistory> {
 					ArgumentView argView;
 
 					@Override

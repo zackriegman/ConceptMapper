@@ -3,7 +3,7 @@ package com.appspot.conceptmapper.client;
 import java.util.List;
 import java.util.Map;
 
-import com.appspot.conceptmapper.client.ServerComm.SearchPropositionsCallback;
+import com.appspot.conceptmapper.client.ServerComm.LocalCallback;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
@@ -20,7 +20,7 @@ import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
 public class EditMode extends ResizeComposite implements
-		SearchPropositionsCallback {
+LocalCallback<List<Proposition>> {
 
 	private HTML messageArea = new HTML();
 	private Label searchLabel = new Label(
@@ -70,7 +70,7 @@ public class EditMode extends ResizeComposite implements
 
 		mainPanel.add(tree);
 
-		ServerComm.fetchProps(new ServerComm.FetchPropsCallback() {
+		ServerComm.fetchProps(new ServerComm.LocalCallback<Proposition[]>() {
 
 			@Override
 			public void call(Proposition[] props) {
@@ -89,9 +89,9 @@ public class EditMode extends ResizeComposite implements
 		initWidget(mainSplit);
 
 	}
-
+	
 	@Override
-	public void searchPropositionsCallback(List<Proposition> propMatches) {
+	public void call(List<Proposition> propMatches) {
 		class SearchButton extends Button implements ClickHandler {
 			int resultIndex;
 
@@ -105,6 +105,16 @@ public class EditMode extends ResizeComposite implements
 				ConceptMapper.message("users want to use proposition:"
 						+ searchResults.getText(resultIndex, 0) + "; with this propID:" +
 						propositionMatches.get(resultIndex ).id);
+				PropositionView propView = PropositionView.getLastPropositionWithFocus();
+				if(propView.getChildCount() == 0){
+					ArgumentView argView = (ArgumentView) propView.getParentItem();
+					int index = argView.getChildIndex( propView );
+					//argView.replaceWithLink()
+				} else {
+					ConceptMapper.message("Cannot link to existing proposition when proposition currently being edited has children");
+				}
+					
+				
 			}
 		}
 		propositionMatches = propMatches;
@@ -125,7 +135,7 @@ public class EditMode extends ResizeComposite implements
 	 * to work. I found this fix on stack overflow
 	 */
 	public class EditModeTree extends Tree {
-		public SearchPropositionsCallback searchCallback;
+		public LocalCallback<List<Proposition>> searchCallback;
 
 		@Override
 		protected boolean isKeyboardNavigationEnabled(TreeItem inCurrentItem) {

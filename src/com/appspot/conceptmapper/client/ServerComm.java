@@ -26,12 +26,8 @@ public class ServerComm {
 	private static boolean callInProgress = false;
 
 	private static void message(String string) {
-		GWT.log( string );
-		ConceptMapper.message( string );
-	}
-
-	public interface FetchPropsCallback {
-		public void call(Proposition[] props);
+		GWT.log(string);
+		ConceptMapper.message(string);
 	}
 
 	private interface Command {
@@ -54,55 +50,91 @@ public class ServerComm {
 		}
 	}
 
-	public static void fetchProps(FetchPropsCallback fetchCallback) {
-		class ThisCallback implements AsyncCallback<Proposition[]> {
-			public FetchPropsCallback fetch;
+	public static interface LocalCallback<T> {
+		public void call(T t);
+	}
 
-			public void onFailure(Throwable caught) {
-				message("Error: " + caught.getMessage());
-			}
+	public static void fetchProps(LocalCallback<Proposition[]> localCallback) {
+		/*
+		class AServerCallback extends ServerCallback<Proposition[]> {
+			public LocalCallback<Proposition[]> localCallback;
 
 			@Override
 			public void onSuccess(Proposition[] result) {
-				message("Server Reports Success Fetching Props");
-				fetch.call(result);
+				message();
+				localCallback.call(result);
 			}
 		}
 		;
 
-		ThisCallback callback = new ThisCallback();
-		callback.fetch = fetchCallback;
-
-		propositionService.getAllProps(callback);
+		AServerCallback callback = new AServerCallback();
+		callback.localCallback = localCallback;
+*/
+		propositionService.getAllProps(new ServerCallback<Proposition[]>(localCallback,"Server Reports Success Fetching Props" ));
 	}
 
-	public interface GetChangesCallback {
-		public void call(SortedMap<Date, Change> changes);
-	}
-
-	public static void getChanges(Change change, List<Proposition> props,
-			List<Argument> args, GetChangesCallback localCallback) {
-
-		class ThisCallback implements AsyncCallback<SortedMap<Date, Change>> {
-
-			GetChangesCallback getChangesCallback;
-
-			@Override
-			public void onSuccess(SortedMap<Date, Change> result) {
-				message("Server Reports Success Fetching Changes");
-				getChangesCallback.call(result);
-			}
+	public static void getPropTree(LocalCallback<Proposition> localCallback) {
+		class ServerCallbackTemp implements AsyncCallback<Proposition> {
 
 			@Override
 			public void onFailure(Throwable caught) {
-				caught.printStackTrace();
-				// message("Error: " + s.toString() );
+				// TODO Auto-generated method stub
+
 			}
+
+			@Override
+			public void onSuccess(Proposition result) {
+				// TODO Auto-generated method stub
+
+			}
+
+		}
+	}
+
+	private static class ServerCallback<T> implements AsyncCallback<T> {
+		LocalCallback<T> localCallback;
+		String successMessage;
+
+		public ServerCallback(LocalCallback<T> localCallback,
+				String successMessage) {
+			this.localCallback = localCallback;
+			this.successMessage = successMessage;
 		}
 
+		@Override
+		public void onFailure(Throwable caught) {
+			message("Error: " + caught.getMessage());
+			caught.printStackTrace();
+		}
+
+		@Override
+		public void onSuccess(T result) {
+			if (localCallback != null) {
+				localCallback.call(result);
+			}
+			if (successMessage != null) {
+				message(successMessage);
+			}
+		}
+	}
+
+	public static void getChanges(Change change, List<Proposition> props,
+			List<Argument> args,
+			LocalCallback<SortedMap<Date, Change>> localCallback) {
+		/*
+		 * class AServerCallback extends ServerCallback<SortedMap<Date, Change>>
+		 * {
+		 * 
+		 * LocalCallback<SortedMap<Date, Change>> localCallback;
+		 * 
+		 * @Override public void onSuccess(SortedMap<Date, Change> result) {
+		 * message("Server Reports Success Fetching Changes");
+		 * localCallback.call(result); } }
+		 */
+
 		Long changeID = (change == null) ? null : change.id;
-		ThisCallback serverCallback = new ThisCallback();
-		serverCallback.getChangesCallback = localCallback;
+		// AServerCallback serverCallback = new AServerCallback();
+		// serverCallback.localCallback = localCallback;
 		List<Long> propIDs = new LinkedList<Long>();
 		for (Proposition prop : props) {
 			propIDs.add(prop.id);
@@ -113,17 +145,15 @@ public class ServerComm {
 		}
 
 		propositionService.getRevisions(changeID, propIDs, argIDs,
-				serverCallback);
-	}
-
-	public interface GetPropositionCurrentVersionAndHistoryCallback {
-		public void call(PropTreeWithHistory propTreeWithHistory);
+				new ServerCallback<SortedMap<Date, Change>>(localCallback,
+						"Server Reports Success Fetching Changes"));
 	}
 
 	public static void getPropositionCurrentVersionAndHistory(Proposition prop,
-			GetPropositionCurrentVersionAndHistoryCallback localCallback) {
-		class ServerCallback implements AsyncCallback<PropTreeWithHistory> {
-			GetPropositionCurrentVersionAndHistoryCallback localCallback;
+			LocalCallback<PropTreeWithHistory> localCallback) {
+		/*
+		class AServerCallback extends ServerCallback<PropTreeWithHistory> {
+			LocalCallback<PropTreeWithHistory> localCallback;
 
 			@Override
 			public void onSuccess(PropTreeWithHistory result) {
@@ -131,75 +161,53 @@ public class ServerComm {
 				localCallback.call(result);
 
 			}
-
-			@Override
-			public void onFailure(Throwable caught) {
-				// TODO Auto-generated method stub
-				caught.printStackTrace();
-			}
 		}
-		ServerCallback serverCallback = new ServerCallback();
-		serverCallback.localCallback = localCallback;
+		AServerCallback serverCallback = new AServerCallback();
+		serverCallback.localCallback = localCallback;*/
 		propositionService.getPropositionCurrentVersionAndHistory(prop.id,
-				serverCallback);
-	}
-
-	public interface GetArgumentCurrentVersionAndHistoryCallback {
-		public void call(ArgTreeWithHistory argTreeWithHistory);
+				new ServerCallback<PropTreeWithHistory>(localCallback,"Server Reports Success Fetching Proposition and History" ));
 	}
 
 	public static void getArgumentCurrentVersionAndHistory(Argument arg,
-			GetArgumentCurrentVersionAndHistoryCallback localCallback) {
-		class ServerCallback implements AsyncCallback<ArgTreeWithHistory> {
-			GetArgumentCurrentVersionAndHistoryCallback localCallback;
+			LocalCallback<ArgTreeWithHistory> localCallback) {
+		/*
+		class AServerCallback extends ServerCallback<ArgTreeWithHistory> {
+			LocalCallback<ArgTreeWithHistory> localCallback;
 
 			@Override
 			public void onSuccess(ArgTreeWithHistory result) {
 				message("Server Reports Success Fetching Argument and History");
 				localCallback.call(result);
 			}
-
-			@Override
-			public void onFailure(Throwable caught) {
-				// TODO Auto-generated method stub
-				caught.printStackTrace();
-			}
 		}
-		ServerCallback serverCallback = new ServerCallback();
+		AServerCallback serverCallback = new AServerCallback();
 		serverCallback.localCallback = localCallback;
+		*/
 		propositionService.getArgumentCurrentVersionAndHistory(arg.id,
-				serverCallback);
-	}
-
-	public interface SearchPropositionsCallback {
-		public void searchPropositionsCallback(List<Proposition> propMatches);
+				new ServerCallback<ArgTreeWithHistory>(localCallback, "Server Reports Success Fetching Argument and History"));
 	}
 
 	public static void searchPropositions(String string, Proposition prop,
-			SearchPropositionsCallback localCallback) {
-		class ServerCallback implements AsyncCallback<List<Proposition>> {
-			SearchPropositionsCallback localCallback;
+			LocalCallback<List<Proposition>> localCallback) {
+		/*
+		class AServerCallback extends ServerCallback<List<Proposition>> {
+			LocalCallback<List<Proposition>> localCallback;
 
 			@Override
 			public void onSuccess(List<Proposition> result) {
-				//message("Server Reports Success Searching");
-				localCallback.searchPropositionsCallback(result);
-			}
-
-			@Override
-			public void onFailure(Throwable caught) {
-				// TODO Auto-generated method stub
-				caught.printStackTrace();
+				// message("Server Reports Success Searching");
+				localCallback.call(result);
 			}
 		}
-		ServerCallback serverCallback = new ServerCallback();
+		AServerCallback serverCallback = new AServerCallback();
 		serverCallback.localCallback = localCallback;
+		*/
 		Long id = null;
-		if( prop != null ){
+		if (prop != null) {
 			id = prop.id;
 		}
-		
-		propositionService.searchPropositions( string, id, serverCallback );
+
+		propositionService.searchPropositions(string, id, new ServerCallback<List<Proposition>>(localCallback,"Server Reports Success Searching"));
 	}
 
 	public static void addArgument(boolean pro, Proposition parentProp,

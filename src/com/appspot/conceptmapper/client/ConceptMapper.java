@@ -90,26 +90,30 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
  * version list when a node is closed
  */
 
-// TODO: implement arg loading in versionsMode
-// TODO: implement proposition search
-// TODO: implement linking to existing propositions (i.e. propositions can belong to multiple arguments)
-// TODO: decide how to get rid of repetative code (for propositions and args), maybe make them both subclasses of a Node class?
-// TODO: highlight last change node after time travel
-// TODO: provide a way to see deleted top level nodes
-// TODO: put the thing in a frame, add helpful message along the side
-// TODO: trim changes list when a node is closed, expand when a node is opened (maybe to implement this, change how nodes are stored... maybe with a list of all their changes... which type of changes does a node need to know about...
-// TODO at least in IE can delete root level proposition without first deleting its text
-// TODO: if the message queue gets backed up (more than 5?) give user a message that there is trouble saving changes to server, and changes may be lost
-// TODO: implement proposition strength voting, and scoring algorithm
-// TODO: maintain order of propositions? waiting to see if order gets screwed up
 
-// TO DO: test in IE, chrome, etc.
-// TO DO:  upload to appengine, and add an example argument (for instance my argument about legalizing unauthorized access)
-// TO DO: implement user accounts, email updates of changes, inviting friends
-// TO DO: poll server every few seconds for server side changes (this has
-// to come after versioning I think)
+//TODO: implement linking to existing propositions (i.e. propositions can belong to multiple arguments)
+//TODO: weed changes list when a node is closed, expand when a node is opened (maybe to implement this, change how nodes are stored... maybe with a list of all their changes... which type of changes does a node need to know about...
+//TODO: lazy load propositions (maybe a few layers deep in advance) instead of loading the entire tree
+
+//TODO: add helpful message along the side (tips box)
+//TODO: provide a way to see deleted top level nodes
+//TODO: implement user accounts, email updates of changes, inviting friends
+//TODO: implement proposition strength voting, and scoring algorithm
+//TODO: allow arguments to have titles
+
+//TODO: trim whitespace before checking to see if update has actually changed something
+//TODO: highlight last change node after time travel
+//TODO: get rid of irrelevant update operations (e.g. clearing update before delete)
+//TODO: decide how to get rid of repetative code (for propositions and args), maybe make them both subclasses of a Node class?
+
+//TODO: if the message queue gets backed up (more than 5?) give user a message that there is trouble saving changes to server, and changes may be lost
+//TODO: maintain order of propositions? waiting to see if order gets screwed up
+//TODO: IE problems: (1) VersionsMode doesn't seem to work (2) can delete root level proposition without first deleting its text
+
+// TO DO: test in IE, chrome, safari, opera, etc.
+// TO DO: upload to appengine, and add an example argument (for instance my argument about legalizing unauthorized access)
+// TO DO: poll server every few seconds for server side changes (this has to come after versioning I think)
 // TO DO: implement some basic database integrity checks (e.g. every argument belongs to an existing proposition...)
-// TO DO: lazy load propositions (maybe a few layers deep in advance) instead of loading the entire tree
 // TO DO: give people a way to specify logical structure (first order predicate calculus structure of each proposition
 // TO DO: add definitions (as a special kind of proposition?)
 // TO DO: integrate logic engine to verify validity of arguments
