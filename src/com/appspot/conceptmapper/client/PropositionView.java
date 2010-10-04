@@ -1,10 +1,8 @@
 package com.appspot.conceptmapper.client;
 
-import java.util.List;
 import java.util.Map;
 
 import com.appspot.conceptmapper.client.EditMode.EditModeTree;
-import com.appspot.conceptmapper.client.ServerComm.SearchPropositionsCallback;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;

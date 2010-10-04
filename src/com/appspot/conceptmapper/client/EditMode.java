@@ -9,15 +9,42 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class EditMode extends VerticalPanel {
+public class EditMode extends ResizeComposite implements
+		SearchPropositionsCallback {
 
-	EditModeTree tree;
+	private HTML messageArea = new HTML();
+	private Label searchLabel = new Label(
+			"Would you like to use one of these already existing propositions?");
+	private FlexTable searchResults = new FlexTable();
+	private EditModeTree tree;
+	private List<Proposition> propositionMatches;
 
 	public EditMode() {
+		super();
+
+		FlowPanel mainPanel = new FlowPanel();
+
+		SplitLayoutPanel mainSplit = new SplitLayoutPanel();
+		SplitLayoutPanel sideSplit = new SplitLayoutPanel();
+
+		sideSplit.addNorth(messageArea, 280);
+
+		FlowPanel searchFlowPanel = new FlowPanel();
+		searchFlowPanel.add(searchLabel);
+		searchLabel.setVisible(false);
+		searchFlowPanel.add(searchResults);
+		sideSplit.add(searchFlowPanel);
+
 		Button addPropButton = new Button("Add A New Proposition");
 		addPropButton.addClickHandler(new ClickHandler() {
 			@Override
@@ -36,45 +63,70 @@ public class EditMode extends VerticalPanel {
 			}
 		});
 
-		add(addPropButton);
-		
-		tree = new EditModeTree();
-		tree.searchCallback = new SearchPropositionsCallback() {
-			
-			@Override
-			public void call(List<Proposition> propMatches) {
-				ConceptMapper.println("Found these matching propositions:");
-				for( Proposition prop : propMatches ){
-					ConceptMapper.println(" - " + prop.getContent());
-				}
-			}
-		};
+		mainPanel.add(addPropButton);
 
-		add(tree);
+		tree = new EditModeTree();
+		tree.searchCallback = this;
+
+		mainPanel.add(tree);
 
 		ServerComm.fetchProps(new ServerComm.FetchPropsCallback() {
 
 			@Override
 			public void call(Proposition[] props) {
 				for (Proposition prop : props) {
-					tree.addItem(PropositionView.recursiveBuildPropositionView(prop, true, null, null));
+					tree.addItem(PropositionView.recursiveBuildPropositionView(
+							prop, true, null, null));
 				}
 				openTree();
 			}
 		});
 
 		tree.setAnimationEnabled(false);
+
+		mainSplit.addEast(sideSplit, 400);
+		mainSplit.add(new ScrollPanel(mainPanel));
+		initWidget(mainSplit);
+
 	}
-	
+
+	@Override
+	public void searchPropositionsCallback(List<Proposition> propMatches) {
+		class SearchButton extends Button implements ClickHandler {
+			int resultIndex;
+
+			SearchButton(int resultIndex) {
+				super("use this");
+				this.resultIndex = resultIndex;
+				addClickHandler(this);
+			}
+
+			public void onClick(ClickEvent event) {
+				ConceptMapper.message("users want to use proposition:"
+						+ searchResults.getText(resultIndex, 0) + "; with this propID:" +
+						propositionMatches.get(resultIndex ).id);
+			}
+		}
+		propositionMatches = propMatches;
+		searchResults.removeAllRows();
+		int i = 0;
+		for (Proposition prop : propMatches) {
+			searchLabel.setVisible(true);
+			searchResults.setText(i, 0, prop.getContent());
+			searchResults.setWidget(i, 1, new SearchButton(i));
+			i++;
+		}
+	}
+
 	/**
-	 * annoyingly, by default the Tree eats the arrow key events so they
-	 * can't be used for moving in a text box. Setting a handler on the tree
-	 * to keep the events from doing their default behavior or propagating
-	 * doesn't seem to work. I found this fix on stack overflow
+	 * annoyingly, by default the Tree eats the arrow key events so they can't
+	 * be used for moving in a text box. Setting a handler on the tree to keep
+	 * the events from doing their default behavior or propagating doesn't seem
+	 * to work. I found this fix on stack overflow
 	 */
 	public class EditModeTree extends Tree {
 		public SearchPropositionsCallback searchCallback;
-		
+
 		@Override
 		protected boolean isKeyboardNavigationEnabled(TreeItem inCurrentItem) {
 			return false;
@@ -138,8 +190,7 @@ public class EditMode extends VerticalPanel {
 				 * propositions, then insert a place holder
 				 */
 				else if (realArgView.getChildCount() > 0) {
-					cloneArgView
-							.addItem(newLoadDummyTreeItemArg());
+					cloneArgView.addItem(newLoadDummyTreeItemArg());
 				}
 			}
 		}
@@ -152,14 +203,14 @@ public class EditMode extends VerticalPanel {
 		}
 		return clonePropView;
 	}
-	
-	public TreeItem newLoadDummyTreeItemProp(){
+
+	public TreeItem newLoadDummyTreeItemProp() {
 		TreeItem treeItem = new TreeItem("loading from server...");
 		treeItem.addStyleName("loadDummyProp");
 		return treeItem;
 	}
-	
-	public TreeItem newLoadDummyTreeItemArg(){
+
+	public TreeItem newLoadDummyTreeItemArg() {
 		TreeItem treeItem = new TreeItem("loading from server...");
 		treeItem.addStyleName("loadDummyArg");
 		return treeItem;

@@ -26,7 +26,8 @@ public class ServerComm {
 	private static boolean callInProgress = false;
 
 	private static void message(String string) {
-		ConceptMapper.println(string);
+		GWT.log( string );
+		ConceptMapper.message( string );
 	}
 
 	public interface FetchPropsCallback {
@@ -171,7 +172,7 @@ public class ServerComm {
 	}
 
 	public interface SearchPropositionsCallback {
-		public void call(List<Proposition> propMatches);
+		public void searchPropositionsCallback(List<Proposition> propMatches);
 	}
 
 	public static void searchPropositions(String string, Proposition prop,
@@ -182,7 +183,7 @@ public class ServerComm {
 			@Override
 			public void onSuccess(List<Proposition> result) {
 				//message("Server Reports Success Searching");
-				localCallback.call(result);
+				localCallback.searchPropositionsCallback(result);
 			}
 
 			@Override

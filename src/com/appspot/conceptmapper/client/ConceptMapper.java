@@ -1,14 +1,16 @@
 package com.appspot.conceptmapper.client;
 
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 
-import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.TabLayoutPanel;
 
 /*
  * TODO ok, so the main approach i'm thinking of now is that the server
@@ -117,80 +119,55 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  */
 public class ConceptMapper implements EntryPoint {
 
-	private HorizontalPanel mainPanel = new HorizontalPanel();
-	private VerticalPanel modePanel = new VerticalPanel();
-	private HorizontalPanel buttonPanel = new HorizontalPanel();
+	private DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.EM);
+	private TabLayoutPanel modePanel = new TabLayoutPanel(1.5, Style.Unit.EM);
+
+	private static HTML messageArea = new HTML();
 	private EditMode editMode = new EditMode();
 	private VersionsMode versionsMode;
-	private static HTML messageArea = new HTML();
 	
-	private Button seeRevisionsButton = new Button("See Previous Revisions");
-	private Button backToEditingButton = new Button("Go Back to Editing");
+
 
 	public void onModuleLoad() {
-		modePanel.add( buttonPanel );
-		modePanel.add( editMode );
+		modePanel.add( editMode, "Edit" );
 		versionsMode = new VersionsMode( editMode );
-		modePanel.add( versionsMode );
+		modePanel.add( new ScrollPanel( versionsMode ), "Versions" );
 		
-		versionsMode.setVisible( false );
-
-		
-		seeRevisionsButton.addClickHandler(new ClickHandler() {
-
+		modePanel.addSelectionHandler(new SelectionHandler<Integer>() {
+			
 			@Override
-			public void onClick(ClickEvent event) {
-				versionsMode.displayVersions();
-				editMode.setVisible(false);
-				versionsMode.setVisible(true);
-				seeRevisionsButton.setVisible(false);
-				backToEditingButton.setVisible(true);
+			public void onSelection(SelectionEvent<Integer> event) {
+				if( modePanel.getSelectedIndex() == 1 ){
+					versionsMode.displayVersions();
+				}
+				
 			}
 		});
 		
-		backToEditingButton.setVisible(false);
-		backToEditingButton.addClickHandler(new ClickHandler() {
 
-			@Override
-			public void onClick(ClickEvent event) {
-				versionsMode.setVisible(false);
-				editMode.setVisible(true);
-				seeRevisionsButton.setVisible(true);
-				backToEditingButton.setVisible(false);
-			}
-		});
-
-		buttonPanel.add(seeRevisionsButton);
-		buttonPanel.add(backToEditingButton);
+		Label titleLabel = new Label("ConceptMapper Prototype");
+		titleLabel.setStylePrimaryName("titleLabel");
+		//messageArea.setStylePrimaryName("messageLabel");
+		mainPanel.addNorth( titleLabel, 5);
+		mainPanel.addNorth( messageArea, 2);
+		mainPanel.add( modePanel );
 		
 		
-		mainPanel.add(modePanel);
-		mainPanel.add(messageArea);
-
-		// Associate the Main panel with the HTML host page.
-		RootPanel.get("mappingWidget").add(mainPanel);
-
+		
+		RootLayoutPanel rp = RootLayoutPanel.get();
+	    rp.add(mainPanel);
 
 		// Window.alert( "pops up a window to user with message");
 
-		println("App Begin");
+		message("App Begin");
+	}
+	
+	public static void message( String string ){
+		messageArea.setHTML("<div class=\"messageLabel\">" + string + "</div>");
 	}
 
 	public String propositionToString(Proposition prop) {
 		return "id:" + prop.id + "; content:" + prop.content + "; topLevel:"
 				+ prop.topLevel;
 	}
-
-
-
-	public static void println(String string) {
-		print('\n' + string + "<br />");
-	}
-
-	public static void print(String string) {
-		messageArea.setHTML(string + messageArea.getHTML());
-	}
-
-
-
 }
