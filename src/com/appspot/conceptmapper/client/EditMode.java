@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.appspot.conceptmapper.client.ServerComm.LocalCallback;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
@@ -20,7 +21,7 @@ import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
 public class EditMode extends ResizeComposite implements
-LocalCallback<List<Proposition>> {
+		LocalCallback<List<Proposition>> {
 
 	private HTML messageArea = new HTML();
 	private Label searchLabel = new Label(
@@ -58,8 +59,7 @@ LocalCallback<List<Proposition>> {
 
 				tree.addItem(newPropView);
 				newPropView.haveFocus();
-				ServerComm
-						.addProposition(newPropView.getProposition(), null, 0);
+				ServerComm.addProposition(newPropView.getProposition(), null, 0);
 			}
 		});
 
@@ -89,7 +89,7 @@ LocalCallback<List<Proposition>> {
 		initWidget(mainSplit);
 
 	}
-	
+
 	@Override
 	public void call(List<Proposition> propMatches) {
 		class SearchButton extends Button implements ClickHandler {
@@ -103,18 +103,44 @@ LocalCallback<List<Proposition>> {
 
 			public void onClick(ClickEvent event) {
 				ConceptMapper.message("users want to use proposition:"
-						+ searchResults.getText(resultIndex, 0) + "; with this propID:" +
-						propositionMatches.get(resultIndex ).id);
-				PropositionView propView = PropositionView.getLastPropositionWithFocus();
-				if(propView.getChildCount() == 0){
-					ArgumentView argView = (ArgumentView) propView.getParentItem();
-					int index = argView.getChildIndex( propView );
-					//argView.replaceWithLink()
+						+ searchResults.getText(resultIndex, 0)
+						+ "; with this propID:"
+						+ propositionMatches.get(resultIndex).id);
+				PropositionView propView = PropositionView
+						.getLastPropositionWithFocus();
+				GWT.log("lastPropositionWithFocus Content:" + propView.getContent());
+				if (propView.getChildCount() == 0) {
+					GWT.log("AAAAA");
+					class ThisCallback implements LocalCallback<Proposition> {
+						ArgumentView argView;
+						PropositionView propView;
+						int propIndex;
+
+						@Override
+						public void call(Proposition proposition) {
+							GWT.log("BBBBB");
+							argView.removeItem(propView);
+							PropositionView newPropView = PropositionView
+									.recursiveBuildPropositionView(proposition,
+											true, null, null);
+							GWT.log("PropositionView as returned:");
+							newPropView.printPropRecursive(0);
+							argView.insertPropositionViewAt(propIndex,
+									newPropView);
+						}
+					};
+					ThisCallback callback = new ThisCallback();
+					callback.argView = (ArgumentView) propView.getParentItem();
+					callback.propView = propView;
+					callback.propIndex = callback.argView
+							.getChildIndex(propView);
+					//TODO MUST ALSO LINK!!!!
+					Proposition propToLinkTo = propMatches.get(resultIndex);
+					ServerComm.getPropTree(propToLinkTo, callback);
 				} else {
-					ConceptMapper.message("Cannot link to existing proposition when proposition currently being edited has children");
+					ConceptMapper
+							.message("Cannot link to existing proposition when proposition currently being edited has children");
 				}
-					
-				
 			}
 		}
 		propositionMatches = propMatches;
@@ -246,8 +272,9 @@ LocalCallback<List<Proposition>> {
 				args.add(argView.argument);
 				if (argView.getState() || propView.getChildCount() == 0) {
 					for (int j = 0; j < argView.getChildCount(); j++) {
-						recursiveGetOpenPropsAndArgs((PropositionView) argView
-								.getChild(j), props, args);
+						recursiveGetOpenPropsAndArgs(
+								(PropositionView) argView.getChild(j), props,
+								args);
 					}
 				}
 			}

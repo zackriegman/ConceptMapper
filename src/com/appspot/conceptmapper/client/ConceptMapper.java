@@ -174,4 +174,12 @@ public class ConceptMapper implements EntryPoint {
 		return "id:" + prop.id + "; content:" + prop.content + "; topLevel:"
 				+ prop.topLevel;
 	}
+	
+	public static String spaces(int spaces) {
+		String string = "";
+		for (int i = 0; i < spaces; i++) {
+			string = string + " ";
+		}
+		return string;
+	}
 }

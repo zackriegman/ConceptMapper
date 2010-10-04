@@ -64,7 +64,7 @@ public class VersionsMode extends HorizontalPanel implements
 			}
 		}
 	}
-
+/*
 	public void printPropRecursive(PropositionView propViewParent, int level) {
 		GWT.log(spaces(level * 2) + "propID:" + propViewParent.proposition.id
 				+ "; content:" + propViewParent.getContent());
@@ -89,6 +89,7 @@ public class VersionsMode extends HorizontalPanel implements
 		}
 		return string;
 	}
+	*/
 
 	public void displayVersions() {
 		versionList.clear();
@@ -240,7 +241,7 @@ public class VersionsMode extends HorizontalPanel implements
 						false, propViewIndex, argViewIndex);
 
 		GWT.log("propTree before timeTravel:");
-		printPropRecursive(propGraft, 0);
+		propGraft.printPropRecursive( 0);
 		TimeTraveler timeTraveler = new TimeTraveler(
 				propTreeWithHistory.changes, propViewIndex, argViewIndex, null);
 
@@ -252,11 +253,11 @@ public class VersionsMode extends HorizontalPanel implements
 
 		timeTraveler.travelToDate(mainTT.getCurrentDate());
 		GWT.log("propTree after timeTravel:");
-		printPropRecursive(propGraft, 0);
+		propGraft.printPropRecursive( 0);
 
 		PropositionView view = mainTT.absorb(timeTraveler, propGraft);
 		GWT.log("old propview after grafting:");
-		printPropRecursive(view, 0);
+		view.printPropRecursive( 0);
 		GWT.log("----------------");
 
 		loadVersionListFromTimeMachine();
@@ -282,7 +283,7 @@ public class VersionsMode extends HorizontalPanel implements
 						false, propViewIndex, argViewIndex);
 
 		GWT.log("propTree before timeTravel:");
-		printArgRecursive(argGraft, 0);
+		argGraft.printArgRecursive( 0);
 		TimeTraveler timeTraveler = new TimeTraveler(
 				argTreeWithHistory.changes, propViewIndex, argViewIndex, null);
 
@@ -294,11 +295,11 @@ public class VersionsMode extends HorizontalPanel implements
 
 		timeTraveler.travelToDate(mainTT.getCurrentDate());
 		GWT.log("argTree after timeTravel:");
-		printArgRecursive(argGraft, 0);
+		argGraft.printArgRecursive( 0);
 
 		ArgumentView view = mainTT.absorb(timeTraveler, argGraft);
 		GWT.log("old propview after grafting:");
-		printArgRecursive(view, 0);
+		view.printArgRecursive( 0);
 		GWT.log("----------------");
 
 		loadVersionListFromTimeMachine();

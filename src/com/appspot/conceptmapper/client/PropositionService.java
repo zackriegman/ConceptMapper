@@ -27,6 +27,8 @@ public interface PropositionService extends RemoteService {
 			throws Exception;
 
 	public Proposition[] getAllProps();
+	
+	public Proposition getPropositionTree(Long propID) throws Exception;
 
 	public SortedMap<Date, Change> getRevisions(Long changeID,
 			List<Long> propIDs, List<Long> argIDs) throws Exception;

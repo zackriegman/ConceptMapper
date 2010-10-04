@@ -3,6 +3,7 @@ package com.appspot.conceptmapper.client;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.TreeItem;
 
 public class ArgumentView extends TreeItem {
@@ -65,6 +66,16 @@ public class ArgumentView extends TreeItem {
 		while (!removeQueue.isEmpty()) {
 			TreeItem toRemove = removeQueue.poll();
 			addItem(toRemove);
+		}
+	}
+	
+
+	
+	public void printArgRecursive( int level ){
+		GWT.log(ConceptMapper.spaces(level * 2) + getText() + "; id:"
+				+ argument.id);
+		for (int j = 0; j < getChildCount(); j++) {
+			((PropositionView) getChild(j)).printPropRecursive( level + 1);
 		}
 	}
 

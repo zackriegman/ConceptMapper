@@ -48,4 +48,6 @@ public interface PropositionServiceAsync {
 
 	void searchPropositions(String string, Long excludePropID,
 			AsyncCallback<List<Proposition>> callback);
+
+	void getPropositionTree(Long propID, AsyncCallback<Proposition> callback);
 }

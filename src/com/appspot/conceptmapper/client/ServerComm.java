@@ -54,43 +54,6 @@ public class ServerComm {
 		public void call(T t);
 	}
 
-	public static void fetchProps(LocalCallback<Proposition[]> localCallback) {
-		/*
-		class AServerCallback extends ServerCallback<Proposition[]> {
-			public LocalCallback<Proposition[]> localCallback;
-
-			@Override
-			public void onSuccess(Proposition[] result) {
-				message();
-				localCallback.call(result);
-			}
-		}
-		;
-
-		AServerCallback callback = new AServerCallback();
-		callback.localCallback = localCallback;
-*/
-		propositionService.getAllProps(new ServerCallback<Proposition[]>(localCallback,"Server Reports Success Fetching Props" ));
-	}
-
-	public static void getPropTree(LocalCallback<Proposition> localCallback) {
-		class ServerCallbackTemp implements AsyncCallback<Proposition> {
-
-			@Override
-			public void onFailure(Throwable caught) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void onSuccess(Proposition result) {
-				// TODO Auto-generated method stub
-
-			}
-
-		}
-	}
-
 	private static class ServerCallback<T> implements AsyncCallback<T> {
 		LocalCallback<T> localCallback;
 		String successMessage;
@@ -118,23 +81,49 @@ public class ServerComm {
 		}
 	}
 
+	private static abstract class ServerCallbackWithDispatch<T> implements
+			AsyncCallback<T> {
+		String successMessage;
+
+		public ServerCallbackWithDispatch(String successMessage) {
+			this.successMessage = successMessage;
+		}
+
+		@Override
+		public void onFailure(Throwable caught) {
+			dispatchCommand();
+			message("Error: " + caught.getMessage());
+			caught.printStackTrace();
+		}
+
+		@Override
+		public void onSuccess(T result) {
+			dispatchCommand();
+			if (successMessage != null) {
+				message(successMessage);
+			}
+			doOnSuccess(result);
+		}
+
+		public abstract void doOnSuccess(T result);
+	}
+
+	public static void fetchProps(LocalCallback<Proposition[]> localCallback) {
+		propositionService.getAllProps(new ServerCallback<Proposition[]>(
+				localCallback, "Server Reports Success Fetching Props"));
+	}
+
+	public static void getPropTree(Proposition proposition,
+			LocalCallback<Proposition> localCallback) {
+		propositionService.getPropositionTree(proposition.id,
+				new ServerCallback<Proposition>(localCallback,
+						"Server Reports Success Getting Prop Tree"));
+	}
+
 	public static void getChanges(Change change, List<Proposition> props,
 			List<Argument> args,
 			LocalCallback<SortedMap<Date, Change>> localCallback) {
-		/*
-		 * class AServerCallback extends ServerCallback<SortedMap<Date, Change>>
-		 * {
-		 * 
-		 * LocalCallback<SortedMap<Date, Change>> localCallback;
-		 * 
-		 * @Override public void onSuccess(SortedMap<Date, Change> result) {
-		 * message("Server Reports Success Fetching Changes");
-		 * localCallback.call(result); } }
-		 */
-
 		Long changeID = (change == null) ? null : change.id;
-		// AServerCallback serverCallback = new AServerCallback();
-		// serverCallback.localCallback = localCallback;
 		List<Long> propIDs = new LinkedList<Long>();
 		for (Proposition prop : props) {
 			propIDs.add(prop.id);
@@ -151,79 +140,59 @@ public class ServerComm {
 
 	public static void getPropositionCurrentVersionAndHistory(Proposition prop,
 			LocalCallback<PropTreeWithHistory> localCallback) {
-		/*
-		class AServerCallback extends ServerCallback<PropTreeWithHistory> {
-			LocalCallback<PropTreeWithHistory> localCallback;
-
-			@Override
-			public void onSuccess(PropTreeWithHistory result) {
-				message("Server Reports Success Fetching Proposition and History");
-				localCallback.call(result);
-
-			}
-		}
-		AServerCallback serverCallback = new AServerCallback();
-		serverCallback.localCallback = localCallback;*/
-		propositionService.getPropositionCurrentVersionAndHistory(prop.id,
-				new ServerCallback<PropTreeWithHistory>(localCallback,"Server Reports Success Fetching Proposition and History" ));
+		propositionService
+				.getPropositionCurrentVersionAndHistory(
+						prop.id,
+						new ServerCallback<PropTreeWithHistory>(localCallback,
+								"Server Reports Success Fetching Proposition and History"));
 	}
 
 	public static void getArgumentCurrentVersionAndHistory(Argument arg,
 			LocalCallback<ArgTreeWithHistory> localCallback) {
-		/*
-		class AServerCallback extends ServerCallback<ArgTreeWithHistory> {
-			LocalCallback<ArgTreeWithHistory> localCallback;
-
-			@Override
-			public void onSuccess(ArgTreeWithHistory result) {
-				message("Server Reports Success Fetching Argument and History");
-				localCallback.call(result);
-			}
-		}
-		AServerCallback serverCallback = new AServerCallback();
-		serverCallback.localCallback = localCallback;
-		*/
-		propositionService.getArgumentCurrentVersionAndHistory(arg.id,
-				new ServerCallback<ArgTreeWithHistory>(localCallback, "Server Reports Success Fetching Argument and History"));
+		propositionService
+				.getArgumentCurrentVersionAndHistory(
+						arg.id,
+						new ServerCallback<ArgTreeWithHistory>(localCallback,
+								"Server Reports Success Fetching Argument and History"));
 	}
 
 	public static void searchPropositions(String string, Proposition prop,
 			LocalCallback<List<Proposition>> localCallback) {
-		/*
-		class AServerCallback extends ServerCallback<List<Proposition>> {
-			LocalCallback<List<Proposition>> localCallback;
-
-			@Override
-			public void onSuccess(List<Proposition> result) {
-				// message("Server Reports Success Searching");
-				localCallback.call(result);
-			}
-		}
-		AServerCallback serverCallback = new AServerCallback();
-		serverCallback.localCallback = localCallback;
-		*/
 		Long id = null;
 		if (prop != null) {
 			id = prop.id;
 		}
 
-		propositionService.searchPropositions(string, id, new ServerCallback<List<Proposition>>(localCallback,"Server Reports Success Searching"));
+		propositionService.searchPropositions(string, id,
+				new ServerCallback<List<Proposition>>(localCallback, null));
 	}
 
 	public static void addArgument(boolean pro, Proposition parentProp,
 			Argument newArg, Proposition newProp) {
-		class CommandAdd implements Command {
+		class CommandAdd extends ServerCallbackWithDispatch<Argument> implements
+				Command {
 			boolean pro;
 			Proposition parentProp;
 			Argument newArg;
 			Proposition newProp;
 
+			CommandAdd(String message) {
+				super(message);
+			}
+
 			@Override
 			public void execute() {
-				addArgumentCmd(pro, parentProp, newArg, newProp);
+				propositionService.addArgument(parentProp.id, pro, this);
+			}
+
+			@Override
+			public void doOnSuccess(Argument result) {
+				newProp.id = result.props.get(0).id;
+				newArg.id = result.id;
 			}
 		}
-		CommandAdd command = new CommandAdd();
+		CommandAdd command = new CommandAdd(
+				"Server Reports Successful Argument Add");
 		command.pro = pro;
 		command.parentProp = parentProp;
 		command.newArg = newArg;
@@ -231,149 +200,89 @@ public class ServerComm {
 		queueCommand(command);
 	}
 
-	private static void addArgumentCmd(boolean pro, Proposition parentProp,
-			Argument newArg, Proposition newProp) {
-		class AddCallback implements AsyncCallback<Argument> {
-			Proposition newProposition;
-			Argument newArgument;
-
-			@Override
-			public void onFailure(Throwable caught) {
-				String details = caught.getMessage();
-				message("Error: " + details);
-				dispatchCommand();
-			}
-
-			@Override
-			public void onSuccess(Argument result) {
-				message("Server Reports Successful Argument Add");
-				newProposition.id = result.props.get(0).id;
-				newArgument.id = result.id;
-				dispatchCommand();
-			}
-		}
-
-		AddCallback addCallback = new AddCallback();
-		addCallback.newProposition = newProp;
-		addCallback.newArgument = newArg;
-
-		propositionService.addArgument(parentProp.id, pro, addCallback);
-	}
-
 	public static void removeProposition(Proposition prop) {
-		class CommandRemove implements Command {
+		class CommandRemove extends ServerCallbackWithDispatch<Void> implements
+				Command {
 			Proposition prop;
+
+			public CommandRemove(String message) {
+				super(message);
+			}
 
 			@Override
 			public void execute() {
-				removePropositionCmd(prop);
-			}
-		}
-		CommandRemove command = new CommandRemove();
-		command.prop = prop;
-		queueCommand(command);
-	}
-
-	private static void removePropositionCmd(Proposition prop) {
-		AsyncCallback<Void> callback = new AsyncCallback<Void>() {
-			public void onFailure(Throwable caught) {
-				message("Error: " + caught.getMessage());
-				dispatchCommand();
+				propositionService.removeProposition(prop.id, this);
 			}
 
 			@Override
-			public void onSuccess(Void result) {
-				message("Server Reports Successful Proposition Delete");
-				dispatchCommand();
+			public void doOnSuccess(Void result) {
 			}
-		};
-
-		propositionService.removeProposition(prop.id, callback);
+		}
+		CommandRemove command = new CommandRemove(
+				"Server Reports Successful Proposition Delete");
+		command.prop = prop;
+		queueCommand(command);
 	}
 
 	public static void updateProposition(Proposition prop) {
-		class CommandUpdate implements Command {
+		class CommandUpdate extends ServerCallbackWithDispatch<Void> implements
+				Command {
 			Proposition prop;
+
+			public CommandUpdate(String message) {
+				super(message);
+			}
 
 			@Override
 			public void execute() {
-				updatePropositionCmd(prop);
-			}
-		}
-		CommandUpdate command = new CommandUpdate();
-		command.prop = prop;
-
-		queueCommand(command);
-	}
-
-	private static void updatePropositionCmd(Proposition prop) {
-		AsyncCallback<Void> callback = new AsyncCallback<Void>() {
-			public void onFailure(Throwable caught) {
-				message("Error [updatePropositionCmd]: " + caught.getMessage());
-				dispatchCommand();
+				propositionService.updateProposition(prop.id,
+						prop.getContent(), this);
 			}
 
 			@Override
-			public void onSuccess(Void result) {
-				message("Server Reports Successful Proposition Update");
-				dispatchCommand();
+			public void doOnSuccess(Void result) {
 			}
-		};
+		}
+		CommandUpdate command = new CommandUpdate(
+				"Server Reports Successful Proposition Update");
+		command.prop = prop;
 
-		propositionService.updateProposition(prop.id, prop.getContent(),
-				callback);
+		queueCommand(command);
 	}
 
 	public static void addProposition(Proposition newProposition,
 			Argument parentArgument, int position) {
-		class CommandAdd implements Command {
+		class CommandAdd extends ServerCallbackWithDispatch<Long> implements
+				Command {
 			Proposition newProposition;
 			Argument parentArgument;
 			int position;
 
-			@Override
-			public void execute() {
-				addPropositionCmd(newProposition, parentArgument, position);
+			public CommandAdd(String message) {
+				super(message);
 			}
 
+			@Override
+			public void execute() {
+				if (parentArgument != null)
+					propositionService.addProposition(parentArgument.id,
+							position, this);
+				else
+					propositionService.addProposition(null, 0, this);
+			}
+
+			@Override
+			public void doOnSuccess(Long result) {
+				newProposition.id = result;
+			}
 		}
 
-		CommandAdd command = new CommandAdd();
+		CommandAdd command = new CommandAdd(
+				"Server Reports Successful Proposition Add");
 		command.newProposition = newProposition;
 		command.parentArgument = parentArgument;
 		command.position = position;
 
 		queueCommand(command);
-	}
-
-	private static void addPropositionCmd(Proposition newProposition,
-			Argument parentArgument, int position) {
-
-		class AddCallback implements AsyncCallback<Long> {
-			Proposition newProposition;
-
-			@Override
-			public void onFailure(Throwable caught) {
-				String details = caught.getMessage();
-				message("Error: " + details);
-				dispatchCommand();
-			}
-
-			@Override
-			public void onSuccess(Long result) {
-				message("Server Reports Successful Proposition Add");
-				newProposition.id = result;
-				dispatchCommand();
-			}
-		}
-
-		AddCallback addCallback = new AddCallback();
-		addCallback.newProposition = newProposition;
-
-		if (parentArgument != null)
-			propositionService.addProposition(parentArgument.id, position,
-					addCallback);
-		else
-			propositionService.addProposition(null, 0, addCallback);
 	}
 }

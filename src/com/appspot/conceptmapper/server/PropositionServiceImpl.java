@@ -646,4 +646,11 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		return returnSet;
 
 	}
+
+	@Override
+	public Proposition getPropositionTree(Long propID) throws Exception {
+		Proposition prop = ofy.get(Proposition.class, propID );
+		recursiveBuildProp(prop);
+		return prop;
+	}
 }
