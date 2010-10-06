@@ -36,6 +36,14 @@ h1 {
 	padding: .5em;
 }
 
+.linkedPropositionTextArea {
+	border: 1px dotted #00f;
+	padding: .5em;
+	/*background-color: #FFF1A8;*/
+	/*background-color: #FFFF8B;*/
+	background-color:#FFFFCC
+}
+
 .titleLabel {
 	font-size: 2em;
 	font-weight: bold;

@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.appspot.conceptmapper.client.ServerComm.LocalCallback;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
@@ -28,7 +27,6 @@ public class EditMode extends ResizeComposite implements
 			"Would you like to use one of these already existing propositions?");
 	private FlexTable searchResults = new FlexTable();
 	private EditModeTree tree;
-	private List<Proposition> propositionMatches;
 
 	public EditMode() {
 		super();
@@ -38,13 +36,13 @@ public class EditMode extends ResizeComposite implements
 		SplitLayoutPanel mainSplit = new SplitLayoutPanel();
 		SplitLayoutPanel sideSplit = new SplitLayoutPanel();
 
-		sideSplit.addNorth(messageArea, 280);
+		sideSplit.addNorth(new ScrollPanel(messageArea), 280);
 
 		FlowPanel searchFlowPanel = new FlowPanel();
 		searchFlowPanel.add(searchLabel);
 		searchLabel.setVisible(false);
 		searchFlowPanel.add(searchResults);
-		sideSplit.add(searchFlowPanel);
+		sideSplit.add(new ScrollPanel(searchFlowPanel));
 
 		Button addPropButton = new Button("Add A New Proposition");
 		addPropButton.addClickHandler(new ClickHandler() {
@@ -59,7 +57,8 @@ public class EditMode extends ResizeComposite implements
 
 				tree.addItem(newPropView);
 				newPropView.haveFocus();
-				ServerComm.addProposition(newPropView.getProposition(), null, 0);
+				ServerComm
+						.addProposition(newPropView.getProposition(), null, 0);
 			}
 		});
 
@@ -94,62 +93,62 @@ public class EditMode extends ResizeComposite implements
 	public void call(List<Proposition> propMatches) {
 		class SearchButton extends Button implements ClickHandler {
 			int resultIndex;
+			List<Proposition> propMatches;
 
-			SearchButton(int resultIndex) {
+			SearchButton(int resultIndex, List<Proposition> propMatches) {
 				super("use this");
 				this.resultIndex = resultIndex;
+				this.propMatches = propMatches;
 				addClickHandler(this);
 			}
 
 			public void onClick(ClickEvent event) {
-				ConceptMapper.message("users want to use proposition:"
-						+ searchResults.getText(resultIndex, 0)
-						+ "; with this propID:"
-						+ propositionMatches.get(resultIndex).id);
-				PropositionView propView = PropositionView
+				PropositionView propViewToRemove = PropositionView
 						.getLastPropositionWithFocus();
-				GWT.log("lastPropositionWithFocus Content:" + propView.getContent());
-				if (propView.getChildCount() == 0) {
-					GWT.log("AAAAA");
+				if (propViewToRemove.getChildCount() == 0) {
 					class ThisCallback implements LocalCallback<Proposition> {
-						ArgumentView argView;
-						PropositionView propView;
+						ArgumentView parentArgView;
+						PropositionView propViewToRemove;
 						int propIndex;
 
 						@Override
 						public void call(Proposition proposition) {
-							GWT.log("BBBBB");
-							argView.removeItem(propView);
+							parentArgView.removeItem(propViewToRemove);
 							PropositionView newPropView = PropositionView
 									.recursiveBuildPropositionView(proposition,
 											true, null, null);
-							GWT.log("PropositionView as returned:");
-							newPropView.printPropRecursive(0);
-							argView.insertPropositionViewAt(propIndex,
+							parentArgView.insertPropositionViewAt(propIndex,
 									newPropView);
 						}
-					};
+					}
+					;
 					ThisCallback callback = new ThisCallback();
-					callback.argView = (ArgumentView) propView.getParentItem();
-					callback.propView = propView;
-					callback.propIndex = callback.argView
-							.getChildIndex(propView);
-					//TODO MUST ALSO LINK!!!!
+					ArgumentView parentArgView = propViewToRemove
+							.parentArgView();
+					callback.parentArgView = parentArgView;
+					callback.propViewToRemove = propViewToRemove;
+					callback.propIndex = parentArgView
+							.getChildIndex(propViewToRemove);
 					Proposition propToLinkTo = propMatches.get(resultIndex);
-					ServerComm.getPropTree(propToLinkTo, callback);
+					ServerComm.replaceWithLinkAndGet(parentArgView.argument,
+							propToLinkTo, propViewToRemove.proposition,
+							callback);
 				} else {
 					ConceptMapper
 							.message("Cannot link to existing proposition when proposition currently being edited has children");
 				}
 			}
 		}
-		propositionMatches = propMatches;
 		searchResults.removeAllRows();
+		if (propMatches.size() > 0) {
+			searchLabel.setVisible(true);
+		} else {
+			searchLabel.setVisible(false);
+		}
 		int i = 0;
 		for (Proposition prop : propMatches) {
-			searchLabel.setVisible(true);
 			searchResults.setText(i, 0, prop.getContent());
-			searchResults.setWidget(i, 1, new SearchButton(i));
+			searchResults.setWidget(i, 1, new SearchButton(i, propMatches));
 			i++;
 		}
 	}
@@ -272,9 +271,8 @@ public class EditMode extends ResizeComposite implements
 				args.add(argView.argument);
 				if (argView.getState() || propView.getChildCount() == 0) {
 					for (int j = 0; j < argView.getChildCount(); j++) {
-						recursiveGetOpenPropsAndArgs(
-								(PropositionView) argView.getChild(j), props,
-								args);
+						recursiveGetOpenPropsAndArgs((PropositionView) argView
+								.getChild(j), props, args);
 					}
 				}
 			}

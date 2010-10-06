@@ -41,6 +41,10 @@ public class ArgumentView extends TreeItem {
 			setText("Argument Against");
 		}
 	}
+	
+	public PropositionView getPropView( int index ){
+		return (PropositionView) getChild(index);
+	}
 
 	public void insertPropositionViewAt(int index, PropositionView propView) {
 		/*

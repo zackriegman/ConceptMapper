@@ -11,7 +11,7 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 @RemoteServiceRelativePath("propServ")
 public interface PropositionService extends RemoteService {
 
-	public Long addProposition(Long parentArgID, int position) throws Exception;
+	public Long addProposition(Long parentArgID, int position, String content) throws Exception;
 
 	public void removeProposition(Long propID) throws Exception;
 
@@ -28,7 +28,7 @@ public interface PropositionService extends RemoteService {
 
 	public Proposition[] getAllProps();
 	
-	public Proposition getPropositionTree(Long propID) throws Exception;
+	public Proposition replaceWithLinkAndGet(Long parentArgID, Long linkPropID, Long removePropID) throws Exception;
 
 	public SortedMap<Date, Change> getRevisions(Long changeID,
 			List<Long> propIDs, List<Long> argIDs) throws Exception;
@@ -55,6 +55,6 @@ public interface PropositionService extends RemoteService {
 	public ArgTreeWithHistory getArgumentCurrentVersionAndHistory(Long argID)
 			throws Exception;
 	
-	public List<Proposition> searchPropositions( String string, Long excludePropID );
+	public List<Proposition> searchPropositions( String string, Long filerArgID ) throws Exception;
 
 }

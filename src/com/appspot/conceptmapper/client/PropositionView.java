@@ -29,14 +29,17 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	private TextArea textArea = new TextAreaSloppyGrow();
 	private Button proButton;
 	private Button conButton;
+	private Button linkRemoveButton;
+	private Button linkEditButton;
 	public Proposition proposition;
 	boolean deleted = false;
+	boolean editable;
 
 	public String toString() {
 		return "textArea:" + textArea.getText() + "; id:" + proposition.id;
 	}
-	
-	public static PropositionView getLastPropositionWithFocus(){
+
+	public static PropositionView getLastPropositionWithFocus() {
 		return lastPropositionWithFocus;
 	}
 
@@ -46,6 +49,14 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		cloneView.textArea.setText(textArea.getText());
 		cloneView.setState(getState());
 		return cloneView;
+	}
+
+	public Argument parentArgument() {
+		if (parentArgView() != null) {
+			return parentArgView().argument;
+		} else {
+			return null;
+		}
 	}
 
 	public ArgumentView parentArgView() {
@@ -67,32 +78,51 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	public PropositionView(Proposition prop, boolean editable) {
 		super();
 		this.proposition = prop;
+		this.editable = editable;
+		VerticalPanel mainPanel = new VerticalPanel();
 		setContent(proposition.getContent());
-		VerticalPanel verticalPanel = new VerticalPanel();
-		verticalPanel.add(textArea);
-		this.setWidget(verticalPanel);
+		mainPanel.add(textArea);
+		this.setWidget(mainPanel);
 
 		if (editable) {
-			HorizontalPanel horizontalPanel = new HorizontalPanel();
-			verticalPanel.add(horizontalPanel);
+			HorizontalPanel editPanel = new HorizontalPanel();
+			mainPanel.add(editPanel);
 			proButton = new Button("For");
 			conButton = new Button("Against");
-			horizontalPanel.add(proButton);
-			horizontalPanel.add(conButton);
+			editPanel.add(proButton);
+			editPanel.add(conButton);
 			proButton.addClickHandler(this);
 			conButton.addClickHandler(this);
 			proButton.setVisible(false);
 			conButton.setVisible(false);
 
+			if (proposition.linkCount > 1) {
+				linkRemoveButton = new Button("Unlink");
+				linkEditButton = new Button("Edit");
+				editPanel.add(linkRemoveButton);
+				editPanel.add(linkEditButton);
+				linkRemoveButton.addClickHandler(this);
+				linkEditButton.addClickHandler(this);
+				linkRemoveButton.setVisible(false);
+				linkEditButton.setVisible(false);
+				textArea.setReadOnly(true);
+			} else {
+				textArea.setReadOnly(false);
+			}
+
 			textArea.addKeyDownHandler(this);
 			textArea.addKeyUpHandler(this);
 			textArea.addFocusHandler(this);
 			textArea.addChangeHandler(this);
+		} else if (!editable) {
+			textArea.setReadOnly(true);
 		}
-		textArea.setReadOnly(!editable);
-		// textArea.setEnabled(editable); //blacks out the wideget entirely
 
-		textArea.setStylePrimaryName("propositionTextArea");
+		if (proposition.linkCount <= 1) {
+			textArea.setStylePrimaryName("propositionTextArea");
+		} else if (proposition.linkCount > 1) {
+			textArea.setStylePrimaryName("linkedPropositionTextArea");
+		}
 		setState(true);
 
 	}
@@ -120,6 +150,10 @@ public class PropositionView extends TreeItem implements ClickHandler,
 
 		} else if (event.getSource() == conButton) {
 			addArgument(false);
+		} else if (event.getSource() == linkRemoveButton) {
+			// TODO: write linkeRemoveButton action
+		} else if (event.getSource() == linkEditButton) {
+			// TODO: write linkEditButton action
 		}
 	}
 
@@ -144,22 +178,26 @@ public class PropositionView extends TreeItem implements ClickHandler,
 				event.preventDefault();
 			} else if (charCode == KeyCodes.KEY_ENTER
 					&& parentArgView() != null) {
-				addPropositionAfterThisOne();
+				addProposition();
 				event.preventDefault();
-			} else if (charCode == KeyCodes.KEY_BACKSPACE
-					&& textArea.getCursorPos() == 0
-					&& textArea.getSelectionLength() == 0) {
-				removePropositionAndParentArgument();
-				event.preventDefault();
-			} else if (charCode == KeyCodes.KEY_DELETE
-					&& textArea.getText().equals("")) {
-				removePropositionAndParentArgument();
-				event.preventDefault();
-			} else if (charCode == KeyCodes.KEY_DELETE
-					&& textArea.getCursorPos() == textArea.getText().length()
-					&& textArea.getSelectionLength() == 0) {
-				removeNextProposition();
-				event.preventDefault();
+			}
+			/* only do the following key actions if this is not a link */
+			else if (proposition.linkCount <= 1) {
+				if (charCode == KeyCodes.KEY_BACKSPACE
+						&& textArea.getCursorPos() == 0
+						&& textArea.getSelectionLength() == 0) {
+					removePropositionAndParentArgument();
+					event.preventDefault();
+				} else if (charCode == KeyCodes.KEY_DELETE
+						&& textArea.getText().equals("")) {
+					removePropositionAndParentArgument();
+					event.preventDefault();
+				} else if (charCode == KeyCodes.KEY_DELETE
+						&& textArea.getCursorPos() == textArea.getText()
+								.length() && textArea.getSelectionLength() == 0) {
+					removeNextProposition();
+					event.preventDefault();
+				}
 			}
 		}
 	}
@@ -169,7 +207,8 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		int thisIndex = parentArgView.getChildIndex(this);
 		PropositionView nextPropView = ((PropositionView) parentArgView
 				.getChild(thisIndex + 1));
-		if (nextPropView != null && nextPropView.getChildCount() == 0) {
+		if (nextPropView != null && nextPropView.getChildCount() == 0
+				&& nextPropView.proposition.linkCount <= 1) {
 			int cursorPosition = textArea.getCursorPos();
 			textArea.setText(textArea.getText()
 					+ nextPropView.textArea.getText());
@@ -233,6 +272,11 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		} else if (thisIndex != 0) {
 			PropositionView prePropView = ((PropositionView) parentArgView
 					.getChild(thisIndex - 1));
+			
+			/* cannot combine contents with a preceeding proposition that is a link */
+			if( prePropView.proposition.linkCount > 1){
+				return;
+			}
 			TextArea preTextArea = prePropView.textArea;
 			int newCursorPosition = preTextArea.getText().length();
 			String combinedText = preTextArea.getText() + textArea.getText();
@@ -241,33 +285,55 @@ public class PropositionView extends TreeItem implements ClickHandler,
 			preTextArea.setCursorPos(newCursorPosition);
 			prePropView.proposition.setContent(combinedText);
 			remove();
-			ServerComm.updateProposition(prePropView.proposition);
+			prePropView.updatePropOnServerIfChanged();
 		}
 		ServerComm.removeProposition(this.proposition);
 		deleted = true;
 	}
 
-	public void addPropositionAfterThisOne() {
-		PropositionView newProposition = new PropositionView(true);
+	public void addProposition() {
 		int cursorPosition = textArea.getCursorPos();
+		String content = textArea.getText();
+
+		/*
+		 * for linked props do not permit splitting the prop; only permit adding
+		 * new empty props before or after
+		 */
+		if (proposition.linkCount > 1 && cursorPosition != 0
+				&& cursorPosition != content.length()) {
+			return;
+		}
 
 		int treePosition = parentArgView().getChildIndex(this);
-		parentArgView().insertPropositionViewAt(treePosition + 1,
-				newProposition);
+		PropositionView newPropView = new PropositionView(true);
+		if (cursorPosition == 0) {
+			parentArgView().insertPropositionViewAt(treePosition, newPropView);
+			ServerComm.addProposition(newPropView.proposition,
+					parentArgView().argument, treePosition);
+		} else {
+			parentArgView().insertPropositionViewAt(treePosition + 1,
+					newPropView);
 
-		// then split the text between the current and new proposition
-		String content = textArea.getText();
-		String firstContent = content.substring(0, cursorPosition);
-		String secondContent = content.substring(cursorPosition);
+			// then split the text between the current and new proposition
+			content = textArea.getText();
+			String firstContent = content.substring(0, cursorPosition);
+			String secondContent = content.substring(cursorPosition);
 
-		textArea.setText(firstContent);
-		newProposition.textArea.setText(secondContent);
+			textArea.setText(firstContent);
+			proposition.setContent(firstContent);
 
-		newProposition.textArea.setCursorPos(0);
-		newProposition.textArea.setFocus(true);
+			newPropView.textArea.setText(secondContent);
+			newPropView.proposition.setContent(secondContent);
 
-		ServerComm.addProposition(newProposition.proposition,
-				parentArgView().argument, treePosition + 1);
+			newPropView.textArea.setCursorPos(0);
+			newPropView.textArea.setFocus(true);
+			GWT.log("prop sent:" + newPropView.toString());
+
+			ServerComm.addProposition(newPropView.proposition,
+					parentArgView().argument, treePosition + 1);
+			updatePropOnServerIfChanged();
+		}
+
 	}
 
 	@Override
@@ -279,15 +345,24 @@ public class PropositionView extends TreeItem implements ClickHandler,
 					&& lastPropositionWithFocus != null) {
 				lastPropositionWithFocus.proButton.setVisible(false);
 				lastPropositionWithFocus.conButton.setVisible(false);
+				if (lastPropositionWithFocus.linkEditButton != null) {
+					lastPropositionWithFocus.linkEditButton.setVisible(false);
+					lastPropositionWithFocus.linkRemoveButton.setVisible(false);
+				}
 			}
 			// make this proposition's button's visible
-			if (!textArea.isReadOnly()) {
+			if (editable) {
 				proButton.setVisible(true);
 				conButton.setVisible(true);
+				if (linkEditButton != null) {
+					linkEditButton.setVisible(true);
+					linkRemoveButton.setVisible(true);
+				}
 				lastPropositionWithFocus = this;
-				ServerComm.searchPropositions(textArea.getText(), proposition,
+				ServerComm.searchPropositions(textArea.getText(),
+						parentArgument(),
 						((EditModeTree) getTree()).searchCallback);
-			} 
+			}
 		}
 	}
 
@@ -330,8 +405,16 @@ public class PropositionView extends TreeItem implements ClickHandler,
 
 	@Override
 	public void onChange(ChangeEvent event) {
-		if (this.proposition.getContent() != textArea.getText()) {
-			this.proposition.setContent(textArea.getText());
+		updatePropOnServerIfChanged();
+	}
+
+	private void updatePropOnServerIfChanged() {
+		String trimmedTextAreaContent = textArea.getText() == null ? ""
+				: textArea.getText().trim();
+		String trimmedPropositionContent = proposition.getContent() == null ? ""
+				: proposition.getContent().trim();
+		if (!trimmedPropositionContent.equals(trimmedTextAreaContent)) {
+			this.proposition.setContent(trimmedTextAreaContent);
 			ServerComm.updateProposition(this.proposition);
 		}
 	}
@@ -369,21 +452,19 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	public void onKeyUp(KeyUpEvent event) {
 		Object source = event.getSource();
 		if (source == textArea && !deleted) {
-
-			ServerComm.searchPropositions(textArea.getText(), proposition,
+			ServerComm.searchPropositions(textArea.getText(), parentArgument(),
 					((EditModeTree) getTree()).searchCallback);
 		}
 
 	}
-	
-	public void printPropRecursive( int level) {
+
+	public void printPropRecursive(int level) {
 		GWT.log(ConceptMapper.spaces(level * 2) + "propID:" + proposition.id
 				+ "; content:" + getContent());
 		for (int i = 0; i < getChildCount(); i++) {
 			ArgumentView arg = (ArgumentView) getChild(i);
-			arg.printArgRecursive( level + 1 );
+			arg.printArgRecursive(level + 1);
 		}
 	}
-	
 
 }

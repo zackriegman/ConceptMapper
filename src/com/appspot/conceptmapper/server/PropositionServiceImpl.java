@@ -75,18 +75,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	}
 
 	public void printProposition(Proposition prop) {
-		println(propositionToString(prop));
-	}
-
-	public String propositionToString(Proposition prop) {
-		String tokens = "";
-		if (prop.tokens != null) {
-			for (String str : prop.tokens) {
-				tokens = tokens + " " + str;
-			}
-		}
-		return "id:" + prop.id + "; content:" + prop.content + "; topLevel:"
-				+ prop.topLevel + "; tokens: [" + tokens + "]";
+		println(prop.toString());
 	}
 
 	@Override
@@ -95,7 +84,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		test();
 
 		Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
-				"topLevel", true);
+				"linkCount =", 0);
 		Proposition[] returnProps = new Proposition[propQuery.countAll()];
 		// println("getAllProps[propQuery.countAll()]: " +
 		// propQuery.countAll());
@@ -125,7 +114,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	}
 
 	public void printPropRecursive(Proposition propParent, int level) {
-		println(spaces(level) + propositionToString(propParent));
+		println(spaces(level) + propParent.toString());
 		for (Argument arg : propParent.args) {
 			String printString = spaces(level + 1);
 			if (arg.pro == true)
@@ -178,16 +167,19 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			}
 		}
 	}
-
-	public Long addProposition(Long parentArgID, int position) throws Exception {
+	
+	@Override
+	public Long addProposition(Long parentArgID, int position, String content)
+			throws Exception {
 
 		Proposition newProposition = new Proposition();
+		newProposition.content = content;
 		Argument parentArg = null;
 
 		if (parentArgID != null) {
 			// exception will be generated if there is a bogus parentArgID
 			parentArg = ofy.get(Argument.class, parentArgID);
-			newProposition.topLevel = false;
+			newProposition.linkCount = 1;
 			ofy.put(newProposition);
 			parentArg.propIDs.add(position, newProposition.id);
 			// println("addProposition -- position:" + position +
@@ -195,7 +187,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			// + parentArgID + "; newProposition.id:" + newProposition.id);
 			ofy.put(parentArg);
 		} else {
-			newProposition.topLevel = true;
+			newProposition.linkCount = 0;
 			ofy.put(newProposition);
 		}
 
@@ -222,6 +214,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		ofy.put(change);
 	}
 
+	// TODO
 	@Override
 	public void removeProposition(Long propID) throws Exception {
 		if (ofy.query(Argument.class).filter("aboutPropID", propID).countAll() != 0) {
@@ -234,7 +227,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		Proposition prop = ofy.get(Proposition.class, propID);
 		change.propID = prop.id;
 		change.propContent = prop.content;
-		change.propTopLevel = prop.topLevel;
+		change.propLinkCount = prop.linkCount;
 
 		/* in case there is an argument deletion, create an argument change */
 		Change argDeletionChange = null;
@@ -244,10 +237,11 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		/* get all the arguments that use this proposition */
 		Query<Argument> query = ofy.query(Argument.class).filter("propIDs",
 				propID);
-		if (query.countAll() > 1) { // only delete a proposition that is used in
-			// 1 or fewer arguments
+
+		/* only delete a proposition that is used in 1 or fewer arguments */
+		if (query.countAll() > 1) {
 			throw new Exception(
-					"cannot delete a proposition used by more than one argument; delink for other arguments before deleting");
+					"cannot delete a proposition used by more than one argument; delink from other arguments before deleting");
 		}
 
 		/* if the proposition is used in an argument */
@@ -313,7 +307,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		ofy.get(Proposition.class, parentPropID);
 
 		Proposition newProp = new Proposition();
-		newProp.topLevel = false;
+		newProp.linkCount = 1;
 		ofy.put(newProp);
 
 		Argument newArg = new Argument();
@@ -339,14 +333,15 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	public void updateProposition(Long propID, String content) throws Exception {
 		Change change = new Change(ChangeType.PROP_MODIFICATION);
 		Proposition prop = ofy.get(Proposition.class, propID);
-		if (prop.getContent() != null && prop.getContent().equals(content)) {
+		if (prop.getContent() != null && prop.getContent().trim().equals(content.trim())) {
 			throw new Exception(
 					"Cannot update proposition content:  content not changed!");
 		}
 
 		change.propID = prop.id;
 		change.propContent = prop.content;
-		change.propTopLevel = prop.topLevel;
+		//TODO is this line necessary for some reason?
+		//change.propTopLevel = prop.topLevel;
 
 		/*
 		 * have to save the version info before the proposition value is changed
@@ -354,67 +349,10 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		 */
 		saveVersionInfo(change);
 
-		prop.setContent(content);
+		prop.setContent(content.trim());
 		prop.tokens = getTokensForIndexingOrQuery(content, 30);
 		ofy.put(prop);
 
-	}
-
-	@Override
-	public void linkProposition(Long parentArgID, int position,
-			Long propositionID) throws Exception {
-		Argument argument = ofy.get(Argument.class, parentArgID);
-
-		/*
-		 * we get the proposition, even though the proposition ID is enough to
-		 * complete the linking, we want to raise an exception if the prop
-		 * doesn't actually exist to prevent garbage data from client putting
-		 * the datastore in an inconsistent state
-		 */
-		Proposition proposition = ofy.get(Proposition.class, propositionID);
-
-		argument.propIDs.add(position, propositionID);
-		ofy.put(argument);
-
-		Change change = new Change(ChangeType.PROP_LINK);
-		change.argID = argument.id;
-		change.propID = proposition.id;
-		saveVersionInfo(change);
-	}
-
-	@Override
-	public void unlinkProposition(Long parentArgID, Long propositionID)
-			throws Exception {
-
-		/* this will throw an exception if the argument doesn't exist */
-		Argument argument = ofy.get(Argument.class, parentArgID);
-		/* this will throw an exception if the prop doesn't exist */
-		Proposition proposition = ofy.get(Proposition.class, propositionID);
-
-		int propIndex = argument.propIDs.indexOf(propositionID);
-		if (propIndex == -1) {
-			throw new Exception(
-					"cannot unlink proposition from argument:  proposition not part of argument");
-		}
-
-		argument.propIDs.remove(propositionID);
-
-		if (argument.propIDs.isEmpty()) {
-			/*
-			 * TODO do I need to save any additional version information when I
-			 * delete a argument during an unlink in order to recreate the
-			 * previous state?
-			 */
-			ofy.delete(argument);
-		} else {
-			ofy.put(argument);
-		}
-
-		Change change = new Change(ChangeType.PROP_UNLINK);
-		change.argID = parentArgID;
-		change.propID = proposition.id;
-		change.argPropIndex = propIndex;
-		saveVersionInfo(change);
 	}
 
 	@Override
@@ -578,7 +516,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public List<Proposition> searchPropositions(String string,
-			Long excludePropID) {
+			Long filterArgID) throws Exception {
 		// System.out.println("start:  searchPropositions");
 		Set<String> tokens = getTokensForIndexingOrQuery(string, 5);
 		/*
@@ -592,18 +530,17 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			query.filter("tokens", token);
 		}
 
-		if (excludePropID != null) {
-			query.filter("id !=", excludePropID);
+		Argument filterArg = null;
+		if( filterArgID != null ){
+			filterArg = ofy.get(Argument.class, filterArgID);
 		}
-		/*
-		 * System.out.println("found: "); for (Proposition proposition : query)
-		 * { System.out.println(propositionToString(proposition)); }
-		 * System.out.println("end:  searchPropositions");
-		 * printAllPropsAndArgs();
-		 */
+
 		List<Proposition> results = new LinkedList<Proposition>();
-		for( Proposition proposition : query ){
-			results.add( proposition );
+		for (Proposition proposition : query) {
+			if( filterArg != null && filterArg.propIDs.contains(proposition.id) ){
+				continue;
+			}
+			results.add(proposition);
 		}
 		return results;
 	}
@@ -648,9 +585,158 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Proposition getPropositionTree(Long propID) throws Exception {
-		Proposition prop = ofy.get(Proposition.class, propID );
-		recursiveBuildProp(prop);
-		return prop;
+	public Proposition replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
+			Long removePropID) throws Exception {
+
+		if (ofy.query(Argument.class).filter("aboutPropID", removePropID)
+				.countAll() != 0) {
+			throw new Exception(
+					"cannot replace a proposition with a link to a second proposition when the first has arguments");
+		}
+
+		Argument parentArg = ofy.get(Argument.class, parentArgID);
+		
+		if( parentArg.propIDs.contains(linkPropID)){
+			throw  new Exception( "cannot link to proposition in argument which already links to that proposition");
+		}
+		Proposition removeProp = ofy.get(Proposition.class, removePropID);
+		Proposition linkProp = ofy.get(Proposition.class, linkPropID);
+		int index = -1;
+		if (parentArg != null) {
+			index = parentArg.propIDs.indexOf(removePropID);
+		}
+
+		/* get all the arguments that use this proposition */
+		Query<Argument> query = ofy.query(Argument.class).filter("propIDs",
+				removePropID);
+
+		/* only delete a proposition that is used in 1 or fewer arguments. */
+		if (query.countAll() == 0) {
+			Change change = new Change(ChangeType.PROP_DELETION);
+			change.propID = removeProp.id;
+			change.propContent = removeProp.content;
+			change.propLinkCount = removeProp.linkCount;
+
+			ofy.delete(removeProp);
+			saveVersionInfo(change);
+		}
+		/*
+		 * can't reuse the removeProposition function because don't want to
+		 * delete the argument where it is empty.
+		 */
+		else if (query.countAll() == 1) {
+			Change change = new Change(ChangeType.PROP_DELETION);
+			change.propID = removeProp.id;
+			change.propContent = removeProp.content;
+			change.propLinkCount = removeProp.linkCount;
+			change.argID = parentArgID;
+			change.argPropIndex = index;
+
+			parentArg.propIDs.remove(index);
+
+			ofy.delete(removeProp);
+			ofy.put(parentArg);
+			saveVersionInfo(change);
+		}
+		/*
+		 * if used in more than one argument, unlink instead. can't use the
+		 * unlinkProposition function because don't want to delete the argument
+		 * where it is empty.
+		 */
+		else if (query.countAll() > 1) {
+			Change change = new Change(ChangeType.PROP_UNLINK);
+			change.argID = parentArgID;
+			change.propID = removePropID;
+			change.argPropIndex = index;
+
+			parentArg.propIDs.remove(index);
+
+			removeProp.linkCount--;
+			
+			ofy.put(removeProp);
+			ofy.put(parentArg);
+			saveVersionInfo(change);
+		}
+
+		Change change = new Change(ChangeType.PROP_LINK);
+		change.argID = parentArgID;
+		change.propID = linkPropID;
+
+		parentArg.propIDs.add(index, linkPropID);
+		ofy.put(parentArg);
+		linkProp.linkCount++;
+		ofy.put(linkProp);
+		saveVersionInfo(change);
+
+		recursiveBuildProp(linkProp);
+		return linkProp;
+	}
+
+	/* the below functions are not yet used anywhere... consider deleting them */
+
+	@Override
+	public void linkProposition(Long parentArgID, int position,
+			Long propositionID) throws Exception {
+		Argument argument = ofy.get(Argument.class, parentArgID);
+		Proposition proposition = ofy.get(Proposition.class, propositionID);
+
+		argument.propIDs.add(position, propositionID);
+		ofy.put(argument);
+		proposition.linkCount++;
+		ofy.put(proposition);
+
+		Change change = new Change(ChangeType.PROP_LINK);
+		change.argID = argument.id;
+		change.propID = proposition.id;
+		saveVersionInfo(change);
+	}
+
+	@Override
+	public void unlinkProposition(Long parentArgID, Long propositionID)
+			throws Exception {
+
+		/* this will throw an exception if the argument doesn't exist */
+		Argument argument = ofy.get(Argument.class, parentArgID);
+		/* this will throw an exception if the prop doesn't exist */
+		Proposition proposition = ofy.get(Proposition.class, propositionID);
+
+		int propIndex = argument.propIDs.indexOf(propositionID);
+		if (propIndex == -1) {
+			throw new Exception(
+					"cannot unlink proposition from argument:  proposition not part of argument");
+		}
+
+		argument.propIDs.remove(propositionID);
+
+		/* in case there is an argument deletion, create an argument change */
+		Change argDeletionChange = null;
+
+		if (argument.propIDs.isEmpty()) {
+			argDeletionChange = new Change(ChangeType.ARG_DELETION);
+			argDeletionChange.propID = argument.aboutPropID;
+			argDeletionChange.argID = argument.id;
+			argDeletionChange.argPro = argument.pro;
+			/*
+			 * because we are only deleting arguments when they have no
+			 * propositions left, we don't have to save the argument's
+			 * proposition list
+			 */
+			ofy.delete(argument);
+		} else {
+			ofy.put(argument);
+		}
+		
+		proposition.linkCount--;
+		ofy.put(proposition);
+
+		Change change = new Change(ChangeType.PROP_UNLINK);
+		change.argID = parentArgID;
+		change.propID = proposition.id;
+		change.argPropIndex = propIndex;
+		saveVersionInfo(change);
+
+		if (argDeletionChange != null) {
+			saveVersionInfo(argDeletionChange);
+		}
 	}
 }

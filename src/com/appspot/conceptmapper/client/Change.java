@@ -80,7 +80,7 @@ public class Change implements Serializable {
 	 */
 	public Long propID;
 	public String propContent;
-	public boolean propTopLevel;
+	public int propLinkCount;
 
 	/*
 	 * For change types: PROP_DELETION, PROP_ADDITION, PROP_UNLINK, PROP_LINK
@@ -108,7 +108,7 @@ public class Change implements Serializable {
 		return "id:" + id + "; changeType:" + changeType + "; argID:" + argID
 				+ "; argPropIndex:" + argPropIndex + "; argPro:" + argPro
 				+ "; propID:" + propID + "; propContent:" + propContent
-				+ "; propTopLevel:" + propTopLevel + "; date:" + date
+				+ "; propLinkCount:" + propLinkCount + "; date:" + date
 				+ "; remoteAddr:" + remoteAddr + "; remoteHost:" + remoteHost
 				+ "; remotePort:" + remotePort + "; remoteUser:" + remoteUser;
 	}

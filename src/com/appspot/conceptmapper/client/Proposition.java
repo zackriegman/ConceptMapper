@@ -19,18 +19,28 @@ public class Proposition implements Serializable {
 	public Long id;
 	public String content;
 	transient public Set<String> tokens;
-	public boolean topLevel;
+	public int linkCount;
 	
 	public @Transient List<Argument> args = new LinkedList<Argument>();
 	
 	public Proposition(){
+	}
 	
+	public String toString(Proposition prop) {
+		String tokens = "";
+		if (prop.tokens != null) {
+			for (String str : prop.tokens) {
+				tokens = tokens + " " + str;
+			}
+		}
+		return "id:" + prop.id + "; content:" + prop.content + "; linkCount:"
+		+ linkCount + "; tokens: [" + tokens + "]";
 	}
 	
 	public Proposition( Proposition prop ){
 		id = prop.id;
 		content = prop.content;
-		topLevel = prop.topLevel;
+		linkCount = prop.linkCount;
 	}
 	
 	public Proposition( String content ){

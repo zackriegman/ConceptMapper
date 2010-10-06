@@ -289,7 +289,7 @@ public class TimeTraveler {
 				 * But here the change will add hundreds of nodes, the children
 				 * of the linked proposition. Probably the way to show that is
 				 * simply to add the proposition, and then lazy load the tree
-				 * and someone browses.
+				 * as someone browses.
 				 */
 				/*
 				 * reverse this: ArgumentView argView =

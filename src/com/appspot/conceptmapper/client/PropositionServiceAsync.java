@@ -17,10 +17,6 @@ public interface PropositionServiceAsync {
 
 	void removeProposition(Long propID, AsyncCallback<Void> callback);
 
-
-	void addProposition(Long parentArgID, int position,
-			AsyncCallback<Long> callback);
-
 	void addArgument(Long parentPropID, boolean pro,
 			AsyncCallback<Argument> callback);
 
@@ -46,8 +42,13 @@ public interface PropositionServiceAsync {
 	void getArgumentCurrentVersionAndHistory(Long argID,
 			AsyncCallback<ArgTreeWithHistory> callback);
 
-	void searchPropositions(String string, Long excludePropID,
+	void searchPropositions(String string, Long filterArgID,
 			AsyncCallback<List<Proposition>> callback);
 
-	void getPropositionTree(Long propID, AsyncCallback<Proposition> callback);
+	void replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
+			Long removePropID, AsyncCallback<Proposition> callback);
+
+
+	void addProposition(Long parentArgID, int position, String content,
+			AsyncCallback<Long> callback);
 }
