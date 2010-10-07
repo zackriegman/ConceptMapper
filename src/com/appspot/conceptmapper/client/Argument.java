@@ -1,6 +1,7 @@
 package com.appspot.conceptmapper.client;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -16,22 +17,43 @@ public class Argument implements Serializable {
 	
 	@Id
 	public Long id;
+	public String title;
+	public boolean pro;
 	
-
 	/* note the difference between 'transient' and '@Transient'
 	 * 'transient' will not be sent over the wire, but will be saved to the datastore.
 	 * '@Transient' will not be saved to the datastore, but will be sent over the wire.
-	 * Here the propIDs and aboutPropID don't need to be sent over the wire because
-	 * that info is stored in the Argument.props and Propsition.args lists (which
-	 * in turn are not stored in the datastore.
 	 */
-	transient public List<Long> propIDs = new LinkedList<Long>();
-	transient public Long aboutPropID;
-	
-	public boolean pro;
+	public List<Long> propIDs = new LinkedList<Long>();
 	
 	@Transient
+	public List<Change> changes;
+	@Transient
+	public Date changesTo;
+	
+	public String toString(){
+		StringBuffer buffer = new StringBuffer();
+		buffer.append("id:");
+		buffer.append(id );
+		buffer.append("; pro:");
+		buffer.append( pro );
+		buffer.append("; propIDs:[" );
+		if( propIDs != null ){
+			for(Long id : propIDs){
+				buffer.append( id );
+				buffer.append( " ");
+				
+			}
+		}
+		buffer.append("]");
+		return buffer.toString();
+	}
+	
+	/*transient public Long aboutPropID;*/
+	/*
+	@Transient
 	public List<Proposition> props = new LinkedList<Proposition>();
+	*/
 	
 	public Argument(){
 	}
@@ -41,7 +63,7 @@ public class Argument implements Serializable {
 		pro = argument.pro;
 	}
 	
-	
+	/*
 	public List<Proposition> getProps(){
 		return props;
 	}
@@ -63,5 +85,6 @@ public class Argument implements Serializable {
 	public void deletePropositionl(Proposition proposition) {
 		props.remove(proposition);
 	}
+	*/
 	
 }

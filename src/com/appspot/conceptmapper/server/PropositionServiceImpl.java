@@ -70,12 +70,11 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	}
 
 	public void printArgument(Argument arg) {
-		println("id:" + arg.id + " - propKeys:" + arg.propIDs
-				+ " - aboutPropKey:" + arg.aboutPropID + " - pro:" + arg.pro);
+		println( arg.toString() );
 	}
 
 	public void printProposition(Proposition prop) {
-		println(prop.toString());
+		println( prop.toString());
 	}
 
 	@Override
@@ -99,11 +98,13 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		return returnProps;
 	}
 
+	/*
 	public void printProps(Proposition[] props) {
 		for (Proposition prop : props) {
 			printPropRecursive(prop, 0);
 		}
 	}
+	*/
 
 	public String spaces(int spaces) {
 		String string = "";
@@ -113,6 +114,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		return string;
 	}
 
+	/*
 	public void printPropRecursive(Proposition propParent, int level) {
 		println(spaces(level) + propParent.toString());
 		for (Argument arg : propParent.args) {
@@ -128,10 +130,10 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 				printPropRecursive(prop, level + 2);
 			}
 		}
-
 	}
+	*/
 
-	public void recursiveBuildProp(Proposition prop) {
+	public void recursiveGetProps(Proposition prop, Map<Long, Proposition> props, Map<Long, Argument> args) {
 
 		/* get all the prop's arguments */
 		Query<Argument> argQuery = ofy.query(Argument.class).filter(
