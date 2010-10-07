@@ -79,7 +79,7 @@ public class ArgumentView extends TreeItem {
 		GWT.log(ConceptMapper.spaces(level * 2) + getText() + "; id:"
 				+ argument.id);
 		for (int j = 0; j < getChildCount(); j++) {
-			((PropositionView) getChild(j)).printPropRecursive( level + 1);
+			getPropView(j).printPropRecursive( level + 1);
 		}
 	}
 

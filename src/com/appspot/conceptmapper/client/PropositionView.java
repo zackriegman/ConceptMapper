@@ -139,6 +139,10 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		return proposition;
 	}
 
+	public ArgumentView getArgView(int index) {
+		return (ArgumentView) getChild(index);
+	}
+
 	public void haveFocus() {
 		textArea.setFocus(true);
 	}
@@ -147,13 +151,15 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	public void onClick(ClickEvent event) {
 		if (event.getSource() == proButton) {
 			addArgument(true);
-
 		} else if (event.getSource() == conButton) {
 			addArgument(false);
 		} else if (event.getSource() == linkRemoveButton) {
-			// TODO: write linkeRemoveButton action
+			ServerComm.unlinkProp(parentArgument(), proposition);
+			
+			/* note: remove() must come last, otherwise parentArgumet() == null */
+			remove();
 		} else if (event.getSource() == linkEditButton) {
-			// TODO: write linkEditButton action
+			textArea.setReadOnly(false);
 		}
 	}
 
@@ -272,9 +278,12 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		} else if (thisIndex != 0) {
 			PropositionView prePropView = ((PropositionView) parentArgView
 					.getChild(thisIndex - 1));
-			
-			/* cannot combine contents with a preceeding proposition that is a link */
-			if( prePropView.proposition.linkCount > 1){
+
+			/*
+			 * cannot combine contents with a preceeding proposition that is a
+			 * link
+			 */
+			if (prePropView.proposition.linkCount > 1) {
 				return;
 			}
 			TextArea preTextArea = prePropView.textArea;
@@ -360,10 +369,13 @@ public class PropositionView extends TreeItem implements ClickHandler,
 				}
 				lastPropositionWithFocus = this;
 				ServerComm.searchPropositions(textArea.getText(),
-						parentArgument(),
-						((EditModeTree) getTree()).searchCallback);
+						parentArgument(), getEditModeTree().searchCallback);
 			}
 		}
+	}
+
+	private EditModeTree getEditModeTree() {
+		return (EditModeTree) getTree();
 	}
 
 	private static class TextAreaSloppyGrow extends TextArea {
@@ -406,6 +418,9 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	@Override
 	public void onChange(ChangeEvent event) {
 		updatePropOnServerIfChanged();
+		if (proposition.linkCount > 1) {
+			textArea.setReadOnly(true);
+		}
 	}
 
 	private void updatePropOnServerIfChanged() {
@@ -462,7 +477,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		GWT.log(ConceptMapper.spaces(level * 2) + "propID:" + proposition.id
 				+ "; content:" + getContent());
 		for (int i = 0; i < getChildCount(); i++) {
-			ArgumentView arg = (ArgumentView) getChild(i);
+			ArgumentView arg = getArgView(i);
 			arg.printArgRecursive(level + 1);
 		}
 	}

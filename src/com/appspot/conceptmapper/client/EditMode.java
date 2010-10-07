@@ -74,8 +74,10 @@ public class EditMode extends ResizeComposite implements
 			@Override
 			public void call(Proposition[] props) {
 				for (Proposition prop : props) {
-					tree.addItem(PropositionView.recursiveBuildPropositionView(
-							prop, true, null, null));
+					PropositionView propView = PropositionView.recursiveBuildPropositionView(
+							prop, true, null, null);
+					tree.addItem( propView );
+					propView.printPropRecursive(0);
 				}
 				openTree();
 			}
@@ -181,6 +183,12 @@ public class EditMode extends ResizeComposite implements
 			}
 
 			super.onBrowserEvent(event);
+		}
+		
+		public void printTree(){
+			for(int i = 0; i < getItemCount(); i++){
+				((PropositionView)getItem(i)).printPropRecursive(0);
+			}
 		}
 	}
 

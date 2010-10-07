@@ -12,14 +12,11 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: implement link remove and edit
-//TODO: after linking to a proposition (and perhaps after deleting the link... right of course the deletion currently deletes the node right... well it shouldn't it's used else where) the proposition no longer shows up on searches
 //TODO: implement versioning of links/unlinks and test
 //TODO: if you have two links to a node open in VersionsMode only one of them gets updated as you travel through the tree
 //TODO: weed changes list when a node is closed, expand when a node is opened (maybe to implement this, change how nodes are stored... maybe with a list of all their changes... which type of changes does a node need to know about...
 //TODO: lazy load propositions (maybe a few layers deep in advance) instead of loading the entire tree
-//TODO: what currently happens when someone tries to delete a linked node by deleting contents and then pressing backspace?
-//TODO: how should unlinking work?  how should editing of linked nodes work?
+//TODO: what are all the phantom propositions that show up on an empty search?
 
 //TODO: think about merging of duplicate propositions (both possibly already having arguments)
 //TODO: add helpful message along the side (tips box)
@@ -62,7 +59,7 @@ public class ConceptMapper implements EntryPoint {
 	public void onModuleLoad() {
 		modePanel.add( editMode, "Edit" );
 		versionsMode = new VersionsMode( editMode );
-		modePanel.add( new ScrollPanel( versionsMode ), "Versions" );
+		modePanel.add( versionsMode, "Versions" );
 		
 		modePanel.addSelectionHandler(new SelectionHandler<Integer>() {
 			

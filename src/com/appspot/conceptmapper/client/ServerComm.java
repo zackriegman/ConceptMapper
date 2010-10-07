@@ -67,8 +67,10 @@ public class ServerComm {
 		@Override
 		public void onFailure(Throwable caught) {
 			message("Error: " + caught.getMessage());
-			GWT.log(caught.getMessage());
-			caught.printStackTrace();
+			//GWT.log(caught.getMessage());
+			//caught.printStackTrace();
+			/* trying this to get the exception printed in the GWT.log */
+			throw new RuntimeException(caught);
 		}
 
 		@Override
@@ -94,8 +96,10 @@ public class ServerComm {
 		public void onFailure(Throwable caught) {
 			dispatchCommand();
 			message("Error: " + caught.getMessage());
-			GWT.log(caught.getMessage());
-			caught.printStackTrace();
+			//GWT.log(caught.getMessage());
+			//caught.printStackTrace();
+			/* trying this to get the exception printed in the GWT.log */
+			throw new RuntimeException(caught);
 		}
 
 		@Override
@@ -219,6 +223,33 @@ public class ServerComm {
 		queueCommand(command);
 	}
 
+	public static void unlinkProp(Argument parentArg, Proposition unlinkProp) {
+		class CommandUnlink extends ServerCallbackWithDispatch<Void> implements
+				Command {
+			Proposition unlinkProp;
+			Argument parentArg;
+
+			public CommandUnlink(String message) {
+				super(message);
+			}
+
+			@Override
+			public void execute() {
+				propositionService.unlinkProposition(parentArg.id,
+						unlinkProp.id, this);
+			}
+
+			@Override
+			public void doOnSuccess(Void result) {
+			}
+		}
+		CommandUnlink command = new CommandUnlink(
+				"Server Reports Successful Proposition Unlink");
+		command.unlinkProp = unlinkProp;
+		command.parentArg = parentArg;
+		queueCommand(command);
+	}
+
 	public static void updateProposition(Proposition prop) {
 		class CommandUpdate extends ServerCallbackWithDispatch<Void> implements
 				Command {
@@ -246,7 +277,7 @@ public class ServerComm {
 	}
 
 	public static void addProposition(Proposition newProposition,
-			Argument parentArgument, int position ) {
+			Argument parentArgument, int position) {
 		class CommandAdd extends ServerCallbackWithDispatch<Long> implements
 				Command {
 			Proposition newProposition;
@@ -263,7 +294,8 @@ public class ServerComm {
 					propositionService.addProposition(parentArgument.id,
 							position, newProposition.content, this);
 				else
-					propositionService.addProposition(null, 0, newProposition.content, this);
+					propositionService.addProposition(null, 0,
+							newProposition.content, this);
 			}
 
 			@Override
@@ -280,10 +312,12 @@ public class ServerComm {
 
 		queueCommand(command);
 	}
-	
-	public static void replaceWithLinkAndGet(Argument parentArg, Proposition linkProp, Proposition removeProp, 
+
+	public static void replaceWithLinkAndGet(Argument parentArg,
+			Proposition linkProp, Proposition removeProp,
 			LocalCallback<Proposition> localCallback) {
-		class CommandLink extends ServerCallbackWithDispatch<Proposition> implements Command {
+		class CommandLink extends ServerCallbackWithDispatch<Proposition>
+				implements Command {
 			Long parentArgID;
 			Long linkPropID;
 			Long removePropID;
@@ -292,25 +326,26 @@ public class ServerComm {
 			public CommandLink(String message) {
 				super(message);
 			}
-			
+
 			@Override
 			public void execute() {
-				propositionService.replaceWithLinkAndGet(parentArgID, linkPropID, removePropID,
-						this );
+				propositionService.replaceWithLinkAndGet(parentArgID,
+						linkPropID, removePropID, this);
 			}
-			
+
 			@Override
 			public void doOnSuccess(Proposition result) {
 				localCallback.call(result);
 			}
 		}
-		
-		CommandLink command = new CommandLink("Server Reports Success Getting Prop Tree");
+
+		CommandLink command = new CommandLink(
+				"Server Reports Success Getting Prop Tree");
 		command.parentArgID = parentArg.id;
 		command.linkPropID = linkProp.id;
 		command.removePropID = removeProp.id;
 		command.localCallback = localCallback;
-		
-		queueCommand( command );
+
+		queueCommand(command);
 	}
 }

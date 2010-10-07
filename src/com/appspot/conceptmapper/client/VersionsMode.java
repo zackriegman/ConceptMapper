@@ -12,6 +12,7 @@ import com.appspot.conceptmapper.client.PropositionService.ArgTreeWithHistory;
 import com.appspot.conceptmapper.client.PropositionService.PropTreeWithHistory;
 import com.appspot.conceptmapper.client.ServerComm.LocalCallback;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -19,29 +20,47 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
-public class VersionsMode extends HorizontalPanel implements
+public class VersionsMode extends ResizeComposite implements
 		CloseHandler<TreeItem>, OpenHandler<TreeItem>, ChangeHandler {
 
 	private ListBox versionList = new ListBox();
 	private EditMode editMode;
 	private Tree treeClone = null;
 	private TimeTraveler mainTT;
+	private FlowPanel treePanel = new FlowPanel();
+	private final int LIST_WIDTH = 20;
+	
+	//SplitLayoutPanel mainPanel;
 
 	private HandlerRegistration listBoxChangeHandlerRegistration;
 
 	public VersionsMode(EditMode editModePair) {
+		super();
 		this.editMode = editModePair;
+		DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.EM);
+		//mainPanel = new SplitLayoutPanel();
 
-		add(versionList);
-		versionList.setVisibleItemCount(30);
-		versionList.setWidth("25em");
+		//add(versionList);
+		mainPanel.addWest(versionList, LIST_WIDTH);
+		mainPanel.add( new ScrollPanel( treePanel ));
+		//mainPanel.add(new Label("HEELO"));
+		
+		versionList.setVisibleItemCount(2);
+		versionList.setWidth( LIST_WIDTH + "em");
 
 		listBoxChangeHandlerRegistration = versionList.addChangeHandler(this);
+		initWidget(mainPanel);
 	}
 
 	public void resetState(Tree tree) {
@@ -95,7 +114,7 @@ public class VersionsMode extends HorizontalPanel implements
 		versionList.clear();
 		versionList.addItem("Loading Revision History From Server...");
 		if (treeClone != null) {
-			remove(treeClone);
+			treePanel.remove(treeClone);
 		}
 		List<Proposition> props = new LinkedList<Proposition>();
 		List<Argument> args = new LinkedList<Argument>();
@@ -123,7 +142,7 @@ public class VersionsMode extends HorizontalPanel implements
 						 */
 						editMode.buildTreeCloneOfOpenNodesWithIndexes(
 								treeClone, propViewIndex, argViewIndex);
-						add(treeClone);
+						treePanel.add(treeClone);
 
 						mainTT = new TimeTraveler(changes, propViewIndex,
 								argViewIndex, treeClone);
