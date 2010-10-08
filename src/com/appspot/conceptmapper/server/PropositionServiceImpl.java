@@ -3,6 +3,7 @@ package com.appspot.conceptmapper.server;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -78,24 +79,28 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Proposition[] getAllProps() {
-
-		test();
-
+	public AllPropsAndArgs getAllPropsAndArgs() {
+		/* TODO: now that we aren't building a prop tree any longer there is no reason to do this.
+		 * Instead we can just query for all props and all args and return them all.
+		 */
 		Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
 				"linkCount =", 0);
 		Proposition[] returnProps = new Proposition[propQuery.countAll()];
-		// println("getAllProps[propQuery.countAll()]: " +
-		// propQuery.countAll());
-		int i = 0;
+
+		Map<Long, Proposition> rootProps = new HashMap<Long, Proposition>();
+		Map<Long, Proposition> props = new HashMap<Long, Proposition>();
+		Map<Long, Argument> args = new HashMap<Long, Argument>();
+		
 		for (Proposition prop : propQuery) {
-			returnProps[i] = prop;
-			recursiveBuildProp(prop);
-			i++;
+			rootProps.put(prop.id, prop);
+			recursiveGetProps(prop, props, args);
 		}
 
-		// printProps(returnProps);
-		return returnProps;
+		AllPropsAndArgs propsAndArgs = new AllPropsAndArgs();
+		propsAndArgs.rootProps = rootProps;
+		propsAndArgs.props = props;
+		propsAndArgs.args = args;
+		return propsAndArgs;
 	}
 
 	/*
@@ -136,21 +141,31 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	public void recursiveGetProps(Proposition prop, Map<Long, Proposition> props, Map<Long, Argument> args) {
 
 		/* get all the prop's arguments */
-		Query<Argument> argQuery = ofy.query(Argument.class).filter(
-				"aboutPropID", prop.id);
+		Map<Long, Argument> argMap = ofy.get(Argument.class, prop.argIDs);
 		/* for each argument */
-		for (Argument arg : argQuery) {
-			/* add the argument to the prop */
-			prop.args.add(arg);
-
-			recursiveBuildArg(arg);
+		for (Argument arg : argMap.values()) {
+			/* if it hasn't yet been added to the map */
+			if( ! args.containsKey(arg.id)){
+				/*add it*/
+				args.put( arg.id, arg);
+				/*add it's children*/
+				recursiveGetArgs(arg, props, args);
+			}
 		}
 	}
 
-	public void recursiveBuildArg(Argument arg) {
+	public void recursiveGetArgs(Argument arg, Map<Long, Proposition> props, Map<Long, Argument> args) {
 		/* get all the props in the argument */
-		Map<Long, Proposition> propMap = ofy
-				.get(Proposition.class, arg.propIDs);
+		Map<Long, Proposition> propMap = ofy.get(Proposition.class, arg.propIDs);
+		for (Proposition prop : propMap.values()) {
+			/* if it hasn't yet been added to the map */
+			if( ! props.containsKey(prop.id)){
+				/*add it*/
+				props.put( prop.id, prop);
+				/*add it's children*/
+				recursiveGetProps(prop, props, args);
+			}
+		}
 
 		/*
 		 * for each propID check to make sure the prop actually exists, and if
@@ -165,7 +180,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 						+ "] references proposition which does not exist");
 			} else {
 				arg.props.add(gotProp);
-				recursiveBuildProp(gotProp);
+				recursiveGetProps(gotProp);
 			}
 		}
 	}

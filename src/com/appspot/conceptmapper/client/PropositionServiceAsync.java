@@ -5,14 +5,16 @@ import java.util.Date;
 import java.util.List;
 import java.util.SortedMap;
 
+import com.appspot.conceptmapper.client.PropositionService.AllPropsAndArgs;
 import com.appspot.conceptmapper.client.PropositionService.ArgTreeWithHistory;
 import com.appspot.conceptmapper.client.PropositionService.PropTreeWithHistory;
+import com.appspot.conceptmapper.client.PropositionService.PropsAndArgs;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public interface PropositionServiceAsync {
 	
 	
-	void getAllProps(AsyncCallback<Proposition[]> callback);
+	/*void getAllProps(AsyncCallback<Proposition[]> callback);*/
 	
 
 	void removeProposition(Long propID, AsyncCallback<Void> callback);
@@ -51,4 +53,6 @@ public interface PropositionServiceAsync {
 
 	void addProposition(Long parentArgID, int position, String content,
 			AsyncCallback<Long> callback);
+
+	void getAllPropsAndArgs(AsyncCallback<AllPropsAndArgs> callback);
 }

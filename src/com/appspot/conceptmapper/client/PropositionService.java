@@ -3,6 +3,7 @@ package com.appspot.conceptmapper.client;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 
 import com.google.gwt.user.client.rpc.RemoteService;
@@ -26,7 +27,13 @@ public interface PropositionService extends RemoteService {
 	public void unlinkProposition(Long parentArgID, Long propositionID)
 			throws Exception;
 
-	public Proposition[] getAllProps();
+	public class AllPropsAndArgs implements Serializable {
+		public Map<Long, Proposition> rootProps;
+		public Map<Long, Proposition> props;
+		public Map<Long, Argument> args;
+	}
+	
+	public AllPropsAndArgs getAllPropsAndArgs();
 	
 	public Proposition replaceWithLinkAndGet(Long parentArgID, Long linkPropID, Long removePropID) throws Exception;
 
