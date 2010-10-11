@@ -117,6 +117,4 @@ public class ArgumentView extends TreeItem implements ChangeHandler {
 			ServerComm.updateArgument(argument);
 		}
 	}
-	
-	
 }
