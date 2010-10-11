@@ -7,7 +7,6 @@ import java.util.SortedMap;
 import java.util.Queue;
 
 import com.appspot.conceptmapper.client.PropositionService.AllPropsAndArgs;
-import com.appspot.conceptmapper.client.PropositionService.Nodes;
 import com.appspot.conceptmapper.client.PropositionService.NodesWithHistory;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -68,8 +67,8 @@ public class ServerComm {
 		@Override
 		public void onFailure(Throwable caught) {
 			message("Error: " + caught.getMessage());
-			//GWT.log(caught.getMessage());
-			//caught.printStackTrace();
+			// GWT.log(caught.getMessage());
+			// caught.printStackTrace();
 			/* trying this to get the exception printed in the GWT.log */
 			throw new RuntimeException(caught);
 		}
@@ -97,8 +96,8 @@ public class ServerComm {
 		public void onFailure(Throwable caught) {
 			dispatchCommand();
 			message("Error: " + caught.getMessage());
-			//GWT.log(caught.getMessage());
-			//caught.printStackTrace();
+			// GWT.log(caught.getMessage());
+			// caught.printStackTrace();
 			/* trying this to get the exception printed in the GWT.log */
 			throw new RuntimeException(caught);
 		}
@@ -116,8 +115,9 @@ public class ServerComm {
 	}
 
 	public static void fetchProps(LocalCallback<AllPropsAndArgs> localCallback) {
-		propositionService.getAllPropsAndArgs(new ServerCallback<AllPropsAndArgs>(
-				localCallback, "Server Reports Success Fetching Props"));
+		propositionService
+				.getAllPropsAndArgs(new ServerCallback<AllPropsAndArgs>(
+						localCallback, "Server Reports Success Fetching Props"));
 	}
 
 	public static void getChanges(Change change, List<Proposition> props,
@@ -251,6 +251,32 @@ public class ServerComm {
 		queueCommand(command);
 	}
 
+	public static void updateArgument(Argument arg) {
+		class CommandUpdate extends ServerCallbackWithDispatch<Void> implements
+				Command {
+			Argument arg;
+
+			public CommandUpdate(String message) {
+				super(message);
+			}
+
+			@Override
+			public void execute() {
+				propositionService.updateArgument(arg.id,
+						arg.title, this);
+			}
+
+			@Override
+			public void doOnSuccess(Void result) {
+			}
+		}
+		CommandUpdate command = new CommandUpdate(
+				"Server Reports Successful Argument Update");
+		command.arg = arg;
+
+		queueCommand(command);
+	}
+
 	public static void updateProposition(Proposition prop) {
 		class CommandUpdate extends ServerCallbackWithDispatch<Void> implements
 				Command {
@@ -317,8 +343,8 @@ public class ServerComm {
 	public static void replaceWithLinkAndGet(Argument parentArg,
 			Proposition linkProp, Proposition removeProp,
 			LocalCallback<Nodes> localCallback) {
-		class CommandLink extends ServerCallbackWithDispatch<Nodes>
-				implements Command {
+		class CommandLink extends ServerCallbackWithDispatch<Nodes> implements
+				Command {
 			Long parentArgID;
 			Long linkPropID;
 			Long removePropID;

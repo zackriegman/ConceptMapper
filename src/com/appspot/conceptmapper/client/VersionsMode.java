@@ -237,7 +237,7 @@ public class VersionsMode extends ResizeComposite implements
 
 		PropositionView propGraft = PropositionView
 				.recursiveBuildPropositionView(proposition, false,
-						propTreeWithHistory.props, propTreeWithHistory.args,
+						propTreeWithHistory.nodes,
 						propViewIndex, argViewIndex);
 
 		GWT.log("propTree before timeTravel:");
@@ -278,8 +278,7 @@ public class VersionsMode extends ResizeComposite implements
 		Map<Long, ArgumentView> argViewIndex = new HashMap<Long, ArgumentView>();
 
 		ArgumentView argGraft = PropositionView
-				.recursiveBuildArgumentView(argument, false, argTreeWithHistory.props,
-						argTreeWithHistory.args,
+				.recursiveBuildArgumentView(argument, false, argTreeWithHistory.nodes,
 						propViewIndex, argViewIndex);
 
 		GWT.log("propTree before timeTravel:");

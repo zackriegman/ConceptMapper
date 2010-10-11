@@ -53,7 +53,7 @@ public class Change implements Serializable {
 	// addition or modification
 
 	public enum ChangeType {
-		PROP_DELETION, PROP_ADDITION, PROP_MODIFICATION, ARG_ADDITION, ARG_DELETION, PROP_UNLINK, PROP_LINK
+		PROP_DELETION, PROP_ADDITION, PROP_MODIFICATION, ARG_ADDITION, ARG_DELETION, ARG_MODIFICATION, PROP_UNLINK, PROP_LINK
 	}
 
 	public String remoteAddr;
@@ -79,8 +79,17 @@ public class Change implements Serializable {
 	 * keeping it here for now.)
 	 */
 	public Long propID;
-	public String propContent;
+	
 	public int propLinkCount;
+	
+	/*
+	 * For change type: PROP_MODIFICATION
+	 * content refers to the proposition content
+	 * 
+	 * For change type: ARG_MODIFICATION
+	 * content refers to the argument title
+	 */
+	public String content;
 
 	/*
 	 * For change types: PROP_DELETION, PROP_ADDITION, PROP_UNLINK, PROP_LINK
@@ -107,7 +116,7 @@ public class Change implements Serializable {
 	public String toString() {
 		return "id:" + id + "; changeType:" + changeType + "; argID:" + argID
 				+ "; argPropIndex:" + argPropIndex + "; argPro:" + argPro
-				+ "; propID:" + propID + "; propContent:" + propContent
+				+ "; propID:" + propID + "; content:" + content
 				+ "; propLinkCount:" + propLinkCount + "; date:" + date
 				+ "; remoteAddr:" + remoteAddr + "; remoteHost:" + remoteHost
 				+ "; remotePort:" + remotePort + "; remoteUser:" + remoteUser;

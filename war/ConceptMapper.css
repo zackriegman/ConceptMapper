@@ -39,9 +39,14 @@ h1 {
 .linkedPropositionTextArea {
 	border: 1px dotted #00f;
 	padding: .5em;
-	/*background-color: #FFF1A8;*/
-	/*background-color: #FFFF8B;*/
-	background-color:#FFFFCC
+	/*background-color: #FFF1A8;*/ /*background-color: #FFFF8B;*/
+	background-color: #FFFFCC
+}
+
+.argumentTextBox {
+	border-style: solid;
+	border-color: #E8E8E8 ;
+	border-width: 1px;
 }
 
 .titleLabel {

@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: think about merging of duplicate propositions (both possibly already having arguments)
 //TODO: add helpful message along the side (tips box)
 //TODO: provide a way to see deleted top level nodes
+//TODO: stop deleting empty arguments (the proposition deletion methods are overly complex); implement separate argument deletions; when the last proposition is deleted move to the arguments title; when an empty argument title is backspaced or deleted, delete the argument.
 //TODO: implement user accounts, email updates of changes, inviting friends
 //TODO: implement proposition strength voting, and scoring algorithm
 //TODO: allow arguments to have titles

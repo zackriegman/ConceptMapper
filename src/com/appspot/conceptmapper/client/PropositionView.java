@@ -425,7 +425,6 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	}
 
 	private void updatePropOnServerIfChanged() {
-		GWT.log("AAAAAAA");
 		String trimmedTextAreaContent = textArea.getText() == null ? ""
 				: textArea.getText().trim();
 		String trimmedPropositionContent = proposition.getContent() == null ? ""
@@ -437,8 +436,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	}
 
 	public static PropositionView recursiveBuildPropositionView(
-			Proposition prop, boolean editable, Map<Long, Proposition> props,
-			Map<Long, Argument> args,
+			Proposition prop, boolean editable, Nodes nodes,
 			Map<Long, PropositionView> propViewIndex,
 			Map<Long, ArgumentView> argViewIndex) {
 
@@ -446,24 +444,23 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		if (propViewIndex != null)
 			propViewIndex.put(prop.id, propView);
 		for (Long argID : prop.argIDs) {
-			Argument argument = args.get(argID);
-			propView.addItem(recursiveBuildArgumentView(argument, editable, props, args,
+			Argument argument = nodes.args.get(argID);
+			propView.addItem(recursiveBuildArgumentView(argument, editable, nodes,
 					propViewIndex, argViewIndex));
 		}
 		return propView;
 	}
 
 	public static ArgumentView recursiveBuildArgumentView(Argument arg,
-			boolean editable, Map<Long, Proposition> props,
-			Map<Long, Argument> args, Map<Long, PropositionView> propViewIndex,
+			boolean editable, Nodes nodes, Map<Long, PropositionView> propViewIndex,
 			Map<Long, ArgumentView> argViewIndex) {
 
 		ArgumentView argView = new ArgumentView(arg);
 		if (argViewIndex != null)
 			argViewIndex.put(arg.id, argView);
 		for (Long propID : arg.propIDs) {
-			Proposition proposition = props.get(propID);
-			argView.addItem(recursiveBuildPropositionView(proposition, editable, props, args,
+			Proposition proposition = nodes.props.get(propID);
+			argView.addItem(recursiveBuildPropositionView(proposition, editable, nodes,
 					propViewIndex, argViewIndex));
 		}
 		return argView;

@@ -26,6 +26,7 @@ import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.Query;
 import com.appspot.conceptmapper.client.Argument;
 import com.appspot.conceptmapper.client.Change;
+import com.appspot.conceptmapper.client.Nodes;
 import com.appspot.conceptmapper.client.Proposition;
 import com.appspot.conceptmapper.client.PropositionService;
 import com.appspot.conceptmapper.client.Change.ChangeType;
@@ -90,18 +91,16 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 				"linkCount =", 0);
 
 		Map<Long, Proposition> rootProps = new HashMap<Long, Proposition>();
-		Map<Long, Proposition> props = new HashMap<Long, Proposition>();
-		Map<Long, Argument> args = new HashMap<Long, Argument>();
+		Nodes nodes = new Nodes();
 
 		for (Proposition prop : propQuery) {
 			rootProps.put(prop.id, prop);
-			recursiveGetProps(prop, props, args);
+			recursiveGetProps(prop, nodes);
 		}
 
 		AllPropsAndArgs propsAndArgs = new AllPropsAndArgs();
 		propsAndArgs.rootProps = rootProps;
-		propsAndArgs.props = props;
-		propsAndArgs.args = args;
+		propsAndArgs.nodes = nodes;
 		return propsAndArgs;
 	}
 
@@ -130,35 +129,33 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	 * }
 	 */
 
-	public void recursiveGetProps(Proposition prop,
-			Map<Long, Proposition> props, Map<Long, Argument> args) {
+	public void recursiveGetProps(Proposition prop, Nodes nodes ) {
 
 		/* get all the prop's arguments */
 		Map<Long, Argument> argMap = ofy.get(Argument.class, prop.argIDs);
 		/* for each argument */
 		for (Argument arg : argMap.values()) {
 			/* if it hasn't yet been added to the map */
-			if (!args.containsKey(arg.id)) {
+			if (!nodes.args.containsKey(arg.id)) {
 				/* add it */
-				args.put(arg.id, arg);
+				nodes.args.put(arg.id, arg);
 				/* add it's children */
-				recursiveGetArgs(arg, props, args);
+				recursiveGetArgs(arg, nodes);
 			}
 		}
 	}
 
-	public void recursiveGetArgs(Argument arg, Map<Long, Proposition> props,
-			Map<Long, Argument> args) {
+	public void recursiveGetArgs(Argument arg, Nodes nodes) {
 		/* get all the props in the argument */
 		Map<Long, Proposition> propMap = ofy
 				.get(Proposition.class, arg.propIDs);
 		for (Proposition prop : propMap.values()) {
 			/* if it hasn't yet been added to the map */
-			if (!props.containsKey(prop.id)) {
+			if (!nodes.props.containsKey(prop.id)) {
 				/* add it */
-				props.put(prop.id, prop);
+				nodes.props.put(prop.id, prop);
 				/* add it's children */
-				recursiveGetProps(prop, props, args);
+				recursiveGetProps(prop, nodes);
 			}
 		}
 	}
@@ -221,7 +218,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		Change change = new Change(ChangeType.PROP_DELETION);
 		Proposition prop = ofy.get(Proposition.class, propID);
 		change.propID = prop.id;
-		change.propContent = prop.content;
+		change.content = prop.content;
 		change.propLinkCount = prop.linkCount;
 
 		/*
@@ -274,7 +271,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 				 * proposition list
 				 */
 				parentProp.argIDs.remove(argument.id);
-				ofy.put( parentProp );
+				ofy.put(parentProp);
 				ofy.delete(argument);
 
 			}
@@ -338,8 +335,8 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public void updateProposition(Long propID, String content) throws Exception {
-		println( "propID:" + propID + "; content:" + content);
-		 
+		println("propID:" + propID + "; content:" + content);
+
 		Change change = new Change(ChangeType.PROP_MODIFICATION);
 		Proposition prop = ofy.get(Proposition.class, propID);
 		if (prop.getContent() != null
@@ -349,7 +346,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		}
 
 		change.propID = prop.id;
-		change.propContent = prop.content;
+		change.content = prop.content;
 		// TODO is this line necessary for some reason?
 		// change.propTopLevel = prop.topLevel;
 
@@ -363,6 +360,31 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		prop.tokens = getTokensForIndexingOrQuery(content, 30);
 		ofy.put(prop);
 
+	}
+	
+	@Override
+	public void updateArgument(Long argID, String content) throws Exception {
+		Change change = new Change(ChangeType.ARG_MODIFICATION);
+		Argument arg = ofy.get(Argument.class, argID);
+		if (arg.title != null
+				&& arg.title.trim().equals(content.trim())) {
+			throw new Exception(
+					"Cannot update argument title:  title not changed!");
+		}
+		
+		change.argID = arg.id;
+		change.content = arg.title;
+		// TODO is this line necessary for some reason?
+		// change.propTopLevel = prop.topLevel;
+
+		/*
+		 * have to save the version info before the proposition value is changed
+		 * (or alternatively, create a new Proposition)
+		 */
+		saveVersionInfo(change);
+
+		arg.title = content.trim();
+		ofy.put(arg);
 	}
 
 	@Override
@@ -410,18 +432,17 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			Long argID) throws Exception {
 		println("start getPropositionCurrentVersionAndHistory()");
 		NodesWithHistory versions = new NodesWithHistory();
-		versions.props = new HashMap<Long, Proposition>();
-		versions.args = new HashMap<Long, Argument>();
+		versions.nodes = new Nodes();
 		try {
 			if (propID != null && argID == null) {
 				Proposition proposition = ofy.get(Proposition.class, propID);
-				versions.props.put(proposition.id, proposition);
-				recursiveGetProps(proposition, versions.props, versions.args);
+				versions.nodes.props.put(proposition.id, proposition);
+				recursiveGetProps(proposition, versions.nodes);
 			}
 			if (argID != null && propID == null) {
 				Argument argument = ofy.get(Argument.class, argID);
-				versions.args.put(argument.id, argument);
-				recursiveGetArgs(argument, versions.props, versions.args);
+				versions.nodes.args.put(argument.id, argument);
+				recursiveGetArgs(argument, versions.nodes);
 			} else {
 				throw new Exception(
 						"getPropOrArgCurrentVersionAndHistory: Only one non-null value accepted");
@@ -436,8 +457,8 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		}
 
 		versions.changes = getRevisions(null, new ArrayList<Long>(
-				versions.props.keySet()),
-				new ArrayList<Long>(versions.args.keySet()));
+				versions.nodes.props.keySet()),
+				new ArrayList<Long>(versions.nodes.args.keySet()));
 
 		println("end start getPropositionCurrentVersionAndHistory()");
 		return versions;
@@ -607,7 +628,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		if (query.countAll() == 0) {
 			Change change = new Change(ChangeType.PROP_DELETION);
 			change.propID = removeProp.id;
-			change.propContent = removeProp.content;
+			change.content = removeProp.content;
 			change.propLinkCount = removeProp.linkCount;
 
 			ofy.delete(removeProp);
@@ -620,7 +641,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		else if (query.countAll() == 1) {
 			Change change = new Change(ChangeType.PROP_DELETION);
 			change.propID = removeProp.id;
-			change.propContent = removeProp.content;
+			change.content = removeProp.content;
 			change.propLinkCount = removeProp.linkCount;
 			change.argID = parentArgID;
 			change.argPropIndex = index;
@@ -662,10 +683,8 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		saveVersionInfo(change);
 
 		Nodes nodes = new Nodes();
-		nodes.props = new HashMap<Long, Proposition>();
-		nodes.args = new HashMap<Long, Argument>();
 		nodes.props.put(linkProp.id, linkProp);
-		recursiveGetProps(linkProp, nodes.props, nodes.args);
+		recursiveGetProps(linkProp, nodes );
 		return nodes;
 	}
 
@@ -709,7 +728,6 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		Change argDeletionChange = null;
 
 		if (argument.propIDs.isEmpty()) {
-
 			Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
 					"argIDs", argument.id);
 			Proposition parentProp = propQuery.iterator().next();
@@ -723,6 +741,8 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			 * propositions left, we don't have to save the argument's
 			 * proposition list
 			 */
+			parentProp.argIDs.remove(argument.id);
+			ofy.put(parentProp);
 			ofy.delete(argument);
 		} else {
 			ofy.put(argument);

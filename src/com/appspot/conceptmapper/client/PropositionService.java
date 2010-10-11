@@ -20,6 +20,8 @@ public interface PropositionService extends RemoteService {
 			throws Exception;
 
 	public void updateProposition(Long propID, String content) throws Exception;
+	
+	public void updateArgument(Long argID, String content) throws Exception;
 
 	public void linkProposition(Long parentArgID, int position,
 			Long propositionID) throws Exception;
@@ -31,18 +33,11 @@ public interface PropositionService extends RemoteService {
 		/* added to suppress warnings */
 		private static final long serialVersionUID = 1L;
 		public Map<Long, Proposition> rootProps;
-		public Map<Long, Proposition> props;
-		public Map<Long, Argument> args;
+		public Nodes nodes;
 	}
 	
 	public AllPropsAndArgs getAllPropsAndArgs();
 	
-	public class Nodes implements Serializable{
-		/* added to suppress warnings */
-		private static final long serialVersionUID = 1L;
-		public Map<Long, Proposition> props;
-		public Map<Long, Argument> args;
-	}
 	public Nodes replaceWithLinkAndGet(Long parentArgID, Long linkPropID, Long removePropID) throws Exception;
 
 	public SortedMap<Date, Change> getRevisions(Long changeID,
@@ -51,8 +46,7 @@ public interface PropositionService extends RemoteService {
 	public class NodesWithHistory implements Serializable {
 		/* added to suppress warnings */
 		private static final long serialVersionUID = 1L;
-		public Map<Long, Proposition> props;
-		public Map<Long, Argument> args;
+		public Nodes nodes;
 		public SortedMap<Date, Change> changes;
 	}
 

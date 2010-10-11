@@ -30,6 +30,7 @@ public class TimeTraveler {
 	private Map<Long, Boolean> mapArgPro;
 	private Map<Long, Integer> mapPropIndex;
 	private Map<Long, Long> mapPropID;
+	private Map<Long, String> mapArgTitle;
 	
 	public PropositionView absorb( TimeTraveler timeTraveler, PropositionView propGraft ){
 		/*Long propID = propGraft.proposition.id;
@@ -59,6 +60,7 @@ public class TimeTraveler {
 		mapArgPro.putAll( timeTraveler.mapArgPro);
 		mapPropIndex.putAll( timeTraveler.mapPropIndex);
 		mapPropID.putAll( timeTraveler.mapPropID);
+		mapArgTitle.putAll( timeTraveler.mapArgTitle);
 		
 		return oldPropView;
 	}
@@ -91,6 +93,7 @@ public class TimeTraveler {
 		mapArgPro.putAll( timeTraveler.mapArgPro);
 		mapPropIndex.putAll( timeTraveler.mapPropIndex);
 		mapPropID.putAll( timeTraveler.mapPropID);
+		mapArgTitle.putAll( timeTraveler.mapArgTitle );
 		
 		return oldArgView;
 	}
@@ -112,6 +115,7 @@ public class TimeTraveler {
 		mapArgPro = new HashMap<Long, Boolean>();
 		mapPropIndex = new HashMap<Long, Integer>();
 		mapPropID = new HashMap<Long, Long>();
+		mapArgTitle = new HashMap<Long, String>();
 
 		currentDate = changes.lastKey();
 	}
@@ -269,6 +273,11 @@ public class TimeTraveler {
 				argViewIndex.remove(change.argID);
 				break;
 			}
+			case ARG_MODIFICATION:{
+				ArgumentView argView = argViewIndex.get(change.argID);
+				argView.setArgTitle(mapArgTitle.get(change.id));
+				break;
+			}
 			case PROP_UNLINK: {
 				/*
 				 * reverse this: ArgumentView argView =
@@ -326,7 +335,7 @@ public class TimeTraveler {
 				// println("change: " + change.toString());
 				PropositionView deletedPropView = new PropositionView(false);
 				propViewIndex.put(change.propID, deletedPropView);
-				deletedPropView.setContent(change.propContent);
+				deletedPropView.setContent(change.content);
 				deletedPropView.proposition.id = change.propID;
 				argView.insertPropositionViewAt(change.argPropIndex,
 						deletedPropView);
@@ -349,7 +358,7 @@ public class TimeTraveler {
 			case PROP_MODIFICATION: {
 				PropositionView propView = propViewIndex.get(change.propID);
 				mapPropContent.put(change.id, propView.getContent());
-				propView.setContent(change.propContent);
+				propView.setContent(change.content);
 
 				break;
 			}
@@ -378,6 +387,12 @@ public class TimeTraveler {
 				argView.argument.id = change.argID;
 				propView.addItem(argView);
 				argViewIndex.put(change.argID, argView);
+				break;
+			}
+			case ARG_MODIFICATION: {
+				ArgumentView argView = argViewIndex.get(change.argID);
+				mapArgTitle.put(change.id, argView.getArgTitle());
+				argView.setArgTitle(change.content);
 				break;
 			}
 			case PROP_UNLINK: {

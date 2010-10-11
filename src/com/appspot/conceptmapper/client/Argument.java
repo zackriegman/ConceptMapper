@@ -14,6 +14,7 @@ import com.googlecode.objectify.annotation.Cached;
 public class Argument implements Serializable {
 
 	private static final long serialVersionUID = 1L; //to suppress warnings
+	public static final int MAX_LENGTH = 70;
 	
 	@Id
 	public Long id;
@@ -61,6 +62,7 @@ public class Argument implements Serializable {
 	public Argument( Argument argument ){
 		id = argument.id;
 		pro = argument.pro;
+		title = argument.title;
 	}
 	
 	/*

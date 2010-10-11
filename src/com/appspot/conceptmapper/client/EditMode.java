@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.appspot.conceptmapper.client.PropositionService.AllPropsAndArgs;
-import com.appspot.conceptmapper.client.PropositionService.Nodes;
 import com.appspot.conceptmapper.client.ServerComm.LocalCallback;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -60,8 +59,7 @@ public class EditMode extends ResizeComposite implements
 
 				tree.addItem(newPropView);
 				newPropView.haveFocus();
-				ServerComm
-						.addProposition(newPropView.getProposition(), null, 0);
+				ServerComm.addProposition(newPropView.getProposition(), null, 0);
 			}
 		});
 
@@ -77,24 +75,27 @@ public class EditMode extends ResizeComposite implements
 			@Override
 			public void call(AllPropsAndArgs allNodes) {
 				GWT.log("Root Props:");
-				for( Long propID : allNodes.rootProps.keySet()){
-					GWT.log( "propID:"+propID+"; prop:" + allNodes.rootProps.get(propID).toString() );
+				for (Long propID : allNodes.rootProps.keySet()) {
+					GWT.log("propID:" + propID + "; prop:"
+							+ allNodes.rootProps.get(propID).toString());
 				}
 				GWT.log("Props:");
-				for( Long propID : allNodes.props.keySet()){
-					GWT.log( "propID:"+propID+"; prop:" + allNodes.props.get(propID).toString() );
+				for (Long propID : allNodes.nodes.props.keySet()) {
+					GWT.log("propID:" + propID + "; prop:"
+							+ allNodes.nodes.props.get(propID).toString());
 				}
 				GWT.log("Args:");
-				for( Long argID : allNodes.args.keySet()){
-					GWT.log( "argID:"+argID+"; arg:" + allNodes.args.get(argID).toString() );
+				for (Long argID : allNodes.nodes.args.keySet()) {
+					GWT.log("argID:" + argID + "; arg:"
+							+ allNodes.nodes.args.get(argID).toString());
 				}
-				
-				
+
 				for (Long propID : allNodes.rootProps.keySet()) {
 					Proposition proposition = allNodes.rootProps.get(propID);
-					PropositionView propView = PropositionView.recursiveBuildPropositionView(
-							proposition, true, allNodes.props, allNodes.args, null, null);
-					tree.addItem( propView );
+					PropositionView propView = PropositionView
+							.recursiveBuildPropositionView(proposition, true,
+									allNodes.nodes, null, null);
+					tree.addItem(propView);
 					propView.printPropRecursive(0);
 				}
 				openTree();
@@ -135,16 +136,24 @@ public class EditMode extends ResizeComposite implements
 						@Override
 						public void call(Nodes nodes) {
 							parentArgView.removeItem(propViewToRemove);
-							Proposition proposition  = nodes.props.get(linkPropID);
+							Proposition proposition = nodes.props
+									.get(linkPropID);
 							PropositionView newPropView = PropositionView
 									.recursiveBuildPropositionView(proposition,
-											true, nodes.props, nodes.args, null, null);
+											true, nodes,
+											null, null);
 							parentArgView.insertPropositionViewAt(propIndex,
 									newPropView);
 						}
 					}
 					;
 					ThisCallback callback = new ThisCallback();
+					/*
+					 * TODO handle requests to link to top level nodes more
+					 * gracefully... currently throws an exception, instead a
+					 * message indicating that top level nodes cannot be linked
+					 * would be good...
+					 */
 					ArgumentView parentArgView = propViewToRemove
 							.parentArgView();
 					callback.parentArgView = parentArgView;
@@ -205,10 +214,10 @@ public class EditMode extends ResizeComposite implements
 
 			super.onBrowserEvent(event);
 		}
-		
-		public void printTree(){
-			for(int i = 0; i < getItemCount(); i++){
-				((PropositionView)getItem(i)).printPropRecursive(0);
+
+		public void printTree() {
+			for (int i = 0; i < getItemCount(); i++) {
+				((PropositionView) getItem(i)).printPropRecursive(0);
 			}
 		}
 	}
@@ -300,8 +309,9 @@ public class EditMode extends ResizeComposite implements
 				args.add(argView.argument);
 				if (argView.getState() || propView.getChildCount() == 0) {
 					for (int j = 0; j < argView.getChildCount(); j++) {
-						recursiveGetOpenPropsAndArgs((PropositionView) argView
-								.getChild(j), props, args);
+						recursiveGetOpenPropsAndArgs(
+								(PropositionView) argView.getChild(j), props,
+								args);
 					}
 				}
 			}

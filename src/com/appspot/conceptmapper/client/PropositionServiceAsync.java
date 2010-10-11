@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.SortedMap;
 
 import com.appspot.conceptmapper.client.PropositionService.AllPropsAndArgs;
-import com.appspot.conceptmapper.client.PropositionService.Nodes;
 import com.appspot.conceptmapper.client.PropositionService.NodesWithHistory;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -53,4 +52,6 @@ public interface PropositionServiceAsync {
 
 	void getArgumentCurrentVersionAndHistory(Long argID,
 			AsyncCallback<NodesWithHistory> callback);
+
+	void updateArgument(Long argID, String content, AsyncCallback<Void> callback);
 }

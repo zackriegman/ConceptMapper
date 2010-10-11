@@ -4,10 +4,49 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TreeItem;
 
-public class ArgumentView extends TreeItem {
+public class ArgumentView extends TreeItem implements ChangeHandler {
 	public Argument argument;
+	private Label label;
+	private TextBox textBox;
+
+	public ArgumentView(Argument arg) {
+		super();
+		argument = arg;
+		initialize();
+	}
+
+	public ArgumentView(boolean pro) {
+		super();
+		argument = new Argument();
+		argument.pro = pro;
+		initialize();
+	}
+
+	private void initialize() {
+		label = new Label();
+		textBox = new TextBox();
+		textBox.setVisibleLength(Argument.MAX_LENGTH);
+		textBox.setMaxLength(Argument.MAX_LENGTH);
+		textBox.setStylePrimaryName("argumentTextBox");
+		textBox.addChangeHandler(this);
+		textBox.setText(argument.title);
+		HorizontalPanel horizontalPanel = new HorizontalPanel();
+		horizontalPanel.add(label);
+		horizontalPanel.add(textBox);
+		setWidget(horizontalPanel);
+		if (argument.pro) {
+			label.setText("Argument For: ");
+		} else {
+			label.setText("Argument Against: ");
+		}
+	}
 
 	public ArgumentView createClone() {
 		ArgumentView argView = new ArgumentView(new Argument(argument));
@@ -15,34 +54,20 @@ public class ArgumentView extends TreeItem {
 		return argView;
 
 	}
+	
+	public void setArgTitle( String title ){
+		textBox.setText( title );
+	}
+	
+	public String getArgTitle(){
+		return textBox.getText();
+	}
 
 	public String toString() {
 		return "text:" + getText() + "; id:" + argument.id;
 	}
 
-	public ArgumentView(Argument arg) {
-		super();
-		setLabel(arg.pro);
-
-		argument = arg;
-	}
-
-	public ArgumentView(boolean pro) {
-		super();
-		setLabel(pro);
-		argument = new Argument();
-		argument.pro = pro;
-	}
-
-	private void setLabel(boolean pro) {
-		if (pro) {
-			setText("Argument For");
-		} else {
-			setText("Argument Against");
-		}
-	}
-	
-	public PropositionView getPropView( int index ){
+	public PropositionView getPropView(int index) {
 		return (PropositionView) getChild(index);
 	}
 
@@ -72,15 +97,26 @@ public class ArgumentView extends TreeItem {
 			addItem(toRemove);
 		}
 	}
-	
 
-	
-	public void printArgRecursive( int level ){
+	public void printArgRecursive(int level) {
 		GWT.log(ConceptMapper.spaces(level * 2) + getText() + "; id:"
 				+ argument.id);
 		for (int j = 0; j < getChildCount(); j++) {
-			getPropView(j).printPropRecursive( level + 1);
+			getPropView(j).printPropRecursive(level + 1);
 		}
 	}
 
+	@Override
+	public void onChange(ChangeEvent event) {
+		String trimmedTextBoxContent = textBox.getText() == null ? "" : textBox
+				.getText().trim();
+		String trimmedArgumentTitle = argument.title == null ? ""
+				: argument.title.trim();
+		if (!trimmedArgumentTitle.equals(trimmedTextBoxContent)) {
+			argument.title = trimmedTextBoxContent;
+			ServerComm.updateArgument(argument);
+		}
+	}
+	
+	
 }
