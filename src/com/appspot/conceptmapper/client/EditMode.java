@@ -3,7 +3,10 @@ package com.appspot.conceptmapper.client;
 import java.util.List;
 import java.util.Map;
 
+import com.appspot.conceptmapper.client.PropositionService.AllPropsAndArgs;
+import com.appspot.conceptmapper.client.PropositionService.Nodes;
 import com.appspot.conceptmapper.client.ServerComm.LocalCallback;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
@@ -69,13 +72,28 @@ public class EditMode extends ResizeComposite implements
 
 		mainPanel.add(tree);
 
-		ServerComm.fetchProps(new ServerComm.LocalCallback<Proposition[]>() {
+		ServerComm.fetchProps(new ServerComm.LocalCallback<AllPropsAndArgs>() {
 
 			@Override
-			public void call(Proposition[] props) {
-				for (Proposition prop : props) {
+			public void call(AllPropsAndArgs allNodes) {
+				GWT.log("Root Props:");
+				for( Long propID : allNodes.rootProps.keySet()){
+					GWT.log( "propID:"+propID+"; prop:" + allNodes.rootProps.get(propID).toString() );
+				}
+				GWT.log("Props:");
+				for( Long propID : allNodes.props.keySet()){
+					GWT.log( "propID:"+propID+"; prop:" + allNodes.props.get(propID).toString() );
+				}
+				GWT.log("Args:");
+				for( Long argID : allNodes.args.keySet()){
+					GWT.log( "argID:"+argID+"; arg:" + allNodes.args.get(argID).toString() );
+				}
+				
+				
+				for (Long propID : allNodes.rootProps.keySet()) {
+					Proposition proposition = allNodes.rootProps.get(propID);
 					PropositionView propView = PropositionView.recursiveBuildPropositionView(
-							prop, true, null, null);
+							proposition, true, allNodes.props, allNodes.args, null, null);
 					tree.addItem( propView );
 					propView.printPropRecursive(0);
 				}
@@ -108,17 +126,19 @@ public class EditMode extends ResizeComposite implements
 				PropositionView propViewToRemove = PropositionView
 						.getLastPropositionWithFocus();
 				if (propViewToRemove.getChildCount() == 0) {
-					class ThisCallback implements LocalCallback<Proposition> {
+					class ThisCallback implements LocalCallback<Nodes> {
 						ArgumentView parentArgView;
 						PropositionView propViewToRemove;
 						int propIndex;
+						Long linkPropID;
 
 						@Override
-						public void call(Proposition proposition) {
+						public void call(Nodes nodes) {
 							parentArgView.removeItem(propViewToRemove);
+							Proposition proposition  = nodes.props.get(linkPropID);
 							PropositionView newPropView = PropositionView
 									.recursiveBuildPropositionView(proposition,
-											true, null, null);
+											true, nodes.props, nodes.args, null, null);
 							parentArgView.insertPropositionViewAt(propIndex,
 									newPropView);
 						}
@@ -132,6 +152,7 @@ public class EditMode extends ResizeComposite implements
 					callback.propIndex = parentArgView
 							.getChildIndex(propViewToRemove);
 					Proposition propToLinkTo = propMatches.get(resultIndex);
+					callback.linkPropID = propToLinkTo.id;
 					ServerComm.replaceWithLinkAndGet(parentArgView.argument,
 							propToLinkTo, propViewToRemove.proposition,
 							callback);

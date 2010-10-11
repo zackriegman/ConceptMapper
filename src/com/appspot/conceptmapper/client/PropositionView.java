@@ -184,6 +184,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 				event.preventDefault();
 			} else if (charCode == KeyCodes.KEY_ENTER
 					&& parentArgView() != null) {
+				onChange(null);
 				addProposition();
 				event.preventDefault();
 			}
@@ -336,7 +337,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 
 			newPropView.textArea.setCursorPos(0);
 			newPropView.textArea.setFocus(true);
-			GWT.log("prop sent:" + newPropView.toString());
+			GWT.log("addProposition(): prop sent:" + newPropView.toString());
 
 			ServerComm.addProposition(newPropView.proposition,
 					parentArgView().argument, treePosition + 1);
@@ -424,6 +425,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	}
 
 	private void updatePropOnServerIfChanged() {
+		GWT.log("AAAAAAA");
 		String trimmedTextAreaContent = textArea.getText() == null ? ""
 				: textArea.getText().trim();
 		String trimmedPropositionContent = proposition.getContent() == null ? ""
@@ -435,29 +437,33 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	}
 
 	public static PropositionView recursiveBuildPropositionView(
-			Proposition prop, boolean editable,
+			Proposition prop, boolean editable, Map<Long, Proposition> props,
+			Map<Long, Argument> args,
 			Map<Long, PropositionView> propViewIndex,
 			Map<Long, ArgumentView> argViewIndex) {
 
 		PropositionView propView = new PropositionView(prop, editable);
 		if (propViewIndex != null)
 			propViewIndex.put(prop.id, propView);
-		for (Argument arg : prop.args) {
-			propView.addItem(recursiveBuildArgumentView(arg, editable,
+		for (Long argID : prop.argIDs) {
+			Argument argument = args.get(argID);
+			propView.addItem(recursiveBuildArgumentView(argument, editable, props, args,
 					propViewIndex, argViewIndex));
 		}
 		return propView;
 	}
 
 	public static ArgumentView recursiveBuildArgumentView(Argument arg,
-			boolean editable, Map<Long, PropositionView> propViewIndex,
+			boolean editable, Map<Long, Proposition> props,
+			Map<Long, Argument> args, Map<Long, PropositionView> propViewIndex,
 			Map<Long, ArgumentView> argViewIndex) {
 
 		ArgumentView argView = new ArgumentView(arg);
 		if (argViewIndex != null)
 			argViewIndex.put(arg.id, argView);
-		for (Proposition prop : arg.props) {
-			argView.addItem(recursiveBuildPropositionView(prop, editable,
+		for (Long propID : arg.propIDs) {
+			Proposition proposition = props.get(propID);
+			argView.addItem(recursiveBuildPropositionView(proposition, editable, props, args,
 					propViewIndex, argViewIndex));
 		}
 		return argView;

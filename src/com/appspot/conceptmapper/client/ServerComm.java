@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.Queue;
 
-import com.appspot.conceptmapper.client.PropositionService.ArgTreeWithHistory;
-import com.appspot.conceptmapper.client.PropositionService.PropTreeWithHistory;
+import com.appspot.conceptmapper.client.PropositionService.AllPropsAndArgs;
+import com.appspot.conceptmapper.client.PropositionService.Nodes;
+import com.appspot.conceptmapper.client.PropositionService.NodesWithHistory;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -114,8 +115,8 @@ public class ServerComm {
 		public abstract void doOnSuccess(T result);
 	}
 
-	public static void fetchProps(LocalCallback<Proposition[]> localCallback) {
-		propositionService.getAllProps(new ServerCallback<Proposition[]>(
+	public static void fetchProps(LocalCallback<AllPropsAndArgs> localCallback) {
+		propositionService.getAllPropsAndArgs(new ServerCallback<AllPropsAndArgs>(
 				localCallback, "Server Reports Success Fetching Props"));
 	}
 
@@ -138,20 +139,20 @@ public class ServerComm {
 	}
 
 	public static void getPropositionCurrentVersionAndHistory(Proposition prop,
-			LocalCallback<PropTreeWithHistory> localCallback) {
+			LocalCallback<NodesWithHistory> localCallback) {
 		propositionService
 				.getPropositionCurrentVersionAndHistory(
 						prop.id,
-						new ServerCallback<PropTreeWithHistory>(localCallback,
+						new ServerCallback<NodesWithHistory>(localCallback,
 								"Server Reports Success Fetching Proposition and History"));
 	}
 
 	public static void getArgumentCurrentVersionAndHistory(Argument arg,
-			LocalCallback<ArgTreeWithHistory> localCallback) {
+			LocalCallback<NodesWithHistory> localCallback) {
 		propositionService
 				.getArgumentCurrentVersionAndHistory(
 						arg.id,
-						new ServerCallback<ArgTreeWithHistory>(localCallback,
+						new ServerCallback<NodesWithHistory>(localCallback,
 								"Server Reports Success Fetching Argument and History"));
 	}
 
@@ -186,7 +187,7 @@ public class ServerComm {
 
 			@Override
 			public void doOnSuccess(Argument result) {
-				newProp.id = result.props.get(0).id;
+				newProp.id = result.propIDs.get(0);
 				newArg.id = result.id;
 			}
 		}
@@ -315,13 +316,13 @@ public class ServerComm {
 
 	public static void replaceWithLinkAndGet(Argument parentArg,
 			Proposition linkProp, Proposition removeProp,
-			LocalCallback<Proposition> localCallback) {
-		class CommandLink extends ServerCallbackWithDispatch<Proposition>
+			LocalCallback<Nodes> localCallback) {
+		class CommandLink extends ServerCallbackWithDispatch<Nodes>
 				implements Command {
 			Long parentArgID;
 			Long linkPropID;
 			Long removePropID;
-			LocalCallback<Proposition> localCallback;
+			LocalCallback<Nodes> localCallback;
 
 			public CommandLink(String message) {
 				super(message);
@@ -334,7 +335,7 @@ public class ServerComm {
 			}
 
 			@Override
-			public void doOnSuccess(Proposition result) {
+			public void doOnSuccess(Nodes result) {
 				localCallback.call(result);
 			}
 		}

@@ -28,6 +28,8 @@ public interface PropositionService extends RemoteService {
 			throws Exception;
 
 	public class AllPropsAndArgs implements Serializable {
+		/* added to suppress warnings */
+		private static final long serialVersionUID = 1L;
 		public Map<Long, Proposition> rootProps;
 		public Map<Long, Proposition> props;
 		public Map<Long, Argument> args;
@@ -35,31 +37,29 @@ public interface PropositionService extends RemoteService {
 	
 	public AllPropsAndArgs getAllPropsAndArgs();
 	
-	public Proposition replaceWithLinkAndGet(Long parentArgID, Long linkPropID, Long removePropID) throws Exception;
+	public class Nodes implements Serializable{
+		/* added to suppress warnings */
+		private static final long serialVersionUID = 1L;
+		public Map<Long, Proposition> props;
+		public Map<Long, Argument> args;
+	}
+	public Nodes replaceWithLinkAndGet(Long parentArgID, Long linkPropID, Long removePropID) throws Exception;
 
 	public SortedMap<Date, Change> getRevisions(Long changeID,
 			List<Long> propIDs, List<Long> argIDs) throws Exception;
 
-	public class PropTreeWithHistory implements Serializable {
-
-		/* added to supress warnings */
+	public class NodesWithHistory implements Serializable {
+		/* added to suppress warnings */
 		private static final long serialVersionUID = 1L;
-		public Proposition proposition;
+		public Map<Long, Proposition> props;
+		public Map<Long, Argument> args;
 		public SortedMap<Date, Change> changes;
 	}
 
-	public PropTreeWithHistory getPropositionCurrentVersionAndHistory(
+	public NodesWithHistory getPropositionCurrentVersionAndHistory(
 			Long propID) throws Exception;
 
-	public class ArgTreeWithHistory implements Serializable {
-
-		/* added to supress warnings */
-		private static final long serialVersionUID = 1L;
-		public Argument argument;
-		public SortedMap<Date, Change> changes;
-	}
-
-	public ArgTreeWithHistory getArgumentCurrentVersionAndHistory(Long argID)
+	public NodesWithHistory getArgumentCurrentVersionAndHistory(Long argID)
 			throws Exception;
 	
 	public List<Proposition> searchPropositions( String string, Long filerArgID ) throws Exception;

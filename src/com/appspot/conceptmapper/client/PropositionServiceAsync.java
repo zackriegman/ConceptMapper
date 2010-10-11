@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.SortedMap;
 
 import com.appspot.conceptmapper.client.PropositionService.AllPropsAndArgs;
-import com.appspot.conceptmapper.client.PropositionService.ArgTreeWithHistory;
-import com.appspot.conceptmapper.client.PropositionService.PropTreeWithHistory;
+import com.appspot.conceptmapper.client.PropositionService.Nodes;
+import com.appspot.conceptmapper.client.PropositionService.NodesWithHistory;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public interface PropositionServiceAsync {
@@ -36,22 +36,21 @@ public interface PropositionServiceAsync {
 	void getRevisions(Long changeID, List<Long> propIDs, List<Long> argIDs,
 			AsyncCallback<SortedMap<Date, Change>> callback);
 
-	void getPropositionCurrentVersionAndHistory(Long propID,
-			AsyncCallback<PropTreeWithHistory> callback);
-
-
-	void getArgumentCurrentVersionAndHistory(Long argID,
-			AsyncCallback<ArgTreeWithHistory> callback);
-
 	void searchPropositions(String string, Long filterArgID,
 			AsyncCallback<List<Proposition>> callback);
 
 	void replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
-			Long removePropID, AsyncCallback<Proposition> callback);
+			Long removePropID, AsyncCallback<Nodes> callback);
 
 
 	void addProposition(Long parentArgID, int position, String content,
 			AsyncCallback<Long> callback);
 
 	void getAllPropsAndArgs(AsyncCallback<AllPropsAndArgs> callback);
+
+	void getPropositionCurrentVersionAndHistory(Long propID,
+			AsyncCallback<NodesWithHistory> callback);
+
+	void getArgumentCurrentVersionAndHistory(Long argID,
+			AsyncCallback<NodesWithHistory> callback);
 }

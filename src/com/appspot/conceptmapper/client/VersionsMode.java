@@ -8,8 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
-import com.appspot.conceptmapper.client.PropositionService.ArgTreeWithHistory;
-import com.appspot.conceptmapper.client.PropositionService.PropTreeWithHistory;
+import com.appspot.conceptmapper.client.PropositionService.NodesWithHistory;
 import com.appspot.conceptmapper.client.ServerComm.LocalCallback;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -37,8 +36,8 @@ public class VersionsMode extends ResizeComposite implements
 	private TimeTraveler mainTT;
 	private FlowPanel treePanel = new FlowPanel();
 	private final int LIST_WIDTH = 20;
-	
-	//SplitLayoutPanel mainPanel;
+
+	// SplitLayoutPanel mainPanel;
 
 	private HandlerRegistration listBoxChangeHandlerRegistration;
 
@@ -46,15 +45,15 @@ public class VersionsMode extends ResizeComposite implements
 		super();
 		this.editMode = editModePair;
 		DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.EM);
-		//mainPanel = new SplitLayoutPanel();
+		// mainPanel = new SplitLayoutPanel();
 
-		//add(versionList);
+		// add(versionList);
 		mainPanel.addWest(versionList, LIST_WIDTH);
-		mainPanel.add( new ScrollPanel( treePanel ));
-		//mainPanel.add(new Label("HEELO"));
-		
+		mainPanel.add(new ScrollPanel(treePanel));
+		// mainPanel.add(new Label("HEELO"));
+
 		versionList.setVisibleItemCount(2);
-		versionList.setWidth( LIST_WIDTH + "em");
+		versionList.setWidth(LIST_WIDTH + "em");
 
 		listBoxChangeHandlerRegistration = versionList.addChangeHandler(this);
 		initWidget(mainPanel);
@@ -80,32 +79,22 @@ public class VersionsMode extends ResizeComposite implements
 			}
 		}
 	}
-/*
-	public void printPropRecursive(PropositionView propViewParent, int level) {
-		GWT.log(spaces(level * 2) + "propID:" + propViewParent.proposition.id
-				+ "; content:" + propViewParent.getContent());
-		for (int i = 0; i < propViewParent.getChildCount(); i++) {
-			ArgumentView arg = (ArgumentView) propViewParent.getChild(i);
-			printArgRecursive( arg, level + 1 );
-		}
-	}
-	
-	public void printArgRecursive( ArgumentView arg, int level ){
-		GWT.log(spaces(level * 2) + arg.getText() + "; id:"
-				+ arg.argument.id);
-		for (int j = 0; j < arg.getChildCount(); j++) {
-			printPropRecursive((PropositionView) arg.getChild(j), level + 1);
-		}
-	}
 
-	public String spaces(int spaces) {
-		String string = "";
-		for (int i = 0; i < spaces; i++) {
-			string = string + " ";
-		}
-		return string;
-	}
-	*/
+	/*
+	 * public void printPropRecursive(PropositionView propViewParent, int level)
+	 * { GWT.log(spaces(level * 2) + "propID:" + propViewParent.proposition.id +
+	 * "; content:" + propViewParent.getContent()); for (int i = 0; i <
+	 * propViewParent.getChildCount(); i++) { ArgumentView arg = (ArgumentView)
+	 * propViewParent.getChild(i); printArgRecursive( arg, level + 1 ); } }
+	 * 
+	 * public void printArgRecursive( ArgumentView arg, int level ){
+	 * GWT.log(spaces(level * 2) + arg.getText() + "; id:" + arg.argument.id);
+	 * for (int j = 0; j < arg.getChildCount(); j++) {
+	 * printPropRecursive((PropositionView) arg.getChild(j), level + 1); } }
+	 * 
+	 * public String spaces(int spaces) { String string = ""; for (int i = 0; i
+	 * < spaces; i++) { string = string + " "; } return string; }
+	 */
 
 	public void displayVersions() {
 		versionList.clear();
@@ -192,12 +181,10 @@ public class VersionsMode extends ResizeComposite implements
 			if (treeItem.getChild(0).getStyleName().equals("loadDummyProp")) {
 				// ServerComm.getPropositionCurrentVersionAndHistory(prop,
 				// localCallback)
-				GWT
-						.log("VersionsMode.onClose[loadDummyProp]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
-			} else if (treeItem.getChild(0).getStyleName().equals(
-					"loadDummyArg")) {
-				GWT
-						.log("VersionsMode.onClose[loadDummyArg]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
+				GWT.log("VersionsMode.onClose[loadDummyProp]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
+			} else if (treeItem.getChild(0).getStyleName()
+					.equals("loadDummyArg")) {
+				GWT.log("VersionsMode.onClose[loadDummyArg]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
 			}
 		}
 
@@ -209,14 +196,13 @@ public class VersionsMode extends ResizeComposite implements
 		if (treeItem.getChildCount() > 0) {
 			TreeItem child = treeItem.getChild(0);
 			if (child.getStyleName().equals("loadDummyProp")) {
-				class Callback
-						implements
-						ServerComm.LocalCallback<PropTreeWithHistory> {
+				class Callback implements
+						ServerComm.LocalCallback<NodesWithHistory> {
 					PropositionView propView;
 
 					@Override
-					public void call(PropTreeWithHistory propTreeWithHistory) {
-						mergeLoadedProposition(propView, propTreeWithHistory);
+					public void call(NodesWithHistory propTreeWithHistory) {
+						mergeLoadedProposition(propView.proposition, propTreeWithHistory);
 					}
 				}
 				Callback callback = new Callback();
@@ -225,39 +211,37 @@ public class VersionsMode extends ResizeComposite implements
 				ServerComm.getPropositionCurrentVersionAndHistory(
 						((PropositionView) treeItem).proposition, callback);
 			} else if (child.getStyleName().equals("loadDummyArg")) {
-				class Callback
-						implements
-						LocalCallback<ArgTreeWithHistory> {
+				class Callback implements LocalCallback<NodesWithHistory> {
 					ArgumentView argView;
 
 					@Override
-					public void call(ArgTreeWithHistory argTreeWithHistory) {
-						mergeLoadedArgument(argView, argTreeWithHistory);
+					public void call(NodesWithHistory argTreeWithHistory) {
+						mergeLoadedArgument(argView.argument, argTreeWithHistory);
 					}
 				}
 				Callback callback = new Callback();
 				callback.argView = (ArgumentView) treeItem;
 
 				ServerComm.getArgumentCurrentVersionAndHistory(
-						((ArgumentView) treeItem).argument, callback); 
+						((ArgumentView) treeItem).argument, callback);
 			}
 		}
 
 	}
 
-	public void mergeLoadedProposition(PropositionView propViewParent,
-			PropTreeWithHistory propTreeWithHistory) {
+	public void mergeLoadedProposition(Proposition proposition, NodesWithHistory propTreeWithHistory) {
 
 		GWT.log("mergeLoadedPropositon: start");
 		Map<Long, PropositionView> propViewIndex = new HashMap<Long, PropositionView>();
 		Map<Long, ArgumentView> argViewIndex = new HashMap<Long, ArgumentView>();
 
 		PropositionView propGraft = PropositionView
-				.recursiveBuildPropositionView(propTreeWithHistory.proposition,
-						false, propViewIndex, argViewIndex);
+				.recursiveBuildPropositionView(proposition, false,
+						propTreeWithHistory.props, propTreeWithHistory.args,
+						propViewIndex, argViewIndex);
 
 		GWT.log("propTree before timeTravel:");
-		propGraft.printPropRecursive( 0);
+		propGraft.printPropRecursive(0);
 		TimeTraveler timeTraveler = new TimeTraveler(
 				propTreeWithHistory.changes, propViewIndex, argViewIndex, null);
 
@@ -269,11 +253,11 @@ public class VersionsMode extends ResizeComposite implements
 
 		timeTraveler.travelToDate(mainTT.getCurrentDate());
 		GWT.log("propTree after timeTravel:");
-		propGraft.printPropRecursive( 0);
+		propGraft.printPropRecursive(0);
 
 		PropositionView view = mainTT.absorb(timeTraveler, propGraft);
 		GWT.log("old propview after grafting:");
-		view.printPropRecursive( 0);
+		view.printPropRecursive(0);
 		GWT.log("----------------");
 
 		loadVersionListFromTimeMachine();
@@ -286,20 +270,20 @@ public class VersionsMode extends ResizeComposite implements
 		}
 		GWT.log("mergeLoadedPropositon: start");
 	}
-	
-	public void mergeLoadedArgument(ArgumentView argViewParent,
-			ArgTreeWithHistory argTreeWithHistory) {
+
+	public void mergeLoadedArgument(Argument argument, NodesWithHistory argTreeWithHistory) {
 
 		GWT.log("mergeLoadedArgument: start");
 		Map<Long, PropositionView> propViewIndex = new HashMap<Long, PropositionView>();
 		Map<Long, ArgumentView> argViewIndex = new HashMap<Long, ArgumentView>();
 
 		ArgumentView argGraft = PropositionView
-				.recursiveBuildArgumentView(argTreeWithHistory.argument,
-						false, propViewIndex, argViewIndex);
+				.recursiveBuildArgumentView(argument, false, argTreeWithHistory.props,
+						argTreeWithHistory.args,
+						propViewIndex, argViewIndex);
 
 		GWT.log("propTree before timeTravel:");
-		argGraft.printArgRecursive( 0);
+		argGraft.printArgRecursive(0);
 		TimeTraveler timeTraveler = new TimeTraveler(
 				argTreeWithHistory.changes, propViewIndex, argViewIndex, null);
 
@@ -311,11 +295,11 @@ public class VersionsMode extends ResizeComposite implements
 
 		timeTraveler.travelToDate(mainTT.getCurrentDate());
 		GWT.log("argTree after timeTravel:");
-		argGraft.printArgRecursive( 0);
+		argGraft.printArgRecursive(0);
 
 		ArgumentView view = mainTT.absorb(timeTraveler, argGraft);
 		GWT.log("old propview after grafting:");
-		view.printArgRecursive( 0);
+		view.printArgRecursive(0);
 		GWT.log("----------------");
 
 		loadVersionListFromTimeMachine();
