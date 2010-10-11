@@ -166,23 +166,6 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 				recursiveGetProps(prop, props, args);
 			}
 		}
-
-		/*
-		 * for each propID check to make sure the prop actually exists, and if
-		 * it does add it to the argument, and call this function recursively on
-		 * the prop
-		 */
-		for (Long id : arg.propIDs) {
-			Proposition gotProp = propMap.get(id);
-			if (gotProp == null) {
-				println("ERROR: datastore in inconsistent state; argument ["
-						+ arg.id
-						+ "] references proposition which does not exist");
-			} else {
-				arg.props.add(gotProp);
-				recursiveGetProps(gotProp);
-			}
-		}
 	}
 	
 	@Override
@@ -246,7 +229,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		change.propContent = prop.content;
 		change.propLinkCount = prop.linkCount;
 
-		/* in case there is an argument deletion, create an argument change */
+		/* in case there is an argument deletion, define an argument change variable*/
 		Change argDeletionChange = null;
 
 		// print("Proposition ID to delete:" + propID);
@@ -276,10 +259,14 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			/*
 			 * if that's the only proposition, delete the arg and prepare
 			 * versioning info for the arg deletion as well.
+			 * TODO: stop deleting childless arguments...
 			 */
 			if (argument.propIDs.isEmpty()) {
+				Query<Proposition> propQuery = ofy.query(Proposition.class).filter("argIDs", argument.id);
+				Proposition parentProp = propQuery.iterator().next();
+				
 				argDeletionChange = new Change(ChangeType.ARG_DELETION);
-				argDeletionChange.propID = argument.aboutPropID;
+				argDeletionChange.propID = parentProp.id;
 				argDeletionChange.argID = argument.id;
 				argDeletionChange.argPro = argument.pro;
 				/*
@@ -321,26 +308,28 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		 * trigger an exception if the ID is invalid to prevent inconsistent
 		 * datastore states
 		 */
-		ofy.get(Proposition.class, parentPropID);
+		Proposition parentProp = ofy.get(Proposition.class, parentPropID);
 
 		Proposition newProp = new Proposition();
 		newProp.linkCount = 1;
 		ofy.put(newProp);
 
 		Argument newArg = new Argument();
-		newArg.aboutPropID = parentPropID;
 		newArg.propIDs.add(0, newProp.id);
 
 		newArg.pro = pro;
 
 		ofy.put(newArg);
+		
+		parentProp.argIDs.add(newArg.id);
+		ofy.put(parentProp);
 
 		Change change = new Change(ChangeType.ARG_ADDITION);
 		change.argID = newArg.id;
 		change.propID = parentPropID;
 		saveVersionInfo(change);
 
-		newArg.props.add(newProp);
+		//newArg.props.add(newProp);
 
 		// getAllProps();
 		return newArg;
@@ -374,7 +363,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public SortedMap<Date, Change> getRevisions(Long changeID,
-			List<Long> propIDs, List<Long> argIDs) throws Exception {
+			Map<Long, Proposition> propIDs, Map<Long, Argument> argIDs) throws Exception {
 
 		SortedMap<Date, Change> map = new TreeMap<Date, Change>();
 		// HashSet<Long> processedProps = new HashSet<Long>();
@@ -405,9 +394,12 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			Long propID) throws Exception {
 		println("start getPropositionCurrentVersionAndHistory()");
 		PropTreeWithHistory propVersions = new PropTreeWithHistory();
+		Map<Long, Proposition> propIDs = new HashMap<Long, Proposition>();
+		Map<Long, Argument> argIDs = new HashMap<Long, Argument>();
+		Proposition proposition;
 		try {
-			propVersions.proposition = ofy.get(Proposition.class, propID);
-			recursiveBuildProp(propVersions.proposition);
+			proposition = ofy.get(Proposition.class, propID);
+			recursiveGetProps(proposition, propIDs, argIDs);
 		} catch (EntityNotFoundException e) {
 			/*
 			 * if the prop is not found that merely means it doesn't exist in
@@ -417,9 +409,6 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			propVersions.proposition = null;
 		}
 
-		List<Long> propIDs = new LinkedList<Long>();
-		List<Long> argIDs = new LinkedList<Long>();
-		recursiveExtractPropAndArgIDs(propVersions.proposition, propIDs, argIDs);
 		propVersions.changes = getRevisions(null, propIDs, argIDs);
 
 		println("end start getPropositionCurrentVersionAndHistory()");

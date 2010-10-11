@@ -8,7 +8,6 @@ import java.util.SortedMap;
 import com.appspot.conceptmapper.client.PropositionService.AllPropsAndArgs;
 import com.appspot.conceptmapper.client.PropositionService.ArgTreeWithHistory;
 import com.appspot.conceptmapper.client.PropositionService.PropTreeWithHistory;
-import com.appspot.conceptmapper.client.PropositionService.PropsAndArgs;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public interface PropositionServiceAsync {
