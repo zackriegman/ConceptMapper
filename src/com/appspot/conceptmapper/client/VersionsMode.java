@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
+import com.appspot.conceptmapper.client.PropositionService.NodeChangesMaps;
 import com.appspot.conceptmapper.client.PropositionService.NodesWithHistory;
 import com.appspot.conceptmapper.client.ServerComm.LocalCallback;
 import com.google.gwt.core.client.GWT;
@@ -105,7 +106,7 @@ public class VersionsMode extends ResizeComposite implements
 		List<Proposition> props = new LinkedList<Proposition>();
 		List<Argument> args = new LinkedList<Argument>();
 		editMode.getOpenPropsAndArgs(props, args);
-		ServerComm.getChanges(null, props, args,
+		ServerComm.getRevisions(null, props, args,
 				new ServerComm.LocalCallback<SortedMap<Date, Change>>() {
 
 					@Override
@@ -140,6 +141,16 @@ public class VersionsMode extends ResizeComposite implements
 						onChange(null);
 					}
 				});
+		ServerComm.getChanges( props, args,
+				new ServerComm.LocalCallback<NodeChangesMaps>() {
+
+
+					@Override
+					public void call(NodeChangesMaps changesMaps) {
+						GWT.log(changesMaps.toString());
+						
+					}
+		});
 	}
 
 	private void loadVersionListFromTimeMachine() {

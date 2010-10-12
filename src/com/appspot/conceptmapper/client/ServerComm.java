@@ -7,6 +7,7 @@ import java.util.SortedMap;
 import java.util.Queue;
 
 import com.appspot.conceptmapper.client.PropositionService.AllPropsAndArgs;
+import com.appspot.conceptmapper.client.PropositionService.NodeChangesMaps;
 import com.appspot.conceptmapper.client.PropositionService.NodesWithHistory;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -120,7 +121,7 @@ public class ServerComm {
 						localCallback, "Server Reports Success Fetching Props"));
 	}
 
-	public static void getChanges(Change change, List<Proposition> props,
+	public static void getRevisions(Change change, List<Proposition> props,
 			List<Argument> args,
 			LocalCallback<SortedMap<Date, Change>> localCallback) {
 		Long changeID = (change == null) ? null : change.id;
@@ -136,6 +137,21 @@ public class ServerComm {
 		propositionService.getRevisions(changeID, propIDs, argIDs,
 				new ServerCallback<SortedMap<Date, Change>>(localCallback,
 						"Server Reports Success Fetching Changes"));
+	}
+
+	public static void getChanges(List<Proposition> props, List<Argument> args,
+			LocalCallback<NodeChangesMaps> localCallback) {
+		List<Long> propIDs = new LinkedList<Long>();
+		for (Proposition prop : props) {
+			propIDs.add(prop.id);
+		}
+		List<Long> argIDs = new LinkedList<Long>();
+		for (Argument arg : args) {
+			argIDs.add(arg.id);
+		}
+		propositionService.getChanges(propIDs, argIDs,
+				new ServerCallback<NodeChangesMaps>(localCallback,
+						"Server Reports Success Getting Changes"));
 	}
 
 	public static void getPropositionCurrentVersionAndHistory(Proposition prop,
@@ -262,8 +278,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				propositionService.updateArgument(arg.id,
-						arg.title, this);
+				propositionService.updateArgument(arg.id, arg.title, this);
 			}
 
 			@Override

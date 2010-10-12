@@ -2,12 +2,10 @@ package com.appspot.conceptmapper.client;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 import javax.persistence.Id;
-import javax.persistence.Transient;
 
 import com.googlecode.objectify.annotation.Cached;
 
@@ -25,13 +23,7 @@ public class Proposition implements Serializable {
 	/* not sent to client, but saved */
 	transient public Set<String> tokens;
 	
-	/* sent to client, but not saved */
-	@Transient
-	public List<Change> changes;
-	
-	/* sent to client, but not saved */
-	@Transient
-	public Date changesTo;
+
 
 	
 	//public @Transient List<Argument> args = new LinkedList<Argument>();

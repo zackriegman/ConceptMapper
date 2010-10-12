@@ -2,6 +2,7 @@ package com.appspot.conceptmapper.client;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -55,6 +56,35 @@ public interface PropositionService extends RemoteService {
 
 	public NodesWithHistory getArgumentCurrentVersionAndHistory(Long argID)
 			throws Exception;
+	
+	public class NodeChangesMaps implements Serializable {
+		private static final long serialVersionUID = 1L;
+		public Map<Long, NodeChanges<Argument>> argChanges = new HashMap<Long, NodeChanges<Argument>>();
+		public Map<Long, NodeChanges<Proposition>> propChanges = new HashMap<Long, NodeChanges<Proposition>>();
+		
+		public String toString(){
+			StringBuffer buffer = new StringBuffer();
+			buffer.append( "argChanges:::::::");
+			for(Long id : argChanges.keySet()){
+				buffer.append( "\nid:");
+				buffer.append( id);
+				buffer.append("; nodeChange:");
+				buffer.append(argChanges.get(id));
+			}
+			buffer.append("\npropChanges::::::::");
+			for(Long id : propChanges.keySet()){
+				buffer.append( "\nid:");
+				buffer.append( id);
+				buffer.append("; nodeChange:");
+				buffer.append(propChanges.get(id));
+			}
+			return buffer.toString();
+		}
+		
+	}
+	
+	/* to replace getRevisions above*/
+	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs) throws Exception;
 	
 	public List<Proposition> searchPropositions( String string, Long filerArgID ) throws Exception;
 

@@ -26,6 +26,7 @@ import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.Query;
 import com.appspot.conceptmapper.client.Argument;
 import com.appspot.conceptmapper.client.Change;
+import com.appspot.conceptmapper.client.NodeChanges;
 import com.appspot.conceptmapper.client.Nodes;
 import com.appspot.conceptmapper.client.Proposition;
 import com.appspot.conceptmapper.client.PropositionService;
@@ -129,7 +130,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	 * }
 	 */
 
-	public void recursiveGetProps(Proposition prop, Nodes nodes ) {
+	public void recursiveGetProps(Proposition prop, Nodes nodes) {
 
 		/* get all the prop's arguments */
 		Map<Long, Argument> argMap = ofy.get(Argument.class, prop.argIDs);
@@ -361,17 +362,16 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		ofy.put(prop);
 
 	}
-	
+
 	@Override
 	public void updateArgument(Long argID, String content) throws Exception {
 		Change change = new Change(ChangeType.ARG_MODIFICATION);
 		Argument arg = ofy.get(Argument.class, argID);
-		if (arg.title != null
-				&& arg.title.trim().equals(content.trim())) {
+		if (arg.title != null && arg.title.trim().equals(content.trim())) {
 			throw new Exception(
 					"Cannot update argument title:  title not changed!");
 		}
-		
+
 		change.argID = arg.id;
 		change.content = arg.title;
 		// TODO is this line necessary for some reason?
@@ -385,6 +385,24 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 		arg.title = content.trim();
 		ofy.put(arg);
+	}
+
+	@Override
+	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs)
+			throws Exception {
+
+		NodeChangesMaps nodesChanges = new NodeChangesMaps();
+		try {
+			for (Long propID : propIDs) {
+				recursiveGetPropChanges(propID, nodesChanges);
+			}
+			for (Long argID : argIDs) {
+				recursiveGetArgChanges(argID, nodesChanges);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return nodesChanges;
 	}
 
 	@Override
@@ -457,11 +475,72 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		}
 
 		versions.changes = getRevisions(null, new ArrayList<Long>(
-				versions.nodes.props.keySet()),
-				new ArrayList<Long>(versions.nodes.args.keySet()));
+				versions.nodes.props.keySet()), new ArrayList<Long>(
+				versions.nodes.args.keySet()));
 
 		println("end start getPropositionCurrentVersionAndHistory()");
 		return versions;
+	}
+
+	public void recursiveGetPropChanges(Long propID,
+			NodeChangesMaps nodeChangesMaps) {
+		if (nodeChangesMaps.propChanges.containsKey(propID)) {
+			return;
+		}
+
+		Query<Change> query = ofy.query(Change.class).filter("propID = ",
+				propID);
+		NodeChanges<Proposition> nodeChanges = new NodeChanges<Proposition>();
+		nodeChangesMaps.propChanges.put(propID, nodeChanges);
+		for (Change change : query) {
+			switch (change.changeType) {
+			case ARG_DELETION:
+				nodeChanges.deletedChildIDs.add(change.argID);
+				recursiveGetArgChanges(change.argID, nodeChangesMaps);
+			case ARG_ADDITION:
+			case PROP_MODIFICATION:
+				nodeChanges.changes.add(change);
+				break;
+			case ARG_MODIFICATION:
+				// this shouldn't exist
+			case PROP_DELETION:
+			case PROP_ADDITION:
+			case PROP_LINK:
+			case PROP_UNLINK:
+				// do nothing
+				break;
+			}
+		}
+	}
+
+	public void recursiveGetArgChanges(Long argID,
+			NodeChangesMaps nodeChangesMaps) {
+		if (nodeChangesMaps.argChanges.containsKey(argID)) {
+			return;
+		}
+
+		Query<Change> query = ofy.query(Change.class).filter("argID = ", argID);
+		NodeChanges<Argument> nodeChanges = new NodeChanges<Argument>();
+		nodeChangesMaps.argChanges.put(argID, nodeChanges);
+		for (Change change : query) {
+			switch (change.changeType) {
+			case PROP_UNLINK:
+			case PROP_DELETION:
+				nodeChanges.deletedChildIDs.add(change.propID);
+				recursiveGetPropChanges(change.propID, nodeChangesMaps);
+			case ARG_MODIFICATION:
+			case PROP_ADDITION:
+			case PROP_LINK:
+				nodeChanges.changes.add(change);
+				break;
+			case PROP_MODIFICATION:
+				// this shouldn't exist
+			case ARG_DELETION:
+			case ARG_ADDITION:
+				// do nothing
+				break;
+			}
+		}
 	}
 
 	public void recursiveQueryChanges(List<Long> propIDs, List<Long> argIDs,
@@ -488,8 +567,8 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		List<Long> deletedArgs = new LinkedList<Long>();
 
 		if (propIDs != null && !propIDs.isEmpty()) {
-			Query<Change> query = ofy.query(Change.class)
-					.filter("propID in", propIDs).order("-date");
+			Query<Change> query = ofy.query(Change.class).filter("propID in",
+					propIDs).order("-date");
 			if (date != null) {
 				query = query.filter("date <", date);
 			}
@@ -503,8 +582,8 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 		}
 
 		if (argIDs != null && !argIDs.isEmpty()) {
-			Query<Change> query = ofy.query(Change.class)
-					.filter("argID in", argIDs).order("-date");
+			Query<Change> query = ofy.query(Change.class).filter("argID in",
+					argIDs).order("-date");
 			if (date != null) {
 				query = query.filter("date <", date);
 			}
@@ -684,7 +763,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 		Nodes nodes = new Nodes();
 		nodes.props.put(linkProp.id, linkProp);
-		recursiveGetProps(linkProp, nodes );
+		recursiveGetProps(linkProp, nodes);
 		return nodes;
 	}
 

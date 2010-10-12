@@ -1,12 +1,10 @@
 package com.appspot.conceptmapper.client;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.persistence.Id;
-import javax.persistence.Transient;
 
 import com.googlecode.objectify.annotation.Cached;
 
@@ -14,7 +12,7 @@ import com.googlecode.objectify.annotation.Cached;
 public class Argument implements Serializable {
 
 	private static final long serialVersionUID = 1L; //to suppress warnings
-	public static final int MAX_LENGTH = 70;
+	public static final int MAX_LENGTH = 60;
 	
 	@Id
 	public Long id;
@@ -27,10 +25,6 @@ public class Argument implements Serializable {
 	 */
 	public List<Long> propIDs = new LinkedList<Long>();
 	
-	@Transient
-	public List<Change> changes;
-	@Transient
-	public Date changesTo;
 	
 	public String toString(){
 		StringBuffer buffer = new StringBuffer();

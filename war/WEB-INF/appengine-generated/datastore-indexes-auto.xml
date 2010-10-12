@@ -1,14 +1,14 @@
-<!-- Indices written at Mon, 11 Oct 2010 22:55:39 UTC -->
+<!-- Indices written at Tue, 12 Oct 2010 03:29:43 UTC -->
 
 <datastore-indexes>
 
-    <!-- Used 15 times in query history -->
+    <!-- Used 5 times in query history -->
     <datastore-index kind="Change" ancestor="false" source="auto">
         <property name="propID" direction="asc"/>
         <property name="date" direction="desc"/>
     </datastore-index>
 
-    <!-- Used 6 times in query history -->
+    <!-- Used 1 time in query history -->
     <datastore-index kind="Change" ancestor="false" source="auto">
         <property name="argID" direction="asc"/>
         <property name="date" direction="desc"/>
