@@ -114,8 +114,8 @@ public class VersionsMode extends ResizeComposite implements
 
 						GWT.log("Got back " + changes.size() + " changes");
 
-						Map<Long, PropositionView> propViewIndex = new HashMap<Long, PropositionView>();
-						Map<Long, ArgumentView> argViewIndex = new HashMap<Long, ArgumentView>();
+						Map<Long, ViewPropVer> propViewIndex = new HashMap<Long, ViewPropVer>();
+						Map<Long, ViewArgVer> argViewIndex = new HashMap<Long, ViewArgVer>();
 
 						treeClone = new Tree();
 						treeClone.addCloseHandler(VersionsMode.this);
@@ -209,7 +209,7 @@ public class VersionsMode extends ResizeComposite implements
 			if (child.getStyleName().equals("loadDummyProp")) {
 				class Callback implements
 						ServerComm.LocalCallback<NodesWithHistory> {
-					PropositionView propView;
+					ViewPropEdit propView;
 
 					@Override
 					public void call(NodesWithHistory propTreeWithHistory) {
@@ -217,13 +217,13 @@ public class VersionsMode extends ResizeComposite implements
 					}
 				}
 				Callback callback = new Callback();
-				callback.propView = (PropositionView) treeItem;
+				callback.propView = (ViewPropEdit) treeItem;
 
 				ServerComm.getPropositionCurrentVersionAndHistory(
-						((PropositionView) treeItem).proposition, callback);
+						((ViewPropEdit) treeItem).proposition, callback);
 			} else if (child.getStyleName().equals("loadDummyArg")) {
 				class Callback implements LocalCallback<NodesWithHistory> {
-					ArgumentView argView;
+					ViewArgVer argView;
 
 					@Override
 					public void call(NodesWithHistory argTreeWithHistory) {
@@ -231,10 +231,10 @@ public class VersionsMode extends ResizeComposite implements
 					}
 				}
 				Callback callback = new Callback();
-				callback.argView = (ArgumentView) treeItem;
+				callback.argView = (ViewArgVer) treeItem;
 
 				ServerComm.getArgumentCurrentVersionAndHistory(
-						((ArgumentView) treeItem).argument, callback);
+						((ViewArgVer) treeItem).argument, callback);
 			}
 		}
 
@@ -243,11 +243,10 @@ public class VersionsMode extends ResizeComposite implements
 	public void mergeLoadedProposition(Proposition proposition, NodesWithHistory propTreeWithHistory) {
 
 		GWT.log("mergeLoadedPropositon: start");
-		Map<Long, PropositionView> propViewIndex = new HashMap<Long, PropositionView>();
-		Map<Long, ArgumentView> argViewIndex = new HashMap<Long, ArgumentView>();
+		Map<Long, ViewPropVer> propViewIndex = new HashMap<Long, ViewPropVer>();
+		Map<Long, ViewArgVer> argViewIndex = new HashMap<Long, ViewArgVer>();
 
-		PropositionView propGraft = PropositionView
-				.recursiveBuildPropositionView(proposition, false,
+		ViewPropVer propGraft = recursiveBuildPropositionView(proposition, false,
 						propTreeWithHistory.nodes,
 						propViewIndex, argViewIndex);
 
@@ -266,7 +265,7 @@ public class VersionsMode extends ResizeComposite implements
 		GWT.log("propTree after timeTravel:");
 		propGraft.printPropRecursive(0);
 
-		PropositionView view = mainTT.absorb(timeTraveler, propGraft);
+		ViewPropVer view = mainTT.absorb(timeTraveler, propGraft);
 		GWT.log("old propview after grafting:");
 		view.printPropRecursive(0);
 		GWT.log("----------------");
@@ -285,11 +284,10 @@ public class VersionsMode extends ResizeComposite implements
 	public void mergeLoadedArgument(Argument argument, NodesWithHistory argTreeWithHistory) {
 
 		GWT.log("mergeLoadedArgument: start");
-		Map<Long, PropositionView> propViewIndex = new HashMap<Long, PropositionView>();
-		Map<Long, ArgumentView> argViewIndex = new HashMap<Long, ArgumentView>();
+		Map<Long, ViewPropVer> propViewIndex = new HashMap<Long, ViewPropVer>();
+		Map<Long, ViewArgVer> argViewIndex = new HashMap<Long, ViewArgVer>();
 
-		ArgumentView argGraft = PropositionView
-				.recursiveBuildArgumentView(argument, false, argTreeWithHistory.nodes,
+		ViewArgVer argGraft = recursiveBuildArgumentView(argument, false, argTreeWithHistory.nodes,
 						propViewIndex, argViewIndex);
 
 		GWT.log("propTree before timeTravel:");
@@ -307,7 +305,7 @@ public class VersionsMode extends ResizeComposite implements
 		GWT.log("argTree after timeTravel:");
 		argGraft.printArgRecursive(0);
 
-		ArgumentView view = mainTT.absorb(timeTraveler, argGraft);
+		ViewArgVer view = mainTT.absorb(timeTraveler, argGraft);
 		GWT.log("old propview after grafting:");
 		view.printArgRecursive(0);
 		GWT.log("----------------");
@@ -329,5 +327,37 @@ public class VersionsMode extends ResizeComposite implements
 				.getSelectedIndex());
 		mainTT.travelToDate(new Date(Long.parseLong(millisecondStr)));
 		resetState(treeClone);
+	}
+	
+	public ViewPropVer recursiveBuildPropositionView(Proposition prop,
+			boolean editable, Nodes nodes,
+			Map<Long, ViewPropVer> propViewIndex,
+			Map<Long, ViewArgVer> argViewIndex) {
+
+		ViewPropVer propView = new ViewPropVer(prop);
+		if (propViewIndex != null)
+			propViewIndex.put(prop.id, propView);
+		for (Long argID : prop.argIDs) {
+			Argument argument = nodes.args.get(argID);
+			propView.addItem(recursiveBuildArgumentView(argument, editable,
+					nodes, propViewIndex, argViewIndex));
+		}
+		return propView;
+	}
+
+	public ViewArgVer recursiveBuildArgumentView(Argument arg,
+			boolean editable, Nodes nodes,
+			Map<Long, ViewPropVer> propViewIndex,
+			Map<Long, ViewArgVer> argViewIndex) {
+
+		ViewArgVer argView = new ViewArgVer(arg);
+		if (argViewIndex != null)
+			argViewIndex.put(arg.id, argView);
+		for (Long propID : arg.propIDs) {
+			Proposition proposition = nodes.props.get(propID);
+			argView.addItem(recursiveBuildPropositionView(proposition,
+					editable, nodes, propViewIndex, argViewIndex));
+		}
+		return argView;
 	}
 }

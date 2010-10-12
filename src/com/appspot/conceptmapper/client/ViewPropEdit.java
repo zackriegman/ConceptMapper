@@ -18,129 +18,61 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class PropositionView extends TreeItem implements ClickHandler,
+public class ViewPropEdit extends ViewProp implements ClickHandler,
 		KeyDownHandler, KeyUpHandler, FocusHandler, ChangeHandler {
 
-	private static PropositionView lastPropositionWithFocus = null;
+	private static ViewPropEdit lastPropositionWithFocus = null;
 
-	private TextArea textArea = new TextAreaSloppyGrow();
 	private Button proButton;
 	private Button conButton;
 	private Button linkRemoveButton;
 	private Button linkEditButton;
-	public Proposition proposition;
+
 	boolean deleted = false;
-	boolean editable;
 
-	public String toString() {
-		return "textArea:" + textArea.getText() + "; id:" + proposition.id;
-	}
-
-	public static PropositionView getLastPropositionWithFocus() {
+	public static ViewPropEdit getLastPropositionWithFocus() {
 		return lastPropositionWithFocus;
 	}
 
-	public PropositionView createClone() {
-		PropositionView cloneView = new PropositionView(new Proposition(
-				proposition), false);
-		cloneView.textArea.setText(textArea.getText());
-		cloneView.setState(getState());
-		return cloneView;
+	public ViewPropEdit() {
+		this(new Proposition());
 	}
 
-	public Argument parentArgument() {
-		if (parentArgView() != null) {
-			return parentArgView().argument;
-		} else {
-			return null;
-		}
-	}
+	public ViewPropEdit(Proposition prop) {
+		super(prop);
 
-	public ArgumentView parentArgView() {
-		if (!isTopLevel())
-			return ((ArgumentView) this.getParentItem());
-		else
-			return null;
-	}
+		HorizontalPanel editPanel = new HorizontalPanel();
+		mainPanel.add(editPanel);
+		proButton = new Button("For");
+		conButton = new Button("Against");
+		editPanel.add(proButton);
+		editPanel.add(conButton);
+		proButton.addClickHandler(this);
+		conButton.addClickHandler(this);
+		proButton.setVisible(false);
+		conButton.setVisible(false);
 
-	public boolean isTopLevel() {
-		return getParentItem() == null;
-		// return getTree().equals( getParentItem() );
-	}
-
-	public PropositionView(boolean editable) {
-		this(new Proposition(), editable);
-	}
-
-	public PropositionView(Proposition prop, boolean editable) {
-		super();
-		this.proposition = prop;
-		this.editable = editable;
-		VerticalPanel mainPanel = new VerticalPanel();
-		setContent(proposition.getContent());
-		mainPanel.add(textArea);
-		this.setWidget(mainPanel);
-
-		if (editable) {
-			HorizontalPanel editPanel = new HorizontalPanel();
-			mainPanel.add(editPanel);
-			proButton = new Button("For");
-			conButton = new Button("Against");
-			editPanel.add(proButton);
-			editPanel.add(conButton);
-			proButton.addClickHandler(this);
-			conButton.addClickHandler(this);
-			proButton.setVisible(false);
-			conButton.setVisible(false);
-
-			if (proposition.linkCount > 1) {
-				linkRemoveButton = new Button("Unlink");
-				linkEditButton = new Button("Edit");
-				editPanel.add(linkRemoveButton);
-				editPanel.add(linkEditButton);
-				linkRemoveButton.addClickHandler(this);
-				linkEditButton.addClickHandler(this);
-				linkRemoveButton.setVisible(false);
-				linkEditButton.setVisible(false);
-				textArea.setReadOnly(true);
-			} else {
-				textArea.setReadOnly(false);
-			}
-
-			textArea.addKeyDownHandler(this);
-			textArea.addKeyUpHandler(this);
-			textArea.addFocusHandler(this);
-			textArea.addChangeHandler(this);
-		} else if (!editable) {
+		if (proposition.linkCount > 1) {
+			linkRemoveButton = new Button("Unlink");
+			linkEditButton = new Button("Edit");
+			editPanel.add(linkRemoveButton);
+			editPanel.add(linkEditButton);
+			linkRemoveButton.addClickHandler(this);
+			linkEditButton.addClickHandler(this);
+			linkRemoveButton.setVisible(false);
+			linkEditButton.setVisible(false);
 			textArea.setReadOnly(true);
+		} else {
+			textArea.setReadOnly(false);
 		}
 
-		if (proposition.linkCount <= 1) {
-			textArea.setStylePrimaryName("propositionTextArea");
-		} else if (proposition.linkCount > 1) {
-			textArea.setStylePrimaryName("linkedPropositionTextArea");
-		}
+		textArea.addKeyDownHandler(this);
+		textArea.addKeyUpHandler(this);
+		textArea.addFocusHandler(this);
+		textArea.addChangeHandler(this);
 		setState(true);
-
-	}
-
-	public void setContent(String content) {
-		textArea.setText(content);
-	}
-
-	public String getContent() {
-		return textArea.getText();
-	}
-
-	public Proposition getProposition() {
-		return proposition;
-	}
-
-	public ArgumentView getArgView(int index) {
-		return (ArgumentView) getChild(index);
 	}
 
 	public void haveFocus() {
@@ -155,7 +87,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 			addArgument(false);
 		} else if (event.getSource() == linkRemoveButton) {
 			ServerComm.unlinkProp(parentArgument(), proposition);
-			
+
 			/* note: remove() must come last, otherwise parentArgumet() == null */
 			remove();
 		} else if (event.getSource() == linkEditButton) {
@@ -164,8 +96,8 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	}
 
 	public void addArgument(boolean pro) {
-		ArgumentView newArgView = new ArgumentView(pro);
-		PropositionView newPropView = new PropositionView(true);
+		ViewArgEdit newArgView = new ViewArgEdit(pro);
+		ViewPropEdit newPropView = new ViewPropEdit();
 		newArgView.addItem(newPropView);
 		this.addItem(newArgView);
 		newArgView.setState(true);
@@ -210,9 +142,9 @@ public class PropositionView extends TreeItem implements ClickHandler,
 	}
 
 	public void removeNextProposition() {
-		ArgumentView parentArgView = parentArgView();
+		ViewArgEdit parentArgView = parentArgView();
 		int thisIndex = parentArgView.getChildIndex(this);
-		PropositionView nextPropView = ((PropositionView) parentArgView
+		ViewPropEdit nextPropView = ((ViewPropEdit) parentArgView
 				.getChild(thisIndex + 1));
 		if (nextPropView != null && nextPropView.getChildCount() == 0
 				&& nextPropView.proposition.linkCount <= 1) {
@@ -240,7 +172,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 			return;
 		}
 
-		ArgumentView parentArgView = parentArgView();
+		ViewArgEdit parentArgView = parentArgView();
 		int thisIndex = parentArgView.getChildIndex(this);
 
 		/* if this is the parent argument's first proposition */
@@ -255,7 +187,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 			/* if this is the only proposition of the argument */
 			if (parentArgView.getChildCount() == 1) {
 				/* set the focus on the parent argument's proposition */
-				((PropositionView) parentArgView().getParentItem()).textArea
+				((ViewPropEdit) parentArgView().getParentItem()).textArea
 						.setFocus(true);
 
 				/*
@@ -267,7 +199,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 			/* if there are other children */
 			else {
 				/* set focus on the next proposition */
-				((PropositionView) parentArgView().getChild(thisIndex + 1)).textArea
+				((ViewPropEdit) parentArgView().getChild(thisIndex + 1)).textArea
 						.setFocus(true);
 				/* just remove this proposition */
 				parentArgView().removeItem(this);
@@ -277,7 +209,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 			 * combine propositions
 			 */
 		} else if (thisIndex != 0) {
-			PropositionView prePropView = ((PropositionView) parentArgView
+			ViewPropEdit prePropView = ((ViewPropEdit) parentArgView
 					.getChild(thisIndex - 1));
 
 			/*
@@ -315,7 +247,7 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		}
 
 		int treePosition = parentArgView().getChildIndex(this);
-		PropositionView newPropView = new PropositionView(true);
+		ViewPropEdit newPropView = new ViewPropEdit();
 		if (cursorPosition == 0) {
 			parentArgView().insertPropositionViewAt(treePosition, newPropView);
 			ServerComm.addProposition(newPropView.proposition,
@@ -361,59 +293,21 @@ public class PropositionView extends TreeItem implements ClickHandler,
 				}
 			}
 			// make this proposition's button's visible
-			if (editable) {
-				proButton.setVisible(true);
-				conButton.setVisible(true);
-				if (linkEditButton != null) {
-					linkEditButton.setVisible(true);
-					linkRemoveButton.setVisible(true);
-				}
-				lastPropositionWithFocus = this;
-				ServerComm.searchPropositions(textArea.getText(),
-						parentArgument(), getEditModeTree().searchCallback);
+			proButton.setVisible(true);
+			conButton.setVisible(true);
+			if (linkEditButton != null) {
+				linkEditButton.setVisible(true);
+				linkRemoveButton.setVisible(true);
 			}
+			lastPropositionWithFocus = this;
+			ServerComm.searchPropositions(textArea.getText(), parentArgument(),
+					getEditModeTree().searchCallback);
+
 		}
 	}
 
 	private EditModeTree getEditModeTree() {
 		return (EditModeTree) getTree();
-	}
-
-	private static class TextAreaSloppyGrow extends TextArea {
-		public TextAreaSloppyGrow() {
-			this(80);
-		}
-
-		public void setText(String text) {
-			super.setText(text);
-			resize();
-		}
-
-		private void resize() {
-			int widthInCharacters = getCharacterWidth();
-			int length = getText().length();
-
-			int lineEstimate = length / widthInCharacters;
-			if (lineEstimate < 1) {
-				lineEstimate = 1;
-			}
-			// ConceptMapper.print("onKeyPress: line estimate = " + lineEstimate
-			// );
-			setVisibleLines(lineEstimate);
-		}
-
-		public TextAreaSloppyGrow(int width) {
-			super();
-
-			this.setCharacterWidth(width);
-			setVisibleLines(1);
-
-			this.addKeyUpHandler(new KeyUpHandler() {
-				public void onKeyUp(KeyUpEvent event) {
-					resize();
-				}
-			});
-		}
 	}
 
 	@Override
@@ -435,37 +329,6 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		}
 	}
 
-	public static PropositionView recursiveBuildPropositionView(
-			Proposition prop, boolean editable, Nodes nodes,
-			Map<Long, PropositionView> propViewIndex,
-			Map<Long, ArgumentView> argViewIndex) {
-
-		PropositionView propView = new PropositionView(prop, editable);
-		if (propViewIndex != null)
-			propViewIndex.put(prop.id, propView);
-		for (Long argID : prop.argIDs) {
-			Argument argument = nodes.args.get(argID);
-			propView.addItem(recursiveBuildArgumentView(argument, editable, nodes,
-					propViewIndex, argViewIndex));
-		}
-		return propView;
-	}
-
-	public static ArgumentView recursiveBuildArgumentView(Argument arg,
-			boolean editable, Nodes nodes, Map<Long, PropositionView> propViewIndex,
-			Map<Long, ArgumentView> argViewIndex) {
-
-		ArgumentView argView = new ArgumentView(arg);
-		if (argViewIndex != null)
-			argViewIndex.put(arg.id, argView);
-		for (Long propID : arg.propIDs) {
-			Proposition proposition = nodes.props.get(propID);
-			argView.addItem(recursiveBuildPropositionView(proposition, editable, nodes,
-					propViewIndex, argViewIndex));
-		}
-		return argView;
-	}
-
 	@Override
 	public void onKeyUp(KeyUpEvent event) {
 		Object source = event.getSource();
@@ -475,14 +338,4 @@ public class PropositionView extends TreeItem implements ClickHandler,
 		}
 
 	}
-
-	public void printPropRecursive(int level) {
-		GWT.log(ConceptMapper.spaces(level * 2) + "propID:" + proposition.id
-				+ "; content:" + getContent());
-		for (int i = 0; i < getChildCount(); i++) {
-			ArgumentView arg = getArgView(i);
-			arg.printArgRecursive(level + 1);
-		}
-	}
-
 }

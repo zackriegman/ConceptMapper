@@ -50,7 +50,7 @@ public class EditMode extends ResizeComposite implements
 		addPropButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				PropositionView newPropView = new PropositionView(true);
+				ViewPropEdit newPropView = new ViewPropEdit();
 
 				// close the other tree items
 				for (int i = 0; i < tree.getItemCount(); i++) {
@@ -92,8 +92,7 @@ public class EditMode extends ResizeComposite implements
 
 				for (Long propID : allNodes.rootProps.keySet()) {
 					Proposition proposition = allNodes.rootProps.get(propID);
-					PropositionView propView = PropositionView
-							.recursiveBuildPropositionView(proposition, true,
+					ViewPropEdit propView = recursiveBuildPropositionView(proposition, true,
 									allNodes.nodes, null, null);
 					tree.addItem(propView);
 					propView.printPropRecursive(0);
@@ -124,12 +123,12 @@ public class EditMode extends ResizeComposite implements
 			}
 
 			public void onClick(ClickEvent event) {
-				PropositionView propViewToRemove = PropositionView
+				ViewPropEdit propViewToRemove = ViewPropEdit
 						.getLastPropositionWithFocus();
 				if (propViewToRemove.getChildCount() == 0) {
 					class ThisCallback implements LocalCallback<Nodes> {
-						ArgumentView parentArgView;
-						PropositionView propViewToRemove;
+						ViewArgEdit parentArgView;
+						ViewPropEdit propViewToRemove;
 						int propIndex;
 						Long linkPropID;
 
@@ -138,8 +137,7 @@ public class EditMode extends ResizeComposite implements
 							parentArgView.removeItem(propViewToRemove);
 							Proposition proposition = nodes.props
 									.get(linkPropID);
-							PropositionView newPropView = PropositionView
-									.recursiveBuildPropositionView(proposition,
+							ViewPropEdit newPropView = recursiveBuildPropositionView(proposition,
 											true, nodes,
 											null, null);
 							parentArgView.insertPropositionViewAt(propIndex,
@@ -154,7 +152,7 @@ public class EditMode extends ResizeComposite implements
 					 * message indicating that top level nodes cannot be linked
 					 * would be good...
 					 */
-					ArgumentView parentArgView = propViewToRemove
+					ViewArgEdit parentArgView = propViewToRemove
 							.parentArgView();
 					callback.parentArgView = parentArgView;
 					callback.propViewToRemove = propViewToRemove;
@@ -217,36 +215,36 @@ public class EditMode extends ResizeComposite implements
 
 		public void printTree() {
 			for (int i = 0; i < getItemCount(); i++) {
-				((PropositionView) getItem(i)).printPropRecursive(0);
+				((ViewPropEdit) getItem(i)).printPropRecursive(0);
 			}
 		}
 	}
 
 	public Tree buildTreeCloneOfOpenNodesWithIndexes(Tree cloneTree,
-			Map<Long, PropositionView> propIndex,
-			Map<Long, ArgumentView> argIndex) {
+			Map<Long, ViewPropVer> propIndex,
+			Map<Long, ViewArgVer> argIndex) {
 		// TODO build the index
 		for (int i = 0; i < tree.getItemCount(); i++) {
-			PropositionView clonedPropView = recursiveTreeClone(
-					(PropositionView) tree.getItem(i), propIndex, argIndex);
+			ViewPropVer clonedPropView = recursiveTreeClone(
+					(ViewPropEdit) tree.getItem(i), propIndex, argIndex);
 			cloneTree.addItem(clonedPropView);
 		}
 		return cloneTree;
 	}
 
-	public PropositionView recursiveTreeClone(PropositionView realPropView,
-			Map<Long, PropositionView> propIndex,
-			Map<Long, ArgumentView> argIndex) {
+	public ViewPropVer recursiveTreeClone(ViewPropEdit realPropView,
+			Map<Long, ViewPropVer> propIndex,
+			Map<Long, ViewArgVer> argIndex) {
 		// TODO make prop view non-editable
-		PropositionView clonePropView = realPropView.createClone();
+		ViewPropVer clonePropView = ViewPropVer.cloneViewEdit(realPropView );
 		propIndex.put(clonePropView.getProposition().id, clonePropView);
 
 		/* if the proposition is open then clone it */
 		if (realPropView.getState()) {
 			for (int i = 0; i < realPropView.getChildCount(); i++) {
-				ArgumentView realArgView = (ArgumentView) realPropView
+				ViewArgEdit realArgView = (ViewArgEdit) realPropView
 						.getChild(i);
-				ArgumentView cloneArgView = realArgView.createClone();
+				ViewArgVer cloneArgView = realArgView.createClone();
 				argIndex.put(cloneArgView.argument.id, cloneArgView);
 				clonePropView.addItem(cloneArgView);
 
@@ -254,7 +252,7 @@ public class EditMode extends ResizeComposite implements
 				if (realArgView.getState()) {
 					for (int j = 0; j < realArgView.getChildCount(); j++) {
 						cloneArgView.addItem(recursiveTreeClone(
-								(PropositionView) realArgView.getChild(j),
+								(ViewPropEdit) realArgView.getChild(j),
 								propIndex, argIndex));
 					}
 				}
@@ -291,12 +289,12 @@ public class EditMode extends ResizeComposite implements
 
 	public void getOpenPropsAndArgs(List<Proposition> props, List<Argument> args) {
 		for (int i = 0; i < tree.getItemCount(); i++) {
-			recursiveGetOpenPropsAndArgs(((PropositionView) tree.getItem(i)),
+			recursiveGetOpenPropsAndArgs(((ViewPropEdit) tree.getItem(i)),
 					props, args);
 		}
 	}
 
-	public void recursiveGetOpenPropsAndArgs(PropositionView propView,
+	public void recursiveGetOpenPropsAndArgs(ViewPropEdit propView,
 			List<Proposition> props, List<Argument> args) {
 		props.add(propView.getProposition());
 		if (propView.getState() || propView.getChildCount() == 0) {
@@ -305,12 +303,12 @@ public class EditMode extends ResizeComposite implements
 			 * need to include childless nodes
 			 */
 			for (int i = 0; i < propView.getChildCount(); i++) {
-				ArgumentView argView = ((ArgumentView) propView.getChild(i));
+				ViewArgEdit argView = ((ViewArgEdit) propView.getChild(i));
 				args.add(argView.argument);
 				if (argView.getState() || propView.getChildCount() == 0) {
 					for (int j = 0; j < argView.getChildCount(); j++) {
 						recursiveGetOpenPropsAndArgs(
-								(PropositionView) argView.getChild(j), props,
+								(ViewPropEdit) argView.getChild(j), props,
 								args);
 					}
 				}
@@ -329,5 +327,37 @@ public class EditMode extends ResizeComposite implements
 		for (int i = 0; i < item.getChildCount(); i++) {
 			recursiveOpenTreeItem(item.getChild(i));
 		}
+	}
+	
+	public ViewPropEdit recursiveBuildPropositionView(Proposition prop,
+			boolean editable, Nodes nodes,
+			Map<Long, ViewPropEdit> propViewIndex,
+			Map<Long, ViewArgEdit> argViewIndex) {
+
+		ViewPropEdit propView = new ViewPropEdit(prop);
+		if (propViewIndex != null)
+			propViewIndex.put(prop.id, propView);
+		for (Long argID : prop.argIDs) {
+			Argument argument = nodes.args.get(argID);
+			propView.addItem(recursiveBuildArgumentView(argument, editable,
+					nodes, propViewIndex, argViewIndex));
+		}
+		return propView;
+	}
+
+	public ViewArgEdit recursiveBuildArgumentView(Argument arg,
+			boolean editable, Nodes nodes,
+			Map<Long, ViewPropEdit> propViewIndex,
+			Map<Long, ViewArgEdit> argViewIndex) {
+
+		ViewArgEdit argView = new ViewArgEdit(arg);
+		if (argViewIndex != null)
+			argViewIndex.put(arg.id, argView);
+		for (Long propID : arg.propIDs) {
+			Proposition proposition = nodes.props.get(propID);
+			argView.addItem(recursiveBuildPropositionView(proposition,
+					editable, nodes, propViewIndex, argViewIndex));
+		}
+		return argView;
 	}
 }

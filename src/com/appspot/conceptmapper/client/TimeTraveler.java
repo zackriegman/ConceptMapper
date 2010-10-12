@@ -14,8 +14,8 @@ import com.google.gwt.user.client.ui.TreeItem;
 
 public class TimeTraveler {
 	private Tree tree;
-	private Map<Long, PropositionView> propViewIndex;
-	private Map<Long, ArgumentView> argViewIndex;
+	private Map<Long, ViewPropVer> propViewIndex;
+	private Map<Long, ViewArgVer> argViewIndex;
 	private Date currentDate;
 	/*
 	 * these variables hold the information needed to move the tree forwards and
@@ -32,7 +32,7 @@ public class TimeTraveler {
 	private Map<Long, Long> mapPropID;
 	private Map<Long, String> mapArgTitle;
 	
-	public PropositionView absorb( TimeTraveler timeTraveler, PropositionView propGraft ){
+	public ViewPropVer absorb( TimeTraveler timeTraveler, ViewPropVer propGraft ){
 		/*Long propID = propGraft.proposition.id;
 		PropositionView oldPropView = propViewIndex.get( propID );
 		propViewIndex.remove(propID);
@@ -43,7 +43,7 @@ public class TimeTraveler {
 		*/
 		
 		Long propID = propGraft.proposition.id;
-		PropositionView oldPropView = propViewIndex.get( propID );
+		ViewPropVer oldPropView = propViewIndex.get( propID );
 		oldPropView.getChild(0).remove();
 		while (propGraft.getChildCount() > 0) {
 			GWT.log("transplanted argument" );
@@ -65,7 +65,7 @@ public class TimeTraveler {
 		return oldPropView;
 	}
 	
-	public ArgumentView absorb( TimeTraveler timeTraveler, ArgumentView argGraft ){
+	public ViewArgVer absorb( TimeTraveler timeTraveler, ViewArgVer argGraft ){
 		/*Long propID = propGraft.proposition.id;
 		PropositionView oldPropView = propViewIndex.get( propID );
 		propViewIndex.remove(propID);
@@ -76,7 +76,7 @@ public class TimeTraveler {
 		*/
 		
 		Long argID = argGraft.argument.id;
-		ArgumentView oldArgView = argViewIndex.get( argID );
+		ViewArgVer oldArgView = argViewIndex.get( argID );
 		oldArgView.getChild(0).remove();
 		while (argGraft.getChildCount() > 0) {
 			GWT.log("transplanted proposition" );
@@ -104,8 +104,8 @@ public class TimeTraveler {
 	 * null pointer exception
 	 */
 	public TimeTraveler(SortedMap<Date, Change> changes,
-			Map<Long, PropositionView> propViewIndex,
-			Map<Long, ArgumentView> argViewIndex, Tree tree) {
+			Map<Long, ViewPropVer> propViewIndex,
+			Map<Long, ViewArgVer> argViewIndex, Tree tree) {
 		this.changes = changes;
 		this.propViewIndex = propViewIndex;
 		this.argViewIndex = argViewIndex;
@@ -219,16 +219,16 @@ public class TimeTraveler {
 			GWT.log("processing: " + change.changeType);
 			switch (change.changeType) {
 			case PROP_DELETION: {
-				ArgumentView argView = argViewIndex.get(change.argID);
-				PropositionView propViewToDelete = propViewIndex
+				ViewArgVer argView = argViewIndex.get(change.argID);
+				ViewPropVer propViewToDelete = propViewIndex
 						.get(change.propID);
 				propViewIndex.remove(change.propID);
 				argView.removeItem(propViewToDelete);
 				break;
 			}
 			case PROP_ADDITION: {
-				ArgumentView argView = argViewIndex.get(change.argID);
-				PropositionView propView = new PropositionView(false);
+				ViewArgVer argView = argViewIndex.get(change.argID);
+				ViewPropVer propView = new ViewPropVer();
 				if (argView != null) {
 					argView.insertPropositionViewAt(
 							mapPropIndex.get(change.id), propView);
@@ -240,17 +240,17 @@ public class TimeTraveler {
 				break;
 			}
 			case PROP_MODIFICATION: {
-				PropositionView propView = propViewIndex.get(change.propID);
+				ViewPropVer propView = propViewIndex.get(change.propID);
 				propView.setContent(mapPropContent.get(change.id));
 				break;
 			}
 			case ARG_ADDITION: {
-				PropositionView oldPropView = propViewIndex.get(change.propID);
-				ArgumentView argView = new ArgumentView(mapArgPro
+				ViewPropVer oldPropView = propViewIndex.get(change.propID);
+				ViewArgVer argView = new ViewArgVer(mapArgPro
 						.get(change.id));
 				argView.argument.id = change.argID;
 
-				PropositionView newPropView = new PropositionView(false);
+				ViewPropVer newPropView = new ViewPropVer();
 				newPropView.proposition.id = mapPropID.get(change.id);
 				argView.addItem(newPropView);
 				oldPropView.addItem(argView);
@@ -268,13 +268,13 @@ public class TimeTraveler {
 				 */
 			}
 			case ARG_DELETION: {
-				ArgumentView argView = argViewIndex.get(change.argID);
+				ViewArgVer argView = argViewIndex.get(change.argID);
 				argView.remove();
 				argViewIndex.remove(change.argID);
 				break;
 			}
 			case ARG_MODIFICATION:{
-				ArgumentView argView = argViewIndex.get(change.argID);
+				ViewArgVer argView = argViewIndex.get(change.argID);
 				argView.setArgTitle(mapArgTitle.get(change.id));
 				break;
 			}
@@ -331,9 +331,9 @@ public class TimeTraveler {
 			GWT.log("processing: " + change.changeType);
 			switch (change.changeType) {
 			case PROP_DELETION: {
-				ArgumentView argView = argViewIndex.get(change.argID);
+				ViewArgVer argView = argViewIndex.get(change.argID);
 				// println("change: " + change.toString());
-				PropositionView deletedPropView = new PropositionView(false);
+				ViewPropVer deletedPropView = new ViewPropVer();
 				propViewIndex.put(change.propID, deletedPropView);
 				deletedPropView.setContent(change.content);
 				deletedPropView.proposition.id = change.propID;
@@ -343,8 +343,8 @@ public class TimeTraveler {
 				break;
 			}
 			case PROP_ADDITION: {
-				ArgumentView argView = argViewIndex.get(change.argID);
-				PropositionView propView = propViewIndex.get(change.propID);
+				ViewArgVer argView = argViewIndex.get(change.argID);
+				ViewPropVer propView = propViewIndex.get(change.propID);
 				if (argView != null) {
 					mapPropIndex
 							.put(change.id, argView.getChildIndex(propView));
@@ -356,7 +356,7 @@ public class TimeTraveler {
 				break;
 			}
 			case PROP_MODIFICATION: {
-				PropositionView propView = propViewIndex.get(change.propID);
+				ViewPropVer propView = propViewIndex.get(change.propID);
 				mapPropContent.put(change.id, propView.getContent());
 				propView.setContent(change.content);
 
@@ -364,8 +364,8 @@ public class TimeTraveler {
 			}
 			case ARG_ADDITION: {
 				// printPropRecursive(propView, 0);
-				ArgumentView argView = argViewIndex.get(change.argID);
-				PropositionView propView = (PropositionView) argView
+				ViewArgVer argView = argViewIndex.get(change.argID);
+				ViewPropVer propView = (ViewPropVer) argView
 						.getChild(0);
 				mapArgPro.put(change.id, argView.argument.pro);
 				/*
@@ -382,15 +382,15 @@ public class TimeTraveler {
 				break;
 			}
 			case ARG_DELETION: {
-				PropositionView propView = propViewIndex.get(change.propID);
-				ArgumentView argView = new ArgumentView(change.argPro);
+				ViewPropVer propView = propViewIndex.get(change.propID);
+				ViewArgVer argView = new ViewArgVer(change.argPro);
 				argView.argument.id = change.argID;
 				propView.addItem(argView);
 				argViewIndex.put(change.argID, argView);
 				break;
 			}
 			case ARG_MODIFICATION: {
-				ArgumentView argView = argViewIndex.get(change.argID);
+				ViewArgVer argView = argViewIndex.get(change.argID);
 				mapArgTitle.put(change.id, argView.getArgTitle());
 				argView.setArgTitle(change.content);
 				break;
@@ -409,14 +409,14 @@ public class TimeTraveler {
 				 * could look it up by argID, and then search the argument for
 				 * children with that ID?
 				 */
-				ArgumentView argView = argViewIndex.get(change.argID);
-				PropositionView propView = propViewIndex.get(change.propID);
+				ViewArgVer argView = argViewIndex.get(change.argID);
+				ViewPropVer propView = propViewIndex.get(change.propID);
 				argView.removeItem(propView);
 				break;
 			}
 			case PROP_LINK: {
-				ArgumentView argView = argViewIndex.get(change.argID);
-				PropositionView propView = propViewIndex.get(change.propID);
+				ViewArgVer argView = argViewIndex.get(change.argID);
+				ViewPropVer propView = propViewIndex.get(change.propID);
 				/*
 				 * TODO need to think through linking and unlinking in more
 				 * detail. What I have here will not be enough. Specifically the
