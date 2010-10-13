@@ -246,9 +246,9 @@ public class VersionsMode extends ResizeComposite implements
 		Map<Long, ViewPropVer> propViewIndex = new HashMap<Long, ViewPropVer>();
 		Map<Long, ViewArgVer> argViewIndex = new HashMap<Long, ViewArgVer>();
 
-		ViewPropVer propGraft = recursiveBuildPropositionView(proposition, false,
+		ViewPropVer propGraft = ViewProp.recursiveBuildPropositionView(proposition, 
 						propTreeWithHistory.nodes,
-						propViewIndex, argViewIndex);
+						propViewIndex, argViewIndex, ViewPropVer.FACTORY, ViewArgVer.FACTORY);
 
 		GWT.log("propTree before timeTravel:");
 		propGraft.printPropRecursive(0);
@@ -287,8 +287,8 @@ public class VersionsMode extends ResizeComposite implements
 		Map<Long, ViewPropVer> propViewIndex = new HashMap<Long, ViewPropVer>();
 		Map<Long, ViewArgVer> argViewIndex = new HashMap<Long, ViewArgVer>();
 
-		ViewArgVer argGraft = recursiveBuildArgumentView(argument, false, argTreeWithHistory.nodes,
-						propViewIndex, argViewIndex);
+		ViewArgVer argGraft = ViewArg.recursiveBuildArgumentView(argument, argTreeWithHistory.nodes,
+						propViewIndex, argViewIndex, ViewPropVer.FACTORY, ViewArgVer.FACTORY);
 
 		GWT.log("propTree before timeTravel:");
 		argGraft.printArgRecursive(0);
@@ -329,6 +329,7 @@ public class VersionsMode extends ResizeComposite implements
 		resetState(treeClone);
 	}
 	
+	/*
 	public ViewPropVer recursiveBuildPropositionView(Proposition prop,
 			boolean editable, Nodes nodes,
 			Map<Long, ViewPropVer> propViewIndex,
@@ -360,4 +361,5 @@ public class VersionsMode extends ResizeComposite implements
 		}
 		return argView;
 	}
+	*/
 }

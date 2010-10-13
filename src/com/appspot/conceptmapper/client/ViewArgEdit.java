@@ -4,18 +4,24 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 
 public class ViewArgEdit extends ViewArg implements ChangeHandler {
+	public static ViewArgFactory<ViewArgEdit> FACTORY = new ViewArgFactory<ViewArgEdit>() {
+		@Override
+		public ViewArgEdit create(Argument arg) {
+			return new ViewArgEdit(arg);
+		}
+	};
 
 	public ViewArgEdit(Argument arg) {
-		super( arg );
+		super(arg);
 		initialize();
 	}
 
 	public ViewArgEdit(boolean pro) {
-		super( pro );
+		super(pro);
 		initialize();
 	}
-	
-	public void initialize(){
+
+	public void initialize() {
 		textBox.addChangeHandler(this);
 	}
 

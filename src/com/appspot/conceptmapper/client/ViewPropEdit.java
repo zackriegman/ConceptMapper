@@ -1,7 +1,5 @@
 package com.appspot.conceptmapper.client;
 
-import java.util.Map;
-
 import com.appspot.conceptmapper.client.EditMode.EditModeTree;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -18,12 +16,17 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class ViewPropEdit extends ViewProp implements ClickHandler,
 		KeyDownHandler, KeyUpHandler, FocusHandler, ChangeHandler {
 
 	private static ViewPropEdit lastPropositionWithFocus = null;
+	public static ViewPropFactory<ViewPropEdit>FACTORY = new ViewPropFactory<ViewPropEdit>() {
+		@Override
+		public ViewPropEdit create(Proposition prop) {
+			return new ViewPropEdit( prop );
+		}
+	};
 
 	private Button proButton;
 	private Button conButton;

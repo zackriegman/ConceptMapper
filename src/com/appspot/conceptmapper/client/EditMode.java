@@ -59,7 +59,8 @@ public class EditMode extends ResizeComposite implements
 
 				tree.addItem(newPropView);
 				newPropView.haveFocus();
-				ServerComm.addProposition(newPropView.getProposition(), null, 0);
+				ServerComm
+						.addProposition(newPropView.getProposition(), null, 0);
 			}
 		});
 
@@ -92,8 +93,9 @@ public class EditMode extends ResizeComposite implements
 
 				for (Long propID : allNodes.rootProps.keySet()) {
 					Proposition proposition = allNodes.rootProps.get(propID);
-					ViewPropEdit propView = recursiveBuildPropositionView(proposition, true,
-									allNodes.nodes, null, null);
+					ViewProp propView = ViewProp.recursiveBuildPropositionView(
+							proposition, allNodes.nodes, null, null,
+							ViewPropEdit.FACTORY, ViewArgEdit.FACTORY);
 					tree.addItem(propView);
 					propView.printPropRecursive(0);
 				}
@@ -137,9 +139,11 @@ public class EditMode extends ResizeComposite implements
 							parentArgView.removeItem(propViewToRemove);
 							Proposition proposition = nodes.props
 									.get(linkPropID);
-							ViewPropEdit newPropView = recursiveBuildPropositionView(proposition,
-											true, nodes,
-											null, null);
+							ViewProp newPropView = ViewProp
+									.recursiveBuildPropositionView(proposition,
+											nodes, null, null,
+											ViewPropEdit.FACTORY,
+											ViewArgEdit.FACTORY);
 							parentArgView.insertPropositionViewAt(propIndex,
 									newPropView);
 						}
@@ -221,22 +225,20 @@ public class EditMode extends ResizeComposite implements
 	}
 
 	public Tree buildTreeCloneOfOpenNodesWithIndexes(Tree cloneTree,
-			Map<Long, ViewPropVer> propIndex,
-			Map<Long, ViewArgVer> argIndex) {
+			Map<Long, ViewPropVer> propIndex, Map<Long, ViewArgVer> argIndex) {
 		// TODO build the index
 		for (int i = 0; i < tree.getItemCount(); i++) {
-			ViewPropVer clonedPropView = recursiveTreeClone(
-					(ViewPropEdit) tree.getItem(i), propIndex, argIndex);
+			ViewPropVer clonedPropView = recursiveTreeClone((ViewPropEdit) tree
+					.getItem(i), propIndex, argIndex);
 			cloneTree.addItem(clonedPropView);
 		}
 		return cloneTree;
 	}
 
 	public ViewPropVer recursiveTreeClone(ViewPropEdit realPropView,
-			Map<Long, ViewPropVer> propIndex,
-			Map<Long, ViewArgVer> argIndex) {
+			Map<Long, ViewPropVer> propIndex, Map<Long, ViewArgVer> argIndex) {
 		// TODO make prop view non-editable
-		ViewPropVer clonePropView = ViewPropVer.cloneViewEdit(realPropView );
+		ViewPropVer clonePropView = ViewPropVer.cloneViewEdit(realPropView);
 		propIndex.put(clonePropView.getProposition().id, clonePropView);
 
 		/* if the proposition is open then clone it */
@@ -307,9 +309,8 @@ public class EditMode extends ResizeComposite implements
 				args.add(argView.argument);
 				if (argView.getState() || propView.getChildCount() == 0) {
 					for (int j = 0; j < argView.getChildCount(); j++) {
-						recursiveGetOpenPropsAndArgs(
-								(ViewPropEdit) argView.getChild(j), props,
-								args);
+						recursiveGetOpenPropsAndArgs((ViewPropEdit) argView
+								.getChild(j), props, args);
 					}
 				}
 			}
@@ -328,36 +329,25 @@ public class EditMode extends ResizeComposite implements
 			recursiveOpenTreeItem(item.getChild(i));
 		}
 	}
-	
-	public ViewPropEdit recursiveBuildPropositionView(Proposition prop,
-			boolean editable, Nodes nodes,
-			Map<Long, ViewPropEdit> propViewIndex,
-			Map<Long, ViewArgEdit> argViewIndex) {
-
-		ViewPropEdit propView = new ViewPropEdit(prop);
-		if (propViewIndex != null)
-			propViewIndex.put(prop.id, propView);
-		for (Long argID : prop.argIDs) {
-			Argument argument = nodes.args.get(argID);
-			propView.addItem(recursiveBuildArgumentView(argument, editable,
-					nodes, propViewIndex, argViewIndex));
-		}
-		return propView;
-	}
-
-	public ViewArgEdit recursiveBuildArgumentView(Argument arg,
-			boolean editable, Nodes nodes,
-			Map<Long, ViewPropEdit> propViewIndex,
-			Map<Long, ViewArgEdit> argViewIndex) {
-
-		ViewArgEdit argView = new ViewArgEdit(arg);
-		if (argViewIndex != null)
-			argViewIndex.put(arg.id, argView);
-		for (Long propID : arg.propIDs) {
-			Proposition proposition = nodes.props.get(propID);
-			argView.addItem(recursiveBuildPropositionView(proposition,
-					editable, nodes, propViewIndex, argViewIndex));
-		}
-		return argView;
-	}
+	/*
+	 * public ViewPropEdit recursiveBuildPropositionView(Proposition prop,
+	 * boolean editable, Nodes nodes, Map<Long, ViewPropEdit> propViewIndex,
+	 * Map<Long, ViewArgEdit> argViewIndex) {
+	 * 
+	 * ViewPropEdit propView = new ViewPropEdit(prop); if (propViewIndex !=
+	 * null) propViewIndex.put(prop.id, propView); for (Long argID :
+	 * prop.argIDs) { Argument argument = nodes.args.get(argID);
+	 * propView.addItem(recursiveBuildArgumentView(argument, editable, nodes,
+	 * propViewIndex, argViewIndex)); } return propView; }
+	 * 
+	 * public ViewArgEdit recursiveBuildArgumentView(Argument arg, boolean
+	 * editable, Nodes nodes, Map<Long, ViewPropEdit> propViewIndex, Map<Long,
+	 * ViewArgEdit> argViewIndex) {
+	 * 
+	 * ViewArgEdit argView = new ViewArgEdit(arg); if (argViewIndex != null)
+	 * argViewIndex.put(arg.id, argView); for (Long propID : arg.propIDs) {
+	 * Proposition proposition = nodes.props.get(propID);
+	 * argView.addItem(recursiveBuildPropositionView(proposition, editable,
+	 * nodes, propViewIndex, argViewIndex)); } return argView; }
+	 */
 }

@@ -2,6 +2,7 @@ package com.appspot.conceptmapper.client;
 
 import java.util.Map;
 
+import com.appspot.conceptmapper.client.ViewArg.ViewArgFactory;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
@@ -13,29 +14,29 @@ public abstract class ViewProp extends ViewNode {
 	protected TextArea textArea = new TextAreaSloppyGrow();
 	protected VerticalPanel mainPanel = new VerticalPanel();
 	public Proposition proposition;
-	
-	public ViewProp(Proposition proposition){
+
+	public ViewProp(Proposition proposition) {
 		super();
 		this.proposition = proposition;
 		setContent(proposition.getContent());
 		mainPanel.add(textArea);
 		this.setWidget(mainPanel);
-		
+
 		if (proposition.linkCount <= 1) {
 			textArea.setStylePrimaryName("propositionTextArea");
 		} else if (proposition.linkCount > 1) {
 			textArea.setStylePrimaryName("linkedPropositionTextArea");
 		}
 	}
-	
+
 	public String toString() {
 		return "textArea:" + textArea.getText() + "; id:" + proposition.id;
 	}
-	
-	public Long getNodeID(){
+
+	public Long getNodeID() {
 		return proposition.id;
 	}
-	
+
 	public Argument parentArgument() {
 		if (parentArgView() != null) {
 			return parentArgView().argument;
@@ -55,7 +56,7 @@ public abstract class ViewProp extends ViewNode {
 		return getParentItem() == null;
 		// return getTree().equals( getParentItem() );
 	}
-	
+
 	public void setContent(String content) {
 		textArea.setText(content);
 	}
@@ -71,7 +72,7 @@ public abstract class ViewProp extends ViewNode {
 	public ViewArgEdit getArgView(int index) {
 		return (ViewArgEdit) getChild(index);
 	}
-	
+
 	private static class TextAreaSloppyGrow extends TextArea {
 		public TextAreaSloppyGrow() {
 			this(80);
@@ -98,7 +99,7 @@ public abstract class ViewProp extends ViewNode {
 		public TextAreaSloppyGrow(int width) {
 			super();
 
-			//this.setCharacterWidth(width);
+			// this.setCharacterWidth(width);
 			this.setWidth("50em");
 			setVisibleLines(1);
 
@@ -109,7 +110,7 @@ public abstract class ViewProp extends ViewNode {
 			});
 		}
 	}
-	
+
 	public void printPropRecursive(int level) {
 		GWT.log(ConceptMapper.spaces(level * 2) + "propID:" + proposition.id
 				+ "; content:" + getContent());
@@ -118,4 +119,39 @@ public abstract class ViewProp extends ViewNode {
 			arg.printArgRecursive(level + 1);
 		}
 	}
+
+	public interface ViewPropFactory<P extends ViewProp> {
+		public P create(Proposition prop);
+	}
+
+	public static <P extends ViewProp, A extends ViewArg> P recursiveBuildPropositionView(
+			Proposition prop, Nodes nodes, Map<Long, P> propViewIndex,
+			Map<Long, A> argViewIndex, ViewPropFactory<P> viewPropFactory,
+			ViewArgFactory<A> viewArgFactory) {
+
+		P propView = viewPropFactory.create(prop);
+		if (propViewIndex != null)
+			propViewIndex.put(prop.id, propView);
+		for (Long argID : prop.argIDs) {
+			Argument argument = nodes.args.get(argID);
+			propView.addItem(ViewArg.recursiveBuildArgumentView(argument,
+					nodes, propViewIndex, argViewIndex, viewPropFactory,
+					viewArgFactory));
+		}
+		return propView;
+	}
+
+	/*
+	 * public static ViewProp recursiveBuildPropositionView(Proposition prop,
+	 * boolean editable, Nodes nodes, Map<Long, ViewProp> propViewIndex,
+	 * Map<Long, ViewArg> argViewIndex, ViewPropFactory viewPropFactory,
+	 * ViewArgFactory viewArgFactory) {
+	 * 
+	 * ViewProp propView = viewPropFactory.createViewProp(prop); if
+	 * (propViewIndex != null) propViewIndex.put(prop.id, propView); for (Long
+	 * argID : prop.argIDs) { Argument argument = nodes.args.get(argID);
+	 * propView.addItem(ViewArg.recursiveBuildArgumentView(argument, editable,
+	 * nodes, propViewIndex, argViewIndex, viewPropFactory, viewArgFactory)); }
+	 * return propView; }
+	 */
 }

@@ -3,7 +3,14 @@ package com.appspot.conceptmapper.client;
 import java.util.HashMap;
 import java.util.Map;
 
+
 public class ViewArgVer extends ViewArg {
+	public static ViewArgFactory<ViewArgVer> FACTORY = new ViewArgFactory<ViewArgVer>() {
+		@Override
+		public ViewArgVer create(Argument arg) {
+			return new ViewArgVer(arg);
+		}
+	};
 	
 	public Map<Long, ViewPropVer> deletedViews = new HashMap<Long, ViewPropVer>();
 
