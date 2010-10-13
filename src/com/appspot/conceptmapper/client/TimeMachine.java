@@ -24,16 +24,13 @@ public class TimeMachine {
 	 * information needed to redo various kinds of changes is saved in the
 	 * various maps.
 	 */
-	// private List<Change> changes;
 	private SortedMultiMap<Date, ViewChange> changes;
 	private Map<Long, String> mapPropContent;
-	private Map<Long, Boolean> mapArgPro;
-	private Map<Long, Integer> mapPropIndex;
-	private Map<Long, Long> mapPropID;
 	private Map<Long, String> mapArgTitle;
+	private Map<Long, Integer> mapPropIndex;
+	private Map<Long, Integer> mapArgIndex;
 
-	public ViewPropVer absorb(TimeMachine timeTraveler,
-			ViewPropVer propGraft) {
+	public ViewPropVer absorb(TimeMachine timeTraveler, ViewPropVer propGraft) {
 		/*
 		 * Long propID = propGraft.proposition.id; PropositionView oldPropView =
 		 * propViewIndex.get( propID ); propViewIndex.remove(propID); TreeItem
@@ -52,14 +49,11 @@ public class TimeMachine {
 		}
 		timeTraveler.propViewIndex.remove(propID);
 
-		propViewIndex.putAll(timeTraveler.propViewIndex);
-		argViewIndex.putAll(timeTraveler.argViewIndex);
 		changes.putAll(timeTraveler.changes);
 		mapPropContent.putAll(timeTraveler.mapPropContent);
-		mapArgPro.putAll(timeTraveler.mapArgPro);
-		mapPropIndex.putAll(timeTraveler.mapPropIndex);
-		mapPropID.putAll(timeTraveler.mapPropID);
 		mapArgTitle.putAll(timeTraveler.mapArgTitle);
+		mapPropIndex.putAll(timeTraveler.mapPropIndex);
+		mapArgIndex.putAll(timeTraveler.mapArgIndex);
 
 		return oldPropView;
 	}
@@ -83,14 +77,11 @@ public class TimeMachine {
 		}
 		timeTraveler.argViewIndex.remove(argID);
 
-		propViewIndex.putAll(timeTraveler.propViewIndex);
-		argViewIndex.putAll(timeTraveler.argViewIndex);
 		changes.putAll(timeTraveler.changes);
 		mapPropContent.putAll(timeTraveler.mapPropContent);
-		mapArgPro.putAll(timeTraveler.mapArgPro);
-		mapPropIndex.putAll(timeTraveler.mapPropIndex);
-		mapPropID.putAll(timeTraveler.mapPropID);
 		mapArgTitle.putAll(timeTraveler.mapArgTitle);
+		mapPropIndex.putAll(timeTraveler.mapPropIndex);
+		mapArgIndex.putAll(timeTraveler.mapArgIndex);
 
 		return oldArgView;
 	}
@@ -100,19 +91,14 @@ public class TimeMachine {
 	 * proposition that needs to be added to the tree it will probably throw a
 	 * null pointer exception
 	 */
-	public TimeMachine(SortedMultiMap<Date, ViewChange> changes,
-			Map<Long, ViewPropVer> propViewIndex,
-			Map<Long, ViewArgVer> argViewIndex, Tree tree) {
+	public TimeMachine(SortedMultiMap<Date, ViewChange> changes, Tree tree) {
 		this.changes = changes;
-		this.propViewIndex = propViewIndex;
-		this.argViewIndex = argViewIndex;
 		this.tree = tree;
 
 		mapPropContent = new HashMap<Long, String>();
-		mapArgPro = new HashMap<Long, Boolean>();
-		mapPropIndex = new HashMap<Long, Integer>();
-		mapPropID = new HashMap<Long, Long>();
 		mapArgTitle = new HashMap<Long, String>();
+		mapArgIndex = new HashMap<Long, Integer>();
+		mapPropIndex = new HashMap<Long, Integer>();
 
 		currentDate = changes.lastKey();
 	}
@@ -133,6 +119,7 @@ public class TimeMachine {
 	public void travelToDate(Date newDate) {
 
 		if (newDate.before(currentDate)) {
+			GWT.log("traveling back to date:" + newDate);
 			/*
 			 * here newDate is the date that the user clicked on, and is
 			 * highlighted. Therefore we do not want to process newDate, because
@@ -148,14 +135,13 @@ public class TimeMachine {
 			 * newDate (in the past) to currentDate (in the future) and includes
 			 * currentDate but not newDate. We then want to reverse the order so
 			 * we are undoing the newest changes first.
-			 */
-			/*
-			 * this was really simple and efficient, but until gwt supports
-			 * navigable map it won't work...
+			 * 
+			 * NOTE: this *was* really simple and efficient [i.e.
 			 * moveTreeBackwards(changes.subMap(newDate, false, currentDate,
-			 * true).descendingMap().values());
+			 * true).descendingMap().values())], but until gwt supports
+			 * navigable map we have to put the selected changes in a list and
+			 * reverse them... ;
 			 */
-			GWT.log("traveling back to date:" + newDate);
 			List<List<ViewChange>> reverseList = changes.valuesSublist(newDate,
 					false, currentDate, true);
 			Collections.reverse(reverseList);
@@ -196,70 +182,52 @@ public class TimeMachine {
 				GWT.log("processing: " + vC.change.changeType);
 				switch (vC.change.changeType) {
 				case PROP_DELETION: {
-					ViewArgVer argView = (ViewArgVer)vC.viewNode;
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					// TODO: root prop additions? who keeps the add/remove of
+					// the prop??!!??
 					argView.removeAndSaveChildView(vC.change.propID);
 					break;
 				}
 				case PROP_ADDITION: {
-					ViewArgVer argView = (ViewArgVer)vC.viewNode;
-					//TODO:  root prop additions?  who keeps the add/remove of the prop??!!??
-					if()
-					argView.reviveDeletedView(vC.change.propID,)
-					
-					
-					ViewArgVer argView = argViewIndex.get(change.argID);
-					ViewPropVer propView = new ViewPropVer();
-					if (argView != null) {
-						argView.insertPropositionViewAt(
-								mapPropIndex.get(change.id), propView);
-
-					} else {
-						tree.addItem(propView);
-					}
-					propViewIndex.put(change.propID, propView);
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					// TODO: root prop additions? who keeps the add/remove of
+					// the prop??!!??
+					argView.reviveDeletedView(vC.change.propID,
+							mapPropIndex.get(vC.change.id));
 					break;
 				}
 				case PROP_MODIFICATION: {
-					ViewPropVer propView = propViewIndex.get(change.propID);
-					propView.setContent(mapPropContent.get(change.id));
+					/*
+					 * NOTE: the same content might be put in the mapPropContent
+					 * multiple times if there are multiple links to the same
+					 * node, but it shouldn't be a problem, because the change
+					 * for each link should be processed one right after the
+					 * other, without a chance for the content to be changed by
+					 * a different change...
+					 */
+					ViewPropVer propView = (ViewPropVer) vC.viewNode;
+					propView.setContent(mapPropContent.get(vC.change.id));
 					break;
 				}
 				case ARG_ADDITION: {
-					ViewPropVer oldPropView = propViewIndex
-							.get(change.propID);
-					ViewArgVer argView = new ViewArgVer(
-							mapArgPro.get(change.id));
-					argView.argument.id = change.argID;
-
-					ViewPropVer newPropView = new ViewPropVer();
-					newPropView.proposition.id = mapPropID.get(change.id);
-					argView.addItem(newPropView);
-					oldPropView.addItem(argView);
-
-					argViewIndex.put(change.argID, argView);
-					propViewIndex.put(newPropView.proposition.id, newPropView);
+					ViewPropVer propView = (ViewPropVer) vC.viewNode;
+					propView.reviveDeletedView(vC.change.argID,
+							mapArgIndex.get(vC.change.id));
 					break;
-
-					/*
-					 * PropositionView propView =
-					 * propViewIndex.get(change.propID); ArgumentView argView =
-					 * new ArgumentView(change.argPro); argView.argument.id =
-					 * change.argID; propView.addItem(argView);
-					 * argViewIndex.put(change.argID, argView); break;
-					 */
 				}
 				case ARG_DELETION: {
-					ViewArgVer argView = argViewIndex.get(change.argID);
-					argView.remove();
-					argViewIndex.remove(change.argID);
+					ViewPropVer propView = (ViewPropVer) vC.viewNode;
+					propView.removeAndSaveChildView(vC.change.argID);
 					break;
 				}
 				case ARG_MODIFICATION: {
-					ViewArgVer argView = argViewIndex.get(change.argID);
-					argView.setArgTitle(mapArgTitle.get(change.id));
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					argView.setArgTitle(mapArgTitle.get(vC.change.id));
 					break;
 				}
 				case PROP_UNLINK: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					argView.removeAndSaveChildView(vC.change.propID);
 					/*
 					 * reverse this: ArgumentView argView =
 					 * argViewIndex.get(change.argID); PropositionView propView
@@ -269,6 +237,12 @@ public class TimeMachine {
 					break;
 				}
 				case PROP_LINK: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					// TODO: root prop additions? who keeps the add/remove of
+					// the prop??!!??
+					argView.reviveDeletedView(vC.change.propID,
+							mapPropIndex.get(vC.change.id));
+
 					/*
 					 * TODO need to think through linking and unlinking in more
 					 * detail. What I have here will not be enough. Specifically
@@ -309,113 +283,122 @@ public class TimeMachine {
 	 */
 	private void moveTreeBackwards(Collection<List<ViewChange>> changesToProcess) {
 		GWT.log("----undoing changes----");
-		for (Change change : changesToProcess) {
-			GWT.log("processing: " + change.changeType);
-			switch (change.changeType) {
-			case PROP_DELETION: {
-				ViewArgVer argView = argViewIndex.get(change.argID);
-				// println("change: " + change.toString());
-				ViewPropVer deletedPropView = new ViewPropVer();
-				propViewIndex.put(change.propID, deletedPropView);
-				deletedPropView.setContent(change.content);
-				deletedPropView.proposition.id = change.propID;
-				argView.insertPropositionViewAt(change.argPropIndex,
-						deletedPropView);
-
-				break;
-			}
-			case PROP_ADDITION: {
-				ViewArgVer argView = argViewIndex.get(change.argID);
-				ViewPropVer propView = propViewIndex.get(change.propID);
-				if (argView != null) {
-					mapPropIndex
-							.put(change.id, argView.getChildIndex(propView));
-					argView.removeItem(propView);
-				} else {
-					tree.removeItem(propView);
+		for (List<ViewChange> changeList : changesToProcess) {
+			for (ViewChange vC : changeList) {
+				GWT.log("processing: " + vC.change.changeType);
+				switch (vC.change.changeType) {
+				case PROP_DELETION: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					// TODO: root prop additions? who keeps the add/remove of
+					// the prop??!!??
+					argView.reviveDeletedView(vC.change.propID,
+							vC.change.argPropIndex);
+					break;
 				}
-				propViewIndex.remove(change.propID);
-				break;
-			}
-			case PROP_MODIFICATION: {
-				ViewPropVer propView = propViewIndex.get(change.propID);
-				mapPropContent.put(change.id, propView.getContent());
-				propView.setContent(change.content);
+				case PROP_ADDITION: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					// TODO: root prop additions? who keeps the add/remove of
+					// the prop??!!??
+					int index = argView.indexOfChildWithID(vC.change.propID);
+					mapPropIndex.put(vC.change.id, index);
+					argView.removeAndSaveChildView(vC.change.propID);
+					break;
+				}
+				case PROP_MODIFICATION: {
+					ViewPropVer propView = (ViewPropVer) vC.viewNode;
+					/*
+					 * NOTE: the same content might be put in the mapPropContent
+					 * multiple times if there are multiple links to the same
+					 * node, but it shouldn't be a problem, because the change
+					 * for each link should be processed one right after the
+					 * other, without a chance for the content to be changed by
+					 * a different change...
+					 */
+					mapPropContent.put(vC.change.id, propView.getContent());
+					propView.setContent(vC.change.content);
+					break;
+				}
+				case ARG_ADDITION: {
+					ViewPropVer propView = (ViewPropVer) vC.viewNode;
+					int index = propView.indexOfChildWithID(vC.change.argID);
+					mapArgIndex.put(vC.change.id, index);
+					propView.removeAndSaveChildView(vC.change.argID);
+					break;
+				}
+				case ARG_DELETION: {
+					ViewPropVer propView = (ViewPropVer) vC.viewNode;
+					/*
+					 * TODO at the moment, I think argPropIndex is 0 for an
+					 * ARG_DELETION. I should start saving assigning a value on
+					 * the server... but 0 should work fine for now... it just
+					 * means that the order will not be preserved
+					 */
+					propView.reviveDeletedView(vC.change.argID,
+							vC.change.argPropIndex);
+					break;
+				}
+				case ARG_MODIFICATION: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					/* NOTE: see not regarding arg modification */
+					mapArgTitle.put(vC.change.id, argView.getArgTitle());
+					argView.setArgTitle(vC.change.content);
+					break;
+				}
+				case PROP_UNLINK: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					// TODO: root prop additions? who keeps the add/remove of
+					// the prop??!!??
+					argView.reviveDeletedView(vC.change.propID,
+							vC.change.argPropIndex);
 
-				break;
-			}
-			case ARG_ADDITION: {
-				// printPropRecursive(propView, 0);
-				ViewArgVer argView = argViewIndex.get(change.argID);
-				ViewPropVer propView = (ViewPropVer) argView
-						.getChild(0);
-				mapArgPro.put(change.id, argView.argument.pro);
-				/*
-				 * TODO hmmm... this is more complicated isn't it? what about
-				 * dummy nodes need to think about what happens when we add and
-				 * delete nodes with loadDummys... need to make sure that the
-				 * loadDummy get puts back...
-				 */
-				mapPropID.put(change.id, propView.proposition.id);
-				argView.remove();
-				argViewIndex.remove(change.argID);
-				// propView.removeItem(argView);
-				// println("propView:" + propView + "; argView:" + argView);
-				break;
-			}
-			case ARG_DELETION: {
-				ViewPropVer propView = propViewIndex.get(change.propID);
-				ViewArgVer argView = new ViewArgVer(change.argPro);
-				argView.argument.id = change.argID;
-				propView.addItem(argView);
-				argViewIndex.put(change.argID, argView);
-				break;
-			}
-			case ARG_MODIFICATION: {
-				ViewArgVer argView = argViewIndex.get(change.argID);
-				mapArgTitle.put(change.id, argView.getArgTitle());
-				argView.setArgTitle(change.content);
-				break;
-			}
-			case PROP_UNLINK: {
-				/*
-				 * hmmm... linking might be a problem... how do we know if we
-				 * need to remove the node from the index... it might be
-				 * referenced elsewhere. Perhaps more importantly... a treeItem
-				 * probably cannot be anchored to two different places in a a
-				 * tree (look into this...but I think you can request a
-				 * treeItem's parent, which wouldn't work if it can be anchored
-				 * in two places). In that case we would need two propView
-				 * objects to represent the linked proposition in two different
-				 * places. But how will that work with the index? I guess we
-				 * could look it up by argID, and then search the argument for
-				 * children with that ID?
-				 */
-				ViewArgVer argView = argViewIndex.get(change.argID);
-				ViewPropVer propView = propViewIndex.get(change.propID);
-				argView.removeItem(propView);
-				break;
-			}
-			case PROP_LINK: {
-				ViewArgVer argView = argViewIndex.get(change.argID);
-				ViewPropVer propView = propViewIndex.get(change.propID);
-				/*
-				 * TODO need to think through linking and unlinking in more
-				 * detail. What I have here will not be enough. Specifically the
-				 * server probably doesn't currently send the linked
-				 * proposition's content which will be important for the client
-				 * to display when reviewing revisions. Furthermore, with all
-				 * the other operations, a given change will only add a node.
-				 * But here the change will add hundreds of nodes, the children
-				 * of the linked proposition. Probably the way to show that is
-				 * simply to add the proposition, and then lazy load the tree
-				 * and someone browses.
-				 */
-				argView.insertPropositionViewAt(change.argPropIndex, propView);
-				break;
-			}
-			}
+					/*
+					 * hmmm... linking might be a problem... how do we know if
+					 * we need to remove the node from the index... it might be
+					 * referenced elsewhere. Perhaps more importantly... a
+					 * treeItem probably cannot be anchored to two different
+					 * places in a a tree (look into this...but I think you can
+					 * request a treeItem's parent, which wouldn't work if it
+					 * can be anchored in two places). In that case we would
+					 * need two propView objects to represent the linked
+					 * proposition in two different places. But how will that
+					 * work with the index? I guess we could look it up by
+					 * argID, and then search the argument for children with
+					 * that ID?
+					 * 
+					 * ViewArgVer argView = argViewIndex.get(change.argID);
+					 * ViewPropVer propView = propViewIndex.get(change.propID);
+					 * argView.removeItem(propView);
+					 */
+					break;
+				}
+				case PROP_LINK: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					int index = argView.indexOfChildWithID(vC.change.propID);
+					mapPropIndex.put(vC.change.id, index);
+					argView.removeAndSaveChildView(vC.change.propID);
 
+					/*
+					 * ViewArgVer argView = argViewIndex.get(change.argID);
+					 * ViewPropVer propView = propViewIndex.get(change.propID);
+					 * 
+					 * TODO need to think through linking and unlinking in more
+					 * detail. What I have here will not be enough. Specifically
+					 * the server probably doesn't currently send the linked
+					 * proposition's content which will be important for the
+					 * client to display when reviewing revisions. Furthermore,
+					 * with all the other operations, a given change will only
+					 * add a node. But here the change will add hundreds of
+					 * nodes, the children of the linked proposition. Probably
+					 * the way to show that is simply to add the proposition,
+					 * and then lazy load the tree and someone browses.
+					 * 
+					 * argView.insertPropositionViewAt(change.argPropIndex,
+					 * propView);
+					 */
+					break;
+				}
+				}
+			}
 		}
 	}
 }

@@ -3,7 +3,6 @@ package com.appspot.conceptmapper.client;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +72,13 @@ public class SortedMultiMap<K, V> {
 		return returnList;
 	}
 
+	/*
+	 * I was using NavigableMap, and it was really elegant and simple and
+	 * includes it's own subMap function... but it is not supported in GWT. So
+	 * I'm using this ugly inefficient piece of shit instead, and crossing my
+	 * fingers that the next GWT release includes a NavigableMap (which seems
+	 * sort of essential if you ask me).
+	 */
 	public List<List<V>> valuesSublist(K start, boolean startInclusive, K end,
 			boolean endInclusive) {
 		Set<Map.Entry<K, List<V>>> entries = map.entrySet();
@@ -128,11 +134,6 @@ public class SortedMultiMap<K, V> {
 	}
 
 	/*
-	 * I was using NavigableMap, and it was really elegant and simple and
-	 * includes it's own subMap function... but it is not supported in GWT. So
-	 * I'm using this ugly innefficient piece of shit instead, and crossing my
-	 * fingers that the next GWT release includes a NavigableMap (which seems
-	 * sort of essential if you ask me).
 	 * 
 	 * Anyway this simply returns a list of changes that fall within the range
 	 * date1, non-inclusive, to date2, inclusive.

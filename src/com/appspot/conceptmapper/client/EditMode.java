@@ -144,7 +144,7 @@ public class EditMode extends ResizeComposite implements
 											nodes, null, null,
 											ViewPropEdit.FACTORY,
 											ViewArgEdit.FACTORY);
-							parentArgView.insertPropositionViewAt(propIndex,
+							parentArgView.insertChildViewAt(propIndex,
 									newPropView);
 						}
 					}

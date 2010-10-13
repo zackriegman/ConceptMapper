@@ -1,15 +1,12 @@
 package com.appspot.conceptmapper.client;
 
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Queue;
 
 import com.appspot.conceptmapper.client.ViewProp.ViewPropFactory;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.TreeItem;
 
 public class ViewArg extends ViewNode {
 	public Argument argument;
@@ -88,14 +85,9 @@ public class ViewArg extends ViewNode {
 		}
 	}
 
+	/* DELETE ME: replaced by same method in ViewNode 
 	public void insertPropositionViewAt(int index, ViewProp propView) {
-		/*
-		 * can't figure out how to insert an item at a specific point (instead
-		 * items just get inserted as the last of the current TreeItem's
-		 * children). So, instead, I'm removing all subsequent TreeItem
-		 * children, then adding the new TreeItem (the new proposition) and then
-		 * adding back all the subsequent tree items!
-		 */
+		
 
 		// first remove all subsequent children
 		Queue<TreeItem> removeQueue = new LinkedList<TreeItem>();
@@ -114,6 +106,7 @@ public class ViewArg extends ViewNode {
 			addItem(toRemove);
 		}
 	}
+*/
 
 	public interface ViewArgFactory<A extends ViewArg> {
 		public A create(Argument arg);

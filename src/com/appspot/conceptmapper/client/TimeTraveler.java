@@ -230,7 +230,7 @@ public class TimeTraveler {
 				ViewArgVer argView = argViewIndex.get(change.argID);
 				ViewPropVer propView = new ViewPropVer();
 				if (argView != null) {
-					argView.insertPropositionViewAt(
+					argView.insertChildViewAt(
 							mapPropIndex.get(change.id), propView);
 
 				} else {
@@ -337,7 +337,7 @@ public class TimeTraveler {
 				propViewIndex.put(change.propID, deletedPropView);
 				deletedPropView.setContent(change.content);
 				deletedPropView.proposition.id = change.propID;
-				argView.insertPropositionViewAt(change.argPropIndex,
+				argView.insertChildViewAt(change.argPropIndex,
 						deletedPropView);
 
 				break;
@@ -429,7 +429,7 @@ public class TimeTraveler {
 				 * simply to add the proposition, and then lazy load the tree
 				 * and someone browses.
 				 */
-				argView.insertPropositionViewAt(change.argPropIndex, propView);
+				argView.insertChildViewAt(change.argPropIndex, propView);
 				break;
 			}
 			}

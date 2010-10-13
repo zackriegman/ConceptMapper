@@ -141,16 +141,15 @@ public class VersionsMode extends ResizeComposite implements
 						onChange(null);
 					}
 				});
-		ServerComm.getChanges( props, args,
+		ServerComm.getChanges(props, args,
 				new ServerComm.LocalCallback<NodeChangesMaps>() {
-
 
 					@Override
 					public void call(NodeChangesMaps changesMaps) {
 						GWT.log(changesMaps.toString());
-						
+
 					}
-		});
+				});
 	}
 
 	private void loadVersionListFromTimeMachine() {
@@ -213,7 +212,8 @@ public class VersionsMode extends ResizeComposite implements
 
 					@Override
 					public void call(NodesWithHistory propTreeWithHistory) {
-						mergeLoadedProposition(propView.proposition, propTreeWithHistory);
+						mergeLoadedProposition(propView.proposition,
+								propTreeWithHistory);
 					}
 				}
 				Callback callback = new Callback();
@@ -227,7 +227,8 @@ public class VersionsMode extends ResizeComposite implements
 
 					@Override
 					public void call(NodesWithHistory argTreeWithHistory) {
-						mergeLoadedArgument(argView.argument, argTreeWithHistory);
+						mergeLoadedArgument(argView.argument,
+								argTreeWithHistory);
 					}
 				}
 				Callback callback = new Callback();
@@ -240,15 +241,16 @@ public class VersionsMode extends ResizeComposite implements
 
 	}
 
-	public void mergeLoadedProposition(Proposition proposition, NodesWithHistory propTreeWithHistory) {
+	public void mergeLoadedProposition(Proposition proposition,
+			NodesWithHistory propTreeWithHistory) {
 
 		GWT.log("mergeLoadedPropositon: start");
 		Map<Long, ViewPropVer> propViewIndex = new HashMap<Long, ViewPropVer>();
 		Map<Long, ViewArgVer> argViewIndex = new HashMap<Long, ViewArgVer>();
 
-		ViewPropVer propGraft = ViewProp.recursiveBuildPropositionView(proposition, 
-						propTreeWithHistory.nodes,
-						propViewIndex, argViewIndex, ViewPropVer.FACTORY, ViewArgVer.FACTORY);
+		ViewPropVer propGraft = ViewProp.recursiveBuildPropositionView(
+				proposition, propTreeWithHistory.nodes, propViewIndex,
+				argViewIndex, ViewPropVer.FACTORY, ViewArgVer.FACTORY);
 
 		GWT.log("propTree before timeTravel:");
 		propGraft.printPropRecursive(0);
@@ -281,14 +283,16 @@ public class VersionsMode extends ResizeComposite implements
 		GWT.log("mergeLoadedPropositon: start");
 	}
 
-	public void mergeLoadedArgument(Argument argument, NodesWithHistory argTreeWithHistory) {
+	public void mergeLoadedArgument(Argument argument,
+			NodesWithHistory argTreeWithHistory) {
 
 		GWT.log("mergeLoadedArgument: start");
 		Map<Long, ViewPropVer> propViewIndex = new HashMap<Long, ViewPropVer>();
 		Map<Long, ViewArgVer> argViewIndex = new HashMap<Long, ViewArgVer>();
 
-		ViewArgVer argGraft = ViewArg.recursiveBuildArgumentView(argument, argTreeWithHistory.nodes,
-						propViewIndex, argViewIndex, ViewPropVer.FACTORY, ViewArgVer.FACTORY);
+		ViewArgVer argGraft = ViewArg.recursiveBuildArgumentView(argument,
+				argTreeWithHistory.nodes, propViewIndex, argViewIndex,
+				ViewPropVer.FACTORY, ViewArgVer.FACTORY);
 
 		GWT.log("propTree before timeTravel:");
 		argGraft.printArgRecursive(0);
@@ -328,38 +332,26 @@ public class VersionsMode extends ResizeComposite implements
 		mainTT.travelToDate(new Date(Long.parseLong(millisecondStr)));
 		resetState(treeClone);
 	}
-	
+
 	/*
-	public ViewPropVer recursiveBuildPropositionView(Proposition prop,
-			boolean editable, Nodes nodes,
-			Map<Long, ViewPropVer> propViewIndex,
-			Map<Long, ViewArgVer> argViewIndex) {
-
-		ViewPropVer propView = new ViewPropVer(prop);
-		if (propViewIndex != null)
-			propViewIndex.put(prop.id, propView);
-		for (Long argID : prop.argIDs) {
-			Argument argument = nodes.args.get(argID);
-			propView.addItem(recursiveBuildArgumentView(argument, editable,
-					nodes, propViewIndex, argViewIndex));
-		}
-		return propView;
-	}
-
-	public ViewArgVer recursiveBuildArgumentView(Argument arg,
-			boolean editable, Nodes nodes,
-			Map<Long, ViewPropVer> propViewIndex,
-			Map<Long, ViewArgVer> argViewIndex) {
-
-		ViewArgVer argView = new ViewArgVer(arg);
-		if (argViewIndex != null)
-			argViewIndex.put(arg.id, argView);
-		for (Long propID : arg.propIDs) {
-			Proposition proposition = nodes.props.get(propID);
-			argView.addItem(recursiveBuildPropositionView(proposition,
-					editable, nodes, propViewIndex, argViewIndex));
-		}
-		return argView;
-	}
-	*/
+	 * public ViewPropVer recursiveBuildPropositionView(Proposition prop,
+	 * boolean editable, Nodes nodes, Map<Long, ViewPropVer> propViewIndex,
+	 * Map<Long, ViewArgVer> argViewIndex) {
+	 * 
+	 * ViewPropVer propView = new ViewPropVer(prop); if (propViewIndex != null)
+	 * propViewIndex.put(prop.id, propView); for (Long argID : prop.argIDs) {
+	 * Argument argument = nodes.args.get(argID);
+	 * propView.addItem(recursiveBuildArgumentView(argument, editable, nodes,
+	 * propViewIndex, argViewIndex)); } return propView; }
+	 * 
+	 * public ViewArgVer recursiveBuildArgumentView(Argument arg, boolean
+	 * editable, Nodes nodes, Map<Long, ViewPropVer> propViewIndex, Map<Long,
+	 * ViewArgVer> argViewIndex) {
+	 * 
+	 * ViewArgVer argView = new ViewArgVer(arg); if (argViewIndex != null)
+	 * argViewIndex.put(arg.id, argView); for (Long propID : arg.propIDs) {
+	 * Proposition proposition = nodes.props.get(propID);
+	 * argView.addItem(recursiveBuildPropositionView(proposition, editable,
+	 * nodes, propViewIndex, argViewIndex)); } return argView; }
+	 */
 }

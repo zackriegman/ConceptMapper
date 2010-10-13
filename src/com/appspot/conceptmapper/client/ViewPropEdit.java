@@ -252,11 +252,11 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		int treePosition = parentArgView().getChildIndex(this);
 		ViewPropEdit newPropView = new ViewPropEdit();
 		if (cursorPosition == 0) {
-			parentArgView().insertPropositionViewAt(treePosition, newPropView);
+			parentArgView().insertChildViewAt(treePosition, newPropView);
 			ServerComm.addProposition(newPropView.proposition,
 					parentArgView().argument, treePosition);
 		} else {
-			parentArgView().insertPropositionViewAt(treePosition + 1,
+			parentArgView().insertChildViewAt(treePosition + 1,
 					newPropView);
 
 			// then split the text between the current and new proposition

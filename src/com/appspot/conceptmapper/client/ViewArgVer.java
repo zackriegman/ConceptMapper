@@ -26,4 +26,8 @@ public class ViewArgVer extends ViewArg {
 		ViewPropVer viewNode = (ViewPropVer)removeChildView(id);
 		deletedViews.put(id, viewNode);
 	}
+	
+	public void reviveDeletedView( Long id, int index ){
+		insertChildViewAt(index, deletedViews.remove(id));
+	}
 }
