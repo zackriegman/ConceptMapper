@@ -112,8 +112,10 @@ public class VersionsMode extends ResizeComposite implements
 						 * the callback just keep calling something like wait()
 						 * until it finds that the clone is finished?
 						 */
+						/*preventing the new method from compiling:
 						editMode.buildTreeCloneOfOpenNodesWithIndexes(
 								treeClone, propViewIndex, argViewIndex);
+								*/
 						treePanel.add(treeClone);
 
 						mainTT = new TimeTraveler(changes, propViewIndex,
@@ -156,7 +158,7 @@ public class VersionsMode extends ResizeComposite implements
 						 * until it finds that the clone is finished?
 						 */
 						editMode.buildTreeCloneOfOpenNodesWithIndexes(
-								treeClone, null, null);
+								treeClone);
 						treePanel.add(treeClone);
 
 						SortedMultiMap<Date, ViewChange> timeMachineMap = prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
@@ -192,6 +194,7 @@ public class VersionsMode extends ResizeComposite implements
 		}
 		for( int i = 0; i < viewProp.getChildCount(); i++ ){
 			//TODO how to get rid of this cast?
+			/* TODO what about dummy nodes!!!! this should create a cast error */
 			recursivePrepAndBuild( (ViewArgVer)viewProp.getArgView( i ), timeMachineMap, changesMaps);
 		}
 		for( Change change : nodeChanges.changes ){

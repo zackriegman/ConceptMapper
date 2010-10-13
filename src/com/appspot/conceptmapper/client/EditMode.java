@@ -224,22 +224,19 @@ public class EditMode extends ResizeComposite implements
 		}
 	}
 
-	public Tree buildTreeCloneOfOpenNodesWithIndexes(Tree cloneTree,
-			Map<Long, ViewPropVer> propIndex, Map<Long, ViewArgVer> argIndex) {
+	public Tree buildTreeCloneOfOpenNodesWithIndexes(Tree cloneTree) {
 		// TODO build the index
 		for (int i = 0; i < tree.getItemCount(); i++) {
 			ViewPropVer clonedPropView = recursiveTreeClone((ViewPropEdit) tree
-					.getItem(i), propIndex, argIndex);
+					.getItem(i));
 			cloneTree.addItem(clonedPropView);
 		}
 		return cloneTree;
 	}
 
-	public ViewPropVer recursiveTreeClone(ViewPropEdit realPropView,
-			Map<Long, ViewPropVer> propIndex, Map<Long, ViewArgVer> argIndex) {
+	public ViewPropVer recursiveTreeClone(ViewPropEdit realPropView) {
 		// TODO make prop view non-editable
 		ViewPropVer clonePropView = ViewPropVer.cloneViewEdit(realPropView);
-		propIndex.put(clonePropView.getProposition().id, clonePropView);
 
 		/* if the proposition is open then clone it */
 		if (realPropView.getState()) {
@@ -247,15 +244,13 @@ public class EditMode extends ResizeComposite implements
 				ViewArgEdit realArgView = (ViewArgEdit) realPropView
 						.getChild(i);
 				ViewArgVer cloneArgView = realArgView.createClone();
-				argIndex.put(cloneArgView.argument.id, cloneArgView);
 				clonePropView.addItem(cloneArgView);
 
 				/* if the argument is open then clone it */
 				if (realArgView.getState()) {
 					for (int j = 0; j < realArgView.getChildCount(); j++) {
 						cloneArgView.addItem(recursiveTreeClone(
-								(ViewPropEdit) realArgView.getChild(j),
-								propIndex, argIndex));
+								(ViewPropEdit) realArgView.getChild(j)));
 					}
 				}
 				/*

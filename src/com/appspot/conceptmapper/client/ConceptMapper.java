@@ -11,6 +11,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
+//TODO: for some reason the server stopped returning changes in the new format...that is causing a null pointer exception on the client
 //TODO: handle open and close nodes in VersionsMode
 //TODO: make Vers not editable
 //TODO: implement versioning of links/unlinks and test

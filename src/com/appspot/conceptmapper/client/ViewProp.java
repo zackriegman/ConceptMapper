@@ -70,7 +70,7 @@ public abstract class ViewProp extends ViewNode {
 	}
 
 	public ViewArg getArgView(int index) {
-		return (ViewArgEdit) getChild(index);
+		return (ViewArg) getChild(index);
 	}
 
 	private static class TextAreaSloppyGrow extends TextArea {

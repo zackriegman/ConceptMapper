@@ -74,7 +74,7 @@ public class ViewArg extends ViewNode {
 	}
 
 	public ViewProp getPropView(int index) {
-		return (ViewPropEdit) getChild(index);
+		return (ViewProp) getChild(index);
 	}
 
 	public void printArgRecursive(int level) {
