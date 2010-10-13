@@ -69,7 +69,7 @@ public abstract class ViewProp extends ViewNode {
 		return proposition;
 	}
 
-	public ViewArgEdit getArgView(int index) {
+	public ViewArg getArgView(int index) {
 		return (ViewArgEdit) getChild(index);
 	}
 
@@ -115,7 +115,7 @@ public abstract class ViewProp extends ViewNode {
 		GWT.log(ConceptMapper.spaces(level * 2) + "propID:" + proposition.id
 				+ "; content:" + getContent());
 		for (int i = 0; i < getChildCount(); i++) {
-			ViewArgEdit arg = getArgView(i);
+			ViewArg arg = getArgView(i);
 			arg.printArgRecursive(level + 1);
 		}
 	}

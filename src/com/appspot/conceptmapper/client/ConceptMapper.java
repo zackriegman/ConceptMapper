@@ -11,6 +11,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
+//TODO: handle open and close nodes in VersionsMode
 //TODO: make Vers not editable
 //TODO: implement versioning of links/unlinks and test
 //TODO: if you have two links to a node open in VersionsMode only one of them gets updated as you travel through the tree
@@ -75,7 +76,7 @@ public class ConceptMapper implements EntryPoint {
 		});
 		
 
-		Label titleLabel = new Label("ConceptMapper Prototype");
+		Label titleLabel = new Label("ArgMap Prototype");
 		titleLabel.setStylePrimaryName("titleLabel");
 		//messageArea.setStylePrimaryName("messageLabel");
 		mainPanel.addNorth( titleLabel, 5);

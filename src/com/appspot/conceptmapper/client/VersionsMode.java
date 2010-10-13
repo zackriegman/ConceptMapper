@@ -35,6 +35,7 @@ public class VersionsMode extends ResizeComposite implements
 	private EditMode editMode;
 	private Tree treeClone = null;
 	private TimeTraveler mainTT;
+	private TimeMachine mainTM;
 	private FlowPanel treePanel = new FlowPanel();
 	private final int LIST_WIDTH = 20;
 
@@ -81,23 +82,7 @@ public class VersionsMode extends ResizeComposite implements
 		}
 	}
 
-	/*
-	 * public void printPropRecursive(PropositionView propViewParent, int level)
-	 * { GWT.log(spaces(level * 2) + "propID:" + propViewParent.proposition.id +
-	 * "; content:" + propViewParent.getContent()); for (int i = 0; i <
-	 * propViewParent.getChildCount(); i++) { ArgumentView arg = (ArgumentView)
-	 * propViewParent.getChild(i); printArgRecursive( arg, level + 1 ); } }
-	 * 
-	 * public void printArgRecursive( ArgumentView arg, int level ){
-	 * GWT.log(spaces(level * 2) + arg.getText() + "; id:" + arg.argument.id);
-	 * for (int j = 0; j < arg.getChildCount(); j++) {
-	 * printPropRecursive((PropositionView) arg.getChild(j), level + 1); } }
-	 * 
-	 * public String spaces(int spaces) { String string = ""; for (int i = 0; i
-	 * < spaces; i++) { string = string + " "; } return string; }
-	 */
-
-	public void displayVersions() {
+	public void displayVersions_DELETE_ME() {
 		versionList.clear();
 		versionList.addItem("Loading Revision History From Server...");
 		if (treeClone != null) {
@@ -141,15 +126,101 @@ public class VersionsMode extends ResizeComposite implements
 						onChange(null);
 					}
 				});
+	}
+
+	public void displayVersions() {
+		versionList.clear();
+		versionList.addItem("Loading Revision History From Server...");
+		if (treeClone != null) {
+			treePanel.remove(treeClone);
+		}
+		List<Proposition> props = new LinkedList<Proposition>();
+		List<Argument> args = new LinkedList<Argument>();
+		editMode.getOpenPropsAndArgs(props, args);
 		ServerComm.getChanges(props, args,
 				new ServerComm.LocalCallback<NodeChangesMaps>() {
 
 					@Override
 					public void call(NodeChangesMaps changesMaps) {
+						GWT.log("Got back these changes:");
 						GWT.log(changesMaps.toString());
 
+						treeClone = new Tree();
+						treeClone.addCloseHandler(VersionsMode.this);
+						treeClone.addOpenHandler(VersionsMode.this);
+						/*
+						 * TODO this could be done outside of the callback to
+						 * reduce the user's wait time, but would need to ensure
+						 * that it finishing before the callback proceeds. can
+						 * the callback just keep calling something like wait()
+						 * until it finds that the clone is finished?
+						 */
+						editMode.buildTreeCloneOfOpenNodesWithIndexes(
+								treeClone, null, null);
+						treePanel.add(treeClone);
+
+						SortedMultiMap<Date, ViewChange> timeMachineMap = prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
+								treeClone, changesMaps);
+
+						mainTM = new TimeMachine(timeMachineMap, treeClone);
+
+						loadVersionListFromTimeMachine();
+
+						versionList.setSelectedIndex(0);
+
+						onChange(null);
 					}
 				});
+
+	}
+
+	private SortedMultiMap<Date, ViewChange> prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
+			Tree treeClone, NodeChangesMaps changesMaps) {
+		SortedMultiMap<Date, ViewChange> timeMachineMap = new SortedMultiMap<Date, ViewChange>();
+		for (int i = 0; i < treeClone.getItemCount(); i++) {
+			recursivePrepAndBuild((ViewPropVer)treeClone.getItem(i), timeMachineMap, changesMaps);
+		}
+		return timeMachineMap;
+	}
+
+	public void recursivePrepAndBuild(ViewPropVer viewProp,
+			SortedMultiMap<Date, ViewChange> timeMachineMap, NodeChangesMaps changesMaps) {
+		NodeChanges<Proposition> nodeChanges = changesMaps.propChanges.get(viewProp.getNodeID());
+		for( Long id : nodeChanges.deletedChildIDs ){
+			ViewArgVer deletedView = viewProp.createDeletedView( id );
+			recursivePrepAndBuild( deletedView, timeMachineMap, changesMaps);
+		}
+		for( int i = 0; i < viewProp.getChildCount(); i++ ){
+			//TODO how to get rid of this cast?
+			recursivePrepAndBuild( (ViewArgVer)viewProp.getArgView( i ), timeMachineMap, changesMaps);
+		}
+		for( Change change : nodeChanges.changes ){
+			ViewChange viewChange = new ViewChange();
+			viewChange.change = change;
+			viewChange.viewNode = viewProp;
+			viewProp.viewChanges.add( viewChange );
+			timeMachineMap.put( change.date, viewChange );
+		}
+	}
+
+	public void recursivePrepAndBuild(ViewArgVer viewArg,
+			SortedMultiMap<Date, ViewChange> timeMachineMap, NodeChangesMaps changesMaps) {
+		NodeChanges<Argument> nodeChanges = changesMaps.argChanges.get(viewArg.getNodeID());
+		for( Long id : nodeChanges.deletedChildIDs ){
+			ViewPropVer deletedView = viewArg.createDeletedView( id );
+			recursivePrepAndBuild( deletedView, timeMachineMap, changesMaps);
+		}
+		for( int i = 0; i < viewArg.getChildCount(); i++ ){
+			//TODO how to get rid of this cast?
+			recursivePrepAndBuild( (ViewPropVer)viewArg.getPropView( i ), timeMachineMap, changesMaps);
+		}
+		for( Change change : nodeChanges.changes ){
+			ViewChange viewChange = new ViewChange();
+			viewChange.change = change;
+			viewChange.viewNode = viewArg;
+			viewArg.viewChanges.add( viewChange );
+			timeMachineMap.put( change.date, viewChange );
+		}
 	}
 
 	private void loadVersionListFromTimeMachine() {
@@ -163,7 +234,7 @@ public class VersionsMode extends ResizeComposite implements
 		}
 		versionList.clear();
 
-		List<Change> reverseList = mainTT.getChangeList();
+		List<Change> reverseList = mainTM.getChangeList();
 		Collections.reverse(reverseList);
 		int i = 0;
 		int newSelectionIndex = 0;
@@ -329,29 +400,7 @@ public class VersionsMode extends ResizeComposite implements
 	public void onChange(ChangeEvent event) {
 		String millisecondStr = versionList.getValue(versionList
 				.getSelectedIndex());
-		mainTT.travelToDate(new Date(Long.parseLong(millisecondStr)));
+		mainTM.travelToDate(new Date(Long.parseLong(millisecondStr)));
 		resetState(treeClone);
 	}
-
-	/*
-	 * public ViewPropVer recursiveBuildPropositionView(Proposition prop,
-	 * boolean editable, Nodes nodes, Map<Long, ViewPropVer> propViewIndex,
-	 * Map<Long, ViewArgVer> argViewIndex) {
-	 * 
-	 * ViewPropVer propView = new ViewPropVer(prop); if (propViewIndex != null)
-	 * propViewIndex.put(prop.id, propView); for (Long argID : prop.argIDs) {
-	 * Argument argument = nodes.args.get(argID);
-	 * propView.addItem(recursiveBuildArgumentView(argument, editable, nodes,
-	 * propViewIndex, argViewIndex)); } return propView; }
-	 * 
-	 * public ViewArgVer recursiveBuildArgumentView(Argument arg, boolean
-	 * editable, Nodes nodes, Map<Long, ViewPropVer> propViewIndex, Map<Long,
-	 * ViewArgVer> argViewIndex) {
-	 * 
-	 * ViewArgVer argView = new ViewArgVer(arg); if (argViewIndex != null)
-	 * argViewIndex.put(arg.id, argView); for (Long propID : arg.propIDs) {
-	 * Proposition proposition = nodes.props.get(propID);
-	 * argView.addItem(recursiveBuildPropositionView(proposition, editable,
-	 * nodes, propViewIndex, argViewIndex)); } return argView; }
-	 */
 }

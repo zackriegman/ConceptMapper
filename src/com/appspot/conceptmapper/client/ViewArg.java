@@ -73,7 +73,7 @@ public class ViewArg extends ViewNode {
 		return "text:" + getText() + "; id:" + argument.id;
 	}
 
-	public ViewPropEdit getPropView(int index) {
+	public ViewProp getPropView(int index) {
 		return (ViewPropEdit) getChild(index);
 	}
 

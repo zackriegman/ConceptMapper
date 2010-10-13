@@ -69,14 +69,14 @@ public interface PropositionService extends RemoteService {
 				buffer.append( "\nid:");
 				buffer.append( id);
 				buffer.append("; nodeChange:");
-				buffer.append(argChanges.get(id));
+				buffer.append(argChanges.get(id).toString());
 			}
 			buffer.append("\npropChanges::::::::");
 			for(Long id : propChanges.keySet()){
 				buffer.append( "\nid:");
 				buffer.append( id);
 				buffer.append("; nodeChange:");
-				buffer.append(propChanges.get(id));
+				buffer.append(propChanges.get(id).toString());
 			}
 			return buffer.toString();
 		}

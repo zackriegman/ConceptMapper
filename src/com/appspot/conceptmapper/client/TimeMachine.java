@@ -7,11 +7,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Tree;
-import com.google.gwt.user.client.ui.TreeItem;
 
 public class TimeMachine {
 	private Tree tree;
@@ -30,14 +28,9 @@ public class TimeMachine {
 	private Map<Long, Integer> mapPropIndex;
 	private Map<Long, Integer> mapArgIndex;
 
+	/*
 	public ViewPropVer absorb(TimeMachine timeTraveler, ViewPropVer propGraft) {
-		/*
-		 * Long propID = propGraft.proposition.id; PropositionView oldPropView =
-		 * propViewIndex.get( propID ); propViewIndex.remove(propID); TreeItem
-		 * parentItem = oldPropView.getParentItem(); if( parentItem != null ){
-		 * parentItem.getChildIndex(child) }
-		 */
-
+		
 		Long propID = propGraft.proposition.id;
 		ViewPropVer oldPropView = propViewIndex.get(propID);
 		oldPropView.getChild(0).remove();
@@ -59,12 +52,6 @@ public class TimeMachine {
 	}
 
 	public ViewArgVer absorb(TimeMachine timeTraveler, ViewArgVer argGraft) {
-		/*
-		 * Long propID = propGraft.proposition.id; PropositionView oldPropView =
-		 * propViewIndex.get( propID ); propViewIndex.remove(propID); TreeItem
-		 * parentItem = oldPropView.getParentItem(); if( parentItem != null ){
-		 * parentItem.getChildIndex(child) }
-		 */
 
 		Long argID = argGraft.argument.id;
 		ViewArgVer oldArgView = argViewIndex.get(argID);
@@ -85,6 +72,7 @@ public class TimeMachine {
 
 		return oldArgView;
 	}
+	*/
 
 	/*
 	 * TimeTraveler will work with a null tree, but if it gets a top level
@@ -168,11 +156,6 @@ public class TimeMachine {
 					true));
 		}
 		currentDate = newDate;
-	}
-
-	public class ViewChange {
-		Change change;
-		ViewNode viewNode;
 	}
 
 	private void moveTreeForwards(Collection<List<ViewChange>> changesToProcess) {
@@ -293,6 +276,8 @@ public class TimeMachine {
 					// the prop??!!??
 					argView.reviveDeletedView(vC.change.propID,
 							vC.change.argPropIndex);
+					ViewProp viewPropVer = argView.getPropView(vC.change.argPropIndex);
+					viewPropVer.proposition.content = vC.change.content;
 					break;
 				}
 				case PROP_ADDITION: {
@@ -335,6 +320,9 @@ public class TimeMachine {
 					 */
 					propView.reviveDeletedView(vC.change.argID,
 							vC.change.argPropIndex);
+					ViewArg viewArgVer = propView.getArgView(vC.change.argPropIndex);
+					viewArgVer.argument.pro = vC.change.argPro;
+					viewArgVer.setArgTitle(vC.change.content);
 					break;
 				}
 				case ARG_MODIFICATION: {
