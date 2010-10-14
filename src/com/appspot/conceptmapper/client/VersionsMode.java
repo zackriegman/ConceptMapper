@@ -34,14 +34,17 @@ public class VersionsMode extends ResizeComposite implements
 	private ListBox versionList = new ListBox();
 	private EditMode editMode;
 	private Tree treeClone = null;
-	private TimeTraveler mainTT;
+	private TimeTraveler mainTT; // TODO DELETE this line
 	private TimeMachine mainTM;
+	SortedMultiMap<Date, ViewChange> timeMachineMap;
 	private FlowPanel treePanel = new FlowPanel();
-	private final int LIST_WIDTH = 20;
+	private final int LIST_WIDTH = 30;
 
 	// SplitLayoutPanel mainPanel;
 
 	private HandlerRegistration listBoxChangeHandlerRegistration;
+	private HandlerRegistration treeOpenHandlerRegistration;
+	private HandlerRegistration treeCloseHandlerRegistration;
 
 	public VersionsMode(EditMode editModePair) {
 		super();
@@ -62,9 +65,13 @@ public class VersionsMode extends ResizeComposite implements
 	}
 
 	public void resetState(Tree tree) {
+		treeOpenHandlerRegistration.removeHandler();
+		treeCloseHandlerRegistration.removeHandler();
 		for (int i = 0; i < tree.getItemCount(); i++) {
 			recursiveResetState(tree.getItem(i));
 		}
+		treeClone.addOpenHandler(this);
+		treeClone.addCloseHandler(this);
 	}
 
 	public void recursiveResetState(TreeItem item) {
@@ -103,8 +110,8 @@ public class VersionsMode extends ResizeComposite implements
 						Map<Long, ViewArgVer> argViewIndex = new HashMap<Long, ViewArgVer>();
 
 						treeClone = new Tree();
-						treeClone.addCloseHandler(VersionsMode.this);
-						treeClone.addOpenHandler(VersionsMode.this);
+						treeCloseHandlerRegistration = treeClone.addCloseHandler(VersionsMode.this);
+						treeOpenHandlerRegistration = treeClone.addOpenHandler(VersionsMode.this);
 						/*
 						 * TODO this could be done outside of the callback to
 						 * reduce the user's wait time, but would need to ensure
@@ -112,10 +119,11 @@ public class VersionsMode extends ResizeComposite implements
 						 * the callback just keep calling something like wait()
 						 * until it finds that the clone is finished?
 						 */
-						/*preventing the new method from compiling:
-						editMode.buildTreeCloneOfOpenNodesWithIndexes(
-								treeClone, propViewIndex, argViewIndex);
-								*/
+						/*
+						 * preventing the new method from compiling:
+						 * editMode.buildTreeCloneOfOpenNodesWithIndexes(
+						 * treeClone, propViewIndex, argViewIndex);
+						 */
 						treePanel.add(treeClone);
 
 						mainTT = new TimeTraveler(changes, propViewIndex,
@@ -144,11 +152,12 @@ public class VersionsMode extends ResizeComposite implements
 
 					@Override
 					public void call(NodeChangesMaps changesMaps) {
-						//GWT.log("Got back these changes:\n" + changesMaps.toString() );
+						// GWT.log("Got back these changes:\n" +
+						// changesMaps.toString() );
 
 						treeClone = new Tree();
-						treeClone.addCloseHandler(VersionsMode.this);
-						treeClone.addOpenHandler(VersionsMode.this);
+						treeCloseHandlerRegistration = treeClone.addCloseHandler(VersionsMode.this);
+						treeOpenHandlerRegistration = treeClone.addOpenHandler(VersionsMode.this);
 						/*
 						 * TODO this could be done outside of the callback to
 						 * reduce the user's wait time, but would need to ensure
@@ -156,12 +165,11 @@ public class VersionsMode extends ResizeComposite implements
 						 * the callback just keep calling something like wait()
 						 * until it finds that the clone is finished?
 						 */
-						editMode.buildTreeCloneOfOpenNodesWithIndexes(
-								treeClone);
-						
+						editMode.buildTreeCloneOfOpenNodesWithIndexes(treeClone);
+
 						treePanel.add(treeClone);
 
-						SortedMultiMap<Date, ViewChange> timeMachineMap = prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
+						timeMachineMap = prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
 								treeClone, changesMaps);
 
 						mainTM = new TimeMachine(timeMachineMap, treeClone);
@@ -180,49 +188,56 @@ public class VersionsMode extends ResizeComposite implements
 			Tree treeClone, NodeChangesMaps changesMaps) {
 		SortedMultiMap<Date, ViewChange> timeMachineMap = new SortedMultiMap<Date, ViewChange>();
 		for (int i = 0; i < treeClone.getItemCount(); i++) {
-			recursivePrepAndBuild((ViewPropVer)treeClone.getItem(i), timeMachineMap, changesMaps);
+			recursivePrepAndBuild((ViewPropVer) treeClone.getItem(i),
+					timeMachineMap, changesMaps);
 		}
 		return timeMachineMap;
 	}
 
 	public void recursivePrepAndBuild(ViewPropVer viewProp,
-			SortedMultiMap<Date, ViewChange> timeMachineMap, NodeChangesMaps changesMaps) {
-		NodeChanges<Proposition> nodeChanges = changesMaps.propChanges.get(viewProp.getNodeID());
-		for( Long id : nodeChanges.deletedChildIDs ){
-			ViewArgVer deletedView = viewProp.createDeletedView( id );
-			recursivePrepAndBuild( deletedView, timeMachineMap, changesMaps);
+			SortedMultiMap<Date, ViewChange> timeMachineMap,
+			NodeChangesMaps changesMaps) {
+		NodeChanges<Proposition> nodeChanges = changesMaps.propChanges
+				.get(viewProp.getNodeID());
+		for (Long id : nodeChanges.deletedChildIDs) {
+			ViewArgVer deletedView = viewProp.createDeletedView(id);
+			recursivePrepAndBuild(deletedView, timeMachineMap, changesMaps);
 		}
-		for( int i = 0; i < viewProp.getChildCount(); i++ ){
-			//TODO how to get rid of this cast?
+		for (int i = 0; i < viewProp.getChildCount(); i++) {
+			// TODO how to get rid of this cast?
 			/* TODO what about dummy nodes!!!! this should create a cast error */
-			recursivePrepAndBuild( (ViewArgVer)viewProp.getArgView( i ), timeMachineMap, changesMaps);
+			recursivePrepAndBuild((ViewArgVer) viewProp.getArgView(i),
+					timeMachineMap, changesMaps);
 		}
-		for( Change change : nodeChanges.changes ){
+		for (Change change : nodeChanges.changes) {
 			ViewChange viewChange = new ViewChange();
 			viewChange.change = change;
 			viewChange.viewNode = viewProp;
-			viewProp.viewChanges.add( viewChange );
-			timeMachineMap.put( change.date, viewChange );
+			viewProp.viewChanges.add(viewChange);
+			timeMachineMap.put(change.date, viewChange);
 		}
 	}
 
 	public void recursivePrepAndBuild(ViewArgVer viewArg,
-			SortedMultiMap<Date, ViewChange> timeMachineMap, NodeChangesMaps changesMaps) {
-		NodeChanges<Argument> nodeChanges = changesMaps.argChanges.get(viewArg.getNodeID());
-		for( Long id : nodeChanges.deletedChildIDs ){
-			ViewPropVer deletedView = viewArg.createDeletedView( id );
-			recursivePrepAndBuild( deletedView, timeMachineMap, changesMaps);
+			SortedMultiMap<Date, ViewChange> timeMachineMap,
+			NodeChangesMaps changesMaps) {
+		NodeChanges<Argument> nodeChanges = changesMaps.argChanges.get(viewArg
+				.getNodeID());
+		for (Long id : nodeChanges.deletedChildIDs) {
+			ViewPropVer deletedView = viewArg.createDeletedView(id);
+			recursivePrepAndBuild(deletedView, timeMachineMap, changesMaps);
 		}
-		for( int i = 0; i < viewArg.getChildCount(); i++ ){
-			//TODO how to get rid of this cast?
-			recursivePrepAndBuild( (ViewPropVer)viewArg.getPropView( i ), timeMachineMap, changesMaps);
+		for (int i = 0; i < viewArg.getChildCount(); i++) {
+			// TODO how to get rid of this cast?
+			recursivePrepAndBuild((ViewPropVer) viewArg.getPropView(i),
+					timeMachineMap, changesMaps);
 		}
-		for( Change change : nodeChanges.changes ){
+		for (Change change : nodeChanges.changes) {
 			ViewChange viewChange = new ViewChange();
 			viewChange.change = change;
 			viewChange.viewNode = viewArg;
-			viewArg.viewChanges.add( viewChange );
-			timeMachineMap.put( change.date, viewChange );
+			viewArg.viewChanges.add(viewChange);
+			timeMachineMap.put(change.date, viewChange);
 		}
 	}
 
@@ -259,7 +274,56 @@ public class VersionsMode extends ResizeComposite implements
 	}
 
 	@Override
+	public void onOpen(OpenEvent<TreeItem> event) {
+		ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
+		recursiveAddViewChanges(viewNodeVer);
+		loadVersionListFromTimeMachine();
+	}
+
+	@Override
 	public void onClose(CloseEvent<TreeItem> event) {
+		ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
+		recursiveRemoveViewChanges(viewNodeVer);
+		loadVersionListFromTimeMachine();
+	}
+
+	public void recursiveRemoveViewChanges(ViewNodeVer viewNodeVer) {
+		for( ViewChange viewChange : viewNodeVer.getViewChangeList() ){
+			GWT.log("nodeID: " + viewNodeVer.getNodeID() + " adding: " + viewChange );
+			timeMachineMap.remove(viewChange.change.date, viewChange);
+		}
+		for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
+			ViewNodeVer child = viewNodeVer.getChildViewNodeVer(i);
+			if (child.getState()) {
+				recursiveRemoveViewChanges(child);
+			}
+		}
+		for( ViewNodeVer deletedView : viewNodeVer.getDeletedViewList() ){
+			if( deletedView.getState() ){
+				recursiveRemoveViewChanges(deletedView);
+			}
+		}
+	}
+
+	public void recursiveAddViewChanges(ViewNodeVer viewNodeVer) {
+		for( ViewChange viewChange : viewNodeVer.getViewChangeList() ){
+			GWT.log("nodeID: " + viewNodeVer.getNodeID() + " adding: " + viewChange );
+			timeMachineMap.put(viewChange.change.date, viewChange);
+		}
+		for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
+			ViewNodeVer child = viewNodeVer.getChildViewNodeVer(i);
+			if (child.getState()) {
+				recursiveAddViewChanges(child);
+			}
+		}
+		for( ViewNodeVer deletedView : viewNodeVer.getDeletedViewList() ){
+			if( deletedView.getState() ){
+				recursiveAddViewChanges(deletedView);
+			}
+		}
+	}
+
+	public void onClose_DELETE_ME(CloseEvent<TreeItem> event) {
 		TreeItem treeItem = event.getTarget();
 		if (treeItem.getChildCount() > 0) {
 			if (treeItem.getChild(0).getStyleName().equals("loadDummyProp")) {
@@ -274,8 +338,7 @@ public class VersionsMode extends ResizeComposite implements
 
 	}
 
-	@Override
-	public void onOpen(OpenEvent<TreeItem> event) {
+	public void onOpen_DELETE_ME(OpenEvent<TreeItem> event) {
 		TreeItem treeItem = event.getTarget();
 		if (treeItem.getChildCount() > 0) {
 			TreeItem child = treeItem.getChild(0);

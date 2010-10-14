@@ -266,6 +266,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 				argDeletionChange.propID = parentProp.id;
 				argDeletionChange.argID = argument.id;
 				argDeletionChange.argPro = argument.pro;
+				argDeletionChange.argPropIndex = parentProp.argIDs.indexOf( argument.id );
 				/*
 				 * because we are only deleting arguments when they have no
 				 * propositions left, we don't have to save the argument's
@@ -408,7 +409,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public SortedMap<Date, Change> getRevisions(Long changeID,
 			List<Long> propIDs, List<Long> argIDs) throws Exception {
-
+//TODO: DELETE THIS METHOD
 		SortedMap<Date, Change> map = new TreeMap<Date, Change>();
 		// HashSet<Long> processedProps = new HashSet<Long>();
 		// HashSet<Long> processedArgs = new HashSet<Long>();
@@ -545,7 +546,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 
 	public void recursiveQueryChanges(List<Long> propIDs, List<Long> argIDs,
 			Map<Date, Change> map, Date date) {
-
+		//TODO: DELETE THIS METHOD
 		println("recursiveQueryChanges: propIDs:");
 		if (propIDs != null) {
 			String printString = "*";
@@ -815,6 +816,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 			argDeletionChange.propID = parentProp.id;
 			argDeletionChange.argID = argument.id;
 			argDeletionChange.argPro = argument.pro;
+			argDeletionChange.argPropIndex = parentProp.argIDs.indexOf( argument.id );
 			/*
 			 * because we are only deleting arguments when they have no
 			 * propositions left, we don't have to save the argument's

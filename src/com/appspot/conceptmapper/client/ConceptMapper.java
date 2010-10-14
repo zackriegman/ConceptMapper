@@ -12,36 +12,32 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: for some reason the server stopped returning changes in the new format...that is causing a null pointer exception on the client
-//TODO: handle open and close nodes in VersionsMode
-//TODO: make Vers not editable
-//TODO: implement versioning of links/unlinks and test
-//TODO: if you have two links to a node open in VersionsMode only one of them gets updated as you travel through the tree
+//TODO: handle open and close nodes in VersionsMode:  when opening, need to zoom node to same time as rest of tree
+//TODO: undeleting links does not restory their yellow color
+//TODO: unlinking last prop in an arg deletes the arg on the server but not on the client, resulting in strange behavor
 //TODO: weed changes list when a node is closed, expand when a node is opened (maybe to implement this, change how nodes are stored... maybe with a list of all their changes... which type of changes does a node need to know about...
+//TODO: lazy load closed items in versions mode
 //TODO: prevent circular linking from crashing program...
-//TODO: lazy load propositions (maybe a few layers deep in advance) instead of loading the entire tree
-//TODO: what are all the phantom propositions that show up on an empty search?
 
-//TODO: think about merging of duplicate propositions (both possibly already having arguments)
-//TODO: add helpful message along the side (tips box)
+//TODO: lazy load in editmode (maybe a few layers deep in advance) instead of loading the entire tree
 //TODO: provide a way to see deleted top level nodes
-//TODO: stop deleting empty arguments (the proposition deletion methods are overly complex); implement separate argument deletions; when the last proposition is deleted move to the arguments title; when an empty argument title is backspaced or deleted, delete the argument.
+//TODO: add helpful message along the side (tips box)
+//TODO: poll server every few seconds for server side changes (this has to come after versioning I think)
 //TODO: implement user accounts, email updates of changes, inviting friends
 //TODO: implement proposition strength voting, and scoring algorithm
-//TODO: allow arguments to have titles
 
-//TODO: trim whitespace before checking to see if update has actually changed something
 //TODO: highlight last change node after time travel
-//TODO: get rid of irrelevant update operations (e.g. clearing update before delete)
+//TODO: think about merging of duplicate propositions (both possibly already having arguments)
+//TODO: fine tune UI for arguments... see implementation notes
+//TODO: what is this?:   get rid of irrelevant update operations (e.g. clearing update before delete)
+//TODO: still an issue?: what are all the phantom propositions that show up on an empty search?
 //TODO: decide how to get rid of repetative code (for propositions and args), maybe make them both subclasses of a Node class?
-
 //TODO: if the message queue gets backed up (more than 5?) give user a message that there is trouble saving changes to server, and changes may be lost
 //TODO: maintain order of propositions? waiting to see if order gets screwed up
 //TODO: IE problems: (1) VersionsMode doesn't seem to work (2) can delete root level proposition without first deleting its text
 
 // TO DO: test in IE, chrome, safari, opera, etc.
 // TO DO: upload to appengine, and add an example argument (for instance my argument about legalizing unauthorized access)
-// TO DO: poll server every few seconds for server side changes (this has to come after versioning I think)
 // TO DO: implement some basic database integrity checks (e.g. every argument belongs to an existing proposition...)
 // TO DO: give people a way to specify logical structure (first order predicate calculus structure of each proposition
 // TO DO: add definitions (as a special kind of proposition?)

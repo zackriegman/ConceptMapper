@@ -44,8 +44,22 @@ public class SortedMultiMap<K, V> {
 		list.addAll(values);
 	}
 
+	/*
+	 * removes all the objects associated with the given key
+	 */
 	public List<V> remove(K key) {
 		return map.remove(key);
+	}
+	
+	/*
+	 * this efficiently removes just the given object (rather than all the objects associated with that key
+	 */
+	public void remove( K key, V value ){
+		List<V> list = map.get(key);
+		list.remove(value);
+		if(list.isEmpty()){
+			map.remove(key);
+		}
 	}
 
 	public K lastKey() {

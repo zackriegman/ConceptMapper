@@ -1,11 +1,15 @@
 package com.appspot.conceptmapper.client;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ViewPropVer extends ViewProp {
+import com.google.gwt.core.client.GWT;
+
+public class ViewPropVer extends ViewProp implements ViewNodeVer {
 	public List<ViewChange> viewChanges = new ArrayList<ViewChange>();
 	public static ViewPropFactory<ViewPropVer> FACTORY = new ViewPropFactory<ViewPropVer>() {
 
@@ -19,6 +23,7 @@ public class ViewPropVer extends ViewProp {
 
 	public ViewPropVer(Proposition proposition) {
 		super(proposition);
+		textArea.setReadOnly(true);
 	}
 	
 	public ViewPropVer(){
@@ -43,7 +48,10 @@ public class ViewPropVer extends ViewProp {
 	}
 
 	public void reviveDeletedView(Long id, int index) {
-		insertChildViewAt(index, deletedViews.remove(id));
+		GWT.log("reviveDeletedView( " + id + ", " + index + " );" );
+		ViewNode viewNode = deletedViews.remove(id);
+		assert viewNode != null ;
+		insertChildViewAt(index, viewNode);
 	}
 
 	public ViewArgVer createDeletedView(Long id) {
@@ -56,5 +64,17 @@ public class ViewPropVer extends ViewProp {
 		ViewArgVer deletedView = new ViewArgVer(argument);
 		deletedViews.put(id, deletedView );
 		return deletedView;
+	}
+	
+	public List<ViewChange> getViewChangeList() {
+		return viewChanges;
+	}
+
+	public ViewNodeVer getChildViewNodeVer( int i ){
+		return (ViewNodeVer) getChild(i);
+	}
+	
+	public Collection<ViewNodeVer> getDeletedViewList(){
+		return (Collection<ViewNodeVer>) deletedViews.values();
 	}
 }

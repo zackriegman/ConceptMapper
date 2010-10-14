@@ -162,7 +162,7 @@ public class TimeMachine {
 		GWT.log("----re-doing changes----");
 		for (List<ViewChange> changeList : changesToProcess) {
 			for (ViewChange vC : changeList) {
-				GWT.log("processing: " + vC.change.changeType);
+				GWT.log("processing: " + vC.change );
 				switch (vC.change.changeType) {
 				case PROP_DELETION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
@@ -268,7 +268,7 @@ public class TimeMachine {
 		GWT.log("----undoing changes----");
 		for (List<ViewChange> changeList : changesToProcess) {
 			for (ViewChange vC : changeList) {
-				GWT.log("processing: " + vC.change.changeType);
+				GWT.log("processing: " + vC.change );
 				switch (vC.change.changeType) {
 				case PROP_DELETION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
@@ -312,12 +312,6 @@ public class TimeMachine {
 				}
 				case ARG_DELETION: {
 					ViewPropVer propView = (ViewPropVer) vC.viewNode;
-					/*
-					 * TODO at the moment, I think argPropIndex is 0 for an
-					 * ARG_DELETION. I should start saving assigning a value on
-					 * the server... but 0 should work fine for now... it just
-					 * means that the order will not be preserved
-					 */
 					propView.reviveDeletedView(vC.change.argID,
 							vC.change.argPropIndex);
 					ViewArg viewArgVer = propView.getArgView(vC.change.argPropIndex);
