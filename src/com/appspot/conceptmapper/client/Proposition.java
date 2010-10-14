@@ -31,6 +31,10 @@ public class Proposition implements Serializable {
 	public Proposition(){
 	}
 	
+	public Proposition( Long id ){
+		this.id = id;
+	}
+	
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
 		buffer.append("id:");

@@ -40,7 +40,7 @@ public class ViewArgVer extends ViewArg {
 		 * this view is just empty; can set to false, because real value will be
 		 * set before it is used when the time machine goes back in time...
 		 */
-		ViewPropVer deletedView = new ViewPropVer();
+		ViewPropVer deletedView = new ViewPropVer( id );
 		deletedViews.put(id, deletedView );
 		return deletedView;
 	}

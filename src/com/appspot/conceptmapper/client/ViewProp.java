@@ -112,8 +112,8 @@ public abstract class ViewProp extends ViewNode {
 	}
 
 	public void printPropRecursive(int level) {
-		GWT.log(ConceptMapper.spaces(level * 2) + "propID:" + proposition.id
-				+ "; content:" + getContent());
+		GWT.log(ConceptMapper.spaces(level * 2) + "propID:" + getNodeID()
+				+ "; content:" + getContent() + "; hashCode:" + hashCode()  );
 		for (int i = 0; i < getChildCount(); i++) {
 			ViewArg arg = getArgView(i);
 			arg.printArgRecursive(level + 1);

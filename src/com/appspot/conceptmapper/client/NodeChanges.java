@@ -14,17 +14,16 @@ public class NodeChanges<T> implements Serializable {
 	
 	public String toString(){
 		StringBuffer buffer = new StringBuffer();
-		buffer.append( "changes:[");
+		buffer.append( "\n  changes:");
 		for( Change change : changes ){
+			buffer.append("\n    ");
 			buffer.append( change.toString() );
-			buffer.append( "; ");
 		}
-		buffer.append( "]; deletedChildIDs:[" );
+		buffer.append( "\n  deletedChildIDs:" );
 		for( Long id: deletedChildIDs){
+			buffer.append("\n    ");
 			buffer.append( id );
-			buffer.append( "; ");
 		}
-		buffer.append( "]");
 		return buffer.toString();
 	}
 }

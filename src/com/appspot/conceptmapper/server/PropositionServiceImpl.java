@@ -502,7 +502,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 				nodeChanges.changes.add(change);
 				break;
 			case ARG_MODIFICATION:
-				// this shouldn't exist
+				// this case should never happen
 			case PROP_DELETION:
 			case PROP_ADDITION:
 			case PROP_LINK:
@@ -534,7 +534,7 @@ public class PropositionServiceImpl extends RemoteServiceServlet implements
 				nodeChanges.changes.add(change);
 				break;
 			case PROP_MODIFICATION:
-				// this shouldn't exist
+				// this case should never happen
 			case ARG_DELETION:
 			case ARG_ADDITION:
 				// do nothing

@@ -144,8 +144,7 @@ public class VersionsMode extends ResizeComposite implements
 
 					@Override
 					public void call(NodeChangesMaps changesMaps) {
-						GWT.log("Got back these changes:");
-						GWT.log(changesMaps.toString());
+						//GWT.log("Got back these changes:\n" + changesMaps.toString() );
 
 						treeClone = new Tree();
 						treeClone.addCloseHandler(VersionsMode.this);
@@ -159,6 +158,7 @@ public class VersionsMode extends ResizeComposite implements
 						 */
 						editMode.buildTreeCloneOfOpenNodesWithIndexes(
 								treeClone);
+						
 						treePanel.add(treeClone);
 
 						SortedMultiMap<Date, ViewChange> timeMachineMap = prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(

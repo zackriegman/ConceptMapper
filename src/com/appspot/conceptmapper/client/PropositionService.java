@@ -64,16 +64,16 @@ public interface PropositionService extends RemoteService {
 		
 		public String toString(){
 			StringBuffer buffer = new StringBuffer();
-			buffer.append( "argChanges:::::::");
+			buffer.append( "\nargChanges:::::::");
 			for(Long id : argChanges.keySet()){
-				buffer.append( "\nid:");
+				buffer.append( "\n id:");
 				buffer.append( id);
 				buffer.append("; nodeChange:");
 				buffer.append(argChanges.get(id).toString());
 			}
 			buffer.append("\npropChanges::::::::");
 			for(Long id : propChanges.keySet()){
-				buffer.append( "\nid:");
+				buffer.append( "\n id:");
 				buffer.append( id);
 				buffer.append("; nodeChange:");
 				buffer.append(propChanges.get(id).toString());

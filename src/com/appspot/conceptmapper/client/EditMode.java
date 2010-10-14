@@ -75,6 +75,7 @@ public class EditMode extends ResizeComposite implements
 
 			@Override
 			public void call(AllPropsAndArgs allNodes) {
+				/*
 				GWT.log("Root Props:");
 				for (Long propID : allNodes.rootProps.keySet()) {
 					GWT.log("propID:" + propID + "; prop:"
@@ -90,6 +91,7 @@ public class EditMode extends ResizeComposite implements
 					GWT.log("argID:" + argID + "; arg:"
 							+ allNodes.nodes.args.get(argID).toString());
 				}
+				*/
 
 				for (Long propID : allNodes.rootProps.keySet()) {
 					Proposition proposition = allNodes.rootProps.get(propID);

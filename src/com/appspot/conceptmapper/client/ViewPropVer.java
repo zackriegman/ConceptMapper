@@ -20,9 +20,13 @@ public class ViewPropVer extends ViewProp {
 	public ViewPropVer(Proposition proposition) {
 		super(proposition);
 	}
+	
+	public ViewPropVer(){
+		this( new Long(-1) );
+	}
 
-	public ViewPropVer() {
-		this(new Proposition());
+	public ViewPropVer( Long id ) {
+		this(new Proposition(id));
 		textArea.setReadOnly(true);
 	}
 
@@ -47,7 +51,9 @@ public class ViewPropVer extends ViewProp {
 		 * this view is just empty; can set to false, because real value will be
 		 * set before it is used when the time machine goes back in time...
 		 */
-		ViewArgVer deletedView = new ViewArgVer(false);
+		Argument argument = new Argument();
+		argument.id = id;
+		ViewArgVer deletedView = new ViewArgVer(argument);
 		deletedViews.put(id, deletedView );
 		return deletedView;
 	}

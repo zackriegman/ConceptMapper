@@ -27,7 +27,7 @@ public abstract class ViewNode extends TreeItem {
 	public int indexOfChildWithID(Long id) {
 		for (int i = 0; i < getChildCount(); i++) {
 			ViewNode child = (ViewNode) getChild(i);
-			if (id == child.getNodeID()) {
+			if (id.equals(child.getNodeID())) {
 				return i;
 			}
 		}

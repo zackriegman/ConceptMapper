@@ -1,6 +1,7 @@
 package com.appspot.conceptmapper.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -104,5 +105,15 @@ public class ConceptMapper implements EntryPoint {
 			string = string + " ";
 		}
 		return string;
+	}
+	
+	public static void logNull(String string, Object... vars ){
+		string += ": ";
+		for( int i = 0; i < vars.length; i++ ){
+			if( vars[i] == null ){
+				string += i + " ";
+			}
+		}
+		GWT.log( string );
 	}
 }

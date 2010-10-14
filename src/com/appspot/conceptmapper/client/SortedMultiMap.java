@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import com.google.gwt.core.client.GWT;
+
 public class SortedMultiMap<K, V> {
 	private SortedMap<K, List<V>> map = new TreeMap<K, List<V>>();
 
@@ -55,22 +57,64 @@ public class SortedMultiMap<K, V> {
 	}
 
 	public List<V> firstValues() {
-		return extractFirstValues( map.values());
+		return extractFirstValues(map.values());
 	}
 
-	public List<V> firstValuesSublist(K start, boolean startInclusive, K end,
-			boolean endInclusive) {
-		return extractFirstValues(valuesSublist(start, startInclusive, end,
-				endInclusive));
-	}
-	
-	private List<V> extractFirstValues(Collection<List<V>> values ){
+	/*
+	 * public List<V> firstValuesSublist(K start, boolean startInclusive, K end,
+	 * boolean endInclusive) { return extractFirstValues(valuesSublist(start,
+	 * startInclusive, end, endInclusive)); }
+	 */
+
+	private List<V> extractFirstValues(Collection<List<V>> values) {
 		List<V> returnList = new ArrayList<V>();
 		for (List<V> list : values) {
 			returnList.add(list.get(0));
 		}
 		return returnList;
 	}
+
+	/*
+	public static void test() {
+		StringBuilder sb = new StringBuilder();
+		SortedMultiMap<Integer, String> map = new SortedMultiMap<Integer, String>();
+		map.put(2, "two");
+		map.put(4, "four");
+		map.put(6, "six");
+		map.put(8, "eight");
+		map.put(10, "ten");
+		map.put(4, "four");
+		map.put(4, "four");
+		map.put(4, "four");
+		map.put(4, "four");
+
+		sb.append("SortedMultiMap.test():\n");
+		sb.append("\nTEST 0");
+		List<List<String>> subList = map.valuesSublist(4, true, 8, true);
+		for (List<String> list : subList) {
+			for (String string : list) {
+				sb.append("\n" + string);
+			}
+		}
+
+		sb.append("\nTEST 1");
+		subList = map.valuesSublist(4, false, 8, false);
+		for (List<String> list : subList) {
+			for (String string : list) {
+				sb.append("\n" + string);
+			}
+		}
+
+		sb.append("\nTEST 2");
+		subList = map.valuesSublist(3, true, 7, true);
+		for (List<String> list : subList) {
+			for (String string : list) {
+				sb.append("\n" + string);
+			}
+		}
+		GWT.log(sb.toString());
+	}
+	*/
 
 	/*
 	 * I was using NavigableMap, and it was really elegant and simple and
@@ -81,6 +125,8 @@ public class SortedMultiMap<K, V> {
 	 */
 	public List<List<V>> valuesSublist(K start, boolean startInclusive, K end,
 			boolean endInclusive) {
+		//StringBuilder sb = new StringBuilder();
+		//sb.append("valuesSublist(): START");
 		Set<Map.Entry<K, List<V>>> entries = map.entrySet();
 		Iterator<Map.Entry<K, List<V>>> iterator = entries.iterator();
 		Comparator<? super K> comparator = map.comparator();
@@ -92,7 +138,20 @@ public class SortedMultiMap<K, V> {
 				@Override
 				public int compare(K arg0, K arg1) {
 
-					return ((Comparable) arg0).compareTo((Comparable) arg1);
+					/*
+					 * I'm confused about why I need a '-' here to make this
+					 * work... compareTo(Object o), is defined as: "Compares
+					 * this object with the specified object for order. Returns
+					 * a negative integer, zero, or a positive integer as this
+					 * object is less than, equal to, or greater than the
+					 * specified
+					 * object." And compare(Object o1, Object o2) is defined as: "
+					 * Compares its two arguments for order. Returns a negative
+					 * integer, zero, or a positive integer as the first
+					 * argument is less than, equal to, or greater than the
+					 * second."
+					 */
+					return -((Comparable) arg0).compareTo((Comparable) arg1);
 				}
 
 			};
@@ -100,51 +159,58 @@ public class SortedMultiMap<K, V> {
 
 		while (iterator.hasNext()) {
 			Map.Entry<K, List<V>> entry = iterator.next();
+			//sb.append("\n" + entry.toString() + ": ");
+			/*
+			 * see note above about sign... maybe this should be negative
+			 * instead of reversing my generic comparator... but I don't see why
+			 * either of them should be.  But if this class doesn't work
+			 * when an explicit comparator is given to the sorted list, try fiddling with
+			 * where the '-' is placed her, or above...
+			 */
 			int comparison = comparator.compare(start, entry.getKey());
 			if (comparison < 0) {
+				//sb.append("not added");
 				continue;
 			} else if (comparison == 0) {
 				if (startInclusive) {
 					returnList.add(entry.getValue());
+					//sb.append("added");
+				} else {
+					//sb.append("not added");
 				}
 				break;
 			} else if (comparison > 0) {
 				returnList.add(entry.getValue());
+				//sb.append("added");
 				break;
 			}
 		}
 
 		while (iterator.hasNext()) {
 			Map.Entry<K, List<V>> entry = iterator.next();
+			//sb.append("\n" + entry.toString() + ": ");
 			int comparison = comparator.compare(end, entry.getKey());
 			if (comparison < 0) {
 				returnList.add(entry.getValue());
+				//sb.append("added");
 				continue;
 			} else if (comparison == 0) {
 				if (endInclusive) {
 					returnList.add(entry.getValue());
+					//sb.append("added");
+				} else{
+					//sb.append("not added");
 				}
 				break;
 			} else if (comparison > 0) {
+				//sb.append("not added");
 				break;
 			}
+			//sb.append("end search");
 		}
 
+		//sb.append("\nvaluesSublist(): END");
+		//GWT.log(sb.toString());
 		return returnList;
 	}
-
-	/*
-	 * 
-	 * Anyway this simply returns a list of changes that fall within the range
-	 * date1, non-inclusive, to date2, inclusive.
-	 * 
-	 * private Collection<List<V>> valuesSubset(K key1, K key2) { List<List<V>>
-	 * list = new ArrayList<List<V>>(map.values()); map. int start = 0; int end
-	 * = 0; for (int i = 0; i < list.size(); i++) { if
-	 * (list.get(i).date.after(date1)) { start = i; break; } } for (int i =
-	 * start; i < list.size(); i++) { if (list.get(i).date.equals(date2)) { end
-	 * = i + 1; break; } else if (list.get(i).date.after(date2)) { end = i;
-	 * break; } } return list.subList(start, end); }
-	 */
-
 }
