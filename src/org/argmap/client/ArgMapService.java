@@ -15,7 +15,9 @@ public interface ArgMapService extends RemoteService {
 
 	public Long addProposition(Long parentArgID, int position, String content) throws Exception;
 
-	public void removeProposition(Long propID) throws Exception;
+	public void deleteProposition(Long propID) throws Exception;
+	
+	public void deleteArgument(Long argID) throws Exception;
 
 	public Argument addArgument(Long parentPropID, boolean pro)
 			throws Exception;
@@ -66,14 +68,14 @@ public interface ArgMapService extends RemoteService {
 			StringBuffer buffer = new StringBuffer();
 			buffer.append( "\nargChanges:::::::");
 			for(Long id : argChanges.keySet()){
-				buffer.append( "\n id:");
+				buffer.append( "\n arg.id:");
 				buffer.append( id);
 				buffer.append("; nodeChange:");
 				buffer.append(argChanges.get(id).toString());
 			}
 			buffer.append("\npropChanges::::::::");
 			for(Long id : propChanges.keySet()){
-				buffer.append( "\n id:");
+				buffer.append( "\n prop.id:");
 				buffer.append( id);
 				buffer.append("; nodeChange:");
 				buffer.append(propChanges.get(id).toString());

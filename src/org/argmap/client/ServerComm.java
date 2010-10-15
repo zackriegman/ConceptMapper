@@ -67,7 +67,7 @@ public class ServerComm {
 		}
 
 		@Override
-		public void onFailure(Throwable caught) {
+		public final void onFailure(Throwable caught) {
 			message("Error: " + caught.getMessage());
 			// GWT.log(caught.getMessage());
 			// caught.printStackTrace();
@@ -76,7 +76,7 @@ public class ServerComm {
 		}
 
 		@Override
-		public void onSuccess(T result) {
+		public final void onSuccess(T result) {
 			if (localCallback != null) {
 				localCallback.call(result);
 			}
@@ -95,7 +95,7 @@ public class ServerComm {
 		}
 
 		@Override
-		public void onFailure(Throwable caught) {
+		public final void onFailure(Throwable caught) {
 			dispatchCommand();
 			message("Error: " + caught.getMessage());
 			// GWT.log(caught.getMessage());
@@ -105,12 +105,16 @@ public class ServerComm {
 		}
 
 		@Override
-		public void onSuccess(T result) {
+		public final void onSuccess(T result) {
+			/* this must come before dispatchCommand() otherwise the client might send a 
+			 * request to add a proposition to an argument before the argument has been
+			 * assigned an id by the return call from the server...
+			 */
+			doOnSuccess(result);
 			dispatchCommand();
 			if (successMessage != null) {
 				message(successMessage);
 			}
-			doOnSuccess(result);
 		}
 
 		public abstract void doOnSuccess(T result);
@@ -185,13 +189,14 @@ public class ServerComm {
 	}
 
 	public static void addArgument(boolean pro, Proposition parentProp,
-			Argument newArg, Proposition newProp) {
+			Argument newArg) {
 		class CommandAdd extends ServerCallbackWithDispatch<Argument> implements
 				Command {
 			boolean pro;
 			Proposition parentProp;
 			Argument newArg;
-			Proposition newProp;
+
+			// Proposition newProp;
 
 			CommandAdd(String message) {
 				super(message);
@@ -204,7 +209,7 @@ public class ServerComm {
 
 			@Override
 			public void doOnSuccess(Argument result) {
-				newProp.id = result.propIDs.get(0);
+				// newProp.id = result.propIDs.get(0);
 				newArg.id = result.id;
 			}
 		}
@@ -213,11 +218,11 @@ public class ServerComm {
 		command.pro = pro;
 		command.parentProp = parentProp;
 		command.newArg = newArg;
-		command.newProp = newProp;
+		// command.newProp = newProp;
 		queueCommand(command);
 	}
 
-	public static void removeProposition(Proposition prop) {
+	public static void deleteProposition(Proposition prop) {
 		class CommandRemove extends ServerCallbackWithDispatch<Void> implements
 				Command {
 			Proposition prop;
@@ -228,7 +233,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				propositionService.removeProposition(prop.id, this);
+				propositionService.deleteProposition(prop.id, this);
 			}
 
 			@Override
@@ -238,6 +243,30 @@ public class ServerComm {
 		CommandRemove command = new CommandRemove(
 				"Server Reports Successful Proposition Delete");
 		command.prop = prop;
+		queueCommand(command);
+	}
+
+	public static void deleteArgument(Argument arg) {
+		class CommandRemove extends ServerCallbackWithDispatch<Void> implements
+				Command {
+			Argument arg;
+
+			public CommandRemove(String message) {
+				super(message);
+			}
+
+			@Override
+			public void execute() {
+				propositionService.deleteArgument(arg.id, this);
+			}
+
+			@Override
+			public void doOnSuccess(Void result) {
+			}
+		}
+		CommandRemove command = new CommandRemove(
+				"Server Reports Successful Argument Delete");
+		command.arg = arg;
 		queueCommand(command);
 	}
 

@@ -127,7 +127,7 @@ public class ArgMap implements EntryPoint {
 		 */
 		assert (logs.get(logName) == null);
 		StringBuilder log = new StringBuilder();
-		log.append(logName + ":");
+		log.append(logName + ": ");
 		logs.put(logName, log);
 
 	}

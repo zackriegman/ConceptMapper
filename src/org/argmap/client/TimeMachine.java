@@ -104,9 +104,9 @@ public class TimeMachine {
 	}
 
 	public void travelToDate(Date newDate) {
-		ArgMap.logStart("TM.TTD");
+		ArgMap.logStart("tm.ttd");
 		if (newDate.before(currentDate)) {
-			ArgMap.log("TM.TTD", "traveling back to date:" + newDate);
+			ArgMap.log("tm.ttd", "traveling back to date:" + newDate);
 			/*
 			 * here newDate is the date that the user clicked on, and is
 			 * highlighted. Therefore we do not want to process newDate, because
@@ -150,19 +150,19 @@ public class TimeMachine {
 			 * moveTreeForwards(changes.subMap(currentDate, false, newDate,
 			 * true).values());
 			 */
-			ArgMap.log("TM.TTD", "traveling forward to date:" + newDate);
+			ArgMap.log("tm.ttd", "traveling forward to date:" + newDate);
 			moveTreeForwards(changes.valuesSublist(currentDate, false, newDate,
 					true));
 		}
 		currentDate = newDate;
-		ArgMap.logEnd("TM.TTD");
+		ArgMap.logEnd("tm.ttd");
 	}
 
 	private void moveTreeForwards(Collection<List<ViewChange>> changesToProcess) {
-		ArgMap.logln("TM.TTD", "----re-doing changes----");
+		ArgMap.logln("tm.ttd", "----re-doing changes----");
 		for (List<ViewChange> changeList : changesToProcess) {
 			for (ViewChange vC : changeList) {
-				ArgMap.logln("TM.TTD", "processing: " + vC.change );
+				ArgMap.logln("tm.ttd", "processing: " + vC.change );
 				switch (vC.change.changeType) {
 				case PROP_DELETION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
@@ -265,10 +265,10 @@ public class TimeMachine {
 	 * move back and forth along the change list arbitrarily.
 	 */
 	private void moveTreeBackwards(Collection<List<ViewChange>> changesToProcess) {
-		ArgMap.logln("TM.TTD", "----undoing changes----");
+		ArgMap.logln("tm.ttd", "----undoing changes----");
 		for (List<ViewChange> changeList : changesToProcess) {
 			for (ViewChange vC : changeList) {
-				ArgMap.logln("TM.TTD", "processing: " + vC.change );
+				ArgMap.logln("tm.ttd", "processing: " + vC.change );
 				switch (vC.change.changeType) {
 				case PROP_DELETION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;

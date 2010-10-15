@@ -22,10 +22,10 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		KeyDownHandler, KeyUpHandler, FocusHandler, ChangeHandler {
 
 	private static ViewPropEdit lastPropositionWithFocus = null;
-	public static ViewPropFactory<ViewPropEdit>FACTORY = new ViewPropFactory<ViewPropEdit>() {
+	public static ViewPropFactory<ViewPropEdit> FACTORY = new ViewPropFactory<ViewPropEdit>() {
 		@Override
 		public ViewPropEdit create(Proposition prop) {
-			return new ViewPropEdit( prop );
+			return new ViewPropEdit(prop);
 		}
 	};
 
@@ -107,8 +107,9 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		newArgView.setState(true);
 		this.setState(true);
 		newPropView.textArea.setFocus(true);
-		ServerComm.addArgument(pro, this.proposition, newArgView.argument,
-				newPropView.proposition);
+		ServerComm.addArgument(pro, this.proposition, newArgView.argument);
+		ServerComm.addProposition(newPropView.proposition, newArgView.argument,
+				0);
 	}
 
 	@Override
@@ -129,11 +130,11 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				if (charCode == KeyCodes.KEY_BACKSPACE
 						&& textArea.getCursorPos() == 0
 						&& textArea.getSelectionLength() == 0) {
-					removePropositionAndParentArgument();
+					removePropositionAndMaybeParentArgument();
 					event.preventDefault();
 				} else if (charCode == KeyCodes.KEY_DELETE
 						&& textArea.getText().equals("")) {
-					removePropositionAndParentArgument();
+					removePropositionAndMaybeParentArgument();
 					event.preventDefault();
 				} else if (charCode == KeyCodes.KEY_DELETE
 						&& textArea.getCursorPos() == textArea.getText()
@@ -156,26 +157,27 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			textArea.setText(textArea.getText()
 					+ nextPropView.textArea.getText());
 			textArea.setCursorPos(cursorPosition);
-			ServerComm.removeProposition(nextPropView.proposition);
+			ServerComm.deleteProposition(nextPropView.proposition);
 			nextPropView.remove();
 		}
 
 	}
 
-	public void removePropositionAndParentArgument() {
+	public void removePropositionAndMaybeParentArgument() {
 		if (this.getChildCount() != 0) // cannot delete a proposition with
 			// children...must delete children first
 			return;
 
 		if (isTopLevel()) { // don't worry about setting the focus or dealing
 			// with subsequent or preceeding propositions or
-			// parent arguments if this proposition is top leve.
+			// parent arguments if this proposition is top level.
 			getTree().removeItem(this);
-			ServerComm.removeProposition(this.proposition);
+			ServerComm.deleteProposition(this.proposition);
 			deleted = true;
 			return;
 		}
 
+		boolean parentArgViewRemoved = false;
 		ViewArgEdit parentArgView = parentArgView();
 		int thisIndex = parentArgView.getChildIndex(this);
 
@@ -191,22 +193,23 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			/* if this is the only proposition of the argument */
 			if (parentArgView.getChildCount() == 1) {
 				/* set the focus on the parent argument's proposition */
-				((ViewPropEdit) parentArgView().getParentItem()).textArea
+				((ViewPropEdit) parentArgView.getParentItem()).textArea
 						.setFocus(true);
 
 				/*
 				 * remove the argument (which includes the proposition) from the
 				 * tree
 				 */
-				parentArgView().remove();
+				parentArgView.remove();
+				parentArgViewRemoved = true;
 			}
 			/* if there are other children */
 			else {
 				/* set focus on the next proposition */
-				((ViewPropEdit) parentArgView().getChild(thisIndex + 1)).textArea
+				((ViewPropEdit) parentArgView.getChild(thisIndex + 1)).textArea
 						.setFocus(true);
 				/* just remove this proposition */
-				parentArgView().removeItem(this);
+				parentArgView.removeItem(this);
 			}
 			/*
 			 * if this is not the parent argument's first proposition we want to
@@ -233,8 +236,19 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			remove();
 			prePropView.updatePropOnServerIfChanged();
 		}
-		ServerComm.removeProposition(this.proposition);
+		ServerComm.deleteProposition(this.proposition);
+
 		deleted = true;
+
+		/*
+		 * this must come after the ServerComm.removeProposition() otherwise it
+		 * will fail on the server because the argumentView will still have
+		 * children... (also the deleteProposition() probably wouldn't work out
+		 * to well...)
+		 */
+		if (parentArgViewRemoved == true) {
+			ServerComm.deleteArgument(parentArgView.argument);
+		}
 	}
 
 	public void addProposition() {
@@ -257,8 +271,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			ServerComm.addProposition(newPropView.proposition,
 					parentArgView().argument, treePosition);
 		} else {
-			parentArgView().insertChildViewAt(treePosition + 1,
-					newPropView);
+			parentArgView().insertChildViewAt(treePosition + 1, newPropView);
 
 			// then split the text between the current and new proposition
 			content = textArea.getText();
@@ -273,7 +286,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 			newPropView.textArea.setCursorPos(0);
 			newPropView.textArea.setFocus(true);
-			GWT.log("addProposition(): prop sent:" + newPropView.toString());
 
 			ServerComm.addProposition(newPropView.proposition,
 					parentArgView().argument, treePosition + 1);

@@ -17,7 +17,7 @@ public interface ArgMapServiceAsync {
 	/*void getAllProps(AsyncCallback<Proposition[]> callback);*/
 	
 
-	void removeProposition(Long propID, AsyncCallback<Void> callback);
+	void deleteProposition(Long propID, AsyncCallback<Void> callback);
 
 	void addArgument(Long parentPropID, boolean pro,
 			AsyncCallback<Argument> callback);
@@ -59,4 +59,6 @@ public interface ArgMapServiceAsync {
 
 	void getChanges(List<Long> propIDs, List<Long> argIDs,
 			AsyncCallback<NodeChangesMaps> callback);
+
+	void deleteArgument(Long argID, AsyncCallback<Void> callback);
 }

@@ -165,6 +165,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	public Long addProposition(Long parentArgID, int position, String content)
 			throws Exception {
 
+		//println("addProposition(): parentArgID:"+parentArgID+"; position:"+position+"; content:"+content);
 		Proposition newProposition = new Proposition();
 		newProposition.content = content;
 		Argument parentArg = null;
@@ -175,9 +176,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			newProposition.linkCount = 1;
 			ofy.put(newProposition);
 			parentArg.propIDs.add(position, newProposition.id);
-			// println("addProposition -- position:" + position +
-			// "; parentArgID:"
-			// + parentArgID + "; newProposition.id:" + newProposition.id);
+
 			ofy.put(parentArg);
 		} else {
 			newProposition.linkCount = 0;
@@ -189,10 +188,212 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		change.argID = parentArgID;
 		saveVersionInfo(change);
 
-		// getAllProps();
-
 		return newProposition.id;
 
+	}
+	
+	@Override
+	public void linkProposition(Long parentArgID, int position,
+			Long propositionID) throws Exception {
+		Argument argument = ofy.get(Argument.class, parentArgID);
+		Proposition proposition = ofy.get(Proposition.class, propositionID);
+	
+		argument.propIDs.add(position, propositionID);
+		ofy.put(argument);
+		proposition.linkCount++;
+		ofy.put(proposition);
+	
+		Change change = new Change(ChangeType.PROP_LINK);
+		change.argID = argument.id;
+		change.propID = proposition.id;
+		saveVersionInfo(change);
+	}
+
+	// TODO
+	@Override
+	public void deleteProposition(Long propID) throws Exception {
+		if (ofy.query(Argument.class).filter("aboutPropID", propID).countAll() != 0) {
+			throw new Exception(
+					"cannot delete proposition with arguments; delete arguments first");
+		}
+	
+		/* first get the stuff that we'll need for version control */
+		Change change = new Change(ChangeType.PROP_DELETION);
+		Proposition prop = ofy.get(Proposition.class, propID);
+		change.propID = prop.id;
+		change.content = prop.content;
+		change.propLinkCount = prop.linkCount;
+	
+		/* get all the arguments that use this proposition */
+		Query<Argument> query = ofy.query(Argument.class).filter("propIDs",
+				propID);
+	
+		/* only delete a proposition that is used in 1 or fewer arguments */
+		if (query.countAll() > 1) {
+			throw new Exception(
+					"cannot delete a proposition used by more than one argument; delink from other arguments before deleting");
+		}
+	
+		/* if the proposition is used in an argument */
+		else if (query.countAll() == 1) {
+			Argument argument = query.iterator().next();
+	
+			/* record the versioning information */
+			change.argID = argument.id;
+			change.argPropIndex = argument.propIDs.indexOf(propID);
+			// change.argPro = argument.pro;
+	
+			/* remove the proposition from the argument */
+			argument.propIDs.remove(propID);
+			ofy.put(argument);
+		}
+	
+		/* delete the proposition */
+		ofy.delete(Proposition.class, propID);
+	
+		/* save the version control information */
+		saveVersionInfo(change);
+	
+	}
+
+	/* the below functions are not yet used anywhere... consider deleting them */
+	
+	@Override
+	public void unlinkProposition(Long parentArgID, Long propositionID)
+			throws Exception {
+	
+		/* this will throw an exception if the argument doesn't exist */
+		Argument argument = ofy.get(Argument.class, parentArgID);
+		/* this will throw an exception if the prop doesn't exist */
+		Proposition proposition = ofy.get(Proposition.class, propositionID);
+	
+		int propIndex = argument.propIDs.indexOf(propositionID);
+		if (propIndex == -1) {
+			throw new Exception(
+					"cannot unlink proposition from argument:  proposition not part of argument");
+		}
+	
+		argument.propIDs.remove(propositionID);
+		ofy.put(argument);
+	
+		proposition.linkCount--;
+		ofy.put(proposition);
+	
+		Change change = new Change(ChangeType.PROP_UNLINK);
+		change.argID = parentArgID;
+		change.propID = proposition.id;
+		change.argPropIndex = propIndex;
+		saveVersionInfo(change);
+	}
+
+	@Override
+	public void updateProposition(Long propID, String content) throws Exception {
+		println("propID:" + propID + "; content:" + content);
+	
+		Change change = new Change(ChangeType.PROP_MODIFICATION);
+		Proposition prop = ofy.get(Proposition.class, propID);
+		if (prop.getContent() != null
+				&& prop.getContent().trim().equals(content.trim())) {
+			throw new Exception(
+					"Cannot update proposition content:  content not changed!");
+		}
+	
+		change.propID = prop.id;
+		change.content = prop.content;
+		// TODO is this line necessary for some reason?
+		// change.propTopLevel = prop.topLevel;
+	
+		/*
+		 * have to save the version info before the proposition value is changed
+		 * (or alternatively, create a new Proposition)
+		 */
+		saveVersionInfo(change);
+	
+		prop.setContent(content.trim());
+		prop.tokens = getTokensForIndexingOrQuery(content, 30);
+		ofy.put(prop);
+	
+	}
+	
+	public void deleteArgument( Long argID ) throws Exception {
+		Argument argument = ofy.get(Argument.class, argID );
+		if( ! argument.propIDs.isEmpty() ){
+			throw new Exception("Cannot delete an argumet that still has child propositions.  First remove child propositions.");
+		}
+		Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
+				"argIDs", argID);
+		Proposition parentProp = propQuery.iterator().next();
+
+		Change argDeletionChange = new Change(ChangeType.ARG_DELETION);
+		argDeletionChange.propID = parentProp.id;
+		argDeletionChange.argID = argument.id;
+		argDeletionChange.argPro = argument.pro;
+		argDeletionChange.argPropIndex = parentProp.argIDs.indexOf( argument.id );
+		/*
+		 * because we are only deleting arguments when they have no
+		 * propositions left, we don't have to save the argument's
+		 * proposition list
+		 */
+		parentProp.argIDs.remove(argument.id);
+		
+		ofy.put(parentProp);
+		ofy.delete(argument);
+		saveVersionInfo(argDeletionChange);
+	}
+
+	@Override
+	public Argument addArgument(Long parentPropID, boolean pro)
+			throws Exception {
+	
+		/*
+		 * trigger an exception if the ID is invalid to prevent inconsistent
+		 * datastore states
+		 */
+		Proposition parentProp = ofy.get(Proposition.class, parentPropID);
+	
+		//Proposition newProp = new Proposition();
+		//newProp.linkCount = 1;
+		//ofy.put(newProp);
+	
+		Argument newArg = new Argument();
+		//newArg.propIDs.add(0, newProp.id);
+	
+		newArg.pro = pro;
+		ofy.put(newArg);
+	
+		parentProp.argIDs.add(newArg.id);
+		ofy.put(parentProp);
+	
+		Change change = new Change(ChangeType.ARG_ADDITION);
+		change.argID = newArg.id;
+		change.propID = parentPropID;
+		saveVersionInfo(change);
+	
+		return newArg;
+	}
+
+	@Override
+	public void updateArgument(Long argID, String content) throws Exception {
+		Change change = new Change(ChangeType.ARG_MODIFICATION);
+		Argument arg = ofy.get(Argument.class, argID);
+		if (arg.title != null && arg.title.trim().equals(content.trim())) {
+			throw new Exception(
+					"Cannot update argument title:  title not changed!");
+		}
+	
+		change.argID = arg.id;
+		change.content = arg.title;
+		// TODO is this line necessary for some reason?
+		// change.propTopLevel = prop.topLevel;
+	
+		/*
+		 * have to save the version info before the proposition value is changed
+		 * (or alternatively, create a new Proposition)
+		 */
+		saveVersionInfo(change);
+	
+		arg.title = content.trim();
+		ofy.put(arg);
 	}
 
 	public void saveVersionInfo(Change change) {
@@ -205,187 +406,6 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		println("Change Logged -- " + change.toString());
 
 		ofy.put(change);
-	}
-
-	// TODO
-	@Override
-	public void removeProposition(Long propID) throws Exception {
-		if (ofy.query(Argument.class).filter("aboutPropID", propID).countAll() != 0) {
-			throw new Exception(
-					"cannot delete proposition with arguments; delete arguments first");
-		}
-
-		/* first get the stuff that we'll need for version control */
-		Change change = new Change(ChangeType.PROP_DELETION);
-		Proposition prop = ofy.get(Proposition.class, propID);
-		change.propID = prop.id;
-		change.content = prop.content;
-		change.propLinkCount = prop.linkCount;
-
-		/*
-		 * in case there is an argument deletion, define an argument change
-		 * variable
-		 */
-		Change argDeletionChange = null;
-
-		// print("Proposition ID to delete:" + propID);
-
-		/* get all the arguments that use this proposition */
-		Query<Argument> query = ofy.query(Argument.class).filter("propIDs",
-				propID);
-
-		/* only delete a proposition that is used in 1 or fewer arguments */
-		if (query.countAll() > 1) {
-			throw new Exception(
-					"cannot delete a proposition used by more than one argument; delink from other arguments before deleting");
-		}
-
-		/* if the proposition is used in an argument */
-		else if (query.countAll() == 1) {
-			Argument argument = query.iterator().next();
-
-			/* record the versioning information */
-			change.argID = argument.id;
-			change.argPropIndex = argument.propIDs.indexOf(propID);
-			// change.argPro = argument.pro;
-
-			/* remove the proposition from the argument */
-			argument.propIDs.remove(propID);
-
-			/*
-			 * if that's the only proposition, delete the arg and prepare
-			 * versioning info for the arg deletion as well. TODO: stop deleting
-			 * childless arguments...
-			 */
-			if (argument.propIDs.isEmpty()) {
-				Query<Proposition> propQuery = ofy.query(Proposition.class)
-						.filter("argIDs", argument.id);
-				Proposition parentProp = propQuery.iterator().next();
-
-				argDeletionChange = new Change(ChangeType.ARG_DELETION);
-				argDeletionChange.propID = parentProp.id;
-				argDeletionChange.argID = argument.id;
-				argDeletionChange.argPro = argument.pro;
-				argDeletionChange.argPropIndex = parentProp.argIDs.indexOf( argument.id );
-				/*
-				 * because we are only deleting arguments when they have no
-				 * propositions left, we don't have to save the argument's
-				 * proposition list
-				 */
-				parentProp.argIDs.remove(argument.id);
-				ofy.put(parentProp);
-				ofy.delete(argument);
-
-			}
-
-			/* otherwise save the updated arg */
-			else {
-				ofy.put(argument);
-			}
-		}
-
-		/* delete the proposition */
-		ofy.delete(Proposition.class, propID);
-
-		/* save the version control information */
-		saveVersionInfo(change);
-
-		/*
-		 * if an argument was deleted, also save the version control information
-		 * for that deletion
-		 */
-		if (argDeletionChange != null) {
-			saveVersionInfo(argDeletionChange);
-		}
-
-	}
-
-	@Override
-	public Argument addArgument(Long parentPropID, boolean pro)
-			throws Exception {
-
-		/*
-		 * trigger an exception if the ID is invalid to prevent inconsistent
-		 * datastore states
-		 */
-		Proposition parentProp = ofy.get(Proposition.class, parentPropID);
-
-		Proposition newProp = new Proposition();
-		newProp.linkCount = 1;
-		ofy.put(newProp);
-
-		Argument newArg = new Argument();
-		newArg.propIDs.add(0, newProp.id);
-
-		newArg.pro = pro;
-
-		ofy.put(newArg);
-
-		parentProp.argIDs.add(newArg.id);
-		ofy.put(parentProp);
-
-		Change change = new Change(ChangeType.ARG_ADDITION);
-		change.argID = newArg.id;
-		change.propID = parentPropID;
-		saveVersionInfo(change);
-
-		// newArg.props.add(newProp);
-
-		// getAllProps();
-		return newArg;
-	}
-
-	@Override
-	public void updateProposition(Long propID, String content) throws Exception {
-		println("propID:" + propID + "; content:" + content);
-
-		Change change = new Change(ChangeType.PROP_MODIFICATION);
-		Proposition prop = ofy.get(Proposition.class, propID);
-		if (prop.getContent() != null
-				&& prop.getContent().trim().equals(content.trim())) {
-			throw new Exception(
-					"Cannot update proposition content:  content not changed!");
-		}
-
-		change.propID = prop.id;
-		change.content = prop.content;
-		// TODO is this line necessary for some reason?
-		// change.propTopLevel = prop.topLevel;
-
-		/*
-		 * have to save the version info before the proposition value is changed
-		 * (or alternatively, create a new Proposition)
-		 */
-		saveVersionInfo(change);
-
-		prop.setContent(content.trim());
-		prop.tokens = getTokensForIndexingOrQuery(content, 30);
-		ofy.put(prop);
-
-	}
-
-	@Override
-	public void updateArgument(Long argID, String content) throws Exception {
-		Change change = new Change(ChangeType.ARG_MODIFICATION);
-		Argument arg = ofy.get(Argument.class, argID);
-		if (arg.title != null && arg.title.trim().equals(content.trim())) {
-			throw new Exception(
-					"Cannot update argument title:  title not changed!");
-		}
-
-		change.argID = arg.id;
-		change.content = arg.title;
-		// TODO is this line necessary for some reason?
-		// change.propTopLevel = prop.topLevel;
-
-		/*
-		 * have to save the version info before the proposition value is changed
-		 * (or alternatively, create a new Proposition)
-		 */
-		saveVersionInfo(change);
-
-		arg.title = content.trim();
-		ofy.put(arg);
 	}
 
 	@Override
@@ -766,80 +786,5 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		nodes.props.put(linkProp.id, linkProp);
 		recursiveGetProps(linkProp, nodes);
 		return nodes;
-	}
-
-	/* the below functions are not yet used anywhere... consider deleting them */
-
-	@Override
-	public void linkProposition(Long parentArgID, int position,
-			Long propositionID) throws Exception {
-		Argument argument = ofy.get(Argument.class, parentArgID);
-		Proposition proposition = ofy.get(Proposition.class, propositionID);
-
-		argument.propIDs.add(position, propositionID);
-		ofy.put(argument);
-		proposition.linkCount++;
-		ofy.put(proposition);
-
-		Change change = new Change(ChangeType.PROP_LINK);
-		change.argID = argument.id;
-		change.propID = proposition.id;
-		saveVersionInfo(change);
-	}
-
-	@Override
-	public void unlinkProposition(Long parentArgID, Long propositionID)
-			throws Exception {
-
-		/* this will throw an exception if the argument doesn't exist */
-		Argument argument = ofy.get(Argument.class, parentArgID);
-		/* this will throw an exception if the prop doesn't exist */
-		Proposition proposition = ofy.get(Proposition.class, propositionID);
-
-		int propIndex = argument.propIDs.indexOf(propositionID);
-		if (propIndex == -1) {
-			throw new Exception(
-					"cannot unlink proposition from argument:  proposition not part of argument");
-		}
-
-		argument.propIDs.remove(propositionID);
-
-		/* in case there is an argument deletion, create an argument change */
-		Change argDeletionChange = null;
-
-		if (argument.propIDs.isEmpty()) {
-			Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
-					"argIDs", argument.id);
-			Proposition parentProp = propQuery.iterator().next();
-
-			argDeletionChange = new Change(ChangeType.ARG_DELETION);
-			argDeletionChange.propID = parentProp.id;
-			argDeletionChange.argID = argument.id;
-			argDeletionChange.argPro = argument.pro;
-			argDeletionChange.argPropIndex = parentProp.argIDs.indexOf( argument.id );
-			/*
-			 * because we are only deleting arguments when they have no
-			 * propositions left, we don't have to save the argument's
-			 * proposition list
-			 */
-			parentProp.argIDs.remove(argument.id);
-			ofy.put(parentProp);
-			ofy.delete(argument);
-		} else {
-			ofy.put(argument);
-		}
-
-		proposition.linkCount--;
-		ofy.put(proposition);
-
-		Change change = new Change(ChangeType.PROP_UNLINK);
-		change.argID = parentArgID;
-		change.propID = proposition.id;
-		change.argPropIndex = propIndex;
-		saveVersionInfo(change);
-
-		if (argDeletionChange != null) {
-			saveVersionInfo(argDeletionChange);
-		}
 	}
 }

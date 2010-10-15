@@ -2,8 +2,12 @@ package org.argmap.client;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 
-public class ViewArgEdit extends ViewArg implements ChangeHandler {
+public class ViewArgEdit extends ViewArg implements ChangeHandler,
+		KeyDownHandler {
 	public static ViewArgFactory<ViewArgEdit> FACTORY = new ViewArgFactory<ViewArgEdit>() {
 		@Override
 		public ViewArgEdit create(Argument arg) {
@@ -23,6 +27,7 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler {
 
 	public void initialize() {
 		textBox.addChangeHandler(this);
+		textBox.addKeyDownHandler(this);
 	}
 
 	@Override
@@ -34,6 +39,31 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler {
 		if (!trimmedArgumentTitle.equals(trimmedTextBoxContent)) {
 			argument.title = trimmedTextBoxContent;
 			ServerComm.updateArgument(argument);
+		}
+	}
+	
+	public void haveFocus() {
+		textBox.setFocus(true);
+	}
+
+	@Override
+	public void onKeyDown(KeyDownEvent event) {
+		int charCode = event.getNativeKeyCode();
+		Object source = event.getSource();
+		if (source == textBox) {
+			if ((charCode == KeyCodes.KEY_BACKSPACE || charCode == KeyCodes.KEY_DELETE)
+					&& textBox.getText().equals("")) {
+				int indexOfThis = getParentItem().getChildIndex( this );
+				if(indexOfThis == 0){
+					((ViewPropEdit)getParentItem()).haveFocus();
+				} else {
+					((ViewArgEdit)getParentItem().getChild( indexOfThis - 1 )).haveFocus();
+				}
+				remove();
+				ServerComm.deleteArgument(argument);
+
+				event.preventDefault();
+			}
 		}
 	}
 }
