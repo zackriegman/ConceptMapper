@@ -7,17 +7,17 @@
   
       <servlet>
     <servlet-name>PropositionServiceImpl</servlet-name>
-    <servlet-class>com.appspot.conceptmapper.server.PropositionServiceImpl</servlet-class>
+    <servlet-class>org.argmap.server.PropositionServiceImpl</servlet-class>
   </servlet>
 
   <servlet-mapping>
     <servlet-name>PropositionServiceImpl</servlet-name>
-    <url-pattern>/conceptmapper/propServ</url-pattern>
+    <url-pattern>/argmap/propServ</url-pattern>
   </servlet-mapping>
   
   <!-- Default page to serve -->
   <welcome-file-list>
-    <welcome-file>ConceptMapper.html</welcome-file>
+    <welcome-file>ArgMap.html</welcome-file>
   </welcome-file-list>
 
 </web-app>
