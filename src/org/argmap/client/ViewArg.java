@@ -4,7 +4,6 @@ import java.util.Map;
 
 import org.argmap.client.ViewProp.ViewPropFactory;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
@@ -78,13 +77,15 @@ public class ViewArg extends ViewNode {
 		return (ViewProp) getChild(index);
 	}
 
+	/*
 	public void printArgRecursive(int level) {
 		GWT.log(ArgMap.spaces(level * 2) + getText() + "; id:"
 				+ argument.id);
 		for (int j = 0; j < getChildCount(); j++) {
-			getPropView(j).printPropRecursive(level + 1);
+			getPropView(j).printNodeRecursive(level + 1);
 		}
 	}
+	*/
 
 	/* DELETE ME: replaced by same method in ViewNode 
 	public void insertPropositionViewAt(int index, ViewProp propView) {

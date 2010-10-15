@@ -5,13 +5,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.SortedMap;
 
-import org.argmap.client.PropositionService.AllPropsAndArgs;
-import org.argmap.client.PropositionService.NodeChangesMaps;
-import org.argmap.client.PropositionService.NodesWithHistory;
+import org.argmap.client.ArgMapService.AllPropsAndArgs;
+import org.argmap.client.ArgMapService.NodeChangesMaps;
+import org.argmap.client.ArgMapService.NodesWithHistory;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-public interface PropositionServiceAsync {
+public interface ArgMapServiceAsync {
 	
 	
 	/*void getAllProps(AsyncCallback<Proposition[]> callback);*/

@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.Queue;
 
-import org.argmap.client.PropositionService.AllPropsAndArgs;
-import org.argmap.client.PropositionService.NodeChangesMaps;
-import org.argmap.client.PropositionService.NodesWithHistory;
+import org.argmap.client.ArgMapService.AllPropsAndArgs;
+import org.argmap.client.ArgMapService.NodeChangesMaps;
+import org.argmap.client.ArgMapService.NodesWithHistory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -21,8 +21,8 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  * queuing the remote calls.
  */
 public class ServerComm {
-	private static PropositionServiceAsync propositionService = GWT
-			.create(PropositionService.class);
+	private static ArgMapServiceAsync propositionService = GWT
+			.create(ArgMapService.class);
 
 	private static Queue<Command> commandQueue = new LinkedList<Command>();
 	private static boolean callInProgress = false;

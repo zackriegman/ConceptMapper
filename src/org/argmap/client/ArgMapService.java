@@ -10,8 +10,8 @@ import java.util.SortedMap;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
-@RemoteServiceRelativePath("propServ")
-public interface PropositionService extends RemoteService {
+@RemoteServiceRelativePath("argServ")
+public interface ArgMapService extends RemoteService {
 
 	public Long addProposition(Long parentArgID, int position, String content) throws Exception;
 

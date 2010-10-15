@@ -23,7 +23,7 @@ import org.argmap.client.Change;
 import org.argmap.client.NodeChanges;
 import org.argmap.client.Nodes;
 import org.argmap.client.Proposition;
-import org.argmap.client.PropositionService;
+import org.argmap.client.ArgMapService;
 import org.argmap.client.Change.ChangeType;
 
 import com.google.appengine.api.datastore.EntityNotFoundException;
@@ -32,8 +32,8 @@ import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.Query;
 
-public class PropositionServiceImpl extends RemoteServiceServlet implements
-		PropositionService {
+public class ArgMapServiceImpl extends RemoteServiceServlet implements
+		ArgMapService {
 
 	static {
 		ObjectifyService.register(Proposition.class);

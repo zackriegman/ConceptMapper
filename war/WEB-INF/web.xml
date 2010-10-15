@@ -6,13 +6,13 @@
 <web-app>
   
       <servlet>
-    <servlet-name>PropositionServiceImpl</servlet-name>
-    <servlet-class>org.argmap.server.PropositionServiceImpl</servlet-class>
+    <servlet-name>ArgMapServiceImpl</servlet-name>
+    <servlet-class>org.argmap.server.ArgMapServiceImpl</servlet-class>
   </servlet>
 
   <servlet-mapping>
-    <servlet-name>PropositionServiceImpl</servlet-name>
-    <url-pattern>/argmap/propServ</url-pattern>
+    <servlet-name>ArgMapServiceImpl</servlet-name>
+    <url-pattern>/argmap/argServ</url-pattern>
   </servlet-mapping>
   
   <!-- Default page to serve -->

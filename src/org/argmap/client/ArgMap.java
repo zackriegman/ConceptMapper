@@ -112,28 +112,41 @@ public class ArgMap implements EntryPoint {
 		GWT.log(string);
 	}
 
+	/*
+	 * at some point I might want to modify this to accept a boolean indicating
+	 * whether to print the log or not so that I can easily flip the particular
+	 * log on or off depending on whether I need it...
+	 */
 	public static void logStart(String logName) {
+		if (logName == null)
+			return;
 		/*
 		 * asserts that logStart is only called once per logName before calling
-		 * logEnd otherwise log messages could be lost... or mixed with irrelevant
-		 * logs
-		 */ 
-		assert (logs.get( logName ) == null);
+		 * logEnd otherwise log messages could be lost... or mixed with
+		 * irrelevant logs
+		 */
+		assert (logs.get(logName) == null);
 		StringBuilder log = new StringBuilder();
 		log.append(logName + ":");
-		logs.put( logName, log );
-		
+		logs.put(logName, log);
+
 	}
 
-	public static void logEnd( String logName ) {
+	public static void logEnd(String logName) {
+		if (logName == null)
+			return;
 		GWT.log(logs.remove(logName).toString());
 	}
 
 	public static void log(String logName, String string) {
+		if (logName == null)
+			return;
 		logs.get(logName).append(string);
 	}
-	
+
 	public static void logln(String logName, String string) {
-		log( logName, "\n" + string);
+		if (logName == null)
+			return;
+		log(logName, "\n" + string);
 	}
 }

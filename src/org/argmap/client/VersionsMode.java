@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
-import org.argmap.client.PropositionService.NodeChangesMaps;
-import org.argmap.client.PropositionService.NodesWithHistory;
+import org.argmap.client.ArgMapService.NodeChangesMaps;
+import org.argmap.client.ArgMapService.NodesWithHistory;
 import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.core.client.GWT;
@@ -21,6 +21,7 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ListBox;
@@ -39,7 +40,7 @@ public class VersionsMode extends ResizeComposite implements
 	private TimeMachine mainTM;
 	SortedMultiMap<Date, ViewChange> timeMachineMap;
 	private FlowPanel treePanel = new FlowPanel();
-	private final int LIST_WIDTH = 40;
+	private final int LIST_WIDTH = 20;
 
 	// SplitLayoutPanel mainPanel;
 
@@ -253,8 +254,9 @@ public class VersionsMode extends ResizeComposite implements
 			currentDate = null;
 		}
 		versionList.clear();
-		StringBuilder log = new StringBuilder();
-		log.append( "loadVersionListFromTimeMachine()");
+		ArgMap.logStart("vm.lvlftm");
+		DateTimeFormat dateFormat = DateTimeFormat.getFormat("yyyy MMM d kk:mm:ss:SSS");
+		
 		List<Change> reverseList = mainTM.getChangeList();
 		Collections.reverse(reverseList);
 		int i = 0;
@@ -262,15 +264,15 @@ public class VersionsMode extends ResizeComposite implements
 		for (Change change : reverseList) {
 			String timeString = "" + change.date.getTime();
 			if (timeString.equals(currentDate)) {
-				log.append("###########   Selecting Item:" + i + "; timeString:" + timeString + "; currentDate:" + currentDate);
+				ArgMap.log("vm.lvlftm", "###########   Selecting Item:" + i + "; timeString:" + timeString + "; currentDate:" + currentDate);
 				newSelectionIndex = i;
 			}
-			versionList.addItem("" + change.date + " [" + change.changeType
+			versionList.addItem("" + dateFormat.format(change.date) + " [" + change.changeType
 					+ "]", "" + timeString);
-			log.append("\n" + change);
+			ArgMap.log("vm.lvlftm", "\n" + change);
 			i++;
 		}
-		GWT.log( log.toString() );
+		ArgMap.logEnd("vm.lvlftm");
 		versionList.setSelectedIndex(newSelectionIndex);
 
 		listBoxChangeHandlerRegistration = versionList
@@ -389,7 +391,7 @@ public class VersionsMode extends ResizeComposite implements
 	public void mergeLoadedProposition(Proposition proposition,
 			NodesWithHistory propTreeWithHistory) {
 
-		GWT.log("mergeLoadedPropositon: start");
+		ArgMap.logStart("vm.mlp");
 		Map<Long, ViewPropVer> propViewIndex = new HashMap<Long, ViewPropVer>();
 		Map<Long, ViewArgVer> argViewIndex = new HashMap<Long, ViewArgVer>();
 
@@ -397,8 +399,8 @@ public class VersionsMode extends ResizeComposite implements
 				proposition, propTreeWithHistory.nodes, propViewIndex,
 				argViewIndex, ViewPropVer.FACTORY, ViewArgVer.FACTORY);
 
-		GWT.log("propTree before timeTravel:");
-		propGraft.printPropRecursive(0);
+		ArgMap.log("vm.mlp", "propTree before timeTravel:");
+		propGraft.logNodeRecursive(0, "vm.mlp");
 		TimeTraveler timeTraveler = new TimeTraveler(
 				propTreeWithHistory.changes, propViewIndex, argViewIndex, null);
 
@@ -409,29 +411,29 @@ public class VersionsMode extends ResizeComposite implements
 		 */
 
 		timeTraveler.travelToDate(mainTT.getCurrentDate());
-		GWT.log("propTree after timeTravel:");
-		propGraft.printPropRecursive(0);
+		ArgMap.log("vm.mlp", "propTree after timeTravel:");
+		propGraft.logNodeRecursive(0, "vm.mlp");
 
 		ViewPropVer view = mainTT.absorb(timeTraveler, propGraft);
-		GWT.log("old propview after grafting:");
-		view.printPropRecursive(0);
-		GWT.log("----------------");
+		ArgMap.log("vm.mlp", "old propview after grafting:");
+		view.logNodeRecursive(0, "vm.mlp");
+		ArgMap.log("vm.mlp", "----------------");
 
 		loadVersionListFromTimeMachine();
 
 		// GWT.log("Prop tree transplant");
 		// printPropRecursive(propTree, 0);
-		GWT.log("changes");
+		ArgMap.log("vm.mlp", "changes");
 		for (Change change : propTreeWithHistory.changes.values()) {
 			GWT.log(change.toString());
 		}
-		GWT.log("mergeLoadedPropositon: start");
+		ArgMap.log("vm.mlp", "mergeLoadedPropositon: start");
 	}
 
 	public void mergeLoadedArgument(Argument argument,
 			NodesWithHistory argTreeWithHistory) {
 
-		GWT.log("mergeLoadedArgument: start");
+		ArgMap.logStart("vm.mla");
 		Map<Long, ViewPropVer> propViewIndex = new HashMap<Long, ViewPropVer>();
 		Map<Long, ViewArgVer> argViewIndex = new HashMap<Long, ViewArgVer>();
 
@@ -439,8 +441,8 @@ public class VersionsMode extends ResizeComposite implements
 				argTreeWithHistory.nodes, propViewIndex, argViewIndex,
 				ViewPropVer.FACTORY, ViewArgVer.FACTORY);
 
-		GWT.log("propTree before timeTravel:");
-		argGraft.printArgRecursive(0);
+		ArgMap.log( "vm.mla", "propTree before timeTravel:");
+		argGraft.logNodeRecursive(0, "vm.mla" );
 		TimeTraveler timeTraveler = new TimeTraveler(
 				argTreeWithHistory.changes, propViewIndex, argViewIndex, null);
 
@@ -451,23 +453,23 @@ public class VersionsMode extends ResizeComposite implements
 		 */
 
 		timeTraveler.travelToDate(mainTT.getCurrentDate());
-		GWT.log("argTree after timeTravel:");
-		argGraft.printArgRecursive(0);
+		ArgMap.log( "vm.mla","argTree after timeTravel:");
+		argGraft.logNodeRecursive(0, "vm.mla");
 
 		ViewArgVer view = mainTT.absorb(timeTraveler, argGraft);
-		GWT.log("old propview after grafting:");
-		view.printArgRecursive(0);
-		GWT.log("----------------");
+		ArgMap.log( "vm.mla","old propview after grafting:");
+		view.logNodeRecursive(0, "vm.mla");
+		ArgMap.log( "vm.mla","----------------");
 
 		loadVersionListFromTimeMachine();
 
 		// GWT.log("Prop tree transplant");
 		// printPropRecursive(propTree, 0);
-		GWT.log("changes");
+		ArgMap.log( "vm.mla","changes");
 		for (Change change : argTreeWithHistory.changes.values()) {
 			GWT.log(change.toString());
 		}
-		GWT.log("mergeLoadedPropositon: start");
+		ArgMap.logEnd( "vm.mla");
 	}
 
 	@Override

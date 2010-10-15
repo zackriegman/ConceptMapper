@@ -33,6 +33,10 @@ public abstract class ViewNode extends TreeItem {
 		}
 		return -1;
 	}
+	
+	public ViewNode getChildView(int index ){
+		return (ViewNode)getChild(index);
+	}
 
 	public void insertChildViewAt(int index, ViewNode viewNode) {
 		/*
@@ -58,6 +62,14 @@ public abstract class ViewNode extends TreeItem {
 		while (!removeQueue.isEmpty()) {
 			TreeItem toRemove = removeQueue.poll();
 			addItem(toRemove);
+		}
+	}
+	
+	public void logNodeRecursive(int level, String logName ) {
+		ArgMap.logln(logName, ArgMap.spaces(level * 2) + toString() + "; hashCode:" + hashCode()  );
+		for (int i = 0; i < getChildCount(); i++) {
+			ViewNode node = getChildView(i);
+			node.logNodeRecursive(level + 1, logName);
 		}
 	}
 }

@@ -2,7 +2,7 @@ package org.argmap.client;
 
 import java.util.List;
 
-import org.argmap.client.PropositionService.AllPropsAndArgs;
+import org.argmap.client.ArgMapService.AllPropsAndArgs;
 import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -91,16 +91,18 @@ public class EditMode extends ResizeComposite implements
 							+ allNodes.nodes.args.get(argID).toString());
 				}
 				*/
-
+				ArgMap.logStart("em.em.cb");
+				ArgMap.log("em.em.cb", "Prop Tree From Server");
 				for (Long propID : allNodes.rootProps.keySet()) {
 					Proposition proposition = allNodes.rootProps.get(propID);
 					ViewProp propView = ViewProp.recursiveBuildPropositionView(
 							proposition, allNodes.nodes, null, null,
 							ViewPropEdit.FACTORY, ViewArgEdit.FACTORY);
 					tree.addItem(propView);
-					propView.printPropRecursive(0);
+					propView.logNodeRecursive(0, "em.em.cb");
 				}
 				openTree();
+				ArgMap.logEnd("em.em.cb");
 			}
 		});
 
@@ -109,7 +111,6 @@ public class EditMode extends ResizeComposite implements
 		mainSplit.addEast(sideSplit, 400);
 		mainSplit.add(new ScrollPanel(mainPanel));
 		initWidget(mainSplit);
-
 	}
 
 	@Override
@@ -216,12 +217,6 @@ public class EditMode extends ResizeComposite implements
 			}
 
 			super.onBrowserEvent(event);
-		}
-
-		public void printTree() {
-			for (int i = 0; i < getItemCount(); i++) {
-				((ViewPropEdit) getItem(i)).printPropRecursive(0);
-			}
 		}
 	}
 
