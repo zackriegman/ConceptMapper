@@ -293,7 +293,13 @@ public class VersionsMode extends ResizeComposite implements
 		ArgMap.logStart("vm.oo");
 		ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
 		ArgMap.log("vm.oo", "Adding View Changes: ");
-		recursiveAddViewChanges(viewNodeVer);
+		SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
+		recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oo");
+		
+		TimeMachine timeMachine = new TimeMachine( subTreeChanges, null, viewNodeVer.getClosedDate());
+		timeMachine.travelToDate(mainTM.getCurrentDate());
+		mainTM.absorb( timeMachine );
+		timeMachineMap.putAll( subTreeChanges );
 		loadVersionListFromTimeMachine();
 		ArgMap.logEnd("vm.oo");
 	}
@@ -302,36 +308,36 @@ public class VersionsMode extends ResizeComposite implements
 	public void onClose(CloseEvent<TreeItem> event) {
 		ArgMap.logStart("vm.oc");
 		ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
+		viewNodeVer.setClosedDate(mainTM.getCurrentDate());
 		ArgMap.log("vm.oc", "Removing View Changes: ");
-		recursiveRemoveViewChanges(viewNodeVer);
+		SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
+		recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oc");
+		timeMachineMap.removeAll( subTreeChanges );
 		loadVersionListFromTimeMachine();
 		ArgMap.logEnd("vm.oc");
 	}
 
-	public void recursiveRemoveViewChanges(ViewNodeVer viewNodeVer) {
+	public void recursiveGetViewChanges(ViewNodeVer viewNodeVer, SortedMultiMap<Date, ViewChange> subTreeChanges, boolean skipStateCheck, String logName ) {
 		for (ViewChange viewChange : viewNodeVer.getViewChangeList()) {
-			ArgMap.logln("vm.oc", "nodeID: " + viewNodeVer.getNodeID()
+			ArgMap.logln(logName, "nodeID: " + viewNodeVer.getNodeID()
 					+ " viewChange: " + viewChange);
-			timeMachineMap.remove(viewChange.change.date, viewChange);
+			subTreeChanges.put(viewChange.change.date, viewChange);
 		}
-		ArgMap.logln("vm.oc", "Node: " + viewNodeVer.getNodeID() + "; State: "
+		ArgMap.logln(logName, "Node: " + viewNodeVer.getNodeID() + "; State: "
 				+ viewNodeVer.getState());
-		/*
-		 * TODO this doesn't work because this function is called after the
-		 * first node's state is changed!!!!!!!!!!!!!!!!!!!!!! so it never
-		 * gets past the first node
-		 */
-		if (viewNodeVer.getState()) {
+
+		if (viewNodeVer.getState() || skipStateCheck ) {
 			for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
-				recursiveRemoveViewChanges(viewNodeVer.getChildViewNodeVer(i));
+				recursiveGetViewChanges(viewNodeVer.getChildViewNodeVer(i), subTreeChanges, false, logName);
 			}
 			for (ViewNodeVer deletedView : viewNodeVer.getDeletedViewList()) {
-				recursiveRemoveViewChanges(deletedView);
+				recursiveGetViewChanges(deletedView, subTreeChanges, false, logName);
 			}
 		}
 	}
 
-	public void recursiveAddViewChanges(ViewNodeVer viewNodeVer) {
+	/*
+	public void recursiveAddViewChanges(ViewNodeVer viewNodeVer, boolean skipStateCheck) {
 		for (ViewChange viewChange : viewNodeVer.getViewChangeList()) {
 			ArgMap.logln("vm.oo", "nodeID: " + viewNodeVer.getNodeID()
 					+ " viewChange: " + viewChange);
@@ -339,15 +345,16 @@ public class VersionsMode extends ResizeComposite implements
 		}
 		ArgMap.logln("vm.oo", "Node: " + viewNodeVer.getNodeID() + "; State: "
 				+ viewNodeVer.getState());
-		if (viewNodeVer.getState()) {
+		if (viewNodeVer.getState() || skipStateCheck) {
 			for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
-				recursiveAddViewChanges(viewNodeVer.getChildViewNodeVer(i));
+				recursiveAddViewChanges(viewNodeVer.getChildViewNodeVer(i), false);
 			}
 			for (ViewNodeVer deletedView : viewNodeVer.getDeletedViewList()) {
-				recursiveAddViewChanges(deletedView);
+				recursiveAddViewChanges(deletedView, false);
 			}
 		}
 	}
+	*/
 
 	public void onClose_DELETE_ME(CloseEvent<TreeItem> event) {
 		TreeItem treeItem = event.getTarget();

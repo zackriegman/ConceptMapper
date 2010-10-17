@@ -27,10 +27,30 @@ public class SortedMultiMap<K, V> {
 		list.add(value);
 	}
 
+	
 	public void putAll(SortedMultiMap<K, V> otherMap) {
-		Set<Map.Entry<K, List<V>>> entries = map.entrySet();
+		Set<Map.Entry<K, List<V>>> entries = otherMap.map.entrySet();
 		for (Map.Entry<K, List<V>> entry : entries) {
 			putList(entry.getKey(), entry.getValue());
+		}
+	}
+	
+	
+	public void removeAll( SortedMultiMap<K, V> otherMap ){
+		Set<Map.Entry<K, List<V>>> entries = otherMap.map.entrySet();
+		for (Map.Entry<K, List<V>> entry : entries) {
+			removeList(entry.getKey(), entry.getValue());
+		}
+	}
+	
+	private void removeList(K key, List<V> values) {
+		List<V> list = map.get(key);
+		if( list == null ){
+			throw new RuntimeException("cannot remove value(s) from map because map does not contain the value(s) for key \""+key+"\"");
+		}
+		list.removeAll(values);
+		if( list.isEmpty() ){
+			map.remove(key);
 		}
 	}
 

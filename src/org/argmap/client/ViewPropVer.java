@@ -2,6 +2,7 @@ package org.argmap.client;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,15 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 	};
 
 	public Map<Long, ViewNodeVer> deletedViews = new HashMap<Long, ViewNodeVer>();
+	public Date closedDate;
+	
+	public Date getClosedDate(){
+		return closedDate;
+	}
+	
+	public void setClosedDate( Date closedDate ){
+		this.closedDate = closedDate;
+	}
 
 	public ViewPropVer(Proposition proposition) {
 		super(proposition);

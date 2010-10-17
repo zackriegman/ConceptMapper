@@ -15,9 +15,10 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
+//TODO: when currently selected date disapears becuase a node is close, need to select an appropriate replacement
+//TODO: need to see modifications of the content of closed (but visible) nodes
 //TODO: handle open and close nodes in VersionsMode:  when opening, need to zoom node to same time as rest of tree
 //TODO: undeleting links does not restory their yellow color
-//TODO: unlinking last prop in an arg deletes the arg on the server but not on the client, resulting in strange behavor
 //TODO: weed changes list when a node is closed, expand when a node is opened (maybe to implement this, change how nodes are stored... maybe with a list of all their changes... which type of changes does a node need to know about...
 //TODO: lazy load closed items in versions mode
 //TODO: prevent circular linking from crashing program...

@@ -22,56 +22,60 @@ public class TimeMachine {
 	 * various maps.
 	 */
 	private SortedMultiMap<Date, ViewChange> changes;
-	private Map<Long, String> mapPropContent;
-	private Map<Long, String> mapArgTitle;
-	private Map<Long, Integer> mapPropIndex;
-	private Map<Long, Integer> mapArgIndex;
+	private Map<ViewChange, String> mapPropContent;
+	private Map<ViewChange, String> mapArgTitle;
+	private Map<ViewChange, Integer> mapPropIndex;
+	private Map<ViewChange, Integer> mapArgIndex;
+
+	public void absorb(TimeMachine timeTraveler) {
+		mapPropContent.putAll(timeTraveler.mapPropContent);
+		mapArgTitle.putAll(timeTraveler.mapArgTitle);
+		mapPropIndex.putAll(timeTraveler.mapPropIndex);
+		mapArgIndex.putAll(timeTraveler.mapArgIndex);
+	}
 
 	/*
-	public ViewPropVer absorb(TimeMachine timeTraveler, ViewPropVer propGraft) {
-		
-		Long propID = propGraft.proposition.id;
-		ViewPropVer oldPropView = propViewIndex.get(propID);
-		oldPropView.getChild(0).remove();
-		while (propGraft.getChildCount() > 0) {
-			GWT.log("transplanted argument");
-			TreeItem transplant = propGraft.getChild(0);
-			transplant.remove();
-			oldPropView.addItem(transplant);
-		}
-		timeTraveler.propViewIndex.remove(propID);
+	 * public ViewPropVer absorb(TimeMachine timeTraveler, ViewPropVer
+	 * propGraft) {
+	 * 
+	 * Long propID = propGraft.proposition.id; ViewPropVer oldPropView =
+	 * propViewIndex.get(propID); oldPropView.getChild(0).remove(); while
+	 * (propGraft.getChildCount() > 0) { GWT.log("transplanted argument");
+	 * TreeItem transplant = propGraft.getChild(0); transplant.remove();
+	 * oldPropView.addItem(transplant); }
+	 * timeTraveler.propViewIndex.remove(propID);
+	 * 
+	 * changes.putAll(timeTraveler.changes);
+	 * mapPropContent.putAll(timeTraveler.mapPropContent);
+	 * mapArgTitle.putAll(timeTraveler.mapArgTitle);
+	 * mapPropIndex.putAll(timeTraveler.mapPropIndex);
+	 * mapArgIndex.putAll(timeTraveler.mapArgIndex);
+	 * 
+	 * return oldPropView; }
+	 * 
+	 * public ViewArgVer absorb(TimeMachine timeTraveler, ViewArgVer argGraft) {
+	 * 
+	 * Long argID = argGraft.argument.id; ViewArgVer oldArgView =
+	 * argViewIndex.get(argID); oldArgView.getChild(0).remove(); while
+	 * (argGraft.getChildCount() > 0) { GWT.log("transplanted proposition");
+	 * TreeItem transplant = argGraft.getChild(0); transplant.remove();
+	 * oldArgView.addItem(transplant); }
+	 * timeTraveler.argViewIndex.remove(argID);
+	 * 
+	 * changes.putAll(timeTraveler.changes);
+	 * mapPropContent.putAll(timeTraveler.mapPropContent);
+	 * mapArgTitle.putAll(timeTraveler.mapArgTitle);
+	 * mapPropIndex.putAll(timeTraveler.mapPropIndex);
+	 * mapArgIndex.putAll(timeTraveler.mapArgIndex);
+	 * 
+	 * return oldArgView; }
+	 */
 
-		changes.putAll(timeTraveler.changes);
-		mapPropContent.putAll(timeTraveler.mapPropContent);
-		mapArgTitle.putAll(timeTraveler.mapArgTitle);
-		mapPropIndex.putAll(timeTraveler.mapPropIndex);
-		mapArgIndex.putAll(timeTraveler.mapArgIndex);
-
-		return oldPropView;
+	public TimeMachine(SortedMultiMap<Date, ViewChange> changes, Tree tree,
+			Date currentDate) {
+		this(changes, tree);
+		this.currentDate = currentDate;
 	}
-
-	public ViewArgVer absorb(TimeMachine timeTraveler, ViewArgVer argGraft) {
-
-		Long argID = argGraft.argument.id;
-		ViewArgVer oldArgView = argViewIndex.get(argID);
-		oldArgView.getChild(0).remove();
-		while (argGraft.getChildCount() > 0) {
-			GWT.log("transplanted proposition");
-			TreeItem transplant = argGraft.getChild(0);
-			transplant.remove();
-			oldArgView.addItem(transplant);
-		}
-		timeTraveler.argViewIndex.remove(argID);
-
-		changes.putAll(timeTraveler.changes);
-		mapPropContent.putAll(timeTraveler.mapPropContent);
-		mapArgTitle.putAll(timeTraveler.mapArgTitle);
-		mapPropIndex.putAll(timeTraveler.mapPropIndex);
-		mapArgIndex.putAll(timeTraveler.mapArgIndex);
-
-		return oldArgView;
-	}
-	*/
 
 	/*
 	 * TimeTraveler will work with a null tree, but if it gets a top level
@@ -82,10 +86,10 @@ public class TimeMachine {
 		this.changes = changes;
 		this.tree = tree;
 
-		mapPropContent = new HashMap<Long, String>();
-		mapArgTitle = new HashMap<Long, String>();
-		mapArgIndex = new HashMap<Long, Integer>();
-		mapPropIndex = new HashMap<Long, Integer>();
+		mapPropContent = new HashMap<ViewChange, String>();
+		mapArgTitle = new HashMap<ViewChange, String>();
+		mapArgIndex = new HashMap<ViewChange, Integer>();
+		mapPropIndex = new HashMap<ViewChange, Integer>();
 
 		currentDate = changes.lastKey();
 	}
@@ -162,7 +166,7 @@ public class TimeMachine {
 		ArgMap.logln("tm.ttd", "----re-doing changes----");
 		for (List<ViewChange> changeList : changesToProcess) {
 			for (ViewChange vC : changeList) {
-				ArgMap.logln("tm.ttd", "processing: " + vC.change );
+				ArgMap.logln("tm.ttd", "processing: " + vC.change);
 				switch (vC.change.changeType) {
 				case PROP_DELETION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
@@ -175,8 +179,8 @@ public class TimeMachine {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
 					// TODO: root prop additions? who keeps the add/remove of
 					// the prop??!!??
-					argView.reviveDeletedView(vC.change.propID,
-							mapPropIndex.get(vC.change.id));
+					argView.reviveDeletedView(vC.change.propID, mapPropIndex
+							.get(vC));
 					break;
 				}
 				case PROP_MODIFICATION: {
@@ -189,13 +193,13 @@ public class TimeMachine {
 					 * a different change...
 					 */
 					ViewPropVer propView = (ViewPropVer) vC.viewNode;
-					propView.setContent(mapPropContent.get(vC.change.id));
+					propView.setContent(mapPropContent.get(vC));
 					break;
 				}
 				case ARG_ADDITION: {
 					ViewPropVer propView = (ViewPropVer) vC.viewNode;
-					propView.reviveDeletedView(vC.change.argID,
-							mapArgIndex.get(vC.change.id));
+					propView.reviveDeletedView(vC.change.argID, mapArgIndex
+							.get(vC));
 					break;
 				}
 				case ARG_DELETION: {
@@ -205,7 +209,7 @@ public class TimeMachine {
 				}
 				case ARG_MODIFICATION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
-					argView.setArgTitle(mapArgTitle.get(vC.change.id));
+					argView.setArgTitle(mapArgTitle.get(vC));
 					break;
 				}
 				case PROP_UNLINK: {
@@ -223,8 +227,8 @@ public class TimeMachine {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
 					// TODO: root prop additions? who keeps the add/remove of
 					// the prop??!!??
-					argView.reviveDeletedView(vC.change.propID,
-							mapPropIndex.get(vC.change.id));
+					argView.reviveDeletedView(vC.change.propID, mapPropIndex
+							.get(vC));
 
 					/*
 					 * TODO need to think through linking and unlinking in more
@@ -268,7 +272,7 @@ public class TimeMachine {
 		ArgMap.logln("tm.ttd", "----undoing changes----");
 		for (List<ViewChange> changeList : changesToProcess) {
 			for (ViewChange vC : changeList) {
-				ArgMap.logln("tm.ttd", "processing: " + vC.change );
+				ArgMap.logln("tm.ttd", "processing: " + vC.change);
 				switch (vC.change.changeType) {
 				case PROP_DELETION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
@@ -276,7 +280,8 @@ public class TimeMachine {
 					// the prop??!!??
 					argView.reviveDeletedView(vC.change.propID,
 							vC.change.argPropIndex);
-					ViewProp viewPropVer = argView.getPropView(vC.change.argPropIndex);
+					ViewProp viewPropVer = argView
+							.getPropView(vC.change.argPropIndex);
 					viewPropVer.proposition.content = vC.change.content;
 					break;
 				}
@@ -285,7 +290,7 @@ public class TimeMachine {
 					// TODO: root prop additions? who keeps the add/remove of
 					// the prop??!!??
 					int index = argView.indexOfChildWithID(vC.change.propID);
-					mapPropIndex.put(vC.change.id, index);
+					mapPropIndex.put(vC, index);
 					argView.removeAndSaveChildView(vC.change.propID);
 					break;
 				}
@@ -299,14 +304,14 @@ public class TimeMachine {
 					 * other, without a chance for the content to be changed by
 					 * a different change...
 					 */
-					mapPropContent.put(vC.change.id, propView.getContent());
+					mapPropContent.put(vC, propView.getContent());
 					propView.setContent(vC.change.content);
 					break;
 				}
 				case ARG_ADDITION: {
 					ViewPropVer propView = (ViewPropVer) vC.viewNode;
 					int index = propView.indexOfChildWithID(vC.change.argID);
-					mapArgIndex.put(vC.change.id, index);
+					mapArgIndex.put(vC, index);
 					propView.removeAndSaveChildView(vC.change.argID);
 					break;
 				}
@@ -314,7 +319,8 @@ public class TimeMachine {
 					ViewPropVer propView = (ViewPropVer) vC.viewNode;
 					propView.reviveDeletedView(vC.change.argID,
 							vC.change.argPropIndex);
-					ViewArg viewArgVer = propView.getArgView(vC.change.argPropIndex);
+					ViewArg viewArgVer = propView
+							.getArgView(vC.change.argPropIndex);
 					viewArgVer.argument.pro = vC.change.argPro;
 					viewArgVer.setArgTitle(vC.change.content);
 					break;
@@ -322,7 +328,7 @@ public class TimeMachine {
 				case ARG_MODIFICATION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
 					/* NOTE: see not regarding arg modification */
-					mapArgTitle.put(vC.change.id, argView.getArgTitle());
+					mapArgTitle.put(vC, argView.getArgTitle());
 					argView.setArgTitle(vC.change.content);
 					break;
 				}
@@ -356,7 +362,7 @@ public class TimeMachine {
 				case PROP_LINK: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
 					int index = argView.indexOfChildWithID(vC.change.propID);
-					mapPropIndex.put(vC.change.id, index);
+					mapPropIndex.put(vC, index);
 					argView.removeAndSaveChildView(vC.change.propID);
 
 					/*

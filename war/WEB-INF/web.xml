@@ -4,20 +4,20 @@
     "http://java.sun.com/dtd/web-app_2_3.dtd">
 
 <web-app>
-  
-      <servlet>
-    <servlet-name>ArgMapServiceImpl</servlet-name>
-    <servlet-class>org.argmap.server.ArgMapServiceImpl</servlet-class>
-  </servlet>
 
-  <servlet-mapping>
-    <servlet-name>ArgMapServiceImpl</servlet-name>
-    <url-pattern>/argmap/argServ</url-pattern>
-  </servlet-mapping>
-  
-  <!-- Default page to serve -->
-  <welcome-file-list>
-    <welcome-file>ArgMap.html</welcome-file>
-  </welcome-file-list>
+	<servlet>
+		<servlet-name>ArgMapServiceImpl</servlet-name>
+		<servlet-class>org.argmap.server.ArgMapServiceImpl</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>ArgMapServiceImpl</servlet-name>
+		<url-pattern>/argmap/argServ</url-pattern>
+	</servlet-mapping>
+
+	<!-- Default page to serve -->
+	<welcome-file-list>
+		<welcome-file>ArgMap.html</welcome-file>
+	</welcome-file-list>
 
 </web-app>
