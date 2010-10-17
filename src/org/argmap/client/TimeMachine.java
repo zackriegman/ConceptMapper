@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Tree;
 
 public class TimeMachine {
@@ -179,8 +180,8 @@ public class TimeMachine {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
 					// TODO: root prop additions? who keeps the add/remove of
 					// the prop??!!??
-					argView.reviveDeletedView(vC.change.propID, mapPropIndex
-							.get(vC));
+
+					argView.reviveDeletedView(vC.change.propID, mapPropIndex.get(vC));
 					break;
 				}
 				case PROP_MODIFICATION: {

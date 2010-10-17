@@ -252,13 +252,7 @@ public class VersionsMode extends ResizeComposite implements
 
 	private void loadVersionListFromTimeMachine() {
 		listBoxChangeHandlerRegistration.removeHandler();
-		int selectedIndex = versionList.getSelectedIndex();
-		String currentDate;
-		if (selectedIndex >= 0) {
-			currentDate = versionList.getValue(selectedIndex);
-		} else {
-			currentDate = null;
-		}
+		Long currentDate = mainTM.getCurrentDate().getTime();
 		versionList.clear();
 		ArgMap.logStart("vm.lvlftm");
 		DateTimeFormat dateFormat = DateTimeFormat
@@ -267,17 +261,24 @@ public class VersionsMode extends ResizeComposite implements
 		List<Change> reverseList = mainTM.getChangeList();
 		Collections.reverse(reverseList);
 		int i = 0;
-		int newSelectionIndex = 0;
+		int newSelectionIndex = -1;
 		for (Change change : reverseList) {
-			String timeString = "" + change.date.getTime();
-			if (timeString.equals(currentDate)) {
+			Long changeTime = change.date.getTime();
+			int comparison = currentDate.compareTo(changeTime);
+			if( comparison == 0 ) {
 				ArgMap.log("vm.lvlftm", "###########   Selecting Item:" + i
-						+ "; timeString:" + timeString + "; currentDate:"
+						+ "; changeTime:" + changeTime + "; currentDate:"
 						+ currentDate);
 				newSelectionIndex = i;
 			}
+			else if( comparison > 0 && newSelectionIndex == -1 ){
+				ArgMap.log("vm.lvlftm", "###########   Selecting Item:" + i
+						+ " - 1; before item with changeTime:" + changeTime + "; currentDate:"
+						+ currentDate);
+				newSelectionIndex = i -1;
+			}
 			versionList.addItem("" + dateFormat.format(change.date) + " ["
-					+ change.changeType + "]", "" + timeString);
+					+ change.changeType + "]", "" + changeTime);
 			ArgMap.log("vm.lvlftm", "\n" + change);
 			i++;
 		}
