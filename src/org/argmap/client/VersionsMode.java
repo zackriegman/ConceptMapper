@@ -1,12 +1,13 @@
 package org.argmap.client;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodesWithHistory;
@@ -36,9 +37,6 @@ public class VersionsMode extends ResizeComposite implements
 	private ListBox versionList = new ListBox();
 	private EditMode editMode;
 	private Tree treeClone = null;
-	private TimeTraveler mainTT; // TODO DELETE this line
-	private TimeMachine mainTM;
-	SortedMultiMap<Date, ViewChange> timeMachineMap;
 	private FlowPanel treePanel = new FlowPanel();
 	private final int LIST_WIDTH = 20;
 
@@ -47,6 +45,18 @@ public class VersionsMode extends ResizeComposite implements
 	private HandlerRegistration listBoxChangeHandlerRegistration;
 	private HandlerRegistration treeOpenHandlerRegistration;
 	private HandlerRegistration treeCloseHandlerRegistration;
+	
+	/*
+	 * variables related to moving the tree forwards and backwards in time
+	 */
+	private Map<ViewChange, String> mapPropContent;
+	private Map<ViewChange, String> mapArgTitle;
+	private Map<ViewChange, Integer> mapPropIndex;
+	private Map<ViewChange, Integer> mapArgIndex;
+	//private TimeTraveler mainTT; // TODO DELETE this line
+	//private TimeMachine mainTM;
+	private SortedMultiMap<Date, ViewChange> timeMachineMap;
+	private Date currentDate;
 
 	public VersionsMode(EditMode editModePair) {
 		super();
@@ -91,57 +101,6 @@ public class VersionsMode extends ResizeComposite implements
 		}
 	}
 
-	public void displayVersions_DELETE_ME() {
-		versionList.clear();
-		versionList.addItem("Loading Revision History From Server...");
-		if (treeClone != null) {
-			treePanel.remove(treeClone);
-		}
-		List<Proposition> props = new LinkedList<Proposition>();
-		List<Argument> args = new LinkedList<Argument>();
-		editMode.getOpenPropsAndArgs(props, args);
-		ServerComm.getRevisions(null, props, args,
-				new ServerComm.LocalCallback<SortedMap<Date, Change>>() {
-
-					@Override
-					public void call(SortedMap<Date, Change> changes) {
-
-						GWT.log("Got back " + changes.size() + " changes");
-
-						Map<Long, ViewPropVer> propViewIndex = new HashMap<Long, ViewPropVer>();
-						Map<Long, ViewArgVer> argViewIndex = new HashMap<Long, ViewArgVer>();
-
-						treeClone = new Tree();
-						treeCloseHandlerRegistration = treeClone
-								.addCloseHandler(VersionsMode.this);
-						treeOpenHandlerRegistration = treeClone
-								.addOpenHandler(VersionsMode.this);
-						/*
-						 * TODO this could be done outside of the callback to
-						 * reduce the user's wait time, but would need to ensure
-						 * that it finishing before the callback proceeds. can
-						 * the callback just keep calling something like wait()
-						 * until it finds that the clone is finished?
-						 */
-						/*
-						 * preventing the new method from compiling:
-						 * editMode.buildTreeCloneOfOpenNodesWithIndexes(
-						 * treeClone, propViewIndex, argViewIndex);
-						 */
-						treePanel.add(treeClone);
-
-						mainTT = new TimeTraveler(changes, propViewIndex,
-								argViewIndex, treeClone);
-
-						loadVersionListFromTimeMachine();
-
-						versionList.setSelectedIndex(0);
-
-						onChange(null);
-					}
-				});
-	}
-
 	public void displayVersions() {
 		versionList.clear();
 		versionList.addItem("Loading Revision History From Server...");
@@ -179,7 +138,12 @@ public class VersionsMode extends ResizeComposite implements
 						timeMachineMap = prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
 								treeClone, changesMaps);
 
-						mainTM = new TimeMachine(timeMachineMap, treeClone);
+						mapPropContent = new HashMap<ViewChange, String>();
+						mapArgTitle = new HashMap<ViewChange, String>();
+						mapArgIndex = new HashMap<ViewChange, Integer>();
+						mapPropIndex = new HashMap<ViewChange, Integer>();
+						currentDate = timeMachineMap.lastKey();
+						//mainTM = new TimeMachine(timeMachineMap, treeClone);
 
 						loadVersionListFromTimeMachine();
 
@@ -191,6 +155,15 @@ public class VersionsMode extends ResizeComposite implements
 					}
 				});
 
+	}
+	
+	public List<Change> getChangeList() {
+		List<ViewChange> viewChangeList = timeMachineMap.firstValues();
+		List<Change> returnList = new ArrayList<Change>(viewChangeList.size());
+		for (ViewChange viewChange : viewChangeList) {
+			returnList.add(viewChange.change);
+		}
+		return returnList;
 	}
 
 	private SortedMultiMap<Date, ViewChange> prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
@@ -252,13 +225,13 @@ public class VersionsMode extends ResizeComposite implements
 
 	private void loadVersionListFromTimeMachine() {
 		listBoxChangeHandlerRegistration.removeHandler();
-		Long currentDate = mainTM.getCurrentDate().getTime();
+		Long currentDate = this.currentDate.getTime();
 		versionList.clear();
 		ArgMap.logStart("vm.lvlftm");
 		DateTimeFormat dateFormat = DateTimeFormat
 				.getFormat("yyyy MMM d kk:mm:ss:SSS");
 
-		List<Change> reverseList = mainTM.getChangeList();
+		List<Change> reverseList = getChangeList();
 		Collections.reverse(reverseList);
 		int i = 0;
 		int newSelectionIndex = -1;
@@ -297,9 +270,8 @@ public class VersionsMode extends ResizeComposite implements
 		SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
 		recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oo");
 		
-		TimeMachine timeMachine = new TimeMachine( subTreeChanges, null, viewNodeVer.getClosedDate());
-		timeMachine.travelToDate(mainTM.getCurrentDate());
-		mainTM.absorb( timeMachine );
+		//TimeMachine timeMachine = new TimeMachine( subTreeChanges, null, viewNodeVer.getClosedDate());
+		travelFromDateToDate(viewNodeVer.getClosedDate(), currentDate, subTreeChanges);
 		timeMachineMap.putAll( subTreeChanges );
 		loadVersionListFromTimeMachine();
 		ArgMap.logEnd("vm.oo");
@@ -309,7 +281,7 @@ public class VersionsMode extends ResizeComposite implements
 	public void onClose(CloseEvent<TreeItem> event) {
 		ArgMap.logStart("vm.oc");
 		ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
-		viewNodeVer.setClosedDate(mainTM.getCurrentDate());
+		viewNodeVer.setClosedDate(currentDate);
 		ArgMap.log("vm.oc", "Removing View Changes: ");
 		SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
 		recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oc");
@@ -434,13 +406,13 @@ public class VersionsMode extends ResizeComposite implements
 		 * transplant.remove(); propViewParent.addItem(transplant); }
 		 */
 
-		timeTraveler.travelToDate(mainTT.getCurrentDate());
+		//timeTraveler.travelToDate(mainTT.getCurrentDate());
 		ArgMap.log("vm.mlp", "propTree after timeTravel:");
 		propGraft.logNodeRecursive(0, "vm.mlp");
 
-		ViewPropVer view = mainTT.absorb(timeTraveler, propGraft);
+		//ViewPropVer view = mainTT.absorb(timeTraveler, propGraft);
 		ArgMap.log("vm.mlp", "old propview after grafting:");
-		view.logNodeRecursive(0, "vm.mlp");
+		//view.logNodeRecursive(0, "vm.mlp");
 		ArgMap.log("vm.mlp", "----------------");
 
 		loadVersionListFromTimeMachine();
@@ -476,13 +448,13 @@ public class VersionsMode extends ResizeComposite implements
 		 * transplant.remove(); propViewParent.addItem(transplant); }
 		 */
 
-		timeTraveler.travelToDate(mainTT.getCurrentDate());
+		//timeTraveler.travelToDate(mainTT.getCurrentDate());
 		ArgMap.log("vm.mla", "argTree after timeTravel:");
 		argGraft.logNodeRecursive(0, "vm.mla");
 
-		ViewArgVer view = mainTT.absorb(timeTraveler, argGraft);
+		//ViewArgVer view = mainTT.absorb(timeTraveler, argGraft);
 		ArgMap.log("vm.mla", "old propview after grafting:");
-		view.logNodeRecursive(0, "vm.mla");
+		//view.logNodeRecursive(0, "vm.mla");
 		ArgMap.log("vm.mla", "----------------");
 
 		loadVersionListFromTimeMachine();
@@ -500,6 +472,289 @@ public class VersionsMode extends ResizeComposite implements
 	public void onChange(ChangeEvent event) {
 		String millisecondStr = versionList.getValue(versionList
 				.getSelectedIndex());
-		mainTM.travelToDate(new Date(Long.parseLong(millisecondStr)));
+		travelFromDateToDate(currentDate, new Date(Long.parseLong(millisecondStr)), timeMachineMap);
+	}
+	
+	public void travelFromDateToDate(Date currentDate, Date newDate, SortedMultiMap<Date, ViewChange> changes) {
+		ArgMap.logStart("tm.ttd", true);
+		if (newDate.before(currentDate)) {
+			ArgMap.log("tm.ttd", "traveling back to date:" + newDate);
+			/*
+			 * here newDate is the date that the user clicked on, and is
+			 * highlighted. Therefore we do not want to process newDate, because
+			 * doing so would move the tree to a time before the date
+			 * highlighted by the user. But the user wants the tree at the date
+			 * highlighted, not before the date highlighted.
+			 * 
+			 * Similarly, currentDate is the date that the user had previously
+			 * highlighted, and it has not been processed. So we do want to
+			 * process the change associated with currentDate.
+			 * 
+			 * Therefore we want a list of dates to process that ranges from
+			 * newDate (in the past) to currentDate (in the future) and includes
+			 * currentDate but not newDate. We then want to reverse the order so
+			 * we are undoing the newest changes first.
+			 * 
+			 * NOTE: this *was* really simple and efficient [i.e.
+			 * moveTreeBackwards(changes.subMap(newDate, false, currentDate,
+			 * true).descendingMap().values())], but until gwt supports
+			 * navigable map we have to put the selected changes in a list and
+			 * reverse them... ;
+			 */
+			List<List<ViewChange>> reverseList = changes.valuesSublist(newDate,
+					false, currentDate, true);
+			Collections.reverse(reverseList);
+			moveTreeBackwards(reverseList);
+		} else if (newDate.after(currentDate)) {
+			/*
+			 * the current tree shows the tree after the change highlighted was
+			 * made. currentDate corresponds to the change higlighted. To move
+			 * forward in time we do not want to include the change associated
+			 * with the currentDate. We do however want to include the change
+			 * associated with newDate.
+			 * 
+			 * Therefore we need to get a map that extends from currentDate to
+			 * newDate, not including currentDate, but including newDate.
+			 */
+			/*
+			 * this was really simple and efficient, but until gwt supports
+			 * navigable map it won't work...
+			 * moveTreeForwards(changes.subMap(currentDate, false, newDate,
+			 * true).values());
+			 */
+			ArgMap.log("tm.ttd", "traveling forward to date:" + newDate);
+			moveTreeForwards(changes.valuesSublist(currentDate, false, newDate,
+					true));
+		}
+		this.currentDate = newDate;
+		ArgMap.logEnd("tm.ttd");
+	}
+
+	private void moveTreeForwards(Collection<List<ViewChange>> changesToProcess ) {
+		ArgMap.logln("tm.ttd", "----re-doing changes----");
+		for (List<ViewChange> changeList : changesToProcess) {
+			for (ViewChange vC : changeList) {
+				ArgMap.logln("tm.ttd", "processing: " + vC.change);
+				switch (vC.change.changeType) {
+				case PROP_DELETION: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					// TODO: root prop additions? who keeps the add/remove of
+					// the prop??!!??
+					argView.removeAndSaveChildView(vC.change.propID);
+					break;
+				}
+				case PROP_ADDITION: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					// TODO: root prop additions? who keeps the add/remove of
+					// the prop??!!??
+
+					argView.reviveDeletedView(vC.change.propID, mapPropIndex.get(vC));
+					break;
+				}
+				case PROP_MODIFICATION: {
+					/*
+					 * NOTE: the same content might be put in the mapPropContent
+					 * multiple times if there are multiple links to the same
+					 * node, but it shouldn't be a problem, because the change
+					 * for each link should be processed one right after the
+					 * other, without a chance for the content to be changed by
+					 * a different change...
+					 */
+					ViewPropVer propView = (ViewPropVer) vC.viewNode;
+					propView.setContent(mapPropContent.get(vC));
+					break;
+				}
+				case ARG_ADDITION: {
+					ViewPropVer propView = (ViewPropVer) vC.viewNode;
+					propView.reviveDeletedView(vC.change.argID, mapArgIndex
+							.get(vC));
+					break;
+				}
+				case ARG_DELETION: {
+					ViewPropVer propView = (ViewPropVer) vC.viewNode;
+					propView.removeAndSaveChildView(vC.change.argID);
+					break;
+				}
+				case ARG_MODIFICATION: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					argView.setArgTitle(mapArgTitle.get(vC));
+					break;
+				}
+				case PROP_UNLINK: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					argView.removeAndSaveChildView(vC.change.propID);
+					/*
+					 * reverse this: ArgumentView argView =
+					 * argViewIndex.get(change.argID); PropositionView propView
+					 * = propViewIndex.get(change.propID);
+					 * argView.removeItem(propView);
+					 */
+					break;
+				}
+				case PROP_LINK: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					// TODO: root prop additions? who keeps the add/remove of
+					// the prop??!!??
+					argView.reviveDeletedView(vC.change.propID, mapPropIndex
+							.get(vC));
+
+					/*
+					 * TODO need to think through linking and unlinking in more
+					 * detail. What I have here will not be enough. Specifically
+					 * the server probably doesn't currently send the linked
+					 * proposition's content which will be important for the
+					 * client to display when reviewing revisions. Furthermore,
+					 * with all the other operations, a given change will only
+					 * add a node. But here the change will add hundreds of
+					 * nodes, the children of the linked proposition. Probably
+					 * the way to show that is simply to add the proposition,
+					 * and then lazy load the tree as someone browses.
+					 */
+					/*
+					 * reverse this: ArgumentView argView =
+					 * argViewIndex.get(change.argID); PropositionView propView
+					 * = propViewIndex.get(change.propID);
+					 * argView.insertPropositionViewAt(change.argPropIndex,
+					 * propView);
+					 */
+					break;
+				}
+				}
+			}
+		}
+
+	}
+
+	/*
+	 * this function moves the tree backwards in time by taking each change and
+	 * undoing its effect on the tree. In the process of doing it is also saves
+	 * information that will be needed by moveTreeForwards() in order to re-do
+	 * changes undone by this function. For changes of type PROP_MODIFICATION,
+	 * this function will save newer propContent, for changes of type
+	 * PROP_ADDITION, this function will record the position of the proposition
+	 * within the argument, for changes of type ARG_ADDITION, this function will
+	 * record whether the argument is pro or con. This allows the program to
+	 * move back and forth along the change list arbitrarily.
+	 */
+	private void moveTreeBackwards(Collection<List<ViewChange>> changesToProcess) {
+		ArgMap.logln("tm.ttd", "----undoing changes----");
+		for (List<ViewChange> changeList : changesToProcess) {
+			for (ViewChange vC : changeList) {
+				ArgMap.logln("tm.ttd", "processing: " + vC.change);
+				switch (vC.change.changeType) {
+				case PROP_DELETION: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					// TODO: root prop additions? who keeps the add/remove of
+					// the prop??!!??
+					argView.reviveDeletedView(vC.change.propID,
+							vC.change.argPropIndex);
+					ViewProp viewPropVer = argView
+							.getPropView(vC.change.argPropIndex);
+					viewPropVer.proposition.content = vC.change.content;
+					break;
+				}
+				case PROP_ADDITION: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					// TODO: root prop additions? who keeps the add/remove of
+					// the prop??!!??
+					int index = argView.indexOfChildWithID(vC.change.propID);
+					mapPropIndex.put(vC, index);
+					argView.removeAndSaveChildView(vC.change.propID);
+					break;
+				}
+				case PROP_MODIFICATION: {
+					ViewPropVer propView = (ViewPropVer) vC.viewNode;
+					/*
+					 * NOTE: the same content might be put in the mapPropContent
+					 * multiple times if there are multiple links to the same
+					 * node, but it shouldn't be a problem, because the change
+					 * for each link should be processed one right after the
+					 * other, without a chance for the content to be changed by
+					 * a different change...
+					 */
+					mapPropContent.put(vC, propView.getContent());
+					propView.setContent(vC.change.content);
+					break;
+				}
+				case ARG_ADDITION: {
+					ViewPropVer propView = (ViewPropVer) vC.viewNode;
+					int index = propView.indexOfChildWithID(vC.change.argID);
+					mapArgIndex.put(vC, index);
+					propView.removeAndSaveChildView(vC.change.argID);
+					break;
+				}
+				case ARG_DELETION: {
+					ViewPropVer propView = (ViewPropVer) vC.viewNode;
+					propView.reviveDeletedView(vC.change.argID,
+							vC.change.argPropIndex);
+					ViewArg viewArgVer = propView
+							.getArgView(vC.change.argPropIndex);
+					viewArgVer.argument.pro = vC.change.argPro;
+					viewArgVer.setArgTitle(vC.change.content);
+					break;
+				}
+				case ARG_MODIFICATION: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					/* NOTE: see not regarding arg modification */
+					mapArgTitle.put(vC, argView.getArgTitle());
+					argView.setArgTitle(vC.change.content);
+					break;
+				}
+				case PROP_UNLINK: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					// TODO: root prop additions? who keeps the add/remove of
+					// the prop??!!??
+					argView.reviveDeletedView(vC.change.propID,
+							vC.change.argPropIndex);
+
+					/*
+					 * hmmm... linking might be a problem... how do we know if
+					 * we need to remove the node from the index... it might be
+					 * referenced elsewhere. Perhaps more importantly... a
+					 * treeItem probably cannot be anchored to two different
+					 * places in a a tree (look into this...but I think you can
+					 * request a treeItem's parent, which wouldn't work if it
+					 * can be anchored in two places). In that case we would
+					 * need two propView objects to represent the linked
+					 * proposition in two different places. But how will that
+					 * work with the index? I guess we could look it up by
+					 * argID, and then search the argument for children with
+					 * that ID?
+					 * 
+					 * ViewArgVer argView = argViewIndex.get(change.argID);
+					 * ViewPropVer propView = propViewIndex.get(change.propID);
+					 * argView.removeItem(propView);
+					 */
+					break;
+				}
+				case PROP_LINK: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					int index = argView.indexOfChildWithID(vC.change.propID);
+					mapPropIndex.put(vC, index);
+					argView.removeAndSaveChildView(vC.change.propID);
+
+					/*
+					 * ViewArgVer argView = argViewIndex.get(change.argID);
+					 * ViewPropVer propView = propViewIndex.get(change.propID);
+					 * 
+					 * TODO need to think through linking and unlinking in more
+					 * detail. What I have here will not be enough. Specifically
+					 * the server probably doesn't currently send the linked
+					 * proposition's content which will be important for the
+					 * client to display when reviewing revisions. Furthermore,
+					 * with all the other operations, a given change will only
+					 * add a node. But here the change will add hundreds of
+					 * nodes, the children of the linked proposition. Probably
+					 * the way to show that is simply to add the proposition,
+					 * and then lazy load the tree and someone browses.
+					 * 
+					 * argView.insertPropositionViewAt(change.argPropIndex,
+					 * propView);
+					 */
+					break;
+				}
+				}
+			}
+		}
 	}
 }

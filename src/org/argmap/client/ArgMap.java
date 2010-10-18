@@ -15,6 +15,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
+//TODO: color code arguments
 //TODO: when currently selected date disapears becuase a node is close, need to select an appropriate replacement
 //TODO: need to see modifications of the content of closed (but visible) nodes
 //TODO: handle open and close nodes in VersionsMode:  when opening, need to zoom node to same time as rest of tree
@@ -59,6 +60,7 @@ public class ArgMap implements EntryPoint {
 	private EditMode editMode = new EditMode();
 	private VersionsMode versionsMode;
 	private static Map<String, StringBuilder> logs = new HashMap<String, StringBuilder>();
+	private static Map<String, Boolean> logsImmediatePrint = new HashMap<String, Boolean>();
 
 	public void onModuleLoad() {
 		modePanel.add(editMode, "Edit");
@@ -112,15 +114,20 @@ public class ArgMap implements EntryPoint {
 		}
 		GWT.log(string);
 	}
+	
+	public static void logStart( String logName ){
+		logStart( logName, false );
+	}
 
 	/*
 	 * at some point I might want to modify this to accept a boolean indicating
 	 * whether to print the log or not so that I can easily flip the particular
 	 * log on or off depending on whether I need it...
 	 */
-	public static void logStart(String logName) {
+	public static void logStart(String logName, boolean immediatePrint ) {
 		if (logName == null)
 			return;
+		
 		/*
 		 * asserts that logStart is only called once per logName before calling
 		 * logEnd otherwise log messages could be lost... or mixed with
@@ -130,6 +137,7 @@ public class ArgMap implements EntryPoint {
 		StringBuilder log = new StringBuilder();
 		log.append(logName + ": ");
 		logs.put(logName, log);
+		logsImmediatePrint.put(logName, immediatePrint);
 
 	}
 
@@ -137,9 +145,13 @@ public class ArgMap implements EntryPoint {
 		if (logName == null)
 			return;
 		GWT.log(logs.remove(logName).toString());
+		logsImmediatePrint.remove(logName);
 	}
 
 	public static void log(String logName, String string) {
+		if( logsImmediatePrint.get( logName )){
+			GWT.log(logName + ": " + string);
+		}
 		if (logName == null)
 			return;
 		logs.get(logName).append(string);

@@ -11,7 +11,7 @@ import java.util.Map;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Tree;
 
-public class TimeMachine {
+public class TimeMachiner {
 	private Tree tree;
 
 	private Date currentDate;
@@ -28,7 +28,7 @@ public class TimeMachine {
 	private Map<ViewChange, Integer> mapPropIndex;
 	private Map<ViewChange, Integer> mapArgIndex;
 
-	public void absorb(TimeMachine timeTraveler) {
+	public void absorb(TimeMachiner timeTraveler) {
 		mapPropContent.putAll(timeTraveler.mapPropContent);
 		mapArgTitle.putAll(timeTraveler.mapArgTitle);
 		mapPropIndex.putAll(timeTraveler.mapPropIndex);
@@ -72,7 +72,7 @@ public class TimeMachine {
 	 * return oldArgView; }
 	 */
 
-	public TimeMachine(SortedMultiMap<Date, ViewChange> changes, Tree tree,
+	public TimeMachiner(SortedMultiMap<Date, ViewChange> changes, Tree tree,
 			Date currentDate) {
 		this(changes, tree);
 		this.currentDate = currentDate;
@@ -83,7 +83,7 @@ public class TimeMachine {
 	 * proposition that needs to be added to the tree it will probably throw a
 	 * null pointer exception
 	 */
-	public TimeMachine(SortedMultiMap<Date, ViewChange> changes, Tree tree) {
+	public TimeMachiner(SortedMultiMap<Date, ViewChange> changes, Tree tree) {
 		this.changes = changes;
 		this.tree = tree;
 
