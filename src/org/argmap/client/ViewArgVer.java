@@ -7,8 +7,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.argmap.client.Change.ChangeType;
+
 public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	public List<ViewChange> viewChanges = new ArrayList<ViewChange>();
+	public boolean open = true;
 
 	public static ViewArgFactory<ViewArgVer> FACTORY = new ViewArgFactory<ViewArgVer>() {
 		@Override
@@ -62,6 +65,29 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	public List<ViewChange> getViewChangeList() {
 		return viewChanges;
 	}
+	
+	public List<ViewChange> getViewChangeAddRemoveList(){
+		List<ViewChange> list = new ArrayList<ViewChange>();
+		for( ViewChange viewChange : viewChanges ){
+			switch( viewChange.change.changeType ){
+			case PROP_ADDITION:
+			case PROP_DELETION:
+			case PROP_LINK:
+			case PROP_UNLINK:
+				list.add(viewChange);
+				break;
+			case PROP_MODIFICATION:
+			case ARG_ADDITION:
+			case ARG_DELETION:
+				assert false;
+				break;
+			case ARG_MODIFICATION:
+				//do nothing
+				break;
+			}
+		}
+		return list;
+	}
 
 	public ViewNodeVer getChildViewNodeVer(int i) {
 		return (ViewNodeVer) getChild(i);
@@ -69,5 +95,13 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	
 	public Collection<ViewNodeVer> getDeletedViewList(){
 		return deletedViews.values();
+	}
+	
+	public boolean isOpen(){
+		return open;
+	}
+	
+	public void setOpen( boolean open ){
+		this.open = open;
 	}
 }

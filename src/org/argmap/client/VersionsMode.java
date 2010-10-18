@@ -45,7 +45,7 @@ public class VersionsMode extends ResizeComposite implements
 	private HandlerRegistration listBoxChangeHandlerRegistration;
 	private HandlerRegistration treeOpenHandlerRegistration;
 	private HandlerRegistration treeCloseHandlerRegistration;
-	
+
 	/*
 	 * variables related to moving the tree forwards and backwards in time
 	 */
@@ -53,8 +53,8 @@ public class VersionsMode extends ResizeComposite implements
 	private Map<ViewChange, String> mapArgTitle;
 	private Map<ViewChange, Integer> mapPropIndex;
 	private Map<ViewChange, Integer> mapArgIndex;
-	//private TimeTraveler mainTT; // TODO DELETE this line
-	//private TimeMachine mainTM;
+	// private TimeTraveler mainTT; // TODO DELETE this line
+	// private TimeMachine mainTM;
 	private SortedMultiMap<Date, ViewChange> timeMachineMap;
 	private Date currentDate;
 
@@ -143,7 +143,7 @@ public class VersionsMode extends ResizeComposite implements
 						mapArgIndex = new HashMap<ViewChange, Integer>();
 						mapPropIndex = new HashMap<ViewChange, Integer>();
 						currentDate = timeMachineMap.lastKey();
-						//mainTM = new TimeMachine(timeMachineMap, treeClone);
+						// mainTM = new TimeMachine(timeMachineMap, treeClone);
 
 						loadVersionListFromTimeMachine();
 
@@ -155,15 +155,6 @@ public class VersionsMode extends ResizeComposite implements
 					}
 				});
 
-	}
-	
-	public List<Change> getChangeList() {
-		List<ViewChange> viewChangeList = timeMachineMap.firstValues();
-		List<Change> returnList = new ArrayList<Change>(viewChangeList.size());
-		for (ViewChange viewChange : viewChangeList) {
-			returnList.add(viewChange.change);
-		}
-		return returnList;
 	}
 
 	private SortedMultiMap<Date, ViewChange> prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
@@ -238,17 +229,16 @@ public class VersionsMode extends ResizeComposite implements
 		for (Change change : reverseList) {
 			Long changeTime = change.date.getTime();
 			int comparison = currentDate.compareTo(changeTime);
-			if( comparison == 0 ) {
+			if (comparison == 0) {
 				ArgMap.log("vm.lvlftm", "###########   Selecting Item:" + i
 						+ "; changeTime:" + changeTime + "; currentDate:"
 						+ currentDate);
 				newSelectionIndex = i;
-			}
-			else if( comparison > 0 && newSelectionIndex == -1 ){
+			} else if (comparison > 0 && newSelectionIndex == -1) {
 				ArgMap.log("vm.lvlftm", "###########   Selecting Item:" + i
-						+ " - 1; before item with changeTime:" + changeTime + "; currentDate:"
-						+ currentDate);
-				newSelectionIndex = i -1;
+						+ " - 1; before item with changeTime:" + changeTime
+						+ "; currentDate:" + currentDate);
+				newSelectionIndex = i - 1;
 			}
 			versionList.addItem("" + dateFormat.format(change.date) + " ["
 					+ change.changeType + "]", "" + changeTime);
@@ -262,6 +252,35 @@ public class VersionsMode extends ResizeComposite implements
 				.addChangeHandler(VersionsMode.this);
 	}
 
+	public List<Change> getChangeList() {
+		List<ViewChange> viewChangeList = timeMachineMap.firstValues();
+		List<Change> returnList = new ArrayList<Change>(viewChangeList.size());
+		for (ViewChange viewChange : viewChangeList) {
+			if (!viewChange.hidden)
+				returnList.add(viewChange.change);
+		}
+
+		/*
+		 * if the oldest change is hidden we need to include it anyway,
+		 * otherwise there is no way to replay that change, and potentially no
+		 * way to open up the closed node (because the open/close icon will not
+		 * appear for a node with no children) whose closure resulted in hiding
+		 * the change... and thus to way to unhide the change...
+		 */
+		ViewChange oldestChange = viewChangeList.get(viewChangeList.size() - 1);
+		if (oldestChange.hidden) {
+			returnList.add(oldestChange.change);
+		}
+		return returnList;
+	}
+
+	private void logTree(String logName) {
+		for (int i = 0; i < treeClone.getItemCount(); i++) {
+			ViewNode viewNode = (ViewNode) treeClone.getItem(i);
+			viewNode.logNodeRecursive(2, logName, false);
+		}
+	}
+
 	@Override
 	public void onOpen(OpenEvent<TreeItem> event) {
 		ArgMap.logStart("vm.oo");
@@ -269,11 +288,16 @@ public class VersionsMode extends ResizeComposite implements
 		ArgMap.log("vm.oo", "Adding View Changes: ");
 		SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
 		recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oo");
-		
-		//TimeMachine timeMachine = new TimeMachine( subTreeChanges, null, viewNodeVer.getClosedDate());
-		travelFromDateToDate(viewNodeVer.getClosedDate(), currentDate, subTreeChanges);
-		timeMachineMap.putAll( subTreeChanges );
+		travelFromDateToDate(viewNodeVer.getClosedDate(), currentDate,
+				subTreeChanges);
+		timeMachineMap.putAll(subTreeChanges);
+
+		for (ViewChange viewChange : viewNodeVer.getViewChangeAddRemoveList()) {
+			viewChange.hidden = false;
+		}
+
 		loadVersionListFromTimeMachine();
+		viewNodeVer.setOpen(true);
 		ArgMap.logEnd("vm.oo");
 	}
 
@@ -285,49 +309,102 @@ public class VersionsMode extends ResizeComposite implements
 		ArgMap.log("vm.oc", "Removing View Changes: ");
 		SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
 		recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oc");
-		timeMachineMap.removeAll( subTreeChanges );
+		timeMachineMap.removeAll(subTreeChanges);
+
+		for (ViewChange viewChange : viewNodeVer.getViewChangeAddRemoveList()) {
+			viewChange.hidden = true;
+		}
+
 		loadVersionListFromTimeMachine();
+		viewNodeVer.setOpen(false);
 		ArgMap.logEnd("vm.oc");
 	}
 
-	public void recursiveGetViewChanges(ViewNodeVer viewNodeVer, SortedMultiMap<Date, ViewChange> subTreeChanges, boolean skipStateCheck, String logName ) {
-		for (ViewChange viewChange : viewNodeVer.getViewChangeList()) {
+	public void recursiveGetViewChanges(ViewNodeVer viewNodeVer,
+			SortedMultiMap<Date, ViewChange> forAddOrRemove, boolean firstNode,
+			String logName) {
+		/*
+		 * if it is the first node then we don't want to remove any changes, as 
+		 * add/remove changes are merely hidden, and modification changes are
+		 * left entirely intact.
+		 */
+		if (!firstNode) {
 			ArgMap.logln(logName, "nodeID: " + viewNodeVer.getNodeID()
-					+ " viewChange: " + viewChange);
-			subTreeChanges.put(viewChange.change.date, viewChange);
+					+ "; State: " + viewNodeVer.isOpen());
+			for (ViewChange viewChange : viewNodeVer.getViewChangeList()) {
+				ArgMap.logln(logName, "  viewChange: " + viewChange);
+				forAddOrRemove.put(viewChange.change.date, viewChange);
+			}
 		}
-		ArgMap.logln(logName, "Node: " + viewNodeVer.getNodeID() + "; State: "
-				+ viewNodeVer.getState());
 
-		if (viewNodeVer.getState() || skipStateCheck ) {
+		/*
+		 * we want to process all the children of the first node regardless of
+		 * whether or not it is open, because we are handling the first node's
+		 * open/close event here. Also, all the changes for a closed child node
+		 * will not have been removed (rather the non-modification changes are
+		 * merely hidden and the modification changes are left entirely intact),
+		 * so all the changes for all the children of the firstNode must be
+		 * processed.
+		 */
+		if (firstNode || viewNodeVer.isOpen()) {
 			for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
-				recursiveGetViewChanges(viewNodeVer.getChildViewNodeVer(i), subTreeChanges, false, logName);
+				ViewNodeVer childView = viewNodeVer.getChildViewNodeVer(i);
+				recursiveGetViewChanges(childView, forAddOrRemove, false,
+						logName);
 			}
 			for (ViewNodeVer deletedView : viewNodeVer.getDeletedViewList()) {
-				recursiveGetViewChanges(deletedView, subTreeChanges, false, logName);
+				recursiveGetViewChanges(deletedView, forAddOrRemove, false,
+						logName);
+			}
+		}
+	}
+
+	public void recursiveGetViewChanges_DELETE_ME_NOW(ViewNodeVer viewNodeVer,
+			SortedMultiMap<Date, ViewChange> forAddOrRemove,
+			boolean skipStateCheck, String logName) {
+
+		for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
+			ViewNodeVer childView = viewNodeVer.getChildViewNodeVer(i);
+			ArgMap.logln(logName, "Node: " + childView.getNodeID()
+					+ "; State: " + childView.isOpen());
+			if (childView.isOpen()) {
+				for (ViewChange viewChange : childView.getViewChangeList()) {
+					ArgMap.logln(logName, "nodeID: " + childView.getNodeID()
+							+ " viewChange: " + viewChange);
+					forAddOrRemove.put(viewChange.change.date, viewChange);
+				}
+				recursiveGetViewChanges(childView, forAddOrRemove, false,
+						logName);
+			}
+		}
+		for (ViewNodeVer deletedView : viewNodeVer.getDeletedViewList()) {
+			ArgMap.logln(logName, "Node: " + deletedView.getNodeID()
+					+ "; State: " + deletedView.isOpen());
+			if (deletedView.isOpen()) {
+				for (ViewChange viewChange : deletedView.getViewChangeList()) {
+					ArgMap.logln(logName, "nodeID: " + deletedView.getNodeID()
+							+ " viewChange: " + viewChange);
+					forAddOrRemove.put(viewChange.change.date, viewChange);
+				}
+				recursiveGetViewChanges(deletedView, forAddOrRemove, false,
+						logName);
 			}
 		}
 	}
 
 	/*
-	public void recursiveAddViewChanges(ViewNodeVer viewNodeVer, boolean skipStateCheck) {
-		for (ViewChange viewChange : viewNodeVer.getViewChangeList()) {
-			ArgMap.logln("vm.oo", "nodeID: " + viewNodeVer.getNodeID()
-					+ " viewChange: " + viewChange);
-			timeMachineMap.put(viewChange.change.date, viewChange);
-		}
-		ArgMap.logln("vm.oo", "Node: " + viewNodeVer.getNodeID() + "; State: "
-				+ viewNodeVer.getState());
-		if (viewNodeVer.getState() || skipStateCheck) {
-			for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
-				recursiveAddViewChanges(viewNodeVer.getChildViewNodeVer(i), false);
-			}
-			for (ViewNodeVer deletedView : viewNodeVer.getDeletedViewList()) {
-				recursiveAddViewChanges(deletedView, false);
-			}
-		}
-	}
-	*/
+	 * public void recursiveAddViewChanges(ViewNodeVer viewNodeVer, boolean
+	 * skipStateCheck) { for (ViewChange viewChange :
+	 * viewNodeVer.getViewChangeList()) { ArgMap.logln("vm.oo", "nodeID: " +
+	 * viewNodeVer.getNodeID() + " viewChange: " + viewChange);
+	 * timeMachineMap.put(viewChange.change.date, viewChange); }
+	 * ArgMap.logln("vm.oo", "Node: " + viewNodeVer.getNodeID() + "; State: " +
+	 * viewNodeVer.getState()); if (viewNodeVer.getState() || skipStateCheck) {
+	 * for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
+	 * recursiveAddViewChanges(viewNodeVer.getChildViewNodeVer(i), false); } for
+	 * (ViewNodeVer deletedView : viewNodeVer.getDeletedViewList()) {
+	 * recursiveAddViewChanges(deletedView, false); } } }
+	 */
 
 	public void onClose_DELETE_ME(CloseEvent<TreeItem> event) {
 		TreeItem treeItem = event.getTarget();
@@ -396,7 +473,7 @@ public class VersionsMode extends ResizeComposite implements
 				argViewIndex, ViewPropVer.FACTORY, ViewArgVer.FACTORY);
 
 		ArgMap.log("vm.mlp", "propTree before timeTravel:");
-		propGraft.logNodeRecursive(0, "vm.mlp");
+		propGraft.logNodeRecursive(0, "vm.mlp", true);
 		TimeTraveler timeTraveler = new TimeTraveler(
 				propTreeWithHistory.changes, propViewIndex, argViewIndex, null);
 
@@ -406,13 +483,13 @@ public class VersionsMode extends ResizeComposite implements
 		 * transplant.remove(); propViewParent.addItem(transplant); }
 		 */
 
-		//timeTraveler.travelToDate(mainTT.getCurrentDate());
+		// timeTraveler.travelToDate(mainTT.getCurrentDate());
 		ArgMap.log("vm.mlp", "propTree after timeTravel:");
-		propGraft.logNodeRecursive(0, "vm.mlp");
+		propGraft.logNodeRecursive(0, "vm.mlp", true);
 
-		//ViewPropVer view = mainTT.absorb(timeTraveler, propGraft);
+		// ViewPropVer view = mainTT.absorb(timeTraveler, propGraft);
 		ArgMap.log("vm.mlp", "old propview after grafting:");
-		//view.logNodeRecursive(0, "vm.mlp");
+		// view.logNodeRecursive(0, "vm.mlp");
 		ArgMap.log("vm.mlp", "----------------");
 
 		loadVersionListFromTimeMachine();
@@ -438,7 +515,7 @@ public class VersionsMode extends ResizeComposite implements
 				ViewPropVer.FACTORY, ViewArgVer.FACTORY);
 
 		ArgMap.log("vm.mla", "propTree before timeTravel:");
-		argGraft.logNodeRecursive(0, "vm.mla");
+		argGraft.logNodeRecursive(0, "vm.mla", true);
 		TimeTraveler timeTraveler = new TimeTraveler(
 				argTreeWithHistory.changes, propViewIndex, argViewIndex, null);
 
@@ -448,13 +525,13 @@ public class VersionsMode extends ResizeComposite implements
 		 * transplant.remove(); propViewParent.addItem(transplant); }
 		 */
 
-		//timeTraveler.travelToDate(mainTT.getCurrentDate());
+		// timeTraveler.travelToDate(mainTT.getCurrentDate());
 		ArgMap.log("vm.mla", "argTree after timeTravel:");
-		argGraft.logNodeRecursive(0, "vm.mla");
+		argGraft.logNodeRecursive(0, "vm.mla", true);
 
-		//ViewArgVer view = mainTT.absorb(timeTraveler, argGraft);
+		// ViewArgVer view = mainTT.absorb(timeTraveler, argGraft);
 		ArgMap.log("vm.mla", "old propview after grafting:");
-		//view.logNodeRecursive(0, "vm.mla");
+		// view.logNodeRecursive(0, "vm.mla");
 		ArgMap.log("vm.mla", "----------------");
 
 		loadVersionListFromTimeMachine();
@@ -472,11 +549,13 @@ public class VersionsMode extends ResizeComposite implements
 	public void onChange(ChangeEvent event) {
 		String millisecondStr = versionList.getValue(versionList
 				.getSelectedIndex());
-		travelFromDateToDate(currentDate, new Date(Long.parseLong(millisecondStr)), timeMachineMap);
+		travelFromDateToDate(currentDate,
+				new Date(Long.parseLong(millisecondStr)), timeMachineMap);
 	}
-	
-	public void travelFromDateToDate(Date currentDate, Date newDate, SortedMultiMap<Date, ViewChange> changes) {
-		ArgMap.logStart("tm.ttd", true);
+
+	public void travelFromDateToDate(Date currentDate, Date newDate,
+			SortedMultiMap<Date, ViewChange> changes) {
+		ArgMap.logStart("tm.ttd", false);
 		if (newDate.before(currentDate)) {
 			ArgMap.log("tm.ttd", "traveling back to date:" + newDate);
 			/*
@@ -530,7 +609,7 @@ public class VersionsMode extends ResizeComposite implements
 		ArgMap.logEnd("tm.ttd");
 	}
 
-	private void moveTreeForwards(Collection<List<ViewChange>> changesToProcess ) {
+	private void moveTreeForwards(Collection<List<ViewChange>> changesToProcess) {
 		ArgMap.logln("tm.ttd", "----re-doing changes----");
 		for (List<ViewChange> changeList : changesToProcess) {
 			for (ViewChange vC : changeList) {
@@ -548,7 +627,8 @@ public class VersionsMode extends ResizeComposite implements
 					// TODO: root prop additions? who keeps the add/remove of
 					// the prop??!!??
 
-					argView.reviveDeletedView(vC.change.propID, mapPropIndex.get(vC));
+					argView.reviveDeletedView(vC.change.propID,
+							mapPropIndex.get(vC));
 					break;
 				}
 				case PROP_MODIFICATION: {
@@ -566,8 +646,8 @@ public class VersionsMode extends ResizeComposite implements
 				}
 				case ARG_ADDITION: {
 					ViewPropVer propView = (ViewPropVer) vC.viewNode;
-					propView.reviveDeletedView(vC.change.argID, mapArgIndex
-							.get(vC));
+					propView.reviveDeletedView(vC.change.argID,
+							mapArgIndex.get(vC));
 					break;
 				}
 				case ARG_DELETION: {
@@ -595,8 +675,8 @@ public class VersionsMode extends ResizeComposite implements
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
 					// TODO: root prop additions? who keeps the add/remove of
 					// the prop??!!??
-					argView.reviveDeletedView(vC.change.propID, mapPropIndex
-							.get(vC));
+					argView.reviveDeletedView(vC.change.propID,
+							mapPropIndex.get(vC));
 
 					/*
 					 * TODO need to think through linking and unlinking in more

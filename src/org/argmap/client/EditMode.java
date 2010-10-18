@@ -2,6 +2,7 @@ package org.argmap.client;
 
 import java.util.List;
 
+import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.AllPropsAndArgs;
 import org.argmap.client.ServerComm.LocalCallback;
 
@@ -99,7 +100,7 @@ public class EditMode extends ResizeComposite implements
 							proposition, allNodes.nodes, null, null,
 							ViewPropEdit.FACTORY, ViewArgEdit.FACTORY);
 					tree.addItem(propView);
-					propView.logNodeRecursive(0, "em.em.cb");
+					propView.logNodeRecursive(0, "em.em.cb", true);
 				}
 				openTree();
 				ArgMap.logEnd("em.em.cb");
@@ -171,7 +172,7 @@ public class EditMode extends ResizeComposite implements
 							callback);
 				} else {
 					ArgMap
-							.message("Cannot link to existing proposition when proposition currently being edited has children");
+							.message("Cannot link to existing proposition when proposition currently being edited has children", MessageType.ERROR);
 				}
 			}
 		}

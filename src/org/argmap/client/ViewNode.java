@@ -11,7 +11,7 @@ public abstract class ViewNode extends TreeItem {
 	public ViewNode removeChildView(Long id) {
 		int index = indexOfChildWithID(id);
 		if (index >= 0) {
-			return removeChildViewAt( index );
+			return removeChildViewAt(index);
 		} else {
 			throw new RuntimeException("cannot remove node with id " + id
 					+ " because it is not a child node");
@@ -19,7 +19,7 @@ public abstract class ViewNode extends TreeItem {
 	}
 
 	public ViewNode removeChildViewAt(int index) {
-		ViewNode child = (ViewNode)getChild(index);
+		ViewNode child = (ViewNode) getChild(index);
 		child.remove();
 		return child;
 	}
@@ -33,9 +33,9 @@ public abstract class ViewNode extends TreeItem {
 		}
 		return -1;
 	}
-	
-	public ViewNode getChildView(int index ){
-		return (ViewNode)getChild(index);
+
+	public ViewNode getChildView(int index) {
+		return (ViewNode) getChild(index);
 	}
 
 	public void insertChildViewAt(int index, ViewNode viewNode) {
@@ -64,12 +64,26 @@ public abstract class ViewNode extends TreeItem {
 			addItem(toRemove);
 		}
 	}
-	
-	public void logNodeRecursive(int level, String logName ) {
-		ArgMap.logln(logName, ArgMap.spaces(level * 2) + toString() + "; hashCode:" + hashCode()  );
+
+	/*
+	public void logNodesRecursive(int level, String logName) {
+		ArgMap.logln(logName, ArgMap.spaces(level * 2) + toString()
+				+ "; hashCode:" + hashCode());
 		for (int i = 0; i < getChildCount(); i++) {
 			ViewNode node = getChildView(i);
 			node.logNodeRecursive(level + 1, logName);
+		}
+	}
+	*/
+
+	public void logNodeRecursive(int level, String logName, boolean includeChildrenOfClosedNodes ) {
+		ArgMap.logln(logName, ArgMap.spaces(level * 2) + toString()
+				+ "; hashCode:" + hashCode());
+		if (includeChildrenOfClosedNodes || getState()) {
+			for (int i = 0; i < getChildCount(); i++) {
+				ViewNode node = getChildView(i);
+				node.logNodeRecursive(level + 1, logName, includeChildrenOfClosedNodes);
+			}
 		}
 	}
 }

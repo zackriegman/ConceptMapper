@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.Queue;
 
+import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.AllPropsAndArgs;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodesWithHistory;
@@ -26,11 +27,6 @@ public class ServerComm {
 
 	private static Queue<Command> commandQueue = new LinkedList<Command>();
 	private static boolean callInProgress = false;
-
-	private static void message(String string) {
-		GWT.log(string);
-		ArgMap.message(string);
-	}
 
 	private interface Command {
 		public void execute();
@@ -68,7 +64,7 @@ public class ServerComm {
 
 		@Override
 		public final void onFailure(Throwable caught) {
-			message("Error: " + caught.getMessage());
+			ArgMap.message("Error: " + caught.getMessage(), MessageType.ERROR);
 			// GWT.log(caught.getMessage());
 			// caught.printStackTrace();
 			/* trying this to get the exception printed in the GWT.log */
@@ -81,7 +77,7 @@ public class ServerComm {
 				localCallback.call(result);
 			}
 			if (successMessage != null) {
-				message(successMessage);
+				ArgMap.message(successMessage, MessageType.INFO);
 			}
 		}
 	}
@@ -97,7 +93,7 @@ public class ServerComm {
 		@Override
 		public final void onFailure(Throwable caught) {
 			dispatchCommand();
-			message("Error: " + caught.getMessage());
+			ArgMap.message("Error: " + caught.getMessage(), MessageType.ERROR);
 			// GWT.log(caught.getMessage());
 			// caught.printStackTrace();
 			/* trying this to get the exception printed in the GWT.log */
@@ -113,7 +109,7 @@ public class ServerComm {
 			doOnSuccess(result);
 			dispatchCommand();
 			if (successMessage != null) {
-				message(successMessage);
+				ArgMap.message(successMessage, MessageType.INFO);
 			}
 		}
 

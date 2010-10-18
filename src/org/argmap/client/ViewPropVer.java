@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.argmap.client.Change.ChangeType;
+
 
 public class ViewPropVer extends ViewProp implements ViewNodeVer {
 	public List<ViewChange> viewChanges = new ArrayList<ViewChange>();
@@ -17,7 +19,8 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 			return new ViewPropVer(prop);
 		}
 	};
-
+	
+	public boolean open = true;
 	public Map<Long, ViewNodeVer> deletedViews = new HashMap<Long, ViewNodeVer>();
 	public Date closedDate;
 	
@@ -77,6 +80,29 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 	public List<ViewChange> getViewChangeList() {
 		return viewChanges;
 	}
+	
+	public List<ViewChange> getViewChangeAddRemoveList(){
+		List<ViewChange> list = new ArrayList<ViewChange>();
+		for( ViewChange viewChange : viewChanges ){
+			switch( viewChange.change.changeType ){
+			case ARG_ADDITION:
+			case ARG_DELETION:
+				list.add(viewChange);
+				break;
+			case PROP_ADDITION:
+			case PROP_DELETION:
+			case PROP_LINK:
+			case PROP_UNLINK:
+			case ARG_MODIFICATION:
+				assert false;
+				break;
+			case PROP_MODIFICATION:
+				//do nothing
+				break;
+			}
+		}
+		return list;
+	}
 
 	public ViewNodeVer getChildViewNodeVer( int i ){
 		return (ViewNodeVer) getChild(i);
@@ -85,4 +111,13 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 	public Collection<ViewNodeVer> getDeletedViewList(){
 		return deletedViews.values();
 	}
+	
+	public boolean isOpen(){
+		return open;
+	}
+	
+	public void setOpen( boolean open ){
+		this.open = open;
+	}
 }
+

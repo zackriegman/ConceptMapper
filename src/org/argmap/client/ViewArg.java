@@ -42,18 +42,20 @@ public class ViewArg extends ViewNode {
 		textBox = new TextBox();
 		textBox.setVisibleLength(Argument.MAX_LENGTH);
 		textBox.setMaxLength(Argument.MAX_LENGTH);
-		textBox.setStylePrimaryName("argumentTextBox");
 		textBox.setText(argument.title);
 		HorizontalPanel horizontalPanel = new HorizontalPanel();
-		horizontalPanel.setStylePrimaryName("argumentPanel");
 		horizontalPanel.setWidth("51.5em");
 		horizontalPanel.add(label);
 		horizontalPanel.add(textBox);
 		setWidget(horizontalPanel);
 		if (argument.pro) {
 			label.setText("Argument For: ");
+			horizontalPanel.setStylePrimaryName("proArg");
+			textBox.setStylePrimaryName("proArgTextBox");
 		} else {
 			label.setText("Argument Against: ");
+			horizontalPanel.setStylePrimaryName("conArg");
+			textBox.setStylePrimaryName("conArgTextBox");
 		}
 	}
 

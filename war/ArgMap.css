@@ -16,28 +16,56 @@
 	font-size:	12.8px;
 }
 
-.argumentTextBox {
+.proArgTextBox {
 	border-style: solid;
 	border-color: #E8E8E8 ;
 	border-width: 1px;
-	background-color:#E3E9FF;
+	background-color:#D7FDD7;
 	font-family: arial,sans-serif;
 	font-size:	12.8px;
 }
 
-.argumentPanel {
-	background-color:#E3E9FF;
+.conArgTextBox {
+	border-style: solid;
+	border-color: #E8E8E8 ;
+	border-width: 1px;
+	background-color:#FDD7D7;
+	font-family: arial,sans-serif;
+	font-size:	12.8px;
 }
 
-.titleLabel {
+.proArg {
+	background-color: #D7FDD7;
+}
+
+.conArg {
+	background-color: #FDD7D7;
+}
+
+.title {
 	font-size: 2em;
 	font-weight: bold;
 	color: #777777;
-	margin: 20px 0px 70px;
+	/*margin: 20px 0px 70px;*/
 	text-align: center;
 }
 
-.messageLabel {
+.subTitle {
+	font-size: 1em;
+	color: #777777;
+	text-align: center;
+}
+
+.infoMessage {
 	text-align: center;
 	background-color: #FFF1A8;
+}
+
+.errorMessage {
+	text-align: center;
+	background-color: #FF5151;
+}
+
+.messageArea {
+	text-align: center;
 }

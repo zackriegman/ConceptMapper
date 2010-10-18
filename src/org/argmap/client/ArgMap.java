@@ -9,20 +9,22 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: color code arguments
-//TODO: when currently selected date disapears becuase a node is close, need to select an appropriate replacement
-//TODO: need to see modifications of the content of closed (but visible) nodes
-//TODO: handle open and close nodes in VersionsMode:  when opening, need to zoom node to same time as rest of tree
-//TODO: undeleting links does not restory their yellow color
-//TODO: weed changes list when a node is closed, expand when a node is opened (maybe to implement this, change how nodes are stored... maybe with a list of all their changes... which type of changes does a node need to know about...
+//TODO: test/fix versioning of deletions
+//TODO: test versioning of unlinking
+//TODO: test/fix versioning of a single empty proposition
+//TODO: undeleting links does not restore their yellow color and linking color seems to be broken...
 //TODO: lazy load closed items in versions mode
 //TODO: prevent circular linking from crashing program...
+
+//TODO: linking: original linked item should also change color immediately upon first linking
+//TODO: linking: how will client automatically update link changes...
 
 //TODO: lazy load in editmode (maybe a few layers deep in advance) instead of loading the entire tree
 //TODO: provide a way to see deleted top level nodes
@@ -61,6 +63,7 @@ public class ArgMap implements EntryPoint {
 	private VersionsMode versionsMode;
 	private static Map<String, StringBuilder> logs = new HashMap<String, StringBuilder>();
 	private static Map<String, Boolean> logsImmediatePrint = new HashMap<String, Boolean>();
+	private static MessageTimer messageTimer = new MessageTimer();
 
 	public void onModuleLoad() {
 		modePanel.add(editMode, "Edit");
@@ -78,10 +81,11 @@ public class ArgMap implements EntryPoint {
 			}
 		});
 
-		Label titleLabel = new Label("ArgMap Prototype");
-		titleLabel.setStylePrimaryName("titleLabel");
+		HTML htmlTitle = new HTML("<div class=\"title\">coreason.org</div>" +
+				"<div class=\"subTitle\">...mass collaborative reasoning about everything...</div>");
+		//htmlTitle.setStylePrimaryName("titleLabel");
 		// messageArea.setStylePrimaryName("messageLabel");
-		mainPanel.addNorth(titleLabel, 5);
+		mainPanel.addNorth(htmlTitle, 4);
 		mainPanel.addNorth(messageArea, 2);
 		mainPanel.add(modePanel);
 
@@ -90,11 +94,35 @@ public class ArgMap implements EntryPoint {
 
 		// Window.alert( "pops up a window to user with message");
 
-		message("App Begin");
+		message("App Begin", MessageType.INFO);
+	}
+	
+	public enum MessageType {
+		ERROR, INFO;
 	}
 
-	public static void message(String string) {
-		messageArea.setHTML("<div class=\"messageLabel\">" + string + "</div>");
+	public static void message(String string, MessageType type ) {
+		messageTimer.cancel();
+		messageTimer.schedule(15000);
+		String cssLabel;
+		if( type == MessageType.ERROR ){
+			cssLabel = "errorMessage";
+		} else {
+			cssLabel = "infoMessage";
+		}
+		messageArea.setHTML("<div class=\"messageArea\"><span class=\"" +
+				cssLabel + "\">&nbsp;&nbsp;&nbsp;&nbsp;" + string + "&nbsp;&nbsp;&nbsp;&nbsp;</span></span>");
+
+		
+	}
+	
+	private static class MessageTimer extends Timer{
+
+		@Override
+		public void run() {
+			messageArea.setHTML("");
+		}
+		
 	}
 
 	public static String spaces(int spaces) {
@@ -114,9 +142,9 @@ public class ArgMap implements EntryPoint {
 		}
 		GWT.log(string);
 	}
-	
-	public static void logStart( String logName ){
-		logStart( logName, false );
+
+	public static void logStart(String logName) {
+		logStart(logName, false);
 	}
 
 	/*
@@ -124,10 +152,10 @@ public class ArgMap implements EntryPoint {
 	 * whether to print the log or not so that I can easily flip the particular
 	 * log on or off depending on whether I need it...
 	 */
-	public static void logStart(String logName, boolean immediatePrint ) {
+	public static void logStart(String logName, boolean immediatePrint) {
 		if (logName == null)
 			return;
-		
+
 		/*
 		 * asserts that logStart is only called once per logName before calling
 		 * logEnd otherwise log messages could be lost... or mixed with
@@ -144,22 +172,30 @@ public class ArgMap implements EntryPoint {
 	public static void logEnd(String logName) {
 		if (logName == null)
 			return;
-		GWT.log(logs.remove(logName).toString());
-		logsImmediatePrint.remove(logName);
+		StringBuilder log = logs.remove(logName);
+		if (logsImmediatePrint.remove(logName)) {
+			return;
+		}
+		GWT.log(log.toString());
 	}
 
 	public static void log(String logName, String string) {
-		if( logsImmediatePrint.get( logName )){
-			GWT.log(logName + ": " + string);
-		}
 		if (logName == null)
 			return;
+		if (logsImmediatePrint.get(logName)) {
+			GWT.log(logName + ": " + string);
+			return;
+		}
 		logs.get(logName).append(string);
 	}
 
 	public static void logln(String logName, String string) {
 		if (logName == null)
 			return;
-		log(logName, "\n" + string);
+		if (logsImmediatePrint.get(logName)) {
+			log(logName, string);
+		} else {
+			log(logName, "\n" + string);
+		}
 	}
 }
