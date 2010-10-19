@@ -84,7 +84,7 @@ public class VersionsMode extends ResizeComposite implements
 		treeClone.addOpenHandler(this);
 		treeClone.addCloseHandler(this);
 	}
-	
+
 	public void recursiveResetState(TreeItem item) {
 		/*
 		 * if this item has children, and the first child is not a dummy node
@@ -93,7 +93,7 @@ public class VersionsMode extends ResizeComposite implements
 		if (item.getChildCount() > 0
 				&& !item.getChild(0).getStyleName().equals("loadDummyProp")
 				&& !item.getChild(0).getStyleName().equals("loadDummyArg")) {
-			item.setState(((ViewNodeVer)item).isOpen());
+			item.setState(((ViewNodeVer) item).isOpen());
 			for (int i = 0; i < item.getChildCount(); i++) {
 				recursiveResetState(item.getChild(i));
 			}
@@ -145,7 +145,7 @@ public class VersionsMode extends ResizeComposite implements
 						 * the callback just keep calling something like wait()
 						 * until it finds that the clone is finished?
 						 */
-						editMode.buildTreeCloneOfOpenNodesWithIndexes(treeClone);
+						editMode.buildTreeCloneOfOpenNodes(treeClone);
 
 						treePanel.add(treeClone);
 
@@ -173,59 +173,44 @@ public class VersionsMode extends ResizeComposite implements
 
 	private SortedMultiMap<Date, ViewChange> prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
 			Tree treeClone, NodeChangesMaps changesMaps) {
+		ArgMap.logStart("vm.ptwdnacab", false);
 		SortedMultiMap<Date, ViewChange> timeMachineMap = new SortedMultiMap<Date, ViewChange>();
 		for (int i = 0; i < treeClone.getItemCount(); i++) {
 			recursivePrepAndBuild((ViewPropVer) treeClone.getItem(i),
 					timeMachineMap, changesMaps);
 		}
+		ArgMap.logEnd("vm.ptwdnacab");
 		return timeMachineMap;
 	}
 
-	public void recursivePrepAndBuild(ViewPropVer viewProp,
+	public void recursivePrepAndBuild(ViewNodeVer viewNode,
 			SortedMultiMap<Date, ViewChange> timeMachineMap,
 			NodeChangesMaps changesMaps) {
-		NodeChanges<Proposition> nodeChanges = changesMaps.propChanges
-				.get(viewProp.getNodeID());
+		ArgMap.logIndent("vm.ptwdnacab");
+		NodeChanges nodeChanges = viewNode.chooseNodeChanges(changesMaps);
 		for (Long id : nodeChanges.deletedChildIDs) {
-			ViewArgVer deletedView = viewProp.createDeletedView(id);
+			ViewNodeVer deletedView = viewNode.createDeletedView(id);
 			recursivePrepAndBuild(deletedView, timeMachineMap, changesMaps);
 		}
-		for (int i = 0; i < viewProp.getChildCount(); i++) {
-			// TODO how to get rid of this cast?
-			/* TODO what about dummy nodes!!!! this should create a cast error */
-			recursivePrepAndBuild((ViewArgVer) viewProp.getArgView(i),
-					timeMachineMap, changesMaps);
-		}
-		for (Change change : nodeChanges.changes) {
-			ViewChange viewChange = new ViewChange();
-			viewChange.change = change;
-			viewChange.viewNode = viewProp;
-			viewProp.viewChanges.add(viewChange);
-			timeMachineMap.put(change.date, viewChange);
-		}
-	}
+		for (int i = 0; i < viewNode.getChildCount(); i++) {
+			ViewNodeVer child = viewNode.getChildViewNodeVer(i);
 
-	public void recursivePrepAndBuild(ViewArgVer viewArg,
-			SortedMultiMap<Date, ViewChange> timeMachineMap,
-			NodeChangesMaps changesMaps) {
-		NodeChanges<Argument> nodeChanges = changesMaps.argChanges.get(viewArg
-				.getNodeID());
-		for (Long id : nodeChanges.deletedChildIDs) {
-			ViewPropVer deletedView = viewArg.createDeletedView(id);
-			recursivePrepAndBuild(deletedView, timeMachineMap, changesMaps);
+			/* check not make sure that the child is not a load dummy */
+			if (child.getClass() == ViewPropVer.class
+					|| child.getClass() == ViewArgVer.class) {
+				ArgMap.logln("vm.ptwdnacab", "" + child.getClass());
+				recursivePrepAndBuild(child, timeMachineMap, changesMaps);
+			}
 		}
-		for (int i = 0; i < viewArg.getChildCount(); i++) {
-			// TODO how to get rid of this cast?
-			recursivePrepAndBuild((ViewPropVer) viewArg.getPropView(i),
-					timeMachineMap, changesMaps);
-		}
+
 		for (Change change : nodeChanges.changes) {
 			ViewChange viewChange = new ViewChange();
 			viewChange.change = change;
-			viewChange.viewNode = viewArg;
-			viewArg.viewChanges.add(viewChange);
+			viewChange.viewNode = viewNode;
+			viewNode.getViewChangeList().add(viewChange);
 			timeMachineMap.put(change.date, viewChange);
 		}
+		ArgMap.logUnindent("vm.ptwdnacab");
 	}
 
 	private void loadVersionListFromTimeMachine() {
@@ -300,20 +285,26 @@ public class VersionsMode extends ResizeComposite implements
 	public void onOpen(OpenEvent<TreeItem> event) {
 		ArgMap.logStart("vm.oo");
 		ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
-		ArgMap.log("vm.oo", "Adding View Changes: ");
-		SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
-		recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oo");
-		travelFromDateToDate(viewNodeVer.getClosedDate(), currentDate,
-				subTreeChanges);
-		timeMachineMap.putAll(subTreeChanges);
+		if (!viewNodeVer.isLoaded() && false) {
+			
+		} else {
 
-		for (ViewChange viewChange : viewNodeVer.getViewChangeAddRemoveList()) {
-			viewChange.hidden = false;
+			ArgMap.log("vm.oo", "Adding View Changes: ");
+			SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
+			recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oo");
+			travelFromDateToDate(viewNodeVer.getClosedDate(), currentDate,
+					subTreeChanges);
+			timeMachineMap.putAll(subTreeChanges);
+
+			for (ViewChange viewChange : viewNodeVer
+					.getViewChangeAddRemoveList()) {
+				viewChange.hidden = false;
+			}
+
+			loadVersionListFromTimeMachine();
+			viewNodeVer.setOpen(true);
+			ArgMap.logEnd("vm.oo");
 		}
-
-		loadVersionListFromTimeMachine();
-		viewNodeVer.setOpen(true);
-		ArgMap.logEnd("vm.oo");
 	}
 
 	@Override
@@ -339,7 +330,7 @@ public class VersionsMode extends ResizeComposite implements
 			SortedMultiMap<Date, ViewChange> forAddOrRemove, boolean firstNode,
 			String logName) {
 		/*
-		 * if it is the first node then we don't want to remove any changes, as 
+		 * if it is the first node then we don't want to remove any changes, as
 		 * add/remove changes are merely hidden, and modification changes are
 		 * left entirely intact.
 		 */
@@ -373,53 +364,6 @@ public class VersionsMode extends ResizeComposite implements
 			}
 		}
 	}
-
-	public void recursiveGetViewChanges_DELETE_ME_NOW(ViewNodeVer viewNodeVer,
-			SortedMultiMap<Date, ViewChange> forAddOrRemove,
-			boolean skipStateCheck, String logName) {
-
-		for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
-			ViewNodeVer childView = viewNodeVer.getChildViewNodeVer(i);
-			ArgMap.logln(logName, "Node: " + childView.getNodeID()
-					+ "; State: " + childView.isOpen());
-			if (childView.isOpen()) {
-				for (ViewChange viewChange : childView.getViewChangeList()) {
-					ArgMap.logln(logName, "nodeID: " + childView.getNodeID()
-							+ " viewChange: " + viewChange);
-					forAddOrRemove.put(viewChange.change.date, viewChange);
-				}
-				recursiveGetViewChanges(childView, forAddOrRemove, false,
-						logName);
-			}
-		}
-		for (ViewNodeVer deletedView : viewNodeVer.getDeletedViewList()) {
-			ArgMap.logln(logName, "Node: " + deletedView.getNodeID()
-					+ "; State: " + deletedView.isOpen());
-			if (deletedView.isOpen()) {
-				for (ViewChange viewChange : deletedView.getViewChangeList()) {
-					ArgMap.logln(logName, "nodeID: " + deletedView.getNodeID()
-							+ " viewChange: " + viewChange);
-					forAddOrRemove.put(viewChange.change.date, viewChange);
-				}
-				recursiveGetViewChanges(deletedView, forAddOrRemove, false,
-						logName);
-			}
-		}
-	}
-
-	/*
-	 * public void recursiveAddViewChanges(ViewNodeVer viewNodeVer, boolean
-	 * skipStateCheck) { for (ViewChange viewChange :
-	 * viewNodeVer.getViewChangeList()) { ArgMap.logln("vm.oo", "nodeID: " +
-	 * viewNodeVer.getNodeID() + " viewChange: " + viewChange);
-	 * timeMachineMap.put(viewChange.change.date, viewChange); }
-	 * ArgMap.logln("vm.oo", "Node: " + viewNodeVer.getNodeID() + "; State: " +
-	 * viewNodeVer.getState()); if (viewNodeVer.getState() || skipStateCheck) {
-	 * for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
-	 * recursiveAddViewChanges(viewNodeVer.getChildViewNodeVer(i), false); } for
-	 * (ViewNodeVer deletedView : viewNodeVer.getDeletedViewList()) {
-	 * recursiveAddViewChanges(deletedView, false); } } }
-	 */
 
 	public void onClose_DELETE_ME(CloseEvent<TreeItem> event) {
 		TreeItem treeItem = event.getTarget();
@@ -489,7 +433,9 @@ public class VersionsMode extends ResizeComposite implements
 
 		ArgMap.log("vm.mlp", "propTree before timeTravel:");
 		propGraft.logNodeRecursive(0, "vm.mlp", true);
-		//TimeTraveler timeTraveler = new TimeTraveler(propTreeWithHistory.changes, propViewIndex, argViewIndex, null);
+		// TimeTraveler timeTraveler = new
+		// TimeTraveler(propTreeWithHistory.changes, propViewIndex,
+		// argViewIndex, null);
 
 		/*
 		 * propViewParent.getChild(0).remove(); while (propTree.getChildCount()
@@ -530,7 +476,9 @@ public class VersionsMode extends ResizeComposite implements
 
 		ArgMap.log("vm.mla", "propTree before timeTravel:");
 		argGraft.logNodeRecursive(0, "vm.mla", true);
-		//TimeTraveler timeTraveler = new TimeTraveler(argTreeWithHistory.changes, propViewIndex, argViewIndex, null);
+		// TimeTraveler timeTraveler = new
+		// TimeTraveler(argTreeWithHistory.changes, propViewIndex, argViewIndex,
+		// null);
 
 		/*
 		 * propViewParent.getChild(0).remove(); while (propTree.getChildCount()
@@ -563,12 +511,13 @@ public class VersionsMode extends ResizeComposite implements
 		String millisecondStr = versionList.getValue(versionList
 				.getSelectedIndex());
 		Date destinationDate = new Date(Long.parseLong(millisecondStr));
-		travelFromDateToDate(currentDate,
-				destinationDate, timeMachineMap);
-		
-		//TODO: if multiple copies of the same linked proposition are showing how do we know which one to make visible?
-		
-		treePanel.ensureVisible(timeMachineMap.get(destinationDate).get(0).viewNode);
+		travelFromDateToDate(currentDate, destinationDate, timeMachineMap);
+
+		// TODO: if multiple copies of the same linked proposition are showing
+		// how do we know which one to make visible?
+
+		treePanel.ensureVisible((ViewNode) timeMachineMap.get(destinationDate)
+				.get(0).viewNode);
 	}
 
 	public void travelFromDateToDate(Date currentDate, Date newDate,

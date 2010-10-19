@@ -15,6 +15,12 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
+//TODO: finish argmapserviceimpl for getarg/propwithchanges()
+//TODO: write servercomm methods for that
+//TODO: onopen if not loaded yet, load the node, zoom it, append it...
+
+
+//TODO: look at backwards/forwards of linking/unlinking ... I'm not sure I ever finished writing that code
 //TODO: test versioning of unlinking
 //TODO: test/fix versioning of a single empty proposition
 //TODO: undeleting links does not restore their yellow color and linking color seems to be broken...
@@ -61,6 +67,7 @@ public class ArgMap implements EntryPoint {
 	private VersionsMode versionsMode;
 	private static Map<String, StringBuilder> logs = new HashMap<String, StringBuilder>();
 	private static Map<String, Boolean> logsImmediatePrint = new HashMap<String, Boolean>();
+	private static Map<String, Integer> logsCurrentIndent = new HashMap<String, Integer>();
 	private static MessageTimer messageTimer = new MessageTimer();
 
 	public void onModuleLoad() {
@@ -164,6 +171,7 @@ public class ArgMap implements EntryPoint {
 		log.append(logName + ": ");
 		logs.put(logName, log);
 		logsImmediatePrint.put(logName, immediatePrint);
+		logsCurrentIndent.put(logName, 0 );
 
 	}
 
@@ -174,6 +182,7 @@ public class ArgMap implements EntryPoint {
 		if (logsImmediatePrint.remove(logName)) {
 			return;
 		}
+		logsCurrentIndent.remove( logName );
 		GWT.log(log.toString());
 	}
 
@@ -193,7 +202,21 @@ public class ArgMap implements EntryPoint {
 		if (logsImmediatePrint.get(logName)) {
 			log(logName, string);
 		} else {
-			log(logName, "\n" + string);
+			log(logName, "\n" + spaces(logsCurrentIndent.get(logName)*2) + string);
 		}
+	}
+	
+	public static void logIndent( String logName ){
+		if (logName == null)
+			return;
+		Integer current = logsCurrentIndent.get(logName);
+		logsCurrentIndent.put(logName, current++);
+	}
+	
+	public static void logUnindent( String logName ){
+		if (logName == null)
+			return;
+		Integer current = logsCurrentIndent.get(logName);
+		logsCurrentIndent.put(logName, current--);
 	}
 }

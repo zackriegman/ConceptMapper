@@ -1,9 +1,7 @@
 package org.argmap.client;
 
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.SortedMap;
 import java.util.Queue;
 
 import org.argmap.client.ArgMap.MessageType;
@@ -120,24 +118,6 @@ public class ServerComm {
 		propositionService
 				.getAllPropsAndArgs(new ServerCallback<AllPropsAndArgs>(
 						localCallback, "Server Reports Success Fetching Props"));
-	}
-
-	public static void getRevisions(Change change, List<Proposition> props,
-			List<Argument> args,
-			LocalCallback<SortedMap<Date, Change>> localCallback) {
-		Long changeID = (change == null) ? null : change.id;
-		List<Long> propIDs = new LinkedList<Long>();
-		for (Proposition prop : props) {
-			propIDs.add(prop.id);
-		}
-		List<Long> argIDs = new LinkedList<Long>();
-		for (Argument arg : args) {
-			argIDs.add(arg.id);
-		}
-
-		propositionService.getRevisions(changeID, propIDs, argIDs,
-				new ServerCallback<SortedMap<Date, Change>>(localCallback,
-						"Server Reports Success Fetching Changes"));
 	}
 
 	public static void getChanges(List<Proposition> props, List<Argument> args,

@@ -1,13 +1,13 @@
 package org.argmap.client;
 
 
-import java.util.Date;
 import java.util.List;
-import java.util.SortedMap;
 
 import org.argmap.client.ArgMapService.AllPropsAndArgs;
+import org.argmap.client.ArgMapService.ArgWithChanges;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodesWithHistory;
+import org.argmap.client.ArgMapService.PropWithChanges;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -33,10 +33,6 @@ public interface ArgMapServiceAsync {
 	void unlinkProposition(Long parentArgID, Long propositionID,
 			AsyncCallback<Void> callback);
 
-
-	void getRevisions(Long changeID, List<Long> propIDs, List<Long> argIDs,
-			AsyncCallback<SortedMap<Date, Change>> callback);
-
 	void searchPropositions(String string, Long filterArgID,
 			AsyncCallback<List<Proposition>> callback);
 
@@ -61,4 +57,10 @@ public interface ArgMapServiceAsync {
 			AsyncCallback<NodeChangesMaps> callback);
 
 	void deleteArgument(Long argID, AsyncCallback<Void> callback);
+
+	void getPropositionWithChanges(Long propID,
+			AsyncCallback<PropWithChanges> callback);
+
+	void getArgumentWithChanges(Long argID,
+			AsyncCallback<ArgWithChanges> callback);
 }

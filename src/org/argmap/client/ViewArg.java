@@ -29,12 +29,13 @@ public class ViewArg extends ViewNode {
 	public ViewArg() {
 		initialize();
 	}
-
-	public ViewArgVer createClone() {
+	
+	@Override
+	public ViewNode createViewNodeVerClone() {
 		ViewArgVer argView = new ViewArgVer(new Argument(argument));
-		argView.setState(getState());
+		argView.setOpen(getModifiedState());
+		argView.setLoaded(getModifiedState());
 		return argView;
-
 	}
 
 	private void initialize() {
@@ -72,7 +73,7 @@ public class ViewArg extends ViewNode {
 	}
 
 	public String toString() {
-		return "text:" + getText() + "; id:" + argument.id;
+		return "text:" + getText() + "; arg:" + argument;
 	}
 
 	public ViewProp getPropView(int index) {

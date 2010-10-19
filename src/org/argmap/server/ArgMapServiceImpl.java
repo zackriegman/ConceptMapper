@@ -2,7 +2,6 @@ package org.argmap.server;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,8 +9,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.StopAnalyzer;
@@ -283,6 +280,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		change.argID = parentArgID;
 		change.propID = proposition.id;
 		change.argPropIndex = propIndex;
+		change.content = proposition.content;
 		saveVersionInfo(change);
 	}
 
@@ -425,34 +423,19 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 		return nodesChanges;
 	}
+	
+	@Override
+	public PropWithChanges getPropositionWithChanges(Long propID) throws Exception {
+		Proposition proposition = ofy.get(Proposition.class, propID);
+		
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 	@Override
-	public SortedMap<Date, Change> getRevisions(Long changeID,
-			List<Long> propIDs, List<Long> argIDs) throws Exception {
-//TODO: DELETE THIS METHOD
-		SortedMap<Date, Change> map = new TreeMap<Date, Change>();
-		// HashSet<Long> processedProps = new HashSet<Long>();
-		// HashSet<Long> processedArgs = new HashSet<Long>();
-		if (changeID != null) {
-			Change changeEnd = ofy.get(Change.class, changeID);
-			recursiveQueryChanges(propIDs, argIDs, map, changeEnd.date);
-		} else {
-			recursiveQueryChanges(propIDs, argIDs, map, null);
-		}
-
-		// printAllChanges();
-
-		/*
-		 * reverse the order of the list println("getRevisions: changes:");
-		 * List<Change> returnList = new LinkedList<Change>(); for (Change
-		 * change : map.values()) { returnList.add(0, change);
-		 * println(change.toString()); }
-		 */
-
-		// TODO make sure the map is ordered in the right direction, which it
-		// should be, oldest to newest...
-
-		return map;
+	public ArgWithChanges getArgumentWithChanges(Long argID) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
@@ -467,6 +450,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		return getPropOrArgCurrentVersionAndHistory(null, argID);
 	}
 
+	/* warning: I commented out critical code so this function will not 
+	 * work as expected... it's meant to be deleted soon
+	 */
 	private NodesWithHistory getPropOrArgCurrentVersionAndHistory(Long propID,
 			Long argID) throws Exception {
 		println("start getPropositionCurrentVersionAndHistory()");
@@ -495,9 +481,11 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			 */
 		}
 
+		/* I deleted the get revisions method so this is throwing an error
 		versions.changes = getRevisions(null, new ArrayList<Long>(
 				versions.nodes.props.keySet()), new ArrayList<Long>(
 				versions.nodes.args.keySet()));
+				*/
 
 		println("end start getPropositionCurrentVersionAndHistory()");
 		return versions;
@@ -509,18 +497,26 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			return;
 		}
 
+		NodeChanges nodeChanges = new NodeChanges();
+		nodeChangesMaps.propChanges.put(propID, nodeChanges);
+		
+		getPropChanges( propID, nodeChanges.changes, nodeChanges.deletedChildIDs );
+		
+		for( Long id : nodeChanges.deletedChildIDs ){
+			recursiveGetArgChanges(id, nodeChangesMaps);
+		}
+	}
+	
+	public void getPropChanges( Long propID, List<Change> propChanges, List<Long> deletedChildIDs ){
 		Query<Change> query = ofy.query(Change.class).filter("propID = ",
 				propID);
-		NodeChanges<Proposition> nodeChanges = new NodeChanges<Proposition>();
-		nodeChangesMaps.propChanges.put(propID, nodeChanges);
 		for (Change change : query) {
 			switch (change.changeType) {
 			case ARG_DELETION:
-				nodeChanges.deletedChildIDs.add(change.argID);
-				recursiveGetArgChanges(change.argID, nodeChangesMaps);
+				deletedChildIDs.add(change.argID);
 			case ARG_ADDITION:
 			case PROP_MODIFICATION:
-				nodeChanges.changes.add(change);
+				propChanges.add(change);
 				break;
 			case ARG_MODIFICATION:
 				// this case should never happen
@@ -540,19 +536,27 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			return;
 		}
 
-		Query<Change> query = ofy.query(Change.class).filter("argID = ", argID);
-		NodeChanges<Argument> nodeChanges = new NodeChanges<Argument>();
+		NodeChanges nodeChanges = new NodeChanges();
 		nodeChangesMaps.argChanges.put(argID, nodeChanges);
+		
+		getArgChanges( argID, nodeChanges.changes, nodeChanges.deletedChildIDs );
+		
+		for( Long id : nodeChanges.deletedChildIDs ){
+			recursiveGetPropChanges( id, nodeChangesMaps);
+		}
+	}
+	
+	public void getArgChanges( Long argID, List<Change> argChanges, List<Long> deletedChildIDs ){
+		Query<Change> query = ofy.query(Change.class).filter("argID = ", argID);
 		for (Change change : query) {
 			switch (change.changeType) {
 			case PROP_UNLINK:
 			case PROP_DELETION:
-				nodeChanges.deletedChildIDs.add(change.propID);
-				recursiveGetPropChanges(change.propID, nodeChangesMaps);
+				deletedChildIDs.add(change.propID);
 			case ARG_MODIFICATION:
 			case PROP_ADDITION:
 			case PROP_LINK:
-				nodeChanges.changes.add(change);
+				argChanges.add(change);
 				break;
 			case PROP_MODIFICATION:
 				// this case should never happen
@@ -563,6 +567,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			}
 		}
 	}
+
 
 	public void recursiveQueryChanges(List<Long> propIDs, List<Long> argIDs,
 			Map<Date, Change> map, Date date) {

@@ -43,9 +43,6 @@ public interface ArgMapService extends RemoteService {
 	
 	public Nodes replaceWithLinkAndGet(Long parentArgID, Long linkPropID, Long removePropID) throws Exception;
 
-	public SortedMap<Date, Change> getRevisions(Long changeID,
-			List<Long> propIDs, List<Long> argIDs) throws Exception;
-
 	public class NodesWithHistory implements Serializable {
 		/* added to suppress warnings */
 		private static final long serialVersionUID = 1L;
@@ -59,10 +56,26 @@ public interface ArgMapService extends RemoteService {
 	public NodesWithHistory getArgumentCurrentVersionAndHistory(Long argID)
 			throws Exception;
 	
+	public class PropWithChanges implements Serializable {
+		private static final long serialVersionUID = 1L;
+		Proposition proposition;
+		NodeChanges nodeChanges;
+	}
+	
+	public class ArgWithChanges implements Serializable {
+		private static final long serialVersionUID = 1L;
+		Argument argument;
+		NodeChanges nodeChanges;
+	}
+	
+	public PropWithChanges getPropositionWithChanges( Long propID ) throws Exception;
+	
+	public ArgWithChanges getArgumentWithChanges( Long argID ) throws Exception;
+	
 	public class NodeChangesMaps implements Serializable {
 		private static final long serialVersionUID = 1L;
-		public Map<Long, NodeChanges<Argument>> argChanges = new HashMap<Long, NodeChanges<Argument>>();
-		public Map<Long, NodeChanges<Proposition>> propChanges = new HashMap<Long, NodeChanges<Proposition>>();
+		public Map<Long, NodeChanges> argChanges = new HashMap<Long, NodeChanges>();
+		public Map<Long, NodeChanges> propChanges = new HashMap<Long, NodeChanges>();
 		
 		public String toString(){
 			StringBuffer buffer = new StringBuffer();

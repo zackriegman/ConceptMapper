@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.argmap.client.ArgMapService.NodeChangesMaps;
+
 
 
 public class ViewPropVer extends ViewProp implements ViewNodeVer {
@@ -22,6 +24,7 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 	public boolean open = true;
 	public Map<Long, ViewNodeVer> deletedViews = new HashMap<Long, ViewNodeVer>();
 	public Date closedDate;
+	private boolean isLoaded = true;
 	
 	public Date getClosedDate(){
 		return closedDate;
@@ -45,7 +48,7 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 		textArea.setReadOnly(true);
 	}
 
-	public static ViewPropVer cloneViewEdit(ViewPropEdit viewEdit) {
+	public static ViewPropVer cloneViewEdit_DELETE_ME(ViewPropEdit viewEdit) {
 		ViewPropVer cloneView = new ViewPropVer(viewEdit.proposition);
 		cloneView.textArea.setText(viewEdit.textArea.getText());
 		cloneView.setState(viewEdit.getState());
@@ -118,6 +121,18 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 	
 	public void setOpen( boolean open ){
 		this.open = open;
+	}
+	
+	@Override
+	public NodeChanges chooseNodeChanges(NodeChangesMaps changesMaps) {
+		return changesMaps.propChanges.get(getNodeID());
+	}
+	
+	public boolean isLoaded(){
+		return isLoaded;
+	}
+	public void setLoaded( boolean isLoaded ){
+		this.isLoaded = isLoaded;
 	}
 }
 

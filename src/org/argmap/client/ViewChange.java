@@ -2,7 +2,7 @@ package org.argmap.client;
 
 public class ViewChange {
 	Change change;
-	ViewNode viewNode;
+	ViewNodeVer viewNode;
 	boolean hidden = false;
 	
 	public String toString(){

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class NodeChanges<T> implements Serializable {
+public class NodeChanges implements Serializable {
 	/** to suppress warnings */
 	private static final long serialVersionUID = 1L;
 	public List<Change> changes = new ArrayList<Change>();

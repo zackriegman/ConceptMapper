@@ -7,6 +7,7 @@ import com.google.gwt.user.client.ui.TreeItem;
 
 public abstract class ViewNode extends TreeItem {
 	public abstract Long getNodeID();
+	public abstract ViewNode createViewNodeVerClone();
 
 	public ViewNode removeChildView(Long id) {
 		int index = indexOfChildWithID(id);
@@ -84,6 +85,14 @@ public abstract class ViewNode extends TreeItem {
 				ViewNode node = getChildView(i);
 				node.logNodeRecursive(level + 1, logName, includeChildrenOfClosedNodes);
 			}
+		}
+	}
+	
+	public boolean getModifiedState(){
+		if( getState() || getChildCount() == 0 ){
+			return true;
+		} else {
+			return false;
 		}
 	}
 }

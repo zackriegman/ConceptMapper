@@ -59,8 +59,7 @@ public class EditMode extends ResizeComposite implements
 
 				tree.addItem(newPropView);
 				newPropView.haveFocus();
-				ServerComm
-						.addProposition(newPropView.getProposition(), null, 0);
+				ServerComm.addProposition(newPropView.getProposition(), null, 0);
 			}
 		});
 
@@ -76,22 +75,16 @@ public class EditMode extends ResizeComposite implements
 			@Override
 			public void call(AllPropsAndArgs allNodes) {
 				/*
-				GWT.log("Root Props:");
-				for (Long propID : allNodes.rootProps.keySet()) {
-					GWT.log("propID:" + propID + "; prop:"
-							+ allNodes.rootProps.get(propID).toString());
-				}
-				GWT.log("Props:");
-				for (Long propID : allNodes.nodes.props.keySet()) {
-					GWT.log("propID:" + propID + "; prop:"
-							+ allNodes.nodes.props.get(propID).toString());
-				}
-				GWT.log("Args:");
-				for (Long argID : allNodes.nodes.args.keySet()) {
-					GWT.log("argID:" + argID + "; arg:"
-							+ allNodes.nodes.args.get(argID).toString());
-				}
-				*/
+				 * GWT.log("Root Props:"); for (Long propID :
+				 * allNodes.rootProps.keySet()) { GWT.log("propID:" + propID +
+				 * "; prop:" + allNodes.rootProps.get(propID).toString()); }
+				 * GWT.log("Props:"); for (Long propID :
+				 * allNodes.nodes.props.keySet()) { GWT.log("propID:" + propID +
+				 * "; prop:" + allNodes.nodes.props.get(propID).toString()); }
+				 * GWT.log("Args:"); for (Long argID :
+				 * allNodes.nodes.args.keySet()) { GWT.log("argID:" + argID +
+				 * "; arg:" + allNodes.nodes.args.get(argID).toString()); }
+				 */
 				ArgMap.logStart("em.em.cb");
 				ArgMap.log("em.em.cb", "Prop Tree From Server");
 				for (Long propID : allNodes.rootProps.keySet()) {
@@ -171,8 +164,9 @@ public class EditMode extends ResizeComposite implements
 							propToLinkTo, propViewToRemove.proposition,
 							callback);
 				} else {
-					ArgMap
-							.message("Cannot link to existing proposition when proposition currently being edited has children", MessageType.ERROR);
+					ArgMap.message(
+							"Cannot link to existing proposition when proposition currently being edited has children",
+							MessageType.ERROR);
 				}
 			}
 		}
@@ -221,64 +215,31 @@ public class EditMode extends ResizeComposite implements
 		}
 	}
 
-	public Tree buildTreeCloneOfOpenNodesWithIndexes(Tree cloneTree) {
-		// TODO build the index
+	public Tree buildTreeCloneOfOpenNodes(Tree cloneTree) {
+		ArgMap.logStart("em.btcoop");
 		for (int i = 0; i < tree.getItemCount(); i++) {
-			ViewPropVer clonedPropView = recursiveTreeClone((ViewPropEdit) tree
+			ViewNode clonedPropView = recursiveTreeClone((ViewPropEdit) tree
 					.getItem(i));
 			cloneTree.addItem(clonedPropView);
 		}
+		ArgMap.logEnd("em.btcoop");
 		return cloneTree;
 	}
 
-	public ViewPropVer recursiveTreeClone(ViewPropEdit realPropView) {
-		// TODO make prop view non-editable
-		ViewPropVer clonePropView = ViewPropVer.cloneViewEdit(realPropView);
-
-		/* if the proposition is open then clone it */
-		if (realPropView.getState()) {
-			for (int i = 0; i < realPropView.getChildCount(); i++) {
-				ViewArgEdit realArgView = (ViewArgEdit) realPropView
-						.getChild(i);
-				ViewArgVer cloneArgView = realArgView.createClone();
-				clonePropView.addItem(cloneArgView);
-
-				/* if the argument is open then clone it */
-				if (realArgView.getState()) {
-					for (int j = 0; j < realArgView.getChildCount(); j++) {
-						cloneArgView.addItem(recursiveTreeClone(
-								(ViewPropEdit) realArgView.getChild(j)));
-					}
-				}
-				/*
-				 * if the argument is not open, but does have child
-				 * propositions, then insert a place holder
-				 */
-				else if (realArgView.getChildCount() > 0) {
-					cloneArgView.addItem(newLoadDummyTreeItemArg());
-				}
+	public ViewNode recursiveTreeClone(ViewNode realViewNode) {
+		ArgMap.logIndent("em.btcoop");
+		ViewNode cloneViewNode = realViewNode.createViewNodeVerClone();
+		
+		for (int i = 0; i < realViewNode.getChildCount(); i++) {
+			ViewNode realChild = realViewNode.getChildView(i);
+			if (realViewNode.getState()) {
+				cloneViewNode.addItem(recursiveTreeClone(realChild));
+			} else {
+				cloneViewNode.addItem(new ViewDummyVer(realChild.getNodeID()));
 			}
 		}
-		/*
-		 * if the proposition is not open, but does have child args, insert a
-		 * place holder
-		 */
-		else if (realPropView.getChildCount() > 0) {
-			clonePropView.addItem(newLoadDummyTreeItemProp());
-		}
-		return clonePropView;
-	}
-
-	public TreeItem newLoadDummyTreeItemProp() {
-		TreeItem treeItem = new TreeItem("loading from server...");
-		treeItem.addStyleName("loadDummyProp");
-		return treeItem;
-	}
-
-	public TreeItem newLoadDummyTreeItemArg() {
-		TreeItem treeItem = new TreeItem("loading from server...");
-		treeItem.addStyleName("loadDummyArg");
-		return treeItem;
+		ArgMap.logUnindent("em.btcoop");
+		return cloneViewNode;
 	}
 
 	public void getOpenPropsAndArgs(List<Proposition> props, List<Argument> args) {
@@ -301,8 +262,8 @@ public class EditMode extends ResizeComposite implements
 				args.add(argView.argument);
 				if (argView.getState() || propView.getChildCount() == 0) {
 					for (int j = 0; j < argView.getChildCount(); j++) {
-						recursiveGetOpenPropsAndArgs((ViewPropEdit) argView
-								.getChild(j), props, args);
+						recursiveGetOpenPropsAndArgs(
+								(ViewPropEdit) argView.getChild(j), props, args);
 					}
 				}
 			}
@@ -321,25 +282,4 @@ public class EditMode extends ResizeComposite implements
 			recursiveOpenTreeItem(item.getChild(i));
 		}
 	}
-	/*
-	 * public ViewPropEdit recursiveBuildPropositionView(Proposition prop,
-	 * boolean editable, Nodes nodes, Map<Long, ViewPropEdit> propViewIndex,
-	 * Map<Long, ViewArgEdit> argViewIndex) {
-	 * 
-	 * ViewPropEdit propView = new ViewPropEdit(prop); if (propViewIndex !=
-	 * null) propViewIndex.put(prop.id, propView); for (Long argID :
-	 * prop.argIDs) { Argument argument = nodes.args.get(argID);
-	 * propView.addItem(recursiveBuildArgumentView(argument, editable, nodes,
-	 * propViewIndex, argViewIndex)); } return propView; }
-	 * 
-	 * public ViewArgEdit recursiveBuildArgumentView(Argument arg, boolean
-	 * editable, Nodes nodes, Map<Long, ViewPropEdit> propViewIndex, Map<Long,
-	 * ViewArgEdit> argViewIndex) {
-	 * 
-	 * ViewArgEdit argView = new ViewArgEdit(arg); if (argViewIndex != null)
-	 * argViewIndex.put(arg.id, argView); for (Long propID : arg.propIDs) {
-	 * Proposition proposition = nodes.props.get(propID);
-	 * argView.addItem(recursiveBuildPropositionView(proposition, editable,
-	 * nodes, propViewIndex, argViewIndex)); } return argView; }
-	 */
 }

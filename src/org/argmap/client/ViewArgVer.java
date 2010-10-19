@@ -7,10 +7,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.argmap.client.ArgMapService.NodeChangesMaps;
+
 
 public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	public List<ViewChange> viewChanges = new ArrayList<ViewChange>();
 	public boolean open = true;
+	private boolean isLoaded = true;
 
 	public static ViewArgFactory<ViewArgVer> FACTORY = new ViewArgFactory<ViewArgVer>() {
 		@Override
@@ -103,5 +106,17 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	
 	public void setOpen( boolean open ){
 		this.open = open;
+	}
+
+	@Override
+	public NodeChanges chooseNodeChanges(NodeChangesMaps changesMaps) {
+		return changesMaps.argChanges.get(getNodeID());
+	}
+	
+	public boolean isLoaded(){
+		return isLoaded;
+	}
+	public void setLoaded( boolean isLoaded ){
+		this.isLoaded = isLoaded;
 	}
 }

@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import org.argmap.client.ArgMapService.NodeChangesMaps;
+
 public interface ViewNodeVer {
 	public List<ViewChange> getViewChangeList();
 	public List<ViewChange> getViewChangeAddRemoveList();
@@ -16,4 +18,8 @@ public interface ViewNodeVer {
 	public void setClosedDate( Date closedDate );
 	public boolean isOpen();
 	public void setOpen( boolean open );
+	public NodeChanges chooseNodeChanges( NodeChangesMaps changesMaps );
+	public ViewNodeVer createDeletedView(Long id);
+	public boolean isLoaded();
+	public void setLoaded( boolean isLoaded );
 }

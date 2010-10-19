@@ -30,7 +30,7 @@ public abstract class ViewProp extends ViewNode {
 	}
 
 	public String toString() {
-		return "textArea:" + textArea.getText() + "; id:" + proposition.id;
+		return "textArea:" + textArea.getText() + "; prop:" + proposition;
 	}
 
 	public Long getNodeID() {
@@ -50,6 +50,15 @@ public abstract class ViewProp extends ViewNode {
 			return ((ViewArgEdit) this.getParentItem());
 		else
 			return null;
+	}
+	
+	@Override
+	public ViewNode createViewNodeVerClone() {
+		ViewPropVer cloneView = new ViewPropVer(proposition);
+		cloneView.textArea.setText(textArea.getText());
+		cloneView.setOpen(getModifiedState());
+		cloneView.setLoaded(getModifiedState());
+		return cloneView;
 	}
 
 	public boolean isTopLevel() {
