@@ -24,7 +24,6 @@ import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -37,7 +36,7 @@ public class VersionsMode extends ResizeComposite implements
 	private ListBox versionList = new ListBox();
 	private EditMode editMode;
 	private Tree treeClone = null;
-	private FlowPanel treePanel = new FlowPanel();
+	private ScrollPanel treePanel = new ScrollPanel();
 	private final int LIST_WIDTH = 20;
 
 	// SplitLayoutPanel mainPanel;
@@ -66,7 +65,7 @@ public class VersionsMode extends ResizeComposite implements
 
 		// add(versionList);
 		mainPanel.addWest(versionList, LIST_WIDTH);
-		mainPanel.add(new ScrollPanel(treePanel));
+		mainPanel.add(treePanel);
 		// mainPanel.add(new Label("HEELO"));
 
 		versionList.setVisibleItemCount(2);
@@ -85,8 +84,23 @@ public class VersionsMode extends ResizeComposite implements
 		treeClone.addOpenHandler(this);
 		treeClone.addCloseHandler(this);
 	}
-
+	
 	public void recursiveResetState(TreeItem item) {
+		/*
+		 * if this item has children, and the first child is not a dummy node
+		 * place holder loading message
+		 */
+		if (item.getChildCount() > 0
+				&& !item.getChild(0).getStyleName().equals("loadDummyProp")
+				&& !item.getChild(0).getStyleName().equals("loadDummyArg")) {
+			item.setState(((ViewNodeVer)item).isOpen());
+			for (int i = 0; i < item.getChildCount(); i++) {
+				recursiveResetState(item.getChild(i));
+			}
+		}
+	}
+
+	public void recursiveResetState_DELETE_ME(TreeItem item) {
 		/*
 		 * if this item has children, and the first child is not a dummy node
 		 * place holder loading message
@@ -274,6 +288,7 @@ public class VersionsMode extends ResizeComposite implements
 		return returnList;
 	}
 
+	@SuppressWarnings("unused")
 	private void logTree(String logName) {
 		for (int i = 0; i < treeClone.getItemCount(); i++) {
 			ViewNode viewNode = (ViewNode) treeClone.getItem(i);
@@ -432,7 +447,7 @@ public class VersionsMode extends ResizeComposite implements
 
 					@Override
 					public void call(NodesWithHistory propTreeWithHistory) {
-						mergeLoadedProposition(propView.proposition,
+						mergeLoadedProposition_DELETE_ME(propView.proposition,
 								propTreeWithHistory);
 					}
 				}
@@ -447,7 +462,7 @@ public class VersionsMode extends ResizeComposite implements
 
 					@Override
 					public void call(NodesWithHistory argTreeWithHistory) {
-						mergeLoadedArgument(argView.argument,
+						mergeLoadedArgument_DELETE_ME(argView.argument,
 								argTreeWithHistory);
 					}
 				}
@@ -461,7 +476,7 @@ public class VersionsMode extends ResizeComposite implements
 
 	}
 
-	public void mergeLoadedProposition(Proposition proposition,
+	public void mergeLoadedProposition_DELETE_ME(Proposition proposition,
 			NodesWithHistory propTreeWithHistory) {
 
 		ArgMap.logStart("vm.mlp");
@@ -474,8 +489,7 @@ public class VersionsMode extends ResizeComposite implements
 
 		ArgMap.log("vm.mlp", "propTree before timeTravel:");
 		propGraft.logNodeRecursive(0, "vm.mlp", true);
-		TimeTraveler timeTraveler = new TimeTraveler(
-				propTreeWithHistory.changes, propViewIndex, argViewIndex, null);
+		//TimeTraveler timeTraveler = new TimeTraveler(propTreeWithHistory.changes, propViewIndex, argViewIndex, null);
 
 		/*
 		 * propViewParent.getChild(0).remove(); while (propTree.getChildCount()
@@ -503,7 +517,7 @@ public class VersionsMode extends ResizeComposite implements
 		ArgMap.log("vm.mlp", "mergeLoadedPropositon: start");
 	}
 
-	public void mergeLoadedArgument(Argument argument,
+	public void mergeLoadedArgument_DELETE_ME(Argument argument,
 			NodesWithHistory argTreeWithHistory) {
 
 		ArgMap.logStart("vm.mla");
@@ -516,8 +530,7 @@ public class VersionsMode extends ResizeComposite implements
 
 		ArgMap.log("vm.mla", "propTree before timeTravel:");
 		argGraft.logNodeRecursive(0, "vm.mla", true);
-		TimeTraveler timeTraveler = new TimeTraveler(
-				argTreeWithHistory.changes, propViewIndex, argViewIndex, null);
+		//TimeTraveler timeTraveler = new TimeTraveler(argTreeWithHistory.changes, propViewIndex, argViewIndex, null);
 
 		/*
 		 * propViewParent.getChild(0).remove(); while (propTree.getChildCount()
@@ -549,8 +562,13 @@ public class VersionsMode extends ResizeComposite implements
 	public void onChange(ChangeEvent event) {
 		String millisecondStr = versionList.getValue(versionList
 				.getSelectedIndex());
+		Date destinationDate = new Date(Long.parseLong(millisecondStr));
 		travelFromDateToDate(currentDate,
-				new Date(Long.parseLong(millisecondStr)), timeMachineMap);
+				destinationDate, timeMachineMap);
+		
+		//TODO: if multiple copies of the same linked proposition are showing how do we know which one to make visible?
+		
+		treePanel.ensureVisible(timeMachineMap.get(destinationDate).get(0).viewNode);
 	}
 
 	public void travelFromDateToDate(Date currentDate, Date newDate,
@@ -606,6 +624,7 @@ public class VersionsMode extends ResizeComposite implements
 					true));
 		}
 		this.currentDate = newDate;
+		resetState(treeClone);
 		ArgMap.logEnd("tm.ttd");
 	}
 

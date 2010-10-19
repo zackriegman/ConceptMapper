@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.argmap.client.Change.ChangeType;
 
 public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	public List<ViewChange> viewChanges = new ArrayList<ViewChange>();
@@ -58,6 +57,7 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 		 * set before it is used when the time machine goes back in time...
 		 */
 		ViewPropVer deletedView = new ViewPropVer(id);
+		deletedView.setState(true);
 		deletedViews.put(id, deletedView);
 		return deletedView;
 	}

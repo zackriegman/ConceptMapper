@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.argmap.client.Change.ChangeType;
 
 
 public class ViewPropVer extends ViewProp implements ViewNodeVer {
@@ -73,6 +72,7 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 		Argument argument = new Argument();
 		argument.id = id;
 		ViewArgVer deletedView = new ViewArgVer(argument);
+		deletedView.setState(true);
 		deletedViews.put(id, deletedView );
 		return deletedView;
 	}

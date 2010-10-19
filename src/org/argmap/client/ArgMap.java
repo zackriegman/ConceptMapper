@@ -12,11 +12,9 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: test/fix versioning of deletions
 //TODO: test versioning of unlinking
 //TODO: test/fix versioning of a single empty proposition
 //TODO: undeleting links does not restore their yellow color and linking color seems to be broken...
