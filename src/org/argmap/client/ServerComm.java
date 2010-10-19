@@ -6,8 +6,10 @@ import java.util.Queue;
 
 import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.AllPropsAndArgs;
+import org.argmap.client.ArgMapService.ArgWithChanges;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodesWithHistory;
+import org.argmap.client.ArgMapService.PropWithChanges;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -20,7 +22,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  * queuing the remote calls.
  */
 public class ServerComm {
-	private static ArgMapServiceAsync propositionService = GWT
+	private static ArgMapServiceAsync argMapService = GWT
 			.create(ArgMapService.class);
 
 	private static Queue<Command> commandQueue = new LinkedList<Command>();
@@ -100,9 +102,11 @@ public class ServerComm {
 
 		@Override
 		public final void onSuccess(T result) {
-			/* this must come before dispatchCommand() otherwise the client might send a 
-			 * request to add a proposition to an argument before the argument has been
-			 * assigned an id by the return call from the server...
+			/*
+			 * this must come before dispatchCommand() otherwise the client
+			 * might send a request to add a proposition to an argument before
+			 * the argument has been assigned an id by the return call from the
+			 * server...
 			 */
 			doOnSuccess(result);
 			dispatchCommand();
@@ -115,7 +119,7 @@ public class ServerComm {
 	}
 
 	public static void fetchProps(LocalCallback<AllPropsAndArgs> localCallback) {
-		propositionService
+		argMapService
 				.getAllPropsAndArgs(new ServerCallback<AllPropsAndArgs>(
 						localCallback, "Server Reports Success Fetching Props"));
 	}
@@ -130,14 +134,14 @@ public class ServerComm {
 		for (Argument arg : args) {
 			argIDs.add(arg.id);
 		}
-		propositionService.getChanges(propIDs, argIDs,
+		argMapService.getChanges(propIDs, argIDs,
 				new ServerCallback<NodeChangesMaps>(localCallback,
 						"Server Reports Success Getting Changes"));
 	}
 
 	public static void getPropositionCurrentVersionAndHistory(Proposition prop,
 			LocalCallback<NodesWithHistory> localCallback) {
-		propositionService
+		argMapService
 				.getPropositionCurrentVersionAndHistory(
 						prop.id,
 						new ServerCallback<NodesWithHistory>(localCallback,
@@ -146,11 +150,29 @@ public class ServerComm {
 
 	public static void getArgumentCurrentVersionAndHistory(Argument arg,
 			LocalCallback<NodesWithHistory> localCallback) {
-		propositionService
+		argMapService
 				.getArgumentCurrentVersionAndHistory(
 						arg.id,
 						new ServerCallback<NodesWithHistory>(localCallback,
 								"Server Reports Success Fetching Argument and History"));
+	}
+
+	public static void getPropsWithChanges(List<Long> propIDs,
+			LocalCallback<List<PropWithChanges>> localCallback) {
+		argMapService
+				.getPropositionsWithChanges(
+						propIDs,
+						new ServerCallback<List<PropWithChanges>>(localCallback,
+								"Server Reports Success Fetching Proposition With Changes"));
+	}
+
+	public static void getArgWithChanges(List<Long> argIDs,
+			LocalCallback<List<ArgWithChanges>> localCallback) {
+		argMapService
+		.getArgumentsWithChanges(
+				argIDs,
+				new ServerCallback<List<ArgWithChanges>>(localCallback,
+						"Server Reports Success Fetching Proposition With Changes"));
 	}
 
 	public static void searchPropositions(String string, Argument filterArg,
@@ -160,7 +182,7 @@ public class ServerComm {
 			id = filterArg.id;
 		}
 
-		propositionService.searchPropositions(string, id,
+		argMapService.searchPropositions(string, id,
 				new ServerCallback<List<Proposition>>(localCallback, null));
 	}
 
@@ -180,7 +202,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				propositionService.addArgument(parentProp.id, pro, this);
+				argMapService.addArgument(parentProp.id, pro, this);
 			}
 
 			@Override
@@ -209,7 +231,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				propositionService.deleteProposition(prop.id, this);
+				argMapService.deleteProposition(prop.id, this);
 			}
 
 			@Override
@@ -233,7 +255,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				propositionService.deleteArgument(arg.id, this);
+				argMapService.deleteArgument(arg.id, this);
 			}
 
 			@Override
@@ -258,7 +280,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				propositionService.unlinkProposition(parentArg.id,
+				argMapService.unlinkProposition(parentArg.id,
 						unlinkProp.id, this);
 			}
 
@@ -284,7 +306,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				propositionService.updateArgument(arg.id, arg.title, this);
+				argMapService.updateArgument(arg.id, arg.title, this);
 			}
 
 			@Override
@@ -309,7 +331,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				propositionService.updateProposition(prop.id,
+				argMapService.updateProposition(prop.id,
 						prop.getContent(), this);
 			}
 
@@ -339,10 +361,10 @@ public class ServerComm {
 			@Override
 			public void execute() {
 				if (parentArgument != null)
-					propositionService.addProposition(parentArgument.id,
+					argMapService.addProposition(parentArgument.id,
 							position, newProposition.content, this);
 				else
-					propositionService.addProposition(null, 0,
+					argMapService.addProposition(null, 0,
 							newProposition.content, this);
 			}
 
@@ -377,7 +399,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				propositionService.replaceWithLinkAndGet(parentArgID,
+				argMapService.replaceWithLinkAndGet(parentArgID,
 						linkPropID, removePropID, this);
 			}
 

@@ -58,19 +58,19 @@ public interface ArgMapService extends RemoteService {
 	
 	public class PropWithChanges implements Serializable {
 		private static final long serialVersionUID = 1L;
-		Proposition proposition;
-		NodeChanges nodeChanges;
+		public Proposition proposition;
+		public NodeChanges nodeChanges;
 	}
 	
 	public class ArgWithChanges implements Serializable {
 		private static final long serialVersionUID = 1L;
-		Argument argument;
-		NodeChanges nodeChanges;
+		public Argument argument;
+		public NodeChanges nodeChanges;
 	}
 	
-	public PropWithChanges getPropositionWithChanges( Long propID ) throws Exception;
+	public List<PropWithChanges> getPropositionsWithChanges( List<Long> propIDs ) throws Exception;
 	
-	public ArgWithChanges getArgumentWithChanges( Long argID ) throws Exception;
+	public List<ArgWithChanges> getArgumentsWithChanges( List<Long> argIDs ) throws Exception;
 	
 	public class NodeChangesMaps implements Serializable {
 		private static final long serialVersionUID = 1L;

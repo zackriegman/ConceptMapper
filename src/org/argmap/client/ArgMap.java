@@ -15,10 +15,15 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: finish argmapserviceimpl for getarg/propwithchanges()
-//TODO: write servercomm methods for that
 //TODO: onopen if not loaded yet, load the node, zoom it, append it...
 
+/*TODO: if you close a node in versions mode sometimes you can never open it again because it will 
+ * never have children again given the dates available to click on.  For instance if you add a node, 
+ * add a child, delete the child, and delete the node, all consecutively, and then go to a time when 
+ * the node has children and close it, the node will never have children again because it doesn't have
+ * children when it is created or when it is destroyed... and there are no visible events in between...
+ * this should be a low priority fix, but it might take some ui creativity...
+ */
 
 //TODO: look at backwards/forwards of linking/unlinking ... I'm not sure I ever finished writing that code
 //TODO: test versioning of unlinking

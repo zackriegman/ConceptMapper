@@ -58,9 +58,9 @@ public interface ArgMapServiceAsync {
 
 	void deleteArgument(Long argID, AsyncCallback<Void> callback);
 
-	void getPropositionWithChanges(Long propID,
-			AsyncCallback<PropWithChanges> callback);
+	void getPropositionsWithChanges(List<Long> propIDs,
+			AsyncCallback<List<PropWithChanges>> callback);
 
-	void getArgumentWithChanges(Long argID,
-			AsyncCallback<ArgWithChanges> callback);
+	void getArgumentsWithChanges(List<Long> argIDs,
+			AsyncCallback<List<ArgWithChanges>> callback);
 }

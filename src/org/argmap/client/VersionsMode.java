@@ -9,8 +9,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodesWithHistory;
+import org.argmap.client.ArgMapService.PropWithChanges;
 import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.core.client.GWT;
@@ -91,8 +93,7 @@ public class VersionsMode extends ResizeComposite implements
 		 * place holder loading message
 		 */
 		if (item.getChildCount() > 0
-				&& !item.getChild(0).getStyleName().equals("loadDummyProp")
-				&& !item.getChild(0).getStyleName().equals("loadDummyArg")) {
+				&& !(item.getChild(0).getClass() == ViewDummyVer.class)) {
 			item.setState(((ViewNodeVer) item).isOpen());
 			for (int i = 0; i < item.getChildCount(); i++) {
 				recursiveResetState(item.getChild(i));
@@ -280,20 +281,64 @@ public class VersionsMode extends ResizeComposite implements
 			viewNode.logNodeRecursive(2, logName, false);
 		}
 	}
+	
+	/*
+	 * keep working here...
+	 */
+	public void mergeLoadedNodes( ViewNodeVer viewNodeVer, List<PropWithChanges> propWithChanges ){
+		NodeChanges nodeChanges = propWithChanges.nodeChanges;
+		for (Long id : nodeChanges.deletedChildIDs) {
+			ViewNodeVer deletedView = viewNodeVer.createDummyView(id);
+		}
+	}
 
 	@Override
 	public void onOpen(OpenEvent<TreeItem> event) {
 		ArgMap.logStart("vm.oo");
 		ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
-		if (!viewNodeVer.isLoaded() && false) {
-			
+		if (!viewNodeVer.isLoaded()) {
+			List<Long> childIDs = new ArrayList<Long>();
+			for( int i = 0; i < viewNodeVer.getChildCount(); i++ ){
+				childIDs.add(viewNodeVer.getChildViewNodeVer(i).getNodeID());
+			}
+			if (viewNodeVer.getClass() == ViewArgVer.class) {
+				
+				class Callback implements
+						ServerComm.LocalCallback<List<PropWithChanges>> {
+					ViewPropVer viewPropVer;
+
+					@Override
+					public void call(List<PropWithChanges> propsWithChanges) {
+						mergeLoadedNodes(viewPropVer,
+								propsWithChanges);
+					}
+				}
+				Callback callback = new Callback();
+				callback.viewPropVer = (ViewPropVer) viewNodeVer;
+
+				ServerComm.getPropsWithChanges(childIDs, callback);
+			} else {
+				ArgMap.message( "METHOD NOT YET IMPLEMENTED", MessageType.ERROR );
+			}
 		} else {
 
 			ArgMap.log("vm.oo", "Adding View Changes: ");
 			SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
 			recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oo");
+
+			/*
+			 * this line must come before travelFromDateToDate() becuase that
+			 * method resets the tree to open of added nodes that should be
+			 * open. But this line must come after recursiveGetViewChanges I
+			 * think because that method depends on the opened node not yet have
+			 * a positive isOpen() value... actually that doesn't seem to be
+			 * true anymore...so this could probably be moved to the beginning.
+			 */
+			viewNodeVer.setOpen(true);
+
 			travelFromDateToDate(viewNodeVer.getClosedDate(), currentDate,
 					subTreeChanges);
+
 			timeMachineMap.putAll(subTreeChanges);
 
 			for (ViewChange viewChange : viewNodeVer
@@ -302,7 +347,7 @@ public class VersionsMode extends ResizeComposite implements
 			}
 
 			loadVersionListFromTimeMachine();
-			viewNodeVer.setOpen(true);
+
 			ArgMap.logEnd("vm.oo");
 		}
 	}
@@ -522,7 +567,7 @@ public class VersionsMode extends ResizeComposite implements
 
 	public void travelFromDateToDate(Date currentDate, Date newDate,
 			SortedMultiMap<Date, ViewChange> changes) {
-		ArgMap.logStart("tm.ttd", false);
+		ArgMap.logStart("tm.ttd", true);
 		if (newDate.before(currentDate)) {
 			ArgMap.log("tm.ttd", "traveling back to date:" + newDate);
 			/*

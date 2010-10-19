@@ -2,6 +2,7 @@ package org.argmap.server;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -424,18 +425,29 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		return nodesChanges;
 	}
 	
+	
 	@Override
-	public PropWithChanges getPropositionWithChanges(Long propID) throws Exception {
-		Proposition proposition = ofy.get(Proposition.class, propID);
-		
-		// TODO Auto-generated method stub
-		return null;
+	public List<PropWithChanges> getPropositionsWithChanges(List<Long> propIDs) throws Exception{
+		List<PropWithChanges> list = new ArrayList<PropWithChanges>();
+		for( Long propID : propIDs ){
+			PropWithChanges propWithChanges = new PropWithChanges();
+			propWithChanges.proposition = ofy.get(Proposition.class, propID);
+			propWithChanges.nodeChanges = getPropChanges( propID );
+			list.add(propWithChanges);
+		}
+		return list;
 	}
 
+	
 	@Override
-	public ArgWithChanges getArgumentWithChanges(Long argID) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+	public List<ArgWithChanges> getArgumentsWithChanges(List<Long> argIDs) throws Exception {
+		List<ArgWithChanges> list = new ArrayList<ArgWithChanges>();
+		for( Long argID : argIDs ){
+		ArgWithChanges argWithChanges = new ArgWithChanges();
+		argWithChanges.argument = ofy.get(Argument.class, argID );
+		argWithChanges.nodeChanges = getArgChanges( argID );
+		}
+		return list;
 	}
 
 	@Override
@@ -497,26 +509,25 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			return;
 		}
 
-		NodeChanges nodeChanges = new NodeChanges();
+		NodeChanges nodeChanges = getPropChanges( propID );
 		nodeChangesMaps.propChanges.put(propID, nodeChanges);
-		
-		getPropChanges( propID, nodeChanges.changes, nodeChanges.deletedChildIDs );
 		
 		for( Long id : nodeChanges.deletedChildIDs ){
 			recursiveGetArgChanges(id, nodeChangesMaps);
 		}
 	}
 	
-	public void getPropChanges( Long propID, List<Change> propChanges, List<Long> deletedChildIDs ){
+	public NodeChanges getPropChanges( Long propID ){
+		NodeChanges nodeChanges = new NodeChanges();
 		Query<Change> query = ofy.query(Change.class).filter("propID = ",
 				propID);
 		for (Change change : query) {
 			switch (change.changeType) {
 			case ARG_DELETION:
-				deletedChildIDs.add(change.argID);
+				nodeChanges.deletedChildIDs.add(change.argID);
 			case ARG_ADDITION:
 			case PROP_MODIFICATION:
-				propChanges.add(change);
+				nodeChanges.changes.add(change);
 				break;
 			case ARG_MODIFICATION:
 				// this case should never happen
@@ -528,6 +539,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				break;
 			}
 		}
+		return nodeChanges;
 	}
 
 	public void recursiveGetArgChanges(Long argID,
@@ -536,27 +548,26 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			return;
 		}
 
-		NodeChanges nodeChanges = new NodeChanges();
+		NodeChanges nodeChanges = getArgChanges( argID );
 		nodeChangesMaps.argChanges.put(argID, nodeChanges);
-		
-		getArgChanges( argID, nodeChanges.changes, nodeChanges.deletedChildIDs );
 		
 		for( Long id : nodeChanges.deletedChildIDs ){
 			recursiveGetPropChanges( id, nodeChangesMaps);
 		}
 	}
 	
-	public void getArgChanges( Long argID, List<Change> argChanges, List<Long> deletedChildIDs ){
+	public NodeChanges getArgChanges( Long argID ){
+		NodeChanges nodeChanges = new NodeChanges();
 		Query<Change> query = ofy.query(Change.class).filter("argID = ", argID);
 		for (Change change : query) {
 			switch (change.changeType) {
 			case PROP_UNLINK:
 			case PROP_DELETION:
-				deletedChildIDs.add(change.propID);
+				nodeChanges.deletedChildIDs.add(change.propID);
 			case ARG_MODIFICATION:
 			case PROP_ADDITION:
 			case PROP_LINK:
-				argChanges.add(change);
+				nodeChanges.changes.add(change);
 				break;
 			case PROP_MODIFICATION:
 				// this case should never happen
@@ -566,6 +577,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				break;
 			}
 		}
+		return nodeChanges;
 	}
 
 
