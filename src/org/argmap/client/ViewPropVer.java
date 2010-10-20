@@ -66,6 +66,7 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 		assert viewNode != null ;
 		insertChildViewAt(index, viewNode);
 	}
+	
 
 	public ViewArgVer createDeletedView(Long id) {
 		/*
@@ -76,6 +77,13 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 		argument.id = id;
 		ViewArgVer deletedView = new ViewArgVer(argument);
 		deletedView.setState(true);
+		deletedViews.put(id, deletedView );
+		return deletedView;
+	}
+	
+	@Override
+	public ViewNodeVer createDeletedDummyView(Long id) {
+		ViewDummyVer deletedView = new ViewDummyVer(id);
 		deletedViews.put(id, deletedView );
 		return deletedView;
 	}

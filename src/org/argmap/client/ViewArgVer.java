@@ -64,6 +64,13 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 		deletedViews.put(id, deletedView);
 		return deletedView;
 	}
+	
+	@Override
+	public ViewNodeVer createDeletedDummyView(Long id) {
+		ViewDummyVer deletedView = new ViewDummyVer(id);
+		deletedViews.put(id, deletedView );
+		return deletedView;
+	}
 
 	public List<ViewChange> getViewChangeList() {
 		return viewChanges;
@@ -119,4 +126,5 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	public void setLoaded( boolean isLoaded ){
 		this.isLoaded = isLoaded;
 	}
+
 }

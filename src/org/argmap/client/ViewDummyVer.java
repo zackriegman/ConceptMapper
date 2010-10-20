@@ -73,9 +73,7 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 
 	@Override
 	public Long getNodeID() {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+		return nodeID;
 	}
 
 	@Override
@@ -110,6 +108,13 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	public void setLoaded(boolean isLoaded) {
 		// TODO Auto-generated method stub
 		assert false;
+	}
+
+	@Override
+	public ViewNodeVer createDeletedDummyView(Long id) {
+		// TODO Auto-generated method stub
+		assert false;
+		return null;
 	}
 
 	

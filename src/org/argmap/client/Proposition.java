@@ -1,25 +1,27 @@
 package org.argmap.client;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
-import javax.persistence.Id;
 
 import com.googlecode.objectify.annotation.Cached;
 
 @Cached
-public class Proposition implements Serializable {
+public class Proposition extends Node implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
 	
-	@Id
-	public Long id;
-	public String content;
-	public List<Long> argIDs = new ArrayList<Long>();
+	/* remember if you change the name of a field you have to update
+	 * the server queries:  they operate on fields specified by strings
+	 * that are not checked at compile time.
+	 */
+	
 	public int linkCount;
 	
+	/* note the difference between 'transient' and '@Transient'
+	 * 'transient' will not be sent over the wire, but will be saved to the datastore.
+	 * '@Transient' will not be saved to the datastore, but will be sent over the wire.
+	 */
 	/* not sent to client, but saved */
 	transient public Set<String> tokens;
 	
@@ -44,8 +46,8 @@ public class Proposition implements Serializable {
 		buffer.append( "; linkCount:" );
 		buffer.append( linkCount );
 		buffer.append( "; argIDs:[" );
-		if(argIDs != null){
-			for( Long id : argIDs){
+		if(childIDs != null){
+			for( Long id : childIDs){
 				buffer.append( " " );
 				buffer.append( id );
 			}

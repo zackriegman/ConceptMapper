@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 
+import com.google.gwt.user.client.ui.TreeItem;
+
 public interface ViewNodeVer {
 	public List<ViewChange> getViewChangeList();
 	public List<ViewChange> getViewChangeAddRemoveList();
@@ -20,6 +22,8 @@ public interface ViewNodeVer {
 	public void setOpen( boolean open );
 	public NodeChanges chooseNodeChanges( NodeChangesMaps changesMaps );
 	public ViewNodeVer createDeletedView(Long id);
+	public ViewNodeVer createDeletedDummyView( Long id );
 	public boolean isLoaded();
 	public void setLoaded( boolean isLoaded );
+	public void addItem( TreeItem item );
 }

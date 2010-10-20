@@ -24,7 +24,7 @@ import com.google.gwt.user.client.ui.TreeItem;
 public class EditMode extends ResizeComposite implements
 		LocalCallback<List<Proposition>> {
 
-	private HTML messageArea = new HTML();
+	private static HTML messageArea = new HTML();
 	private Label searchLabel = new Label(
 			"Would you like to use one of these already existing propositions?");
 	private FlexTable searchResults = new FlexTable();
@@ -50,16 +50,21 @@ public class EditMode extends ResizeComposite implements
 		addPropButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				ViewPropEdit newPropView = new ViewPropEdit();
+				try {
+					ViewPropEdit newPropView = new ViewPropEdit();
 
-				// close the other tree items
-				for (int i = 0; i < tree.getItemCount(); i++) {
-					tree.getItem(i).setState(false);
+					// close the other tree items
+					for (int i = 0; i < tree.getItemCount(); i++) {
+						tree.getItem(i).setState(false);
+					}
+
+					tree.addItem(newPropView);
+					newPropView.haveFocus();
+					ServerComm.addProposition(newPropView.getProposition(),
+							null, 0);
+				} catch (Exception e) {
+					ServerComm.handleClientException(e);
 				}
-
-				tree.addItem(newPropView);
-				newPropView.haveFocus();
-				ServerComm.addProposition(newPropView.getProposition(), null, 0);
 			}
 		});
 
@@ -74,29 +79,41 @@ public class EditMode extends ResizeComposite implements
 
 			@Override
 			public void call(AllPropsAndArgs allNodes) {
-				/*
-				 * GWT.log("Root Props:"); for (Long propID :
-				 * allNodes.rootProps.keySet()) { GWT.log("propID:" + propID +
-				 * "; prop:" + allNodes.rootProps.get(propID).toString()); }
-				 * GWT.log("Props:"); for (Long propID :
-				 * allNodes.nodes.props.keySet()) { GWT.log("propID:" + propID +
-				 * "; prop:" + allNodes.nodes.props.get(propID).toString()); }
-				 * GWT.log("Args:"); for (Long argID :
-				 * allNodes.nodes.args.keySet()) { GWT.log("argID:" + argID +
-				 * "; arg:" + allNodes.nodes.args.get(argID).toString()); }
-				 */
-				ArgMap.logStart("em.em.cb");
-				ArgMap.log("em.em.cb", "Prop Tree From Server");
-				for (Long propID : allNodes.rootProps.keySet()) {
-					Proposition proposition = allNodes.rootProps.get(propID);
-					ViewProp propView = ViewProp.recursiveBuildPropositionView(
-							proposition, allNodes.nodes, null, null,
-							ViewPropEdit.FACTORY, ViewArgEdit.FACTORY);
-					tree.addItem(propView);
-					propView.logNodeRecursive(0, "em.em.cb", true);
+				try {
+					/*
+					 * GWT.log("Root Props:"); for (Long propID :
+					 * allNodes.rootProps.keySet()) { GWT.log("propID:" + propID
+					 * + "; prop:" + allNodes.rootProps.get(propID).toString());
+					 * } GWT.log("Props:"); for (Long propID :
+					 * allNodes.nodes.props.keySet()) { GWT.log("propID:" +
+					 * propID + "; prop:" +
+					 * allNodes.nodes.props.get(propID).toString()); }
+					 * GWT.log("Args:"); for (Long argID :
+					 * allNodes.nodes.args.keySet()) { GWT.log("argID:" + argID
+					 * + "; arg:" + allNodes.nodes.args.get(argID).toString());
+					 * }
+					 */
+					ArgMap.logStart("em.em.cb");
+					ArgMap.log("em.em.cb", "Prop Tree From Server");
+					log("<br/>GOT HERE: localCallback.call(): B");
+					for (Long propID : allNodes.rootProps.keySet()) {
+
+						Proposition proposition = allNodes.rootProps
+								.get(propID);
+						ViewProp propView = ViewProp
+								.recursiveBuildPropositionView(proposition,
+										allNodes.nodes, ViewPropEdit.FACTORY,
+										ViewArgEdit.FACTORY);
+						tree.addItem(propView);
+						propView.logNodeRecursive(0, "em.em.cb", true);
+					}
+					log("<br/>GOT HERE: localCallback.call(): C");
+					openTree();
+					ArgMap.logEnd("em.em.cb");
+					log("<br/>GOT HERE: localCallback.call(): Z");
+				} catch (Exception e) {
+					ServerComm.handleClientException(e);
 				}
-				openTree();
-				ArgMap.logEnd("em.em.cb");
 			}
 		});
 
@@ -105,6 +122,10 @@ public class EditMode extends ResizeComposite implements
 		mainSplit.addEast(sideSplit, 400);
 		mainSplit.add(new ScrollPanel(mainPanel));
 		initWidget(mainSplit);
+	}
+
+	public static void log(String string) {
+		messageArea.setHTML(messageArea.getHTML() + string);
 	}
 
 	@Override
@@ -121,52 +142,56 @@ public class EditMode extends ResizeComposite implements
 			}
 
 			public void onClick(ClickEvent event) {
-				ViewPropEdit propViewToRemove = ViewPropEdit
-						.getLastPropositionWithFocus();
-				if (propViewToRemove.getChildCount() == 0) {
-					class ThisCallback implements LocalCallback<Nodes> {
-						ViewArgEdit parentArgView;
-						ViewPropEdit propViewToRemove;
-						int propIndex;
-						Long linkPropID;
+				try {
+					ViewPropEdit propViewToRemove = ViewPropEdit
+							.getLastPropositionWithFocus();
+					if (propViewToRemove.getChildCount() == 0) {
+						class ThisCallback implements LocalCallback<Nodes> {
+							ViewArgEdit parentArgView;
+							ViewPropEdit propViewToRemove;
+							int propIndex;
+							Long linkPropID;
 
-						@Override
-						public void call(Nodes nodes) {
-							parentArgView.removeItem(propViewToRemove);
-							Proposition proposition = nodes.props
-									.get(linkPropID);
-							ViewProp newPropView = ViewProp
-									.recursiveBuildPropositionView(proposition,
-											nodes, null, null,
-											ViewPropEdit.FACTORY,
-											ViewArgEdit.FACTORY);
-							parentArgView.insertChildViewAt(propIndex,
-									newPropView);
+							@Override
+							public void call(Nodes nodes) {
+								parentArgView.removeItem(propViewToRemove);
+								Proposition proposition = nodes.props
+										.get(linkPropID);
+								ViewProp newPropView = ViewProp
+										.recursiveBuildPropositionView(
+												proposition, nodes,
+												ViewPropEdit.FACTORY,
+												ViewArgEdit.FACTORY);
+								parentArgView.insertChildViewAt(propIndex,
+										newPropView);
+							}
 						}
+						;
+						ThisCallback callback = new ThisCallback();
+						/*
+						 * TODO handle requests to link to top level nodes more
+						 * gracefully... currently throws an exception, instead
+						 * a message indicating that top level nodes cannot be
+						 * linked would be good...
+						 */
+						ViewArgEdit parentArgView = propViewToRemove
+								.parentArgView();
+						callback.parentArgView = parentArgView;
+						callback.propViewToRemove = propViewToRemove;
+						callback.propIndex = parentArgView
+								.getChildIndex(propViewToRemove);
+						Proposition propToLinkTo = propMatches.get(resultIndex);
+						callback.linkPropID = propToLinkTo.id;
+						ServerComm.replaceWithLinkAndGet(
+								parentArgView.argument, propToLinkTo,
+								propViewToRemove.proposition, callback);
+					} else {
+						ArgMap.message(
+								"Cannot link to existing proposition when proposition currently being edited has children",
+								MessageType.ERROR);
 					}
-					;
-					ThisCallback callback = new ThisCallback();
-					/*
-					 * TODO handle requests to link to top level nodes more
-					 * gracefully... currently throws an exception, instead a
-					 * message indicating that top level nodes cannot be linked
-					 * would be good...
-					 */
-					ViewArgEdit parentArgView = propViewToRemove
-							.parentArgView();
-					callback.parentArgView = parentArgView;
-					callback.propViewToRemove = propViewToRemove;
-					callback.propIndex = parentArgView
-							.getChildIndex(propViewToRemove);
-					Proposition propToLinkTo = propMatches.get(resultIndex);
-					callback.linkPropID = propToLinkTo.id;
-					ServerComm.replaceWithLinkAndGet(parentArgView.argument,
-							propToLinkTo, propViewToRemove.proposition,
-							callback);
-				} else {
-					ArgMap.message(
-							"Cannot link to existing proposition when proposition currently being edited has children",
-							MessageType.ERROR);
+				} catch (Exception e) {
+					ServerComm.handleClientException(e);
 				}
 			}
 		}
@@ -229,7 +254,7 @@ public class EditMode extends ResizeComposite implements
 	public ViewNode recursiveTreeClone(ViewNode realViewNode) {
 		ArgMap.logIndent("em.btcoop");
 		ViewNode cloneViewNode = realViewNode.createViewNodeVerClone();
-		
+
 		for (int i = 0; i < realViewNode.getChildCount(); i++) {
 			ViewNode realChild = realViewNode.getChildView(i);
 			if (realViewNode.getState()) {

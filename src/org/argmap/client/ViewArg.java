@@ -1,6 +1,5 @@
 package org.argmap.client;
 
-import java.util.Map;
 
 import org.argmap.client.ViewProp.ViewPropFactory;
 
@@ -12,6 +11,7 @@ public class ViewArg extends ViewNode {
 	public Argument argument;
 	protected Label label;
 	protected TextBox textBox;
+	HorizontalPanel horizontalPanel;
 
 	public ViewArg(Argument arg) {
 		super();
@@ -43,13 +43,20 @@ public class ViewArg extends ViewNode {
 		textBox = new TextBox();
 		textBox.setVisibleLength(Argument.MAX_LENGTH);
 		textBox.setMaxLength(Argument.MAX_LENGTH);
-		textBox.setText(argument.title);
-		HorizontalPanel horizontalPanel = new HorizontalPanel();
+		textBox.setText(argument.content);
+		horizontalPanel = new HorizontalPanel();
 		horizontalPanel.setWidth("51.5em");
 		horizontalPanel.add(label);
 		horizontalPanel.add(textBox);
 		setWidget(horizontalPanel);
-		if (argument.pro) {
+		setPro( argument.pro );
+	}
+	
+	public void setPro( boolean pro ){
+		if( argument != null ){
+			argument.pro = pro;
+		}
+		if (pro) {
 			label.setText("Argument For: ");
 			horizontalPanel.setStylePrimaryName("proArg");
 			textBox.setStylePrimaryName("proArgTextBox");
@@ -118,17 +125,17 @@ public class ViewArg extends ViewNode {
 	}
 
 	public static <P extends ViewProp, A extends ViewArg> A recursiveBuildArgumentView(
-			Argument arg, Nodes nodes, Map<Long, P> propViewIndex,
-			Map<Long, A> argViewIndex, ViewPropFactory<P> viewPropFactory,
+			Argument arg, Nodes nodes, ViewPropFactory<P> viewPropFactory,
 			ViewArgFactory<A> viewArgFactory) {
 
+		EditMode.log("<br/>" + arg.toString());
 		A argView = viewArgFactory.create(arg);
-		if (argViewIndex != null)
-			argViewIndex.put(arg.id, argView);
-		for (Long propID : arg.propIDs) {
+	
+		for (Long propID : arg.childIDs) {
 			Proposition proposition = nodes.props.get(propID);
+			assert proposition != null : "childID [" + propID + "] passed with corresponding child node";
 			argView.addItem(ViewProp.recursiveBuildPropositionView(proposition,
-					nodes, propViewIndex, argViewIndex, viewPropFactory,
+					nodes,  viewPropFactory,
 					viewArgFactory));
 		}
 		return argView;

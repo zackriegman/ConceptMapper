@@ -1,6 +1,5 @@
 package org.argmap.client;
 
-import java.util.Map;
 
 import org.argmap.client.ViewArg.ViewArgFactory;
 
@@ -125,33 +124,20 @@ public abstract class ViewProp extends ViewNode {
 	}
 
 	public static <P extends ViewProp, A extends ViewArg> P recursiveBuildPropositionView(
-			Proposition prop, Nodes nodes, Map<Long, P> propViewIndex,
-			Map<Long, A> argViewIndex, ViewPropFactory<P> viewPropFactory,
+			Proposition prop, Nodes nodes, ViewPropFactory<P> viewPropFactory,
 			ViewArgFactory<A> viewArgFactory) {
 
+		EditMode.log("<br/>" + prop.toString());
 		P propView = viewPropFactory.create(prop);
-		if (propViewIndex != null)
-			propViewIndex.put(prop.id, propView);
-		for (Long argID : prop.argIDs) {
+		for (Long argID : prop.childIDs) {
 			Argument argument = nodes.args.get(argID);
+			assert argument != null : "childID [" + argID + "] passed with corresponding child node";
 			propView.addItem(ViewArg.recursiveBuildArgumentView(argument,
-					nodes, propViewIndex, argViewIndex, viewPropFactory,
+					nodes, viewPropFactory,
 					viewArgFactory));
 		}
 		return propView;
 	}
-
-	/*
-	 * public static ViewProp recursiveBuildPropositionView(Proposition prop,
-	 * boolean editable, Nodes nodes, Map<Long, ViewProp> propViewIndex,
-	 * Map<Long, ViewArg> argViewIndex, ViewPropFactory viewPropFactory,
-	 * ViewArgFactory viewArgFactory) {
-	 * 
-	 * ViewProp propView = viewPropFactory.createViewProp(prop); if
-	 * (propViewIndex != null) propViewIndex.put(prop.id, propView); for (Long
-	 * argID : prop.argIDs) { Argument argument = nodes.args.get(argID);
-	 * propView.addItem(ViewArg.recursiveBuildArgumentView(argument, editable,
-	 * nodes, propViewIndex, argViewIndex, viewPropFactory, viewArgFactory)); }
-	 * return propView; }
-	 */
+	
+	
 }

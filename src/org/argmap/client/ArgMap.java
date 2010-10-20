@@ -1,6 +1,8 @@
 package org.argmap.client;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -16,6 +18,8 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
 //TODO: onopen if not loaded yet, load the node, zoom it, append it...
+
+//TODO: deployed app has problems... nodes disapear and errors when adding and deleting nodes
 
 /*TODO: if you close a node in versions mode sometimes you can never open it again because it will 
  * never have children again given the dates available to click on.  For instance if you add a node, 
@@ -68,71 +72,110 @@ public class ArgMap implements EntryPoint {
 	private TabLayoutPanel modePanel = new TabLayoutPanel(1.5, Style.Unit.EM);
 
 	private static HTML messageArea = new HTML();
+	private static List<String> messageList = new ArrayList<String>();
 	private EditMode editMode = new EditMode();
 	private VersionsMode versionsMode;
 	private static Map<String, StringBuilder> logs = new HashMap<String, StringBuilder>();
 	private static Map<String, Boolean> logsImmediatePrint = new HashMap<String, Boolean>();
 	private static Map<String, Integer> logsCurrentIndent = new HashMap<String, Integer>();
-	private static MessageTimer messageTimer = new MessageTimer();
 
 	public void onModuleLoad() {
-		modePanel.add(editMode, "Edit");
-		versionsMode = new VersionsMode(editMode);
-		modePanel.add(versionsMode, "Versions");
+		try {
+			modePanel.add(editMode, "Edit");
+			versionsMode = new VersionsMode(editMode);
+			modePanel.add(versionsMode, "Versions");
 
-		modePanel.addSelectionHandler(new SelectionHandler<Integer>() {
+			modePanel.addSelectionHandler(new SelectionHandler<Integer>() {
 
-			@Override
-			public void onSelection(SelectionEvent<Integer> event) {
-				if (modePanel.getSelectedIndex() == 1) {
-					versionsMode.displayVersions();
+				@Override
+				public void onSelection(SelectionEvent<Integer> event) {
+					try {
+						if (modePanel.getSelectedIndex() == 1) {
+							versionsMode.displayVersions();
+						}
+					} catch (Exception e) {
+						ServerComm.handleClientException(e);
+					}
+
 				}
+			});
 
-			}
-		});
+			HTML htmlTitle = new HTML(
+					"<div class=\"title\">coreason.org</div>"
+							+ "<div class=\"subTitle\">...mass collaborative reasoning about everything...</div>");
+			// htmlTitle.setStylePrimaryName("titleLabel");
+			// messageArea.setStylePrimaryName("messageArea");
+			mainPanel.addNorth(htmlTitle, 4);
+			mainPanel.addNorth(messageArea, 2);
+			mainPanel.add(modePanel);
 
-		HTML htmlTitle = new HTML("<div class=\"title\">coreason.org</div>" +
-				"<div class=\"subTitle\">...mass collaborative reasoning about everything...</div>");
-		//htmlTitle.setStylePrimaryName("titleLabel");
-		// messageArea.setStylePrimaryName("messageLabel");
-		mainPanel.addNorth(htmlTitle, 4);
-		mainPanel.addNorth(messageArea, 2);
-		mainPanel.add(modePanel);
+			RootLayoutPanel rp = RootLayoutPanel.get();
+			rp.add(mainPanel);
 
-		RootLayoutPanel rp = RootLayoutPanel.get();
-		rp.add(mainPanel);
+			// Window.alert( "pops up a window to user with message");
 
-		// Window.alert( "pops up a window to user with message");
-
-		message("App Begin", MessageType.INFO);
+			message("App Begin", MessageType.INFO);
+		} catch (Exception e) {
+			ServerComm.handleClientException(e);
+		}
 	}
-	
+
 	public enum MessageType {
 		ERROR, INFO;
 	}
 
-	public static void message(String string, MessageType type ) {
-		messageTimer.cancel();
-		messageTimer.schedule(15000);
+	public static void message(String string, MessageType type) {
+		message(string, type, 5);
+	}
+
+	public static void message(String string, MessageType type,
+			int displaySeconds) {
+
 		String cssLabel;
-		if( type == MessageType.ERROR ){
+		if (type == MessageType.ERROR) {
 			cssLabel = "errorMessage";
 		} else {
 			cssLabel = "infoMessage";
 		}
-		messageArea.setHTML("<div class=\"messageArea\"><span class=\"" +
-				cssLabel + "\">&nbsp;&nbsp;&nbsp;&nbsp;" + string + "&nbsp;&nbsp;&nbsp;&nbsp;</span></span>");
+		String message = "<span class=\"" + cssLabel
+				+ "\">&nbsp;&nbsp;&nbsp;&nbsp;" + string
+				+ "&nbsp;&nbsp;&nbsp;&nbsp;</span>";
+		messageList.add(message);
 
-		
+		refreshMessageList();
+
+		MessageTimer messageTimer = new MessageTimer();
+		messageTimer.message = message;
+		messageTimer.schedule(displaySeconds * 1000);
 	}
-	
-	private static class MessageTimer extends Timer{
+
+	public static void refreshMessageList() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("<div class=\"messageArea\">");
+		for (int i = 0; i < messageList.size(); i++) {
+			sb.append(messageList.get(i));
+			if (i < messageList.size() - 1) {
+				sb.append("&nbsp;&nbsp;-&nbsp;&nbsp;");
+			}
+		}
+		sb.append("</div>");
+
+		messageArea.setHTML(sb.toString());
+	}
+
+	private static class MessageTimer extends Timer {
+		String message;
 
 		@Override
 		public void run() {
-			messageArea.setHTML("");
+			try {
+				messageList.remove(message);
+				refreshMessageList();
+			} catch (Exception e) {
+				ServerComm.handleClientException(e);
+			}
 		}
-		
+
 	}
 
 	public static String spaces(int spaces) {
@@ -176,7 +219,7 @@ public class ArgMap implements EntryPoint {
 		log.append(logName + ": ");
 		logs.put(logName, log);
 		logsImmediatePrint.put(logName, immediatePrint);
-		logsCurrentIndent.put(logName, 0 );
+		logsCurrentIndent.put(logName, 0);
 
 	}
 
@@ -187,7 +230,7 @@ public class ArgMap implements EntryPoint {
 		if (logsImmediatePrint.remove(logName)) {
 			return;
 		}
-		logsCurrentIndent.remove( logName );
+		logsCurrentIndent.remove(logName);
 		GWT.log(log.toString());
 	}
 
@@ -207,18 +250,19 @@ public class ArgMap implements EntryPoint {
 		if (logsImmediatePrint.get(logName)) {
 			log(logName, string);
 		} else {
-			log(logName, "\n" + spaces(logsCurrentIndent.get(logName)*2) + string);
+			log(logName, "\n" + spaces(logsCurrentIndent.get(logName) * 2)
+					+ string);
 		}
 	}
-	
-	public static void logIndent( String logName ){
+
+	public static void logIndent(String logName) {
 		if (logName == null)
 			return;
 		Integer current = logsCurrentIndent.get(logName);
 		logsCurrentIndent.put(logName, current++);
 	}
-	
-	public static void logUnindent( String logName ){
+
+	public static void logUnindent(String logName) {
 		if (logName == null)
 			return;
 		Integer current = logsCurrentIndent.get(logName);

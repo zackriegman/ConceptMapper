@@ -2,6 +2,7 @@ package org.argmap.client;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 import org.argmap.client.ArgMap.MessageType;
@@ -12,6 +13,7 @@ import org.argmap.client.ArgMapService.NodesWithHistory;
 import org.argmap.client.ArgMapService.PropWithChanges;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /* for remote calls that change data on the server (i.e. adding/removing/modifying 
@@ -65,21 +67,41 @@ public class ServerComm {
 		@Override
 		public final void onFailure(Throwable caught) {
 			ArgMap.message("Error: " + caught.getMessage(), MessageType.ERROR);
-			// GWT.log(caught.getMessage());
-			// caught.printStackTrace();
-			/* trying this to get the exception printed in the GWT.log */
 			throw new RuntimeException(caught);
 		}
 
 		@Override
 		public final void onSuccess(T result) {
-			if (localCallback != null) {
-				localCallback.call(result);
-			}
-			if (successMessage != null) {
-				ArgMap.message(successMessage, MessageType.INFO);
+			try {
+				if (localCallback != null) {
+					localCallback.call(result);
+				}
+				if (successMessage != null) {
+					ArgMap.message(successMessage, MessageType.INFO);
+				}
+			} catch (Exception e) {
+				handleClientException( e );
 			}
 		}
+	}
+	
+	public static void handleClientException( Exception e ){
+		argMapService.logClientException(e.toString(), new AsyncCallback<Void>() {
+			
+			@Override
+			public void onSuccess(Void result) {
+				//Window.alert("Succesfully Logged Bug On Server");
+				
+			}
+			
+			@Override
+			public void onFailure(Throwable caught) {
+				Window.alert("Failed To Log Bug On Server: " + caught.toString());
+				
+			}
+		});
+		ArgMap.message("EXCEPTION CAUGHT ON CLIENT", MessageType.ERROR);
+		Window.alert("Exception:<br/>" + e.toString());
 	}
 
 	private static abstract class ServerCallbackWithDispatch<T> implements
@@ -102,16 +124,20 @@ public class ServerComm {
 
 		@Override
 		public final void onSuccess(T result) {
-			/*
-			 * this must come before dispatchCommand() otherwise the client
-			 * might send a request to add a proposition to an argument before
-			 * the argument has been assigned an id by the return call from the
-			 * server...
-			 */
-			doOnSuccess(result);
-			dispatchCommand();
-			if (successMessage != null) {
-				ArgMap.message(successMessage, MessageType.INFO);
+			try {
+				/*
+				 * this must come before dispatchCommand() otherwise the client
+				 * might send a request to add a proposition to an argument
+				 * before the argument has been assigned an id by the return
+				 * call from the server...
+				 */
+				doOnSuccess(result);
+				dispatchCommand();
+				if (successMessage != null) {
+					ArgMap.message(successMessage, MessageType.INFO);
+				}
+			} catch (Exception e) {
+				handleClientException( e );
 			}
 		}
 
@@ -119,9 +145,8 @@ public class ServerComm {
 	}
 
 	public static void fetchProps(LocalCallback<AllPropsAndArgs> localCallback) {
-		argMapService
-				.getAllPropsAndArgs(new ServerCallback<AllPropsAndArgs>(
-						localCallback, "Server Reports Success Fetching Props"));
+		argMapService.getAllPropsAndArgs(new ServerCallback<AllPropsAndArgs>(
+				localCallback, "Server Reports Success Fetching Props"));
 	}
 
 	public static void getChanges(List<Proposition> props, List<Argument> args,
@@ -158,21 +183,23 @@ public class ServerComm {
 	}
 
 	public static void getPropsWithChanges(List<Long> propIDs,
-			LocalCallback<List<PropWithChanges>> localCallback) {
+			LocalCallback<Map<Long, PropWithChanges>> localCallback) {
 		argMapService
 				.getPropositionsWithChanges(
 						propIDs,
-						new ServerCallback<List<PropWithChanges>>(localCallback,
+						new ServerCallback<Map<Long, PropWithChanges>>(
+								localCallback,
 								"Server Reports Success Fetching Proposition With Changes"));
 	}
 
 	public static void getArgWithChanges(List<Long> argIDs,
-			LocalCallback<List<ArgWithChanges>> localCallback) {
+			LocalCallback<Map<Long, ArgWithChanges>> localCallback) {
 		argMapService
-		.getArgumentsWithChanges(
-				argIDs,
-				new ServerCallback<List<ArgWithChanges>>(localCallback,
-						"Server Reports Success Fetching Proposition With Changes"));
+				.getArgumentsWithChanges(
+						argIDs,
+						new ServerCallback<Map<Long, ArgWithChanges>>(
+								localCallback,
+								"Server Reports Success Fetching Proposition With Changes"));
 	}
 
 	public static void searchPropositions(String string, Argument filterArg,
@@ -280,8 +307,8 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				argMapService.unlinkProposition(parentArg.id,
-						unlinkProp.id, this);
+				argMapService.unlinkProposition(parentArg.id, unlinkProp.id,
+						this);
 			}
 
 			@Override
@@ -306,7 +333,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				argMapService.updateArgument(arg.id, arg.title, this);
+				argMapService.updateArgument(arg.id, arg.content, this);
 			}
 
 			@Override
@@ -331,8 +358,8 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				argMapService.updateProposition(prop.id,
-						prop.getContent(), this);
+				argMapService.updateProposition(prop.id, prop.getContent(),
+						this);
 			}
 
 			@Override
@@ -361,8 +388,8 @@ public class ServerComm {
 			@Override
 			public void execute() {
 				if (parentArgument != null)
-					argMapService.addProposition(parentArgument.id,
-							position, newProposition.content, this);
+					argMapService.addProposition(parentArgument.id, position,
+							newProposition.content, this);
 				else
 					argMapService.addProposition(null, 0,
 							newProposition.content, this);
@@ -399,8 +426,8 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				argMapService.replaceWithLinkAndGet(parentArgID,
-						linkPropID, removePropID, this);
+				argMapService.replaceWithLinkAndGet(parentArgID, linkPropID,
+						removePropID, this);
 			}
 
 			@Override

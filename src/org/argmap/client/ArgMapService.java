@@ -12,6 +12,8 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
 @RemoteServiceRelativePath("argServ")
 public interface ArgMapService extends RemoteService {
+	
+	public void logClientException( String exceptionStr );
 
 	public Long addProposition(Long parentArgID, int position, String content) throws Exception;
 
@@ -68,9 +70,9 @@ public interface ArgMapService extends RemoteService {
 		public NodeChanges nodeChanges;
 	}
 	
-	public List<PropWithChanges> getPropositionsWithChanges( List<Long> propIDs ) throws Exception;
+	public Map<Long, PropWithChanges> getPropositionsWithChanges( List<Long> propIDs ) throws Exception;
 	
-	public List<ArgWithChanges> getArgumentsWithChanges( List<Long> argIDs ) throws Exception;
+	public Map<Long, ArgWithChanges> getArgumentsWithChanges( List<Long> argIDs ) throws Exception;
 	
 	public class NodeChangesMaps implements Serializable {
 		private static final long serialVersionUID = 1L;

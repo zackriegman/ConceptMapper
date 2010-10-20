@@ -21,6 +21,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		KeyDownHandler, KeyUpHandler, FocusHandler, ChangeHandler {
 
 	private static ViewPropEdit lastPropositionWithFocus = null;
+
 	public static ViewPropFactory<ViewPropEdit> FACTORY = new ViewPropFactory<ViewPropEdit>() {
 		@Override
 		public ViewPropEdit create(Proposition prop) {
@@ -84,17 +85,24 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	@Override
 	public void onClick(ClickEvent event) {
-		if (event.getSource() == proButton) {
-			addArgument(true);
-		} else if (event.getSource() == conButton) {
-			addArgument(false);
-		} else if (event.getSource() == linkRemoveButton) {
-			ServerComm.unlinkProp(parentArgument(), proposition);
+		try {
+			if (event.getSource() == proButton) {
+				addArgument(true);
+			} else if (event.getSource() == conButton) {
+				addArgument(false);
+			} else if (event.getSource() == linkRemoveButton) {
+				ServerComm.unlinkProp(parentArgument(), proposition);
 
-			/* note: remove() must come last, otherwise parentArgumet() == null */
-			remove();
-		} else if (event.getSource() == linkEditButton) {
-			textArea.setReadOnly(false);
+				/*
+				 * note: remove() must come last, otherwise parentArgumet() ==
+				 * null
+				 */
+				remove();
+			} else if (event.getSource() == linkEditButton) {
+				textArea.setReadOnly(false);
+			}
+		} catch (Exception e) {
+			ServerComm.handleClientException(e);
 		}
 	}
 
@@ -113,35 +121,40 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
-		int charCode = event.getNativeKeyCode();
-		Object source = event.getSource();
-		if (source == textArea) {
-			if (charCode == KeyCodes.KEY_ENTER && parentArgView() == null) {
-				event.preventDefault();
-			} else if (charCode == KeyCodes.KEY_ENTER
-					&& parentArgView() != null) {
-				onChange(null);
-				addProposition();
-				event.preventDefault();
-			}
-			/* only do the following key actions if this is not a link */
-			else if (proposition.linkCount <= 1) {
-				if (charCode == KeyCodes.KEY_BACKSPACE
-						&& textArea.getCursorPos() == 0
-						&& textArea.getSelectionLength() == 0) {
-					removePropositionAndMaybeParentArgument();
+		try {
+			int charCode = event.getNativeKeyCode();
+			Object source = event.getSource();
+			if (source == textArea) {
+				if (charCode == KeyCodes.KEY_ENTER && parentArgView() == null) {
 					event.preventDefault();
-				} else if (charCode == KeyCodes.KEY_DELETE
-						&& textArea.getText().equals("")) {
-					removePropositionAndMaybeParentArgument();
-					event.preventDefault();
-				} else if (charCode == KeyCodes.KEY_DELETE
-						&& textArea.getCursorPos() == textArea.getText()
-								.length() && textArea.getSelectionLength() == 0) {
-					removeNextProposition();
+				} else if (charCode == KeyCodes.KEY_ENTER
+						&& parentArgView() != null) {
+					onChange(null);
+					addProposition();
 					event.preventDefault();
 				}
+				/* only do the following key actions if this is not a link */
+				else if (proposition.linkCount <= 1) {
+					if (charCode == KeyCodes.KEY_BACKSPACE
+							&& textArea.getCursorPos() == 0
+							&& textArea.getSelectionLength() == 0) {
+						removePropositionAndMaybeParentArgument();
+						event.preventDefault();
+					} else if (charCode == KeyCodes.KEY_DELETE
+							&& textArea.getText().equals("")) {
+						removePropositionAndMaybeParentArgument();
+						event.preventDefault();
+					} else if (charCode == KeyCodes.KEY_DELETE
+							&& textArea.getCursorPos() == textArea.getText()
+									.length()
+							&& textArea.getSelectionLength() == 0) {
+						removeNextProposition();
+						event.preventDefault();
+					}
+				}
 			}
+		} catch (Exception e) {
+			ServerComm.handleClientException(e);
 		}
 	}
 
@@ -295,29 +308,35 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	@Override
 	public void onFocus(FocusEvent event) {
-		Object source = event.getSource();
-		if (source == textArea) {
-			// if another Proposition's buttons are visible hide them
-			if (lastPropositionWithFocus != this
-					&& lastPropositionWithFocus != null) {
-				lastPropositionWithFocus.proButton.setVisible(false);
-				lastPropositionWithFocus.conButton.setVisible(false);
-				if (lastPropositionWithFocus.linkEditButton != null) {
-					lastPropositionWithFocus.linkEditButton.setVisible(false);
-					lastPropositionWithFocus.linkRemoveButton.setVisible(false);
+		try {
+			Object source = event.getSource();
+			if (source == textArea) {
+				// if another Proposition's buttons are visible hide them
+				if (lastPropositionWithFocus != this
+						&& lastPropositionWithFocus != null) {
+					lastPropositionWithFocus.proButton.setVisible(false);
+					lastPropositionWithFocus.conButton.setVisible(false);
+					if (lastPropositionWithFocus.linkEditButton != null) {
+						lastPropositionWithFocus.linkEditButton
+								.setVisible(false);
+						lastPropositionWithFocus.linkRemoveButton
+								.setVisible(false);
+					}
 				}
-			}
-			// make this proposition's button's visible
-			proButton.setVisible(true);
-			conButton.setVisible(true);
-			if (linkEditButton != null) {
-				linkEditButton.setVisible(true);
-				linkRemoveButton.setVisible(true);
-			}
-			lastPropositionWithFocus = this;
-			ServerComm.searchPropositions(textArea.getText(), parentArgument(),
-					getEditModeTree().searchCallback);
+				// make this proposition's button's visible
+				proButton.setVisible(true);
+				conButton.setVisible(true);
+				if (linkEditButton != null) {
+					linkEditButton.setVisible(true);
+					linkRemoveButton.setVisible(true);
+				}
+				lastPropositionWithFocus = this;
+				ServerComm.searchPropositions(textArea.getText(),
+						parentArgument(), getEditModeTree().searchCallback);
 
+			}
+		} catch (Exception e) {
+			ServerComm.handleClientException(e);
 		}
 	}
 
@@ -327,9 +346,13 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	@Override
 	public void onChange(ChangeEvent event) {
-		updatePropOnServerIfChanged();
-		if (proposition.linkCount > 1) {
-			textArea.setReadOnly(true);
+		try {
+			updatePropOnServerIfChanged();
+			if (proposition.linkCount > 1) {
+				textArea.setReadOnly(true);
+			}
+		} catch (Exception e) {
+			ServerComm.handleClientException(e);
 		}
 	}
 
@@ -346,10 +369,15 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	@Override
 	public void onKeyUp(KeyUpEvent event) {
-		Object source = event.getSource();
-		if (source == textArea && !deleted) {
-			ServerComm.searchPropositions(textArea.getText(), parentArgument(),
-					((EditModeTree) getTree()).searchCallback);
+		try {
+			Object source = event.getSource();
+			if (source == textArea && !deleted) {
+				ServerComm.searchPropositions(textArea.getText(),
+						parentArgument(),
+						((EditModeTree) getTree()).searchCallback);
+			}
+		} catch (Exception e) {
+			ServerComm.handleClientException(e);
 		}
 
 	}

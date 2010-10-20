@@ -32,38 +32,47 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 
 	@Override
 	public void onChange(ChangeEvent event) {
-		String trimmedTextBoxContent = textBox.getText() == null ? "" : textBox
-				.getText().trim();
-		String trimmedArgumentTitle = argument.title == null ? ""
-				: argument.title.trim();
-		if (!trimmedArgumentTitle.equals(trimmedTextBoxContent)) {
-			argument.title = trimmedTextBoxContent;
-			ServerComm.updateArgument(argument);
+		try {
+			String trimmedTextBoxContent = textBox.getText() == null ? ""
+					: textBox.getText().trim();
+			String trimmedArgumentTitle = argument.content == null ? ""
+					: argument.content.trim();
+			if (!trimmedArgumentTitle.equals(trimmedTextBoxContent)) {
+				argument.content = trimmedTextBoxContent;
+				ServerComm.updateArgument(argument);
+			}
+		} catch (Exception e) {
+			ServerComm.handleClientException(e);
 		}
 	}
-	
+
 	public void haveFocus() {
 		textBox.setFocus(true);
 	}
 
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
-		int charCode = event.getNativeKeyCode();
-		Object source = event.getSource();
-		if (source == textBox) {
-			if ((charCode == KeyCodes.KEY_BACKSPACE || charCode == KeyCodes.KEY_DELETE)
-					&& textBox.getText().equals("")) {
-				int indexOfThis = getParentItem().getChildIndex( this );
-				if(indexOfThis == 0){
-					((ViewPropEdit)getParentItem()).haveFocus();
-				} else {
-					((ViewArgEdit)getParentItem().getChild( indexOfThis - 1 )).haveFocus();
-				}
-				remove();
-				ServerComm.deleteArgument(argument);
+		try {
+			int charCode = event.getNativeKeyCode();
+			Object source = event.getSource();
+			if (source == textBox) {
+				if ((charCode == KeyCodes.KEY_BACKSPACE || charCode == KeyCodes.KEY_DELETE)
+						&& textBox.getText().equals("")) {
+					int indexOfThis = getParentItem().getChildIndex(this);
+					if (indexOfThis == 0) {
+						((ViewPropEdit) getParentItem()).haveFocus();
+					} else {
+						((ViewArgEdit) getParentItem()
+								.getChild(indexOfThis - 1)).haveFocus();
+					}
+					remove();
+					ServerComm.deleteArgument(argument);
 
-				event.preventDefault();
+					event.preventDefault();
+				}
 			}
+		} catch (Exception e) {
+			ServerComm.handleClientException(e);
 		}
 	}
 }

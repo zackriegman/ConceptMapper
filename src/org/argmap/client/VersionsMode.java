@@ -281,94 +281,124 @@ public class VersionsMode extends ResizeComposite implements
 			viewNode.logNodeRecursive(2, logName, false);
 		}
 	}
-	
+
 	/*
 	 * keep working here...
 	 */
-	public void mergeLoadedNodes( ViewNodeVer viewNodeVer, List<PropWithChanges> propWithChanges ){
-		NodeChanges nodeChanges = propWithChanges.nodeChanges;
-		for (Long id : nodeChanges.deletedChildIDs) {
-			ViewNodeVer deletedView = viewNodeVer.createDummyView(id);
+	public void mergeLoadedNodes(ViewNodeVer viewNodeVer,
+			Map<Long, PropWithChanges> propsWithChanges) {
+		for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
+			/*
+			 * TODO: this line makes no sense, the viewNodeVer has only dummy
+			 * children so we need to replace the dummy children with real
+			 * children before building them out...
+			 */
+			ViewNodeVer child = viewNodeVer.getChildViewNodeVer(i);
+			PropWithChanges propWithChanges = propsWithChanges.get(child
+					.getNodeID());
+			NodeChanges nodeChanges = propWithChanges.nodeChanges;
+			for (Long id : nodeChanges.deletedChildIDs) {
+				child.createDeletedDummyView(id);
+			}
+			for (Long id : propWithChanges.proposition.childIDs) {
+				//child.createDummyView( id );
+			}
+
+			// zoom to the right time
+			// append
 		}
 	}
 
 	@Override
 	public void onOpen(OpenEvent<TreeItem> event) {
-		ArgMap.logStart("vm.oo");
-		ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
-		if (!viewNodeVer.isLoaded()) {
-			List<Long> childIDs = new ArrayList<Long>();
-			for( int i = 0; i < viewNodeVer.getChildCount(); i++ ){
-				childIDs.add(viewNodeVer.getChildViewNodeVer(i).getNodeID());
-			}
-			if (viewNodeVer.getClass() == ViewArgVer.class) {
-				
-				class Callback implements
-						ServerComm.LocalCallback<List<PropWithChanges>> {
-					ViewPropVer viewPropVer;
-
-					@Override
-					public void call(List<PropWithChanges> propsWithChanges) {
-						mergeLoadedNodes(viewPropVer,
-								propsWithChanges);
-					}
+		try {
+			ArgMap.logStart("vm.oo");
+			ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
+			if (!viewNodeVer.isLoaded()) {
+				List<Long> childIDs = new ArrayList<Long>();
+				for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
+					childIDs.add(viewNodeVer.getChildViewNodeVer(i).getNodeID());
 				}
-				Callback callback = new Callback();
-				callback.viewPropVer = (ViewPropVer) viewNodeVer;
+				if (viewNodeVer.getClass() == ViewArgVer.class) {
 
-				ServerComm.getPropsWithChanges(childIDs, callback);
+					class Callback
+							implements
+							ServerComm.LocalCallback<Map<Long, PropWithChanges>> {
+						ViewPropVer viewPropVer;
+
+						@Override
+						public void call(
+								Map<Long, PropWithChanges> propsWithChanges) {
+							mergeLoadedNodes(viewPropVer, propsWithChanges);
+						}
+					}
+					Callback callback = new Callback();
+					callback.viewPropVer = (ViewPropVer) viewNodeVer;
+
+					ServerComm.getPropsWithChanges(childIDs, callback);
+				} else {
+					ArgMap.message("METHOD NOT YET IMPLEMENTED",
+							MessageType.ERROR);
+				}
 			} else {
-				ArgMap.message( "METHOD NOT YET IMPLEMENTED", MessageType.ERROR );
+
+				ArgMap.log("vm.oo", "Adding View Changes: ");
+				SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
+				recursiveGetViewChanges(viewNodeVer, subTreeChanges, true,
+						"vm.oo");
+
+				/*
+				 * this line must come before travelFromDateToDate() becuase
+				 * that method resets the tree to open of added nodes that
+				 * should be open. But this line must come after
+				 * recursiveGetViewChanges I think because that method depends
+				 * on the opened node not yet have a positive isOpen() value...
+				 * actually that doesn't seem to be true anymore...so this could
+				 * probably be moved to the beginning.
+				 */
+				viewNodeVer.setOpen(true);
+
+				travelFromDateToDate(viewNodeVer.getClosedDate(), currentDate,
+						subTreeChanges);
+
+				timeMachineMap.putAll(subTreeChanges);
+
+				for (ViewChange viewChange : viewNodeVer
+						.getViewChangeAddRemoveList()) {
+					viewChange.hidden = false;
+				}
+
+				loadVersionListFromTimeMachine();
+
+				ArgMap.logEnd("vm.oo");
 			}
-		} else {
-
-			ArgMap.log("vm.oo", "Adding View Changes: ");
-			SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
-			recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oo");
-
-			/*
-			 * this line must come before travelFromDateToDate() becuase that
-			 * method resets the tree to open of added nodes that should be
-			 * open. But this line must come after recursiveGetViewChanges I
-			 * think because that method depends on the opened node not yet have
-			 * a positive isOpen() value... actually that doesn't seem to be
-			 * true anymore...so this could probably be moved to the beginning.
-			 */
-			viewNodeVer.setOpen(true);
-
-			travelFromDateToDate(viewNodeVer.getClosedDate(), currentDate,
-					subTreeChanges);
-
-			timeMachineMap.putAll(subTreeChanges);
-
-			for (ViewChange viewChange : viewNodeVer
-					.getViewChangeAddRemoveList()) {
-				viewChange.hidden = false;
-			}
-
-			loadVersionListFromTimeMachine();
-
-			ArgMap.logEnd("vm.oo");
+		} catch (Exception e) {
+			ServerComm.handleClientException(e);
 		}
 	}
 
 	@Override
 	public void onClose(CloseEvent<TreeItem> event) {
-		ArgMap.logStart("vm.oc");
-		ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
-		viewNodeVer.setClosedDate(currentDate);
-		ArgMap.log("vm.oc", "Removing View Changes: ");
-		SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
-		recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oc");
-		timeMachineMap.removeAll(subTreeChanges);
+		try {
+			ArgMap.logStart("vm.oc");
+			ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
+			viewNodeVer.setClosedDate(currentDate);
+			ArgMap.log("vm.oc", "Removing View Changes: ");
+			SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
+			recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oc");
+			timeMachineMap.removeAll(subTreeChanges);
 
-		for (ViewChange viewChange : viewNodeVer.getViewChangeAddRemoveList()) {
-			viewChange.hidden = true;
+			for (ViewChange viewChange : viewNodeVer
+					.getViewChangeAddRemoveList()) {
+				viewChange.hidden = true;
+			}
+
+			loadVersionListFromTimeMachine();
+			viewNodeVer.setOpen(false);
+			ArgMap.logEnd("vm.oc");
+		} catch (Exception e) {
+			ServerComm.handleClientException(e);
 		}
-
-		loadVersionListFromTimeMachine();
-		viewNodeVer.setOpen(false);
-		ArgMap.logEnd("vm.oc");
 	}
 
 	public void recursiveGetViewChanges(ViewNodeVer viewNodeVer,
@@ -436,8 +466,10 @@ public class VersionsMode extends ResizeComposite implements
 
 					@Override
 					public void call(NodesWithHistory propTreeWithHistory) {
-						mergeLoadedProposition_DELETE_ME(propView.proposition,
-								propTreeWithHistory);
+						/*
+						 * mergeLoadedProposition_DELETE_ME(propView.proposition,
+						 * propTreeWithHistory);
+						 */
 					}
 				}
 				Callback callback = new Callback();
@@ -451,8 +483,10 @@ public class VersionsMode extends ResizeComposite implements
 
 					@Override
 					public void call(NodesWithHistory argTreeWithHistory) {
-						mergeLoadedArgument_DELETE_ME(argView.argument,
-								argTreeWithHistory);
+						/*
+						 * mergeLoadedArgument_DELETE_ME(argView.argument,
+						 * argTreeWithHistory);
+						 */
 					}
 				}
 				Callback callback = new Callback();
@@ -465,94 +499,89 @@ public class VersionsMode extends ResizeComposite implements
 
 	}
 
-	public void mergeLoadedProposition_DELETE_ME(Proposition proposition,
-			NodesWithHistory propTreeWithHistory) {
-
-		ArgMap.logStart("vm.mlp");
-		Map<Long, ViewPropVer> propViewIndex = new HashMap<Long, ViewPropVer>();
-		Map<Long, ViewArgVer> argViewIndex = new HashMap<Long, ViewArgVer>();
-
-		ViewPropVer propGraft = ViewProp.recursiveBuildPropositionView(
-				proposition, propTreeWithHistory.nodes, propViewIndex,
-				argViewIndex, ViewPropVer.FACTORY, ViewArgVer.FACTORY);
-
-		ArgMap.log("vm.mlp", "propTree before timeTravel:");
-		propGraft.logNodeRecursive(0, "vm.mlp", true);
-		// TimeTraveler timeTraveler = new
-		// TimeTraveler(propTreeWithHistory.changes, propViewIndex,
-		// argViewIndex, null);
-
-		/*
-		 * propViewParent.getChild(0).remove(); while (propTree.getChildCount()
-		 * > 0) { TreeItem transplant = propTree.getChild(0);
-		 * transplant.remove(); propViewParent.addItem(transplant); }
-		 */
-
-		// timeTraveler.travelToDate(mainTT.getCurrentDate());
-		ArgMap.log("vm.mlp", "propTree after timeTravel:");
-		propGraft.logNodeRecursive(0, "vm.mlp", true);
-
-		// ViewPropVer view = mainTT.absorb(timeTraveler, propGraft);
-		ArgMap.log("vm.mlp", "old propview after grafting:");
-		// view.logNodeRecursive(0, "vm.mlp");
-		ArgMap.log("vm.mlp", "----------------");
-
-		loadVersionListFromTimeMachine();
-
-		// GWT.log("Prop tree transplant");
-		// printPropRecursive(propTree, 0);
-		ArgMap.log("vm.mlp", "changes");
-		for (Change change : propTreeWithHistory.changes.values()) {
-			GWT.log(change.toString());
-		}
-		ArgMap.log("vm.mlp", "mergeLoadedPropositon: start");
-	}
-
-	public void mergeLoadedArgument_DELETE_ME(Argument argument,
-			NodesWithHistory argTreeWithHistory) {
-
-		ArgMap.logStart("vm.mla");
-		Map<Long, ViewPropVer> propViewIndex = new HashMap<Long, ViewPropVer>();
-		Map<Long, ViewArgVer> argViewIndex = new HashMap<Long, ViewArgVer>();
-
-		ViewArgVer argGraft = ViewArg.recursiveBuildArgumentView(argument,
-				argTreeWithHistory.nodes, propViewIndex, argViewIndex,
-				ViewPropVer.FACTORY, ViewArgVer.FACTORY);
-
-		ArgMap.log("vm.mla", "propTree before timeTravel:");
-		argGraft.logNodeRecursive(0, "vm.mla", true);
-		// TimeTraveler timeTraveler = new
-		// TimeTraveler(argTreeWithHistory.changes, propViewIndex, argViewIndex,
-		// null);
-
-		/*
-		 * propViewParent.getChild(0).remove(); while (propTree.getChildCount()
-		 * > 0) { TreeItem transplant = propTree.getChild(0);
-		 * transplant.remove(); propViewParent.addItem(transplant); }
-		 */
-
-		// timeTraveler.travelToDate(mainTT.getCurrentDate());
-		ArgMap.log("vm.mla", "argTree after timeTravel:");
-		argGraft.logNodeRecursive(0, "vm.mla", true);
-
-		// ViewArgVer view = mainTT.absorb(timeTraveler, argGraft);
-		ArgMap.log("vm.mla", "old propview after grafting:");
-		// view.logNodeRecursive(0, "vm.mla");
-		ArgMap.log("vm.mla", "----------------");
-
-		loadVersionListFromTimeMachine();
-
-		// GWT.log("Prop tree transplant");
-		// printPropRecursive(propTree, 0);
-		ArgMap.log("vm.mla", "changes");
-		for (Change change : argTreeWithHistory.changes.values()) {
-			GWT.log(change.toString());
-		}
-		ArgMap.logEnd("vm.mla");
-	}
+	/*
+	 * public void mergeLoadedProposition_DELETE_ME(Proposition proposition,
+	 * NodesWithHistory propTreeWithHistory) {
+	 * 
+	 * ArgMap.logStart("vm.mlp"); Map<Long, ViewPropVer> propViewIndex = new
+	 * HashMap<Long, ViewPropVer>(); Map<Long, ViewArgVer> argViewIndex = new
+	 * HashMap<Long, ViewArgVer>();
+	 * 
+	 * 
+	 * ViewPropVer propGraft = ViewProp.recursiveBuildPropositionView(
+	 * proposition, propTreeWithHistory.nodes, propViewIndex, argViewIndex,
+	 * ViewPropVer.FACTORY, ViewArgVer.FACTORY);
+	 * 
+	 * 
+	 * ArgMap.log("vm.mlp", "propTree before timeTravel:");
+	 * propGraft.logNodeRecursive(0, "vm.mlp", true); // TimeTraveler
+	 * timeTraveler = new // TimeTraveler(propTreeWithHistory.changes,
+	 * propViewIndex, // argViewIndex, null);
+	 * 
+	 * 
+	 * // propViewParent.getChild(0).remove(); while (propTree.getChildCount()
+	 * // > 0) { TreeItem transplant = propTree.getChild(0); //
+	 * transplant.remove(); propViewParent.addItem(transplant); }
+	 * 
+	 * 
+	 * // timeTraveler.travelToDate(mainTT.getCurrentDate());
+	 * ArgMap.log("vm.mlp", "propTree after timeTravel:");
+	 * propGraft.logNodeRecursive(0, "vm.mlp", true);
+	 * 
+	 * // ViewPropVer view = mainTT.absorb(timeTraveler, propGraft);
+	 * ArgMap.log("vm.mlp", "old propview after grafting:"); //
+	 * view.logNodeRecursive(0, "vm.mlp"); ArgMap.log("vm.mlp",
+	 * "----------------");
+	 * 
+	 * loadVersionListFromTimeMachine();
+	 * 
+	 * // GWT.log("Prop tree transplant"); // printPropRecursive(propTree, 0);
+	 * ArgMap.log("vm.mlp", "changes"); for (Change change :
+	 * propTreeWithHistory.changes.values()) { GWT.log(change.toString()); }
+	 * ArgMap.log("vm.mlp", "mergeLoadedPropositon: start"); }
+	 * 
+	 * public void mergeLoadedArgument_DELETE_ME(Argument argument,
+	 * NodesWithHistory argTreeWithHistory) {
+	 * 
+	 * ArgMap.logStart("vm.mla"); Map<Long, ViewPropVer> propViewIndex = new
+	 * HashMap<Long, ViewPropVer>(); Map<Long, ViewArgVer> argViewIndex = new
+	 * HashMap<Long, ViewArgVer>();
+	 * 
+	 * ViewArgVer argGraft = ViewArg.recursiveBuildArgumentView(argument,
+	 * argTreeWithHistory.nodes, propViewIndex, argViewIndex,
+	 * ViewPropVer.FACTORY, ViewArgVer.FACTORY);
+	 * 
+	 * ArgMap.log("vm.mla", "propTree before timeTravel:");
+	 * argGraft.logNodeRecursive(0, "vm.mla", true); // TimeTraveler
+	 * timeTraveler = new // TimeTraveler(argTreeWithHistory.changes,
+	 * propViewIndex, argViewIndex, // null);
+	 * 
+	 * 
+	 * // propViewParent.getChild(0).remove(); while (propTree.getChildCount()
+	 * // > 0) { TreeItem transplant = propTree.getChild(0); //
+	 * transplant.remove(); propViewParent.addItem(transplant); }
+	 * 
+	 * 
+	 * // timeTraveler.travelToDate(mainTT.getCurrentDate());
+	 * ArgMap.log("vm.mla", "argTree after timeTravel:");
+	 * argGraft.logNodeRecursive(0, "vm.mla", true);
+	 * 
+	 * // ViewArgVer view = mainTT.absorb(timeTraveler, argGraft);
+	 * ArgMap.log("vm.mla", "old propview after grafting:"); //
+	 * view.logNodeRecursive(0, "vm.mla"); ArgMap.log("vm.mla",
+	 * "----------------");
+	 * 
+	 * loadVersionListFromTimeMachine();
+	 * 
+	 * // GWT.log("Prop tree transplant"); // printPropRecursive(propTree, 0);
+	 * ArgMap.log("vm.mla", "changes"); for (Change change :
+	 * argTreeWithHistory.changes.values()) { GWT.log(change.toString()); }
+	 * ArgMap.logEnd("vm.mla"); }
+	 */
 
 	@Override
 	public void onChange(ChangeEvent event) {
+		try{
 		String millisecondStr = versionList.getValue(versionList
 				.getSelectedIndex());
 		Date destinationDate = new Date(Long.parseLong(millisecondStr));
@@ -563,6 +592,10 @@ public class VersionsMode extends ResizeComposite implements
 
 		treePanel.ensureVisible((ViewNode) timeMachineMap.get(destinationDate)
 				.get(0).viewNode);
+		}
+		catch( Exception e ){
+			ServerComm.handleClientException(e);
+		}
 	}
 
 	public void travelFromDateToDate(Date currentDate, Date newDate,
@@ -782,7 +815,7 @@ public class VersionsMode extends ResizeComposite implements
 							vC.change.argPropIndex);
 					ViewArg viewArgVer = propView
 							.getArgView(vC.change.argPropIndex);
-					viewArgVer.argument.pro = vC.change.argPro;
+					viewArgVer.setPro( vC.change.argPro );
 					viewArgVer.setArgTitle(vC.change.content);
 					break;
 				}
