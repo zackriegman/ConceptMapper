@@ -22,7 +22,7 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	}
 
 	@Override
-	public List<ViewChange> getViewChangeAddRemoveList() {
+	public List<ViewChange> getViewChangeHideList() {
 		assert false;
 		return null;
 	}

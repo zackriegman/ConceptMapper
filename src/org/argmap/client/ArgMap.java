@@ -19,7 +19,9 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 
 //TODO: onopen if not loaded yet, load the node, zoom it, append it...
 
-//TODO: deployed app has problems... nodes disapear and errors when adding and deleting nodes
+//TODO: 
+
+//TODO: backspacing in an argument with children deletes them on the client (even though not deleted on the server)
 
 /*TODO: if you close a node in versions mode sometimes you can never open it again because it will 
  * never have children again given the dates available to click on.  For instance if you add a node, 

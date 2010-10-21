@@ -25,6 +25,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	private Button conButton;
 	private Button linkRemoveButton;
 	private Button linkEditButton;
+	private HorizontalPanel buttonsPanel;
 
 	boolean deleted = false;
 
@@ -39,29 +40,21 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	public ViewPropEdit(Proposition prop) {
 		super(prop);
 
-		HorizontalPanel editPanel = new HorizontalPanel();
-		mainPanel.add(editPanel);
+		buttonsPanel = new HorizontalPanel();
+		mainPanel.add(buttonsPanel);
 		proButton = new Button("For");
 		conButton = new Button("Against");
-		editPanel.add(proButton);
-		editPanel.add(conButton);
+		buttonsPanel.add(proButton);
+		buttonsPanel.add(conButton);
 		proButton.addClickHandler(this);
 		conButton.addClickHandler(this);
 		proButton.setVisible(false);
 		conButton.setVisible(false);
 
 		if (proposition.linkCount > 1) {
-			linkRemoveButton = new Button("Unlink");
-			linkEditButton = new Button("Edit");
-			editPanel.add(linkRemoveButton);
-			editPanel.add(linkEditButton);
-			linkRemoveButton.addClickHandler(this);
-			linkEditButton.addClickHandler(this);
-			linkRemoveButton.setVisible(false);
-			linkEditButton.setVisible(false);
-			textArea.setReadOnly(true);
+			setNodeLink( true );
 		} else {
-			textArea.setReadOnly(false);
+			setNodeLink( false );
 		}
 
 		textArea.addKeyDownHandler(this);
@@ -69,6 +62,27 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		textArea.addFocusHandler(this);
 		textArea.addChangeHandler(this);
 		setState(true);
+	}
+
+	@Override
+	public void setNodeLink(boolean link) {
+		if (link && linkRemoveButton == null ) {
+			linkRemoveButton = new Button("Unlink");
+			linkEditButton = new Button("Edit");
+			buttonsPanel.add(linkRemoveButton);
+			buttonsPanel.add(linkEditButton);
+			linkRemoveButton.addClickHandler(this);
+			linkEditButton.addClickHandler(this);
+			linkRemoveButton.setVisible(false);
+			linkEditButton.setVisible(false);
+			textArea.setReadOnly(true);
+		} else if (!link && linkRemoveButton != null){
+			buttonsPanel.remove(linkRemoveButton);
+			buttonsPanel.remove(linkEditButton);
+			linkRemoveButton = null;
+			linkEditButton = null;
+			textArea.setReadOnly(false);
+		}
 	}
 
 	public void haveFocus() {
@@ -118,6 +132,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			Object source = event.getSource();
 			if (source == textArea) {
 				if (charCode == KeyCodes.KEY_ENTER && parentArgView() == null) {
+					addArgument( true );
 					event.preventDefault();
 				} else if (charCode == KeyCodes.KEY_ENTER
 						&& parentArgView() != null) {
@@ -373,8 +388,8 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		}
 
 	}
-	
-	public ViewNode createChildView(){
+
+	public ViewNode createChildView() {
 		return new ViewArgEdit();
 	}
 }

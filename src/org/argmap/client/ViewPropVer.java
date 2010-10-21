@@ -50,7 +50,7 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 	}
 
 	public void removeAndSaveChildView(Long id) {
-		ViewArgVer viewNode = (ViewArgVer) removeChildView(id);
+		ViewNodeVer viewNode = (ViewNodeVer) removeChildView(id);
 		deletedViews.put(id, viewNode);
 	}
 
@@ -94,7 +94,7 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 		return viewChanges;
 	}
 	
-	public List<ViewChange> getViewChangeAddRemoveList(){
+	public List<ViewChange> getViewChangeHideList(){
 		List<ViewChange> list = new ArrayList<ViewChange>();
 		for( ViewChange viewChange : viewChanges ){
 			switch( viewChange.change.changeType ){

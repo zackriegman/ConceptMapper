@@ -65,7 +65,7 @@ public class ServerComm {
 
 		@Override
 		public final void onFailure(Throwable caught) {
-			ArgMap.message("Error: " + caught.getMessage(), MessageType.ERROR);
+			ArgMap.message("Error: " + caught.getMessage(), MessageType.ERROR, 10);
 			throw new RuntimeException(caught);
 		}
 
@@ -99,8 +99,8 @@ public class ServerComm {
 				
 			}
 		});
-		ArgMap.message("EXCEPTION CAUGHT ON CLIENT", MessageType.ERROR);
-		Window.alert("Exception:<br/>" + e.toString());
+		ArgMap.message("EXCEPTION CAUGHT ON CLIENT", MessageType.ERROR, 10);
+		Window.alert("Exception: " + e.toString());
 		throw new RuntimeException( e );
 	}
 
@@ -115,7 +115,7 @@ public class ServerComm {
 		@Override
 		public final void onFailure(Throwable caught) {
 			dispatchCommand();
-			ArgMap.message("Error: " + caught.getMessage(), MessageType.ERROR);
+			ArgMap.message("Error: " + caught.getMessage(), MessageType.ERROR, 10);
 			// GWT.log(caught.getMessage());
 			// caught.printStackTrace();
 			/* trying this to get the exception printed in the GWT.log */

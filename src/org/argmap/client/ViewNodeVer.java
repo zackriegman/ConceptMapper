@@ -10,7 +10,7 @@ import com.google.gwt.user.client.ui.TreeItem;
 
 public interface ViewNodeVer {
 	public List<ViewChange> getViewChangeList();
-	public List<ViewChange> getViewChangeAddRemoveList();
+	public List<ViewChange> getViewChangeHideList();
 	
 	public Collection<ViewNodeVer> getDeletedViewList();
 	public void clearDeletedViews();

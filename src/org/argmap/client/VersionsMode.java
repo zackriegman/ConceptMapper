@@ -203,7 +203,7 @@ public class VersionsMode extends ResizeComposite implements
 			}
 		}
 
-		loadChangesIntoNodeAndMap(viewNode, nodeChanges.changes, timeMachineMap);
+		loadChangesIntoNodeAndMap(viewNode, nodeChanges.changes, timeMachineMap );
 
 		ArgMap.logUnindent("vm.ptwdnacab");
 	}
@@ -217,6 +217,12 @@ public class VersionsMode extends ResizeComposite implements
 			viewChange.viewNode = viewNode;
 			viewNode.getViewChangeList().add(viewChange);
 			timeMachineMap.put(change.date, viewChange);
+		}
+		if( ! viewNode.isOpen()){
+			for (ViewChange viewChange : viewNode
+					.getViewChangeHideList()) {
+				viewChange.hidden = true;
+			}
 		}
 	}
 
@@ -293,6 +299,7 @@ public class VersionsMode extends ResizeComposite implements
 			SortedMultiMap<Date, ViewChange> viewChanges) {
 		NodeWithChanges childNodeWithChanges = nodesWithChanges.get(id);
 		ViewNodeVer child = parent.createChild(childNodeWithChanges.node);
+		child.setLoaded(false);
 		for (Long childDummyID : childNodeWithChanges.node.childIDs) {
 			ViewNode childDummy = new ViewDummyVer(childDummyID);
 			child.addItem(childDummy);
@@ -308,8 +315,8 @@ public class VersionsMode extends ResizeComposite implements
 	}
 
 	public void mergeLoadedNodes(ViewNodeVer viewNodeVer,
-			Map<Long, NodeWithChanges> nodesWithChanges) {
-
+			Map<Long, NodeWithChanges> nodesWithChanges) {	
+		
 		SortedMultiMap<Date, ViewChange> viewChanges = new SortedMultiMap<Date, ViewChange>();
 
 		/*
@@ -340,8 +347,10 @@ public class VersionsMode extends ResizeComposite implements
 			viewNodeVer.addItem((ViewNode) createChildWithDummies(viewNodeVer,
 					id, nodesWithChanges, viewChanges));
 		}
+		
+		viewNodeVer.setLoaded(true);
 
-		zoomToDateAndReloadChangeList(viewNodeVer, viewChanges);
+		zoomToCurrentDateAndReloadChangeList(viewNodeVer, viewChanges, viewChanges.lastKey());
 	}
 
 	@Override
@@ -396,17 +405,18 @@ public class VersionsMode extends ResizeComposite implements
 				recursiveGetViewChanges(viewNodeVer, subTreeChanges, true,
 						"vm.oo");
 
-				zoomToDateAndReloadChangeList(viewNodeVer, subTreeChanges);
+				zoomToCurrentDateAndReloadChangeList(viewNodeVer, subTreeChanges, viewNodeVer.getClosedDate());
 
-				ArgMap.logEnd("vm.oo");
+				
 			}
+			ArgMap.logEnd("vm.oo");
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
 		}
 	}
 
-	public void zoomToDateAndReloadChangeList(ViewNodeVer viewNodeVer,
-			SortedMultiMap<Date, ViewChange> subTreeChanges) {
+	public void zoomToCurrentDateAndReloadChangeList(ViewNodeVer viewNodeVer,
+			SortedMultiMap<Date, ViewChange> subTreeChanges, Date startDate) {
 		/*
 		 * this line must come before travelFromDateToDate() becuase that method
 		 * resets the tree to open of added nodes that should be open. But this
@@ -417,12 +427,12 @@ public class VersionsMode extends ResizeComposite implements
 		 */
 		viewNodeVer.setOpen(true);
 
-		travelFromDateToDate(viewNodeVer.getClosedDate(), currentDate,
+		travelFromDateToDate(startDate, currentDate,
 				subTreeChanges);
 
 		timeMachineMap.putAll(subTreeChanges);
 
-		for (ViewChange viewChange : viewNodeVer.getViewChangeAddRemoveList()) {
+		for (ViewChange viewChange : viewNodeVer.getViewChangeHideList()) {
 			viewChange.hidden = false;
 		}
 
@@ -441,7 +451,7 @@ public class VersionsMode extends ResizeComposite implements
 			timeMachineMap.removeAll(subTreeChanges);
 
 			for (ViewChange viewChange : viewNodeVer
-					.getViewChangeAddRemoveList()) {
+					.getViewChangeHideList()) {
 				viewChange.hidden = true;
 			}
 
@@ -652,7 +662,7 @@ public class VersionsMode extends ResizeComposite implements
 
 	public void travelFromDateToDate(Date currentDate, Date newDate,
 			SortedMultiMap<Date, ViewChange> changes) {
-		ArgMap.logStart("tm.ttd", true);
+		ArgMap.logStart("tm.ttd", false);
 		if (newDate.before(currentDate)) {
 			ArgMap.log("tm.ttd", "traveling back to date:" + newDate);
 			/*

@@ -20,15 +20,18 @@ public abstract class ViewProp extends ViewNode {
 		this.setWidget(mainPanel);
 	}
 	
+	public void setNodeLink( boolean link ){};
+	
 	public void setNode( Node node ){
 		proposition = (Proposition)node;
 		setContent(proposition.getContent());
 		if (proposition.linkCount <= 1) {
 			textArea.setStylePrimaryName("propositionTextArea");
+			setNodeLink( false );
 		} else if (proposition.linkCount > 1) {
 			textArea.setStylePrimaryName("linkedPropositionTextArea");
+			setNodeLink( true );
 		}
-		
 	}
 
 	public String toString() {
