@@ -13,13 +13,7 @@ import org.argmap.client.ArgMapService.NodeChangesMaps;
 
 public class ViewPropVer extends ViewProp implements ViewNodeVer {
 	public List<ViewChange> viewChanges = new ArrayList<ViewChange>();
-	public static ViewPropFactory<ViewPropVer> FACTORY = new ViewPropFactory<ViewPropVer>() {
 
-		@Override
-		public ViewPropVer create(Proposition prop) {
-			return new ViewPropVer(prop);
-		}
-	};
 	
 	public boolean open = true;
 	public Map<Long, ViewNodeVer> deletedViews = new HashMap<Long, ViewNodeVer>();
@@ -141,6 +135,10 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 	}
 	public void setLoaded( boolean isLoaded ){
 		this.isLoaded = isLoaded;
+	}
+	
+	public ViewNode createChildView(){
+		return new ViewArgVer();
 	}
 }
 

@@ -100,10 +100,14 @@ public class EditMode extends ResizeComposite implements
 
 						Proposition proposition = allNodes.rootProps
 								.get(propID);
+						ViewProp propView = new ViewPropEdit();
+						propView.recursiveBuildViewNode(proposition, allNodes.nodes);
+						/* TODO remove this and factories...
 						ViewProp propView = ViewProp
 								.recursiveBuildPropositionView(proposition,
 										allNodes.nodes, ViewPropEdit.FACTORY,
 										ViewArgEdit.FACTORY);
+										*/
 						tree.addItem(propView);
 						propView.logNodeRecursive(0, "em.em.cb", true);
 					}
@@ -157,13 +161,17 @@ public class EditMode extends ResizeComposite implements
 								parentArgView.removeItem(propViewToRemove);
 								Proposition proposition = nodes.props
 										.get(linkPropID);
+								ViewProp newViewProp = new ViewPropEdit();
+								newViewProp.recursiveBuildViewNode(proposition, nodes);
+								/*
 								ViewProp newPropView = ViewProp
 										.recursiveBuildPropositionView(
 												proposition, nodes,
 												ViewPropEdit.FACTORY,
 												ViewArgEdit.FACTORY);
+												*/
 								parentArgView.insertChildViewAt(propIndex,
-										newPropView);
+										newViewProp);
 							}
 						}
 						;

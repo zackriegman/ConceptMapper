@@ -21,14 +21,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		KeyDownHandler, KeyUpHandler, FocusHandler, ChangeHandler {
 
 	private static ViewPropEdit lastPropositionWithFocus = null;
-
-	public static ViewPropFactory<ViewPropEdit> FACTORY = new ViewPropFactory<ViewPropEdit>() {
-		@Override
-		public ViewPropEdit create(Proposition prop) {
-			return new ViewPropEdit(prop);
-		}
-	};
-
 	private Button proButton;
 	private Button conButton;
 	private Button linkRemoveButton;
@@ -380,5 +372,9 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			ServerComm.handleClientException(e);
 		}
 
+	}
+	
+	public ViewNode createChildView(){
+		return new ViewArgEdit();
 	}
 }

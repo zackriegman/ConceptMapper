@@ -14,14 +14,6 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	public List<ViewChange> viewChanges = new ArrayList<ViewChange>();
 	public boolean open = true;
 	private boolean isLoaded = true;
-
-	public static ViewArgFactory<ViewArgVer> FACTORY = new ViewArgFactory<ViewArgVer>() {
-		@Override
-		public ViewArgVer create(Argument arg) {
-			return new ViewArgVer(arg);
-		}
-	};
-
 	public Map<Long, ViewNodeVer> deletedViews = new HashMap<Long, ViewNodeVer>();
 	public Date closedDate;
 	
@@ -31,6 +23,11 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	
 	public void setClosedDate( Date closedDate ){
 		this.closedDate = closedDate;
+	}
+	
+	public ViewArgVer(){
+		super();
+		textBox.setReadOnly(true);
 	}
 
 	public ViewArgVer(boolean pro) {
@@ -125,6 +122,10 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	}
 	public void setLoaded( boolean isLoaded ){
 		this.isLoaded = isLoaded;
+	}
+	
+	public ViewNode createChildView(){
+		return new ViewPropVer();
 	}
 
 }

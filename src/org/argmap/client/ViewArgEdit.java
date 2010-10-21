@@ -8,12 +8,12 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 
 public class ViewArgEdit extends ViewArg implements ChangeHandler,
 		KeyDownHandler {
-	public static ViewArgFactory<ViewArgEdit> FACTORY = new ViewArgFactory<ViewArgEdit>() {
-		@Override
-		public ViewArgEdit create(Argument arg) {
-			return new ViewArgEdit(arg);
-		}
-	};
+
+	
+	public ViewArgEdit(){
+		super();
+		initialize();
+	}
 
 	public ViewArgEdit(Argument arg) {
 		super(arg);
@@ -74,5 +74,9 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
 		}
+	}
+	
+	public ViewNode createChildView(){
+		return new ViewPropEdit();
 	}
 }

@@ -17,60 +17,53 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 
 	@Override
 	public List<ViewChange> getViewChangeList() {
-		// TODO Auto-generated method stub
 		assert false;
 		return null;
 	}
 
 	@Override
 	public List<ViewChange> getViewChangeAddRemoveList() {
-		// TODO Auto-generated method stub
 		assert false;
 		return null;
 	}
 
 	@Override
 	public Collection<ViewNodeVer> getDeletedViewList() {
-		// TODO Auto-generated method stub
 		assert false;
 		return null;
 	}
 
 	@Override
 	public ViewNodeVer getChildViewNodeVer(int i) {
-		// TODO Auto-generated method stub
 		assert false;
 		return null;
 	}
 
 	@Override
 	public Date getClosedDate() {
-		// TODO Auto-generated method stub
 		assert false;
 		return null;
 	}
 
 	@Override
 	public void setClosedDate(Date closedDate) {
-		// TODO Auto-generated method stub
 		assert false;
 		
 	}
 
 	@Override
 	public boolean isOpen() {
-		// TODO Auto-generated method stub
 		assert false;
 		return false;
 	}
 
 	@Override
 	public void setOpen(boolean open) {
-		// TODO Auto-generated method stub
 		assert false;
 		
 	}
 
+	/* TODO: this is the only implemented method... explain why that is... */
 	@Override
 	public Long getNodeID() {
 		return nodeID;
@@ -78,43 +71,55 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 
 	@Override
 	public ViewNode createViewNodeVerClone() {
-		// TODO Auto-generated method stub
 		assert false;
 		return null;
 	}
 
 	@Override
 	public NodeChanges chooseNodeChanges(NodeChangesMaps changesMaps) {
-		// TODO Auto-generated method stub
 		
 		return null;
 	}
 
 	@Override
 	public ViewNodeVer createDeletedView(Long id) {
-		// TODO Auto-generated method stub
 		assert false;
 		return null;
 	}
 
 	@Override
 	public boolean isLoaded() {
-		// TODO Auto-generated method stub
 		assert false;
 		return false;
 	}
 
 	@Override
 	public void setLoaded(boolean isLoaded) {
-		// TODO Auto-generated method stub
 		assert false;
 	}
 
 	@Override
 	public ViewNodeVer createDeletedDummyView(Long id) {
-		// TODO Auto-generated method stub
 		assert false;
 		return null;
+	}
+
+	@Override
+	public ViewNode createChildView() {
+		assert false;
+		return null;
+	}
+
+	@Override
+	public Node getChildNodeFromNodeList(Long nodeID, Nodes nodes) {
+		assert false;
+		return null;
+	}
+
+	@Override
+	public void setNode(Node node) {
+		assert false;
+		
 	}
 
 	

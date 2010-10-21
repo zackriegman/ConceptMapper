@@ -32,13 +32,14 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: look at backwards/forwards of linking/unlinking ... I'm not sure I ever finished writing that code
 //TODO: test versioning of unlinking
 //TODO: test/fix versioning of a single empty proposition
-//TODO: undeleting links does not restore their yellow color and linking color seems to be broken...
+//TODO: undeleting links does not restore their yellow color ...
 //TODO: lazy load closed items in versions mode
 //TODO: prevent circular linking from crashing program...
 
 //TODO: linking: original linked item should also change color immediately upon first linking
 //TODO: linking: how will client automatically update link changes...
 
+//TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: lazy load in editmode (maybe a few layers deep in advance) instead of loading the entire tree
 //TODO: provide a way to see deleted top level nodes
 //TODO: add helpful message along the side (tips box)
@@ -46,6 +47,9 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: implement user accounts, email updates of changes, inviting friends
 //TODO: implement proposition strength voting, and scoring algorithm
 
+/*TODO: implement locking when modifying a parent and deleting/adding nodes to make sure that two simultaneous
+ * changes (modifying the parent or deleteing/adding two different child nodes) do not clobber each other
+ * and result in inconsistent datastore state. */
 //TODO: highlight last change node after time travel
 //TODO: think about merging of duplicate propositions (both possibly already having arguments)
 //TODO: fine tune UI for arguments... see implementation notes

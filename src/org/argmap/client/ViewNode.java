@@ -3,10 +3,12 @@ package org.argmap.client;
 import java.util.LinkedList;
 import java.util.Queue;
 
+
 import com.google.gwt.user.client.ui.TreeItem;
 
 public abstract class ViewNode extends TreeItem {
 	public abstract Long getNodeID();
+
 	public abstract ViewNode createViewNodeVerClone();
 
 	public ViewNode removeChildView(Long id) {
@@ -67,32 +69,45 @@ public abstract class ViewNode extends TreeItem {
 	}
 
 	/*
-	public void logNodesRecursive(int level, String logName) {
-		ArgMap.logln(logName, ArgMap.spaces(level * 2) + toString()
-				+ "; hashCode:" + hashCode());
-		for (int i = 0; i < getChildCount(); i++) {
-			ViewNode node = getChildView(i);
-			node.logNodeRecursive(level + 1, logName);
-		}
-	}
-	*/
+	 * public void logNodesRecursive(int level, String logName) {
+	 * ArgMap.logln(logName, ArgMap.spaces(level * 2) + toString() +
+	 * "; hashCode:" + hashCode()); for (int i = 0; i < getChildCount(); i++) {
+	 * ViewNode node = getChildView(i); node.logNodeRecursive(level + 1,
+	 * logName); } }
+	 */
 
-	public void logNodeRecursive(int level, String logName, boolean includeChildrenOfClosedNodes ) {
+	public void logNodeRecursive(int level, String logName,
+			boolean includeChildrenOfClosedNodes) {
 		ArgMap.logln(logName, ArgMap.spaces(level * 2) + toString()
 				+ "; hashCode:" + hashCode());
 		if (includeChildrenOfClosedNodes || getState()) {
 			for (int i = 0; i < getChildCount(); i++) {
 				ViewNode node = getChildView(i);
-				node.logNodeRecursive(level + 1, logName, includeChildrenOfClosedNodes);
+				node.logNodeRecursive(level + 1, logName,
+						includeChildrenOfClosedNodes);
 			}
 		}
 	}
-	
-	public boolean getModifiedState(){
-		if( getState() || getChildCount() == 0 ){
+
+	public boolean getModifiedState() {
+		if (getState() || getChildCount() == 0) {
 			return true;
 		} else {
 			return false;
+		}
+	}
+
+	public abstract ViewNode createChildView();
+	public abstract Node getChildNodeFromNodeList( Long nodeID, Nodes nodes );
+	public abstract void setNode( Node node );
+	
+	public void recursiveBuildViewNode(Node node, Nodes nodes) {
+		setNode( node );
+		for (Long nodeID : node.childIDs) {
+			ViewNode childView = createChildView();
+			Node childNode = getChildNodeFromNodeList( nodeID, nodes );
+			addItem(childView);
+			childView.recursiveBuildViewNode(childNode, nodes);
 		}
 	}
 }

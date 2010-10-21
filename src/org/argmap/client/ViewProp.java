@@ -1,7 +1,6 @@
 package org.argmap.client;
 
 
-import org.argmap.client.ViewArg.ViewArgFactory;
 
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
@@ -16,16 +15,20 @@ public abstract class ViewProp extends ViewNode {
 
 	public ViewProp(Proposition proposition) {
 		super();
-		this.proposition = proposition;
-		setContent(proposition.getContent());
+		setNode( proposition );
 		mainPanel.add(textArea);
 		this.setWidget(mainPanel);
-
+	}
+	
+	public void setNode( Node node ){
+		proposition = (Proposition)node;
+		setContent(proposition.getContent());
 		if (proposition.linkCount <= 1) {
 			textArea.setStylePrimaryName("propositionTextArea");
 		} else if (proposition.linkCount > 1) {
 			textArea.setStylePrimaryName("linkedPropositionTextArea");
 		}
+		
 	}
 
 	public String toString() {
@@ -118,26 +121,8 @@ public abstract class ViewProp extends ViewNode {
 			});
 		}
 	}
-
-	public interface ViewPropFactory<P extends ViewProp> {
-		public P create(Proposition prop);
-	}
-
-	public static <P extends ViewProp, A extends ViewArg> P recursiveBuildPropositionView(
-			Proposition prop, Nodes nodes, ViewPropFactory<P> viewPropFactory,
-			ViewArgFactory<A> viewArgFactory) {
-
-		EditMode.log("<br/>" + prop.toString());
-		P propView = viewPropFactory.create(prop);
-		for (Long argID : prop.childIDs) {
-			Argument argument = nodes.args.get(argID);
-			assert argument != null : "childID [" + argID + "] passed with corresponding child node";
-			propView.addItem(ViewArg.recursiveBuildArgumentView(argument,
-					nodes, viewPropFactory,
-					viewArgFactory));
-		}
-		return propView;
-	}
 	
-	
+	public Node getChildNodeFromNodeList( Long nodeID, Nodes nodes ){
+		return nodes.args.get( nodeID );
+	}
 }

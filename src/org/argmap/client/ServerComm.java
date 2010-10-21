@@ -102,6 +102,7 @@ public class ServerComm {
 		});
 		ArgMap.message("EXCEPTION CAUGHT ON CLIENT", MessageType.ERROR);
 		Window.alert("Exception:<br/>" + e.toString());
+		throw new RuntimeException( e );
 	}
 
 	private static abstract class ServerCallbackWithDispatch<T> implements
