@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -481,13 +480,13 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Map<Long, PropWithChanges> getPropositionsWithChanges(
+	public Map<Long, NodeWithChanges> getPropositionsWithChanges(
 			List<Long> propIDs) throws Exception {
 		try {
-			Map<Long, PropWithChanges> map = new HashMap<Long, PropWithChanges>();
+			Map<Long, NodeWithChanges> map = new HashMap<Long, NodeWithChanges>();
 			for (Long propID : propIDs) {
-				PropWithChanges propWithChanges = new PropWithChanges();
-				propWithChanges.proposition = ofy
+				NodeWithChanges propWithChanges = new NodeWithChanges();
+				propWithChanges.node = ofy
 						.get(Proposition.class, propID);
 				propWithChanges.nodeChanges = getPropChanges(propID);
 				map.put(propID, propWithChanges);
@@ -500,13 +499,13 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Map<Long, ArgWithChanges> getArgumentsWithChanges(List<Long> argIDs)
+	public Map<Long, NodeWithChanges> getArgumentsWithChanges(List<Long> argIDs)
 			throws Exception {
 		try {
-			Map<Long, ArgWithChanges> map = new HashMap<Long, ArgWithChanges>();
+			Map<Long, NodeWithChanges> map = new HashMap<Long, NodeWithChanges>();
 			for (Long argID : argIDs) {
-				ArgWithChanges argWithChanges = new ArgWithChanges();
-				argWithChanges.argument = ofy.get(Argument.class, argID);
+				NodeWithChanges argWithChanges = new NodeWithChanges();
+				argWithChanges.node = ofy.get(Argument.class, argID);
 				argWithChanges.nodeChanges = getArgChanges(argID);
 				map.put(argID, argWithChanges);
 			}

@@ -34,7 +34,7 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	}
 
 	@Override
-	public ViewNodeVer getChildViewNodeVer(int i) {
+	public ViewNodeVer getChildViewNode(int i) {
 		assert false;
 		return null;
 	}
@@ -98,11 +98,13 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 		assert false;
 	}
 
+	/*
 	@Override
 	public ViewNodeVer createDeletedDummyView(Long id) {
 		assert false;
 		return null;
 	}
+	*/
 
 	@Override
 	public ViewNode createChildView() {
@@ -120,6 +122,23 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	public void setNode(Node node) {
 		assert false;
 		
+	}
+
+	@Override
+	public void addDeletedItem(ViewNodeVer viewNodeVer) {
+		assert false;
+		
+	}
+
+	@Override
+	public ViewNodeVer createChild(Node node) {
+		assert false;
+		return null;
+	}
+
+	@Override
+	public void clearDeletedViews() {
+		assert false;
 	}
 
 	

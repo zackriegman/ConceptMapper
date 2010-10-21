@@ -58,21 +58,15 @@ public interface ArgMapService extends RemoteService {
 	public NodesWithHistory getArgumentCurrentVersionAndHistory(Long argID)
 			throws Exception;
 	
-	public class PropWithChanges implements Serializable {
+	public class NodeWithChanges implements Serializable {
 		private static final long serialVersionUID = 1L;
-		public Proposition proposition;
+		public Node node;
 		public NodeChanges nodeChanges;
 	}
 	
-	public class ArgWithChanges implements Serializable {
-		private static final long serialVersionUID = 1L;
-		public Argument argument;
-		public NodeChanges nodeChanges;
-	}
+	public Map<Long, NodeWithChanges> getPropositionsWithChanges( List<Long> propIDs ) throws Exception;
 	
-	public Map<Long, PropWithChanges> getPropositionsWithChanges( List<Long> propIDs ) throws Exception;
-	
-	public Map<Long, ArgWithChanges> getArgumentsWithChanges( List<Long> argIDs ) throws Exception;
+	public Map<Long, NodeWithChanges> getArgumentsWithChanges( List<Long> argIDs ) throws Exception;
 	
 	public class NodeChangesMaps implements Serializable {
 		private static final long serialVersionUID = 1L;

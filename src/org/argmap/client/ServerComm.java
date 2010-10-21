@@ -7,10 +7,9 @@ import java.util.Queue;
 
 import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.AllPropsAndArgs;
-import org.argmap.client.ArgMapService.ArgWithChanges;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
+import org.argmap.client.ArgMapService.NodeWithChanges;
 import org.argmap.client.ArgMapService.NodesWithHistory;
-import org.argmap.client.ArgMapService.PropWithChanges;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
@@ -184,21 +183,21 @@ public class ServerComm {
 	}
 
 	public static void getPropsWithChanges(List<Long> propIDs,
-			LocalCallback<Map<Long, PropWithChanges>> localCallback) {
+			LocalCallback<Map<Long, NodeWithChanges>> localCallback) {
 		argMapService
 				.getPropositionsWithChanges(
 						propIDs,
-						new ServerCallback<Map<Long, PropWithChanges>>(
+						new ServerCallback<Map<Long, NodeWithChanges>>(
 								localCallback,
 								"Server Reports Success Fetching Proposition With Changes"));
 	}
 
-	public static void getArgWithChanges(List<Long> argIDs,
-			LocalCallback<Map<Long, ArgWithChanges>> localCallback) {
+	public static void getArgsWithChanges(List<Long> argIDs,
+			LocalCallback<Map<Long, NodeWithChanges>> localCallback) {
 		argMapService
 				.getArgumentsWithChanges(
 						argIDs,
-						new ServerCallback<Map<Long, ArgWithChanges>>(
+						new ServerCallback<Map<Long, NodeWithChanges>>(
 								localCallback,
 								"Server Reports Success Fetching Proposition With Changes"));
 	}

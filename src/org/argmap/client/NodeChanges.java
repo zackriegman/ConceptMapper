@@ -2,14 +2,13 @@ package org.argmap.client;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class NodeChanges implements Serializable {
 	/** to suppress warnings */
 	private static final long serialVersionUID = 1L;
 	public List<Change> changes = new ArrayList<Change>();
-	public Date changesTo;
+	/*public Date changesTo;*/
 	public List<Long> deletedChildIDs = new ArrayList<Long>();
 	
 	public String toString(){

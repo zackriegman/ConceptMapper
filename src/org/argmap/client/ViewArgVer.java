@@ -62,12 +62,14 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 		return deletedView;
 	}
 	
+	/*
 	@Override
 	public ViewNodeVer createDeletedDummyView(Long id) {
 		ViewDummyVer deletedView = new ViewDummyVer(id);
 		deletedViews.put(id, deletedView );
 		return deletedView;
 	}
+	*/
 
 	public List<ViewChange> getViewChangeList() {
 		return viewChanges;
@@ -96,12 +98,16 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 		return list;
 	}
 
-	public ViewNodeVer getChildViewNodeVer(int i) {
+	public ViewNodeVer getChildViewNode(int i) {
 		return (ViewNodeVer) getChild(i);
 	}
 	
 	public Collection<ViewNodeVer> getDeletedViewList(){
 		return deletedViews.values();
+	}
+	
+	public void addDeletedViewVer( ViewNodeVer viewNode ){
+		deletedViews.put( viewNode.getNodeID(), viewNode );
 	}
 	
 	public boolean isOpen(){
@@ -126,6 +132,23 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	
 	public ViewNode createChildView(){
 		return new ViewPropVer();
+	}
+	
+	public void addDeletedItem( ViewNodeVer viewNodeVer ){
+		assert viewNodeVer.getNodeID() != null;
+		deletedViews.put( viewNodeVer.getNodeID(), viewNodeVer );
+		
+	}
+
+	@Override
+	public ViewNodeVer createChild(Node node) {
+		return new ViewPropVer( (Proposition) node );
+	}
+
+	@Override
+	public void clearDeletedViews() {
+		deletedViews.clear();
+		
 	}
 
 }

@@ -9,10 +9,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
+import org.argmap.client.ArgMapService.NodeWithChanges;
 import org.argmap.client.ArgMapService.NodesWithHistory;
-import org.argmap.client.ArgMapService.PropWithChanges;
 import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.core.client.GWT;
@@ -194,9 +193,9 @@ public class VersionsMode extends ResizeComposite implements
 			recursivePrepAndBuild(deletedView, timeMachineMap, changesMaps);
 		}
 		for (int i = 0; i < viewNode.getChildCount(); i++) {
-			ViewNodeVer child = viewNode.getChildViewNodeVer(i);
+			ViewNodeVer child = viewNode.getChildViewNode(i);
 
-			/* check not make sure that the child is not a load dummy */
+			/* check to make sure that the child is not a load dummy */
 			if (child.getClass() == ViewPropVer.class
 					|| child.getClass() == ViewArgVer.class) {
 				ArgMap.logln("vm.ptwdnacab", "" + child.getClass());
@@ -204,14 +203,21 @@ public class VersionsMode extends ResizeComposite implements
 			}
 		}
 
-		for (Change change : nodeChanges.changes) {
+		loadChangesIntoNodeAndMap(viewNode, nodeChanges.changes, timeMachineMap);
+
+		ArgMap.logUnindent("vm.ptwdnacab");
+	}
+
+	private void loadChangesIntoNodeAndMap(ViewNodeVer viewNode,
+			List<Change> changes,
+			SortedMultiMap<Date, ViewChange> timeMachineMap) {
+		for (Change change : changes) {
 			ViewChange viewChange = new ViewChange();
 			viewChange.change = change;
 			viewChange.viewNode = viewNode;
 			viewNode.getViewChangeList().add(viewChange);
 			timeMachineMap.put(change.date, viewChange);
 		}
-		ArgMap.logUnindent("vm.ptwdnacab");
 	}
 
 	private void loadVersionListFromTimeMachine() {
@@ -282,31 +288,60 @@ public class VersionsMode extends ResizeComposite implements
 		}
 	}
 
-	/*
-	 * keep working here...
-	 */
-	public void mergeLoadedNodes(ViewNodeVer viewNodeVer,
-			Map<Long, PropWithChanges> propsWithChanges) {
-		for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
-			/*
-			 * TODO: this line makes no sense, the viewNodeVer has only dummy
-			 * children so we need to replace the dummy children with real
-			 * children before building them out...
-			 */
-			ViewNodeVer child = viewNodeVer.getChildViewNodeVer(i);
-			PropWithChanges propWithChanges = propsWithChanges.get(child
-					.getNodeID());
-			NodeChanges nodeChanges = propWithChanges.nodeChanges;
-			for (Long id : nodeChanges.deletedChildIDs) {
-				child.createDeletedDummyView(id);
-			}
-			for (Long id : propWithChanges.proposition.childIDs) {
-				//child.createDummyView( id );
-			}
-
-			// zoom to the right time
-			// append
+	public ViewNodeVer createChildWithDummies(ViewNodeVer parent, Long id,
+			Map<Long, NodeWithChanges> nodesWithChanges,
+			SortedMultiMap<Date, ViewChange> viewChanges) {
+		NodeWithChanges childNodeWithChanges = nodesWithChanges.get(id);
+		ViewNodeVer child = parent.createChild(childNodeWithChanges.node);
+		for (Long childDummyID : childNodeWithChanges.node.childIDs) {
+			ViewNode childDummy = new ViewDummyVer(childDummyID);
+			child.addItem(childDummy);
 		}
+		for (Long deletedID : childNodeWithChanges.nodeChanges.deletedChildIDs) {
+			ViewNodeVer childDummy = new ViewDummyVer(deletedID);
+			child.addDeletedItem(childDummy);
+		}
+
+		loadChangesIntoNodeAndMap(child,
+				childNodeWithChanges.nodeChanges.changes, viewChanges);
+		return child;
+	}
+
+	public void mergeLoadedNodes(ViewNodeVer viewNodeVer,
+			Map<Long, NodeWithChanges> nodesWithChanges) {
+
+		SortedMultiMap<Date, ViewChange> viewChanges = new SortedMultiMap<Date, ViewChange>();
+
+		/*
+		 * for the deleted views: get the dummys to convert to reals
+		 */
+		List<ViewNodeVer> deletedViewList = new ArrayList<ViewNodeVer>(
+				viewNodeVer.getDeletedViewList());
+		/* remove the dummys */
+		viewNodeVer.clearDeletedViews();
+		/* for each dummy create a real and append it to the node */
+		for (ViewNodeVer deletedView : deletedViewList) {
+			viewNodeVer.addDeletedItem(createChildWithDummies(viewNodeVer,
+					deletedView.getNodeID(), nodesWithChanges, viewChanges));
+		}
+
+		/*
+		 * for the existing views: get the dummys to convert to reals while
+		 * removing dummys
+		 */
+		List<Long> dummyIDs = new ArrayList<Long>();
+		while (viewNodeVer.getChildCount() > 0) {
+			ViewNodeVer child = viewNodeVer.getChildViewNode(0);
+			dummyIDs.add(child.getNodeID());
+			child.remove();
+		}
+		/* for each dummy create a real and append it to the node */
+		for (Long id : dummyIDs) {
+			viewNodeVer.addItem((ViewNode) createChildWithDummies(viewNodeVer,
+					id, nodesWithChanges, viewChanges));
+		}
+
+		zoomToDateAndReloadChangeList(viewNodeVer, viewChanges);
 	}
 
 	@Override
@@ -315,31 +350,45 @@ public class VersionsMode extends ResizeComposite implements
 			ArgMap.logStart("vm.oo");
 			ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
 			if (!viewNodeVer.isLoaded()) {
+
+				/*
+				 * make a list of all the child dummy ids, both existing and
+				 * deleted
+				 */
 				List<Long> childIDs = new ArrayList<Long>();
+				for (ViewNodeVer deletedView : viewNodeVer.getDeletedViewList()) {
+					childIDs.add(deletedView.getNodeID());
+				}
 				for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
-					childIDs.add(viewNodeVer.getChildViewNodeVer(i).getNodeID());
+					childIDs.add(viewNodeVer.getChildViewNode(i).getNodeID());
 				}
-				if (viewNodeVer.getClass() == ViewArgVer.class) {
 
-					class Callback
-							implements
-							ServerComm.LocalCallback<Map<Long, PropWithChanges>> {
-						ViewPropVer viewPropVer;
+				/* a class to hold the call back method */
+				class Callback implements
+						ServerComm.LocalCallback<Map<Long, NodeWithChanges>> {
+					ViewNodeVer viewNodeVer;
 
-						@Override
-						public void call(
-								Map<Long, PropWithChanges> propsWithChanges) {
-							mergeLoadedNodes(viewPropVer, propsWithChanges);
-						}
+					@Override
+					public void call(Map<Long, NodeWithChanges> nodesWithChanges) {
+						mergeLoadedNodes(viewNodeVer, nodesWithChanges);
 					}
-					Callback callback = new Callback();
-					callback.viewPropVer = (ViewPropVer) viewNodeVer;
-
-					ServerComm.getPropsWithChanges(childIDs, callback);
-				} else {
-					ArgMap.message("METHOD NOT YET IMPLEMENTED",
-							MessageType.ERROR);
 				}
+
+				/*
+				 * request the nodes and changes for each of the ids collected
+				 * above from the server. If the node being opened is a
+				 * proposition request a list of child arguments and vice-versa.
+				 */
+				if (viewNodeVer.getClass() == ViewArgVer.class) {
+					Callback callback = new Callback();
+					callback.viewNodeVer = viewNodeVer;
+					ServerComm.getPropsWithChanges(childIDs, callback);
+				} else if (viewNodeVer.getClass() == ViewPropVer.class) {
+					Callback callback = new Callback();
+					callback.viewNodeVer = viewNodeVer;
+					ServerComm.getArgsWithChanges(childIDs, callback);
+				}
+
 			} else {
 
 				ArgMap.log("vm.oo", "Adding View Changes: ");
@@ -347,34 +396,37 @@ public class VersionsMode extends ResizeComposite implements
 				recursiveGetViewChanges(viewNodeVer, subTreeChanges, true,
 						"vm.oo");
 
-				/*
-				 * this line must come before travelFromDateToDate() becuase
-				 * that method resets the tree to open of added nodes that
-				 * should be open. But this line must come after
-				 * recursiveGetViewChanges I think because that method depends
-				 * on the opened node not yet have a positive isOpen() value...
-				 * actually that doesn't seem to be true anymore...so this could
-				 * probably be moved to the beginning.
-				 */
-				viewNodeVer.setOpen(true);
-
-				travelFromDateToDate(viewNodeVer.getClosedDate(), currentDate,
-						subTreeChanges);
-
-				timeMachineMap.putAll(subTreeChanges);
-
-				for (ViewChange viewChange : viewNodeVer
-						.getViewChangeAddRemoveList()) {
-					viewChange.hidden = false;
-				}
-
-				loadVersionListFromTimeMachine();
+				zoomToDateAndReloadChangeList(viewNodeVer, subTreeChanges);
 
 				ArgMap.logEnd("vm.oo");
 			}
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
 		}
+	}
+
+	public void zoomToDateAndReloadChangeList(ViewNodeVer viewNodeVer,
+			SortedMultiMap<Date, ViewChange> subTreeChanges) {
+		/*
+		 * this line must come before travelFromDateToDate() becuase that method
+		 * resets the tree to open of added nodes that should be open. But this
+		 * line must come after recursiveGetViewChanges I think because that
+		 * method depends on the opened node not yet have a positive isOpen()
+		 * value... actually that doesn't seem to be true anymore...so this
+		 * could probably be moved to the beginning.
+		 */
+		viewNodeVer.setOpen(true);
+
+		travelFromDateToDate(viewNodeVer.getClosedDate(), currentDate,
+				subTreeChanges);
+
+		timeMachineMap.putAll(subTreeChanges);
+
+		for (ViewChange viewChange : viewNodeVer.getViewChangeAddRemoveList()) {
+			viewChange.hidden = false;
+		}
+
+		loadVersionListFromTimeMachine();
 	}
 
 	@Override
@@ -429,7 +481,7 @@ public class VersionsMode extends ResizeComposite implements
 		 */
 		if (firstNode || viewNodeVer.isOpen()) {
 			for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
-				ViewNodeVer childView = viewNodeVer.getChildViewNodeVer(i);
+				ViewNodeVer childView = viewNodeVer.getChildViewNode(i);
 				recursiveGetViewChanges(childView, forAddOrRemove, false,
 						logName);
 			}
@@ -581,19 +633,19 @@ public class VersionsMode extends ResizeComposite implements
 
 	@Override
 	public void onChange(ChangeEvent event) {
-		try{
-		String millisecondStr = versionList.getValue(versionList
-				.getSelectedIndex());
-		Date destinationDate = new Date(Long.parseLong(millisecondStr));
-		travelFromDateToDate(currentDate, destinationDate, timeMachineMap);
+		try {
+			String millisecondStr = versionList.getValue(versionList
+					.getSelectedIndex());
+			Date destinationDate = new Date(Long.parseLong(millisecondStr));
+			travelFromDateToDate(currentDate, destinationDate, timeMachineMap);
 
-		// TODO: if multiple copies of the same linked proposition are showing
-		// how do we know which one to make visible?
+			// TODO: if multiple copies of the same linked proposition are
+			// showing
+			// how do we know which one to make visible?
 
-		treePanel.ensureVisible((ViewNode) timeMachineMap.get(destinationDate)
-				.get(0).viewNode);
-		}
-		catch( Exception e ){
+			treePanel.ensureVisible((ViewNode) timeMachineMap.get(
+					destinationDate).get(0).viewNode);
+		} catch (Exception e) {
 			ServerComm.handleClientException(e);
 		}
 	}
@@ -815,7 +867,7 @@ public class VersionsMode extends ResizeComposite implements
 							vC.change.argPropIndex);
 					ViewArg viewArgVer = propView
 							.getArgView(vC.change.argPropIndex);
-					viewArgVer.setPro( vC.change.argPro );
+					viewArgVer.setPro(vC.change.argPro);
 					viewArgVer.setArgTitle(vC.change.content);
 					break;
 				}

@@ -167,7 +167,7 @@ public class SortedMultiMap<K, V> {
 		if (comparator == null) {
 			comparator = new Comparator<K>() {
 
-				@SuppressWarnings({ "unchecked"  })
+				@SuppressWarnings({ "unchecked", "rawtypes"  })
 				@Override
 				public int compare(K arg0, K arg1) {
 

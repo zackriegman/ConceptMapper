@@ -5,10 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.argmap.client.ArgMapService.AllPropsAndArgs;
-import org.argmap.client.ArgMapService.ArgWithChanges;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
+import org.argmap.client.ArgMapService.NodeWithChanges;
 import org.argmap.client.ArgMapService.NodesWithHistory;
-import org.argmap.client.ArgMapService.PropWithChanges;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -59,13 +58,13 @@ public interface ArgMapServiceAsync {
 
 	void deleteArgument(Long argID, AsyncCallback<Void> callback);
 
+	void logClientException(String exceptionStr, AsyncCallback<Void> callback);
+
 	void getPropositionsWithChanges(List<Long> propIDs,
-			AsyncCallback<Map<Long, PropWithChanges>> callback);
+			AsyncCallback<Map<Long, NodeWithChanges>> callback);
 
 	void getArgumentsWithChanges(List<Long> argIDs,
-			AsyncCallback<Map<Long, ArgWithChanges>> callback);
-
-	void logClientException(String exceptionStr, AsyncCallback<Void> callback);
+			AsyncCallback<Map<Long, NodeWithChanges>> callback);
 
 
 
