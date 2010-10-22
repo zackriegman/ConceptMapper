@@ -17,10 +17,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: onopen if not loaded yet, load the node, zoom it, append it...
-
-//TODO: 
-
 //TODO: backspacing in an argument with children deletes them on the client (even though not deleted on the server)
 
 /*TODO: if you close a node in versions mode sometimes you can never open it again because it will 
