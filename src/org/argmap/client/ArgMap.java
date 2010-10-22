@@ -17,8 +17,12 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: backspacing in an argument with children deletes them on the client (even though not deleted on the server)
+/*TODO: implement loading of unlinked propositions from the server in versionsmode: see implementation notes
+ * versioning lazy loading:Links:deleted for more info */
+//TODO: look at backwards/forwards of linking/unlinking ... I'm not sure I ever finished writing that code
+//TODO: test versioning of unlinking
 
+//TODO: backspacing in an argument with children deletes them on the client (even though not deleted on the server)
 /*TODO: if you close a node in versions mode sometimes you can never open it again because it will 
  * never have children again given the dates available to click on.  For instance if you add a node, 
  * add a child, delete the child, and delete the node, all consecutively, and then go to a time when 
@@ -26,9 +30,6 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
  * children when it is created or when it is destroyed... and there are no visible events in between...
  * this should be a low priority fix, but it might take some ui creativity...
  */
-
-//TODO: look at backwards/forwards of linking/unlinking ... I'm not sure I ever finished writing that code
-//TODO: test versioning of unlinking
 //TODO: test/fix versioning of a single empty proposition
 //TODO: undeleting links does not restore their yellow color ...
 //TODO: lazy load closed items in versions mode

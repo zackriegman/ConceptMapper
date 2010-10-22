@@ -76,7 +76,7 @@ public class ServerComm {
 					localCallback.call(result);
 				}
 				if (successMessage != null) {
-					ArgMap.message(successMessage, MessageType.INFO);
+					ArgMap.message(successMessage, MessageType.INFO, 2);
 				}
 			} catch (Exception e) {
 				handleClientException( e );
@@ -134,7 +134,7 @@ public class ServerComm {
 				doOnSuccess(result);
 				dispatchCommand();
 				if (successMessage != null) {
-					ArgMap.message(successMessage, MessageType.INFO);
+					ArgMap.message(successMessage, MessageType.INFO, 2);
 				}
 			} catch (Exception e) {
 				handleClientException( e );

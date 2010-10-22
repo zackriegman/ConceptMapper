@@ -95,7 +95,6 @@ public class EditMode extends ResizeComposite implements
 					 */
 					ArgMap.logStart("em.em.cb");
 					ArgMap.log("em.em.cb", "Prop Tree From Server");
-					log("<br/>GOT HERE: localCallback.call(): B");
 					for (Long propID : allNodes.rootProps.keySet()) {
 
 						Proposition proposition = allNodes.rootProps
@@ -111,10 +110,8 @@ public class EditMode extends ResizeComposite implements
 						tree.addItem(propView);
 						propView.logNodeRecursive(0, "em.em.cb", true);
 					}
-					log("<br/>GOT HERE: localCallback.call(): C");
 					openTree();
 					ArgMap.logEnd("em.em.cb");
-					log("<br/>GOT HERE: localCallback.call(): Z");
 				} catch (Exception e) {
 					ServerComm.handleClientException(e);
 				}
