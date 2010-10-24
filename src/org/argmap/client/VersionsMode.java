@@ -34,10 +34,10 @@ import com.google.gwt.user.client.ui.TreeItem;
 public class VersionsMode extends ResizeComposite implements
 		CloseHandler<TreeItem>, OpenHandler<TreeItem>, ChangeHandler {
 
-	private ListBox versionList = new ListBox();
-	private EditMode editMode;
+	private final ListBox versionList = new ListBox();
+	private final EditMode editMode;
 	private Tree treeClone = null;
-	private ScrollPanel treePanel = new ScrollPanel();
+	private final ScrollPanel treePanel = new ScrollPanel();
 	private final int LIST_WIDTH = 20;
 
 	// SplitLayoutPanel mainPanel;
@@ -92,7 +92,7 @@ public class VersionsMode extends ResizeComposite implements
 		 * place holder loading message
 		 */
 		if (item.getChildCount() > 0
-				&& !(item.getChild(0).getClass() == ViewDummyVer.class)) {
+				&& !(item.getChild(0) instanceof ViewDummyVer)) {
 			item.setState(((ViewNodeVer) item).isOpen());
 			for (int i = 0; i < item.getChildCount(); i++) {
 				recursiveResetState(item.getChild(i));
@@ -196,8 +196,8 @@ public class VersionsMode extends ResizeComposite implements
 			ViewNodeVer child = viewNode.getChildViewNode(i);
 
 			/* check to make sure that the child is not a load dummy */
-			if (child.getClass() == ViewPropVer.class
-					|| child.getClass() == ViewArgVer.class) {
+			if (child instanceof ViewPropVer
+					|| child instanceof ViewArgVer) {
 				ArgMap.logln("vm.ptwdnacab", "" + child.getClass());
 				recursivePrepAndBuild(child, timeMachineMap, changesMaps);
 			}
@@ -388,11 +388,11 @@ public class VersionsMode extends ResizeComposite implements
 				 * above from the server. If the node being opened is a
 				 * proposition request a list of child arguments and vice-versa.
 				 */
-				if (viewNodeVer.getClass() == ViewArgVer.class) {
+				if (viewNodeVer instanceof ViewArgVer) {
 					Callback callback = new Callback();
 					callback.viewNodeVer = viewNodeVer;
 					ServerComm.getPropsWithChanges(childIDs, callback);
-				} else if (viewNodeVer.getClass() == ViewPropVer.class) {
+				} else if (viewNodeVer instanceof ViewPropVer) {
 					Callback callback = new Callback();
 					callback.viewNodeVer = viewNodeVer;
 					ServerComm.getArgsWithChanges(childIDs, callback);

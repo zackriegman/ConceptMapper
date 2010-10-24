@@ -17,6 +17,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
+//TODO: replace class comparisons with the instanceof operator
 /*TODO: implement loading of unlinked propositions from the server in versionsmode: see implementation notes
  * versioning lazy loading:Links:deleted for more info */
 //TODO: look at backwards/forwards of linking/unlinking ... I'm not sure I ever finished writing that code
