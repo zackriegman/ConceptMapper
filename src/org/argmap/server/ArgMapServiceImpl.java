@@ -17,13 +17,13 @@ import org.apache.lucene.analysis.StopAnalyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.snowball.SnowballAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.TermAttribute;
+import org.argmap.client.ArgMapService;
 import org.argmap.client.Argument;
 import org.argmap.client.Change;
 import org.argmap.client.Node;
 import org.argmap.client.NodeChanges;
 import org.argmap.client.Nodes;
 import org.argmap.client.Proposition;
-import org.argmap.client.ArgMapService;
 import org.argmap.client.Change.ChangeType;
 
 import com.google.appengine.api.datastore.EntityNotFoundException;
@@ -46,7 +46,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	private static final long serialVersionUID = 1L; // just to get rid of the
 	// warnings...
-	private Objectify ofy = ObjectifyService.begin();
+	private final Objectify ofy = ObjectifyService.begin();
 
 	public void test() {
 		// ofy.delete(ofy.query( Change.class ));
@@ -97,7 +97,6 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 			Map<Long, Proposition> rootProps = new HashMap<Long, Proposition>();
 			Nodes nodes = new Nodes();
-
 
 			for (Proposition prop : propQuery) {
 				rootProps.put(prop.id, prop);
@@ -233,17 +232,17 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			/* first get the stuff that we'll need for version control */
 			Change change = new Change(ChangeType.PROP_DELETION);
 			Proposition prop = ofy.get(Proposition.class, propID);
-			if( ! prop.childIDs.isEmpty()){
+			if (!prop.childIDs.isEmpty()) {
 				throw new Exception(
-				"cannot delete proposition with arguments; delete arguments first");
+						"cannot delete proposition with arguments; delete arguments first");
 			}
 			change.propID = prop.id;
 			change.content = prop.content;
 			change.propLinkCount = prop.linkCount;
 
 			/* get all the arguments that use this proposition */
-			Query<Argument> query = ofy.query(Argument.class).filter("childIDs",
-					propID);
+			Query<Argument> query = ofy.query(Argument.class).filter(
+					"childIDs", propID);
 
 			/* only delete a proposition that is used in 1 or fewer arguments */
 			if (query.countAll() > 1) {
@@ -462,16 +461,14 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			throws Exception {
 		try {
 			NodeChangesMaps nodesChanges = new NodeChangesMaps();
-			try {
-				for (Long propID : propIDs) {
-					recursiveGetPropChanges(propID, nodesChanges);
-				}
-				for (Long argID : argIDs) {
-					recursiveGetArgChanges(argID, nodesChanges);
-				}
-			} catch (Exception e) {
-				log.log(Level.SEVERE, "Uncaught exception", e);
+
+			for (Long propID : propIDs) {
+				recursiveGetPropChanges(propID, nodesChanges);
 			}
+			for (Long argID : argIDs) {
+				recursiveGetArgChanges(argID, nodesChanges);
+			}
+
 			return nodesChanges;
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Uncaught exception", e);
@@ -486,8 +483,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			Map<Long, NodeWithChanges> map = new HashMap<Long, NodeWithChanges>();
 			for (Long propID : propIDs) {
 				NodeWithChanges propWithChanges = new NodeWithChanges();
-				propWithChanges.node = ofy
-						.get(Proposition.class, propID);
+				propWithChanges.node = ofy.get(Proposition.class, propID);
 				propWithChanges.nodeChanges = getPropChanges(propID);
 				map.put(propID, propWithChanges);
 			}
@@ -506,7 +502,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			for (Long argID : argIDs) {
 				NodeWithChanges argWithChanges = new NodeWithChanges();
 				argWithChanges.node = ofy.get(Argument.class, argID);
-				argWithChanges.nodeChanges = getArgChanges(argID);
+				argWithChanges.nodeChanges = getArgChanges(argID, argWithChanges.unlinkedLinks);
 				map.put(argID, argWithChanges);
 			}
 			return map;
@@ -588,7 +584,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	public void recursiveGetPropChanges(Long propID,
-			NodeChangesMaps nodeChangesMaps) {
+			NodeChangesMaps nodeChangesMaps) throws Exception {
 		if (nodeChangesMaps.propChanges.containsKey(propID)) {
 			return;
 		}
@@ -601,7 +597,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
-	public NodeChanges getPropChanges(Long propID) {
+	public NodeChanges getPropChanges(Long propID) throws Exception {
 		NodeChanges nodeChanges = new NodeChanges();
 		Query<Change> query = ofy.query(Change.class).filter("propID = ",
 				propID);
@@ -627,12 +623,12 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	public void recursiveGetArgChanges(Long argID,
-			NodeChangesMaps nodeChangesMaps) {
+			NodeChangesMaps nodeChangesMaps) throws Exception {
 		if (nodeChangesMaps.argChanges.containsKey(argID)) {
 			return;
 		}
 
-		NodeChanges nodeChanges = getArgChanges(argID);
+		NodeChanges nodeChanges = getArgChanges(argID, nodeChangesMaps.unlinkedLinks);
 		nodeChangesMaps.argChanges.put(argID, nodeChanges);
 
 		for (Long id : nodeChanges.deletedChildIDs) {
@@ -640,12 +636,15 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
-	public NodeChanges getArgChanges(Long argID) {
+	public NodeChanges getArgChanges(Long argID, Map<Long, Proposition> unlinkedLinks ) throws Exception {
 		NodeChanges nodeChanges = new NodeChanges();
 		Query<Change> query = ofy.query(Change.class).filter("argID = ", argID);
 		for (Change change : query) {
 			switch (change.changeType) {
 			case PROP_UNLINK:
+				if( !unlinkedLinks.containsKey(change.propID)){
+					unlinkedLinks.put(change.propID, ofy.get(Proposition.class, change.propID));
+				}
 			case PROP_DELETION:
 				nodeChanges.deletedChildIDs.add(change.propID);
 			case ARG_MODIFICATION:
@@ -688,8 +687,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		List<Long> deletedArgs = new LinkedList<Long>();
 
 		if (propIDs != null && !propIDs.isEmpty()) {
-			Query<Change> query = ofy.query(Change.class)
-					.filter("propID in", propIDs).order("-date");
+			Query<Change> query = ofy.query(Change.class).filter("propID in",
+					propIDs).order("-date");
 			if (date != null) {
 				query = query.filter("date <", date);
 			}
@@ -703,8 +702,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 
 		if (argIDs != null && !argIDs.isEmpty()) {
-			Query<Change> query = ofy.query(Change.class)
-					.filter("argID in", argIDs).order("-date");
+			Query<Change> query = ofy.query(Change.class).filter("argID in",
+					argIDs).order("-date");
 			if (date != null) {
 				query = query.filter("date <", date);
 			}
@@ -814,9 +813,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 						"cannot link to proposition in argument which already links to that proposition");
 			}
 			Proposition removeProp = ofy.get(Proposition.class, removePropID);
-			if( !removeProp.childIDs.isEmpty()){
+			if (!removeProp.childIDs.isEmpty()) {
 				throw new Exception(
-				"cannot replace a proposition with a link to a second proposition when the first has arguments");
+						"cannot replace a proposition with a link to a second proposition when the first has arguments");
 			}
 			Proposition linkProp = ofy.get(Proposition.class, linkPropID);
 			int index = -1;
@@ -825,8 +824,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			}
 
 			/* get all the arguments that use this proposition */
-			Query<Argument> query = ofy.query(Argument.class).filter("childIDs",
-					removePropID);
+			Query<Argument> query = ofy.query(Argument.class).filter(
+					"childIDs", removePropID);
 
 			/* only delete a proposition that is used in 1 or fewer arguments. */
 			if (query.countAll() == 0) {
@@ -897,7 +896,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public void logClientException(String exceptionStr ) {
-		log.severe("CLIENT EXCEPTION (string)" + exceptionStr);		
+	public void logClientException(String exceptionStr) {
+		log.severe("CLIENT EXCEPTION (string)" + exceptionStr);
 	}
 }

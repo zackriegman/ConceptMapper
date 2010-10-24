@@ -75,6 +75,16 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 		return deletedView;
 	}
 	
+	@Override
+	public ViewNode createChildView(){
+		return new ViewArgVer();
+	}
+
+	@Override
+	public ViewNodeVer createChild(Node node) {
+		return new ViewArgVer( (Argument) node );
+	}
+	
 	public void addDeletedItem( ViewNodeVer viewNodeVer ){
 		assert viewNodeVer.getNodeID() != null;
 		deletedViews.put( viewNodeVer.getNodeID(), viewNodeVer );
@@ -146,14 +156,7 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 		this.isLoaded = isLoaded;
 	}
 	
-	public ViewNode createChildView(){
-		return new ViewArgVer();
-	}
-
-	@Override
-	public ViewNodeVer createChild(Node node) {
-		return new ViewArgVer( (Argument) node );
-	}
+	
 
 	@Override
 	public void clearDeletedViews() {

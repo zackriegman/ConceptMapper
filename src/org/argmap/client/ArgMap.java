@@ -10,14 +10,12 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
-
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: replace class comparisons with the instanceof operator
 /*TODO: implement loading of unlinked propositions from the server in versionsmode: see implementation notes
  * versioning lazy loading:Links:deleted for more info */
 //TODO: look at backwards/forwards of linking/unlinking ... I'm not sure I ever finished writing that code
@@ -72,12 +70,12 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
  */
 public class ArgMap implements EntryPoint {
 
-	private DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.EM);
-	private TabLayoutPanel modePanel = new TabLayoutPanel(1.5, Style.Unit.EM);
+	private final DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.EM);
+	private final TabLayoutPanel modePanel = new TabLayoutPanel(1.5, Style.Unit.EM);
 
 	private static HTML messageArea = new HTML();
 	private static List<String> messageList = new ArrayList<String>();
-	private EditMode editMode = new EditMode();
+	private final EditMode editMode = new EditMode();
 	private VersionsMode versionsMode;
 	private static Map<String, StringBuilder> logs = new HashMap<String, StringBuilder>();
 	private static Map<String, Boolean> logsImmediatePrint = new HashMap<String, Boolean>();

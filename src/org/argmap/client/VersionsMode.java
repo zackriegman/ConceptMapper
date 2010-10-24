@@ -189,21 +189,27 @@ public class VersionsMode extends ResizeComposite implements
 		ArgMap.logIndent("vm.ptwdnacab");
 		NodeChanges nodeChanges = viewNode.chooseNodeChanges(changesMaps);
 		for (Long id : nodeChanges.deletedChildIDs) {
-			ViewNodeVer deletedView = viewNode.createDeletedView(id);
+			ViewNodeVer deletedView;
+			if (viewNode instanceof ViewArgVer
+					&& changesMaps.unlinkedLinks.containsKey(id)) {
+				deletedView = viewNode.createDeletedView(changesMaps.unlinkedLinks.get(id));
+
+			} else {
+				deletedView = viewNode.createDeletedView(id);
+			}
 			recursivePrepAndBuild(deletedView, timeMachineMap, changesMaps);
 		}
 		for (int i = 0; i < viewNode.getChildCount(); i++) {
 			ViewNodeVer child = viewNode.getChildViewNode(i);
 
 			/* check to make sure that the child is not a load dummy */
-			if (child instanceof ViewPropVer
-					|| child instanceof ViewArgVer) {
+			if (child instanceof ViewPropVer || child instanceof ViewArgVer) {
 				ArgMap.logln("vm.ptwdnacab", "" + child.getClass());
 				recursivePrepAndBuild(child, timeMachineMap, changesMaps);
 			}
 		}
 
-		loadChangesIntoNodeAndMap(viewNode, nodeChanges.changes, timeMachineMap );
+		loadChangesIntoNodeAndMap(viewNode, nodeChanges.changes, timeMachineMap);
 
 		ArgMap.logUnindent("vm.ptwdnacab");
 	}
@@ -218,9 +224,8 @@ public class VersionsMode extends ResizeComposite implements
 			viewNode.getViewChangeList().add(viewChange);
 			timeMachineMap.put(change.date, viewChange);
 		}
-		if( ! viewNode.isOpen()){
-			for (ViewChange viewChange : viewNode
-					.getViewChangeHideList()) {
+		if (!viewNode.isOpen()) {
+			for (ViewChange viewChange : viewNode.getViewChangeHideList()) {
 				viewChange.hidden = true;
 			}
 		}
@@ -315,8 +320,8 @@ public class VersionsMode extends ResizeComposite implements
 	}
 
 	public void mergeLoadedNodes(ViewNodeVer viewNodeVer,
-			Map<Long, NodeWithChanges> nodesWithChanges) {	
-		
+			Map<Long, NodeWithChanges> nodesWithChanges) {
+
 		SortedMultiMap<Date, ViewChange> viewChanges = new SortedMultiMap<Date, ViewChange>();
 
 		/*
@@ -347,10 +352,11 @@ public class VersionsMode extends ResizeComposite implements
 			viewNodeVer.addItem((ViewNode) createChildWithDummies(viewNodeVer,
 					id, nodesWithChanges, viewChanges));
 		}
-		
+
 		viewNodeVer.setLoaded(true);
 
-		zoomToCurrentDateAndReloadChangeList(viewNodeVer, viewChanges, viewChanges.lastKey());
+		zoomToCurrentDateAndReloadChangeList(viewNodeVer, viewChanges,
+				viewChanges.lastKey());
 	}
 
 	@Override
@@ -405,9 +411,9 @@ public class VersionsMode extends ResizeComposite implements
 				recursiveGetViewChanges(viewNodeVer, subTreeChanges, true,
 						"vm.oo");
 
-				zoomToCurrentDateAndReloadChangeList(viewNodeVer, subTreeChanges, viewNodeVer.getClosedDate());
+				zoomToCurrentDateAndReloadChangeList(viewNodeVer,
+						subTreeChanges, viewNodeVer.getClosedDate());
 
-				
 			}
 			ArgMap.logEnd("vm.oo");
 		} catch (Exception e) {
@@ -427,8 +433,7 @@ public class VersionsMode extends ResizeComposite implements
 		 */
 		viewNodeVer.setOpen(true);
 
-		travelFromDateToDate(startDate, currentDate,
-				subTreeChanges);
+		travelFromDateToDate(startDate, currentDate, subTreeChanges);
 
 		timeMachineMap.putAll(subTreeChanges);
 
@@ -450,8 +455,7 @@ public class VersionsMode extends ResizeComposite implements
 			recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oc");
 			timeMachineMap.removeAll(subTreeChanges);
 
-			for (ViewChange viewChange : viewNodeVer
-					.getViewChangeHideList()) {
+			for (ViewChange viewChange : viewNodeVer.getViewChangeHideList()) {
 				viewChange.hidden = true;
 			}
 
@@ -508,10 +512,12 @@ public class VersionsMode extends ResizeComposite implements
 			if (treeItem.getChild(0).getStyleName().equals("loadDummyProp")) {
 				// ServerComm.getPropositionCurrentVersionAndHistory(prop,
 				// localCallback)
-				GWT.log("VersionsMode.onClose[loadDummyProp]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
-			} else if (treeItem.getChild(0).getStyleName()
-					.equals("loadDummyArg")) {
-				GWT.log("VersionsMode.onClose[loadDummyArg]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
+				GWT
+						.log("VersionsMode.onClose[loadDummyProp]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
+			} else if (treeItem.getChild(0).getStyleName().equals(
+					"loadDummyArg")) {
+				GWT
+						.log("VersionsMode.onClose[loadDummyArg]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
 			}
 		}
 
@@ -735,8 +741,8 @@ public class VersionsMode extends ResizeComposite implements
 					// TODO: root prop additions? who keeps the add/remove of
 					// the prop??!!??
 
-					argView.reviveDeletedView(vC.change.propID,
-							mapPropIndex.get(vC));
+					argView.reviveDeletedView(vC.change.propID, mapPropIndex
+							.get(vC));
 					break;
 				}
 				case PROP_MODIFICATION: {
@@ -754,8 +760,8 @@ public class VersionsMode extends ResizeComposite implements
 				}
 				case ARG_ADDITION: {
 					ViewPropVer propView = (ViewPropVer) vC.viewNode;
-					propView.reviveDeletedView(vC.change.argID,
-							mapArgIndex.get(vC));
+					propView.reviveDeletedView(vC.change.argID, mapArgIndex
+							.get(vC));
 					break;
 				}
 				case ARG_DELETION: {
@@ -783,8 +789,8 @@ public class VersionsMode extends ResizeComposite implements
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
 					// TODO: root prop additions? who keeps the add/remove of
 					// the prop??!!??
-					argView.reviveDeletedView(vC.change.propID,
-							mapPropIndex.get(vC));
+					argView.reviveDeletedView(vC.change.propID, mapPropIndex
+							.get(vC));
 
 					/*
 					 * TODO need to think through linking and unlinking in more

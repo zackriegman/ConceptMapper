@@ -62,6 +62,7 @@ public interface ArgMapService extends RemoteService {
 		private static final long serialVersionUID = 1L;
 		public Node node;
 		public NodeChanges nodeChanges;
+		public Map<Long, Proposition> unlinkedLinks = new HashMap<Long, Proposition>();
 	}
 	
 	public Map<Long, NodeWithChanges> getPropositionsWithChanges( List<Long> propIDs ) throws Exception;
@@ -72,7 +73,9 @@ public interface ArgMapService extends RemoteService {
 		private static final long serialVersionUID = 1L;
 		public Map<Long, NodeChanges> argChanges = new HashMap<Long, NodeChanges>();
 		public Map<Long, NodeChanges> propChanges = new HashMap<Long, NodeChanges>();
+		public Map<Long, Proposition> unlinkedLinks = new HashMap<Long, Proposition>();
 		
+		@Override
 		public String toString(){
 			StringBuffer buffer = new StringBuffer();
 			buffer.append( "\nargChanges:::::::");
