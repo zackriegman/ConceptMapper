@@ -16,15 +16,14 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: add placeholder before earliest revision so that it can be undone
-//TODO: test/fix versioning of a single empty proposition
-//TODO: undeleting links does not restore their yellow color ...
-//TODO: prevent circular linking from crashing program...
 
 //TODO: new search feature
-//TODO: version mode should only display toplevel propositions that are open...
+//TODO: versionsmode display only opened top level nodes.
 
+
+//TODO: prevent circular linking from crashing program...
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
+
 //TODO: lazy load in editmode (maybe a few layers deep in advance) instead of loading the entire tree (and create a button to open all (or maybe ten) levels of children at once
 //TODO: provide a way to see deleted top level nodes
 //TODO: add helpful message along the side (tips box)
@@ -41,6 +40,39 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
  * this should be a low priority fix, but it might take some ui creativity... ui creativity should be minimal
  * just add a placeholder element like "-----" for instance... but need to think about how to detect when
  * this is necessary and what date to assign the placeholder...
+ */
+/*TODO: undoing unlinks does not restore the link's yellow color if the link *currently* is not  
+ * linked to by more than one argument because the server sends the current proposition which
+ * indicates a link count of 1.  This could be addressed by having a proposition's link/unlink
+ * events also be owned by that proposition in VersionsMode, and hiding them probably (because
+ * they may be interesting only in regards to the color of the node because the unlink/link
+ * events may be with regards to arguments that are not currently opened) and treating
+ * them as only coloring events when moving forwards and backwards (thus in some cases there
+ * would be two link/unlink ViewChanges, one for the proposition whose link count is being updated
+ * and one for the argument which needs to either display or hide the linked proposition).  The forwards/backwards
+ * methods could distinguish between links/unlinks that were to be treated only as coloring events versus
+ * ones that would be treated as displaying/removing the linked proposition based on whether the ViewNodeVer
+ * object contained in the ViewChange object was a ViewPropVer or a ViewArgVer.  If it's a ViewArgVer
+ * it would display/remove the linked proposition.  If it's a ViewPropVer it would simply update the link
+ * count and change the color from yellow to white if it falls below 2, and vice versa.  This would require a
+ * change on the server to return the coloring events for a proposition, and would require changes on the client
+ * to insert the coloring events into the timeMachineMap and so forth.
+ */
+/*TODO: version mode should only display toplevel propositions that have been interacted with.
+ * Displaying open top level propositions is not enough because a toplevel node might
+ * have had child nodes that have been deleted and we want to be able to walk through that history.
+ * Furthermore, we want to be able to see the modifications of the node.  This isn't exactly ideal.
+ * The search feature should return all nodes... not just linked nodes.  What if the node has no
+ * children.  How does the user indicated that he wants to view it (since it won't have an
+ * open tree icon).  He could click inside it and make it dirty, but that is not intuitive to the
+ * user.  This relates to the general question of how to conceive of toplevelness of a node.
+ * Rather than toplevelness a node should be tagged with a category, and we would have tagged
+ * and untagged nodes.  Tagged ones would show up when browsing, and might have priority when
+ * searching, but would otherwise be the same. Hmmm... I don't think this is high priority
+ * right now.  Showing open toplevel propositions will get the job done for the time being...
+ * [Also note that attempting to version a single empty proposition results in a null pointer
+ * exception... so if I decide not to prevent that in the UI (for instance if I decide not to only display
+ * toplevel propositions in version mode) then this needs to be fixed.]
  */
 //TODO: linking: original linked item should also change color immediately upon first linking
 //TODO: linking: how will client automatically update link changes...

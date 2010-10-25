@@ -21,11 +21,11 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		KeyDownHandler, KeyUpHandler, FocusHandler, ChangeHandler {
 
 	private static ViewPropEdit lastPropositionWithFocus = null;
-	private Button proButton;
-	private Button conButton;
+	private final Button proButton;
+	private final Button conButton;
 	private Button linkRemoveButton;
 	private Button linkEditButton;
-	private HorizontalPanel buttonsPanel;
+	private final HorizontalPanel buttonsPanel;
 
 	boolean deleted = false;
 
@@ -132,6 +132,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			Object source = event.getSource();
 			if (source == textArea) {
 				if (charCode == KeyCodes.KEY_ENTER && parentArgView() == null) {
+					onChange(null);
 					addArgument( true );
 					event.preventDefault();
 				} else if (charCode == KeyCodes.KEY_ENTER
@@ -389,6 +390,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	}
 
+	@Override
 	public ViewNode createChild() {
 		return new ViewArgEdit();
 	}

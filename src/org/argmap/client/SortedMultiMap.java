@@ -12,7 +12,7 @@ import java.util.TreeMap;
 
 
 public class SortedMultiMap<K, V> {
-	private SortedMap<K, List<V>> map = new TreeMap<K, List<V>>();
+	private final SortedMap<K, List<V>> map = new TreeMap<K, List<V>>();
 
 	public List<V> get(K key) {
 		return map.get(key);
@@ -83,6 +83,10 @@ public class SortedMultiMap<K, V> {
 
 	public K lastKey() {
 		return map.lastKey();
+	}
+	
+	public K firstKey(){
+		return map.firstKey();
 	}
 
 	public Collection<List<V>> values() {
@@ -184,7 +188,7 @@ public class SortedMultiMap<K, V> {
 					 * argument is less than, equal to, or greater than the
 					 * second."
 					 */
-					return -((Comparable) arg0).compareTo((Comparable) arg1);
+					return -((Comparable) arg0).compareTo(arg1);
 				}
 
 			};

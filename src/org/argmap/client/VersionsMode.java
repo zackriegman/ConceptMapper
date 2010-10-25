@@ -288,11 +288,16 @@ public class VersionsMode extends ResizeComposite implements
 			ArgMap.log("vm.lvlftm", "\n" + change);
 			i++;
 		}
-		ArgMap.logEnd("vm.lvlftm");
+
+		/* add an item older than all items so that last change can be shown */
+		Date oldest = timeMachineMap.get(timeMachineMap.firstKey()).get(0).change.date;
+		versionList.addItem("-------", "" + (oldest.getTime() - 1000));
+
 		versionList.setSelectedIndex(newSelectionIndex);
 
 		listBoxChangeHandlerRegistration = versionList
 				.addChangeHandler(VersionsMode.this);
+		ArgMap.logEnd("vm.lvlftm");
 	}
 
 	public List<Change> getChangeList() {
@@ -374,7 +379,7 @@ public class VersionsMode extends ResizeComposite implements
 			ViewNodeVer childDummy = new ViewDummyVer(deletedID);
 			child.addDeletedItem(childDummy);
 		}
-		
+
 		child.setLoaded(false);
 		child.setOpen(false);
 		return child;
@@ -601,8 +606,14 @@ public class VersionsMode extends ResizeComposite implements
 			// showing
 			// how do we know which one to make visible?
 
-			treePanel.ensureVisible((ViewNode) timeMachineMap.get(
-					destinationDate).get(0).viewNode);
+			/* must check to make sure a change exists for destinationDate becuase
+			 * destination date may be a placeholder to allow the user to walk
+			 * past the earliest change.
+			 */
+			if (timeMachineMap.get(destinationDate) != null) {
+				treePanel.ensureVisible((ViewNode) timeMachineMap.get(
+						destinationDate).get(0).viewNode);
+			}
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
 		}
