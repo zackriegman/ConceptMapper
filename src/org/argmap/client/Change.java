@@ -68,26 +68,25 @@ public class Change implements Serializable {
 	 * For change types: PROP_DELETION, PROP_ADDITION, PROP_UNLINK, PROP_LINK
 	 * propID refers to the child proposition of the argument
 	 * 
-	 * For change type: PROP_MODIFICATION
-	 * propID refers to the proposition whose content  has been modified
+	 * For change type: PROP_MODIFICATION propID refers to the proposition whose
+	 * content has been modified
 	 * 
-	 * For change type: ARG_ADDITION, ARG_DELETION
-	 * propID refers to the parent proposition of the argument.  (But note that
-	 * it is not actually necessary to record the parent proposition for an ARG_ADDITION because
-	 * the arg knows its parent and can only have one, so we can figure out what to delete
-	 * merely with the argID. However currently it's used on the client side, so I'm
-	 * keeping it here for now.)
+	 * For change type: ARG_ADDITION, ARG_DELETION propID refers to the parent
+	 * proposition of the argument. (But note that it is not actually necessary
+	 * to record the parent proposition for an ARG_ADDITION because the arg
+	 * knows its parent and can only have one, so we can figure out what to
+	 * delete merely with the argID. However currently it's used on the client
+	 * side, so I'm keeping it here for now.)
 	 */
 	public Long propID;
-	
+
 	public int propLinkCount;
-	
+
 	/*
-	 * For change type: PROP_MODIFICATION
-	 * content refers to the proposition content
+	 * For change type: PROP_MODIFICATION content refers to the proposition
+	 * content
 	 * 
-	 * For change type: ARG_MODIFICATION
-	 * content refers to the argument title
+	 * For change type: ARG_MODIFICATION content refers to the argument title
 	 */
 	public String content;
 
@@ -95,11 +94,10 @@ public class Change implements Serializable {
 	 * For change types: PROP_DELETION, PROP_ADDITION, PROP_UNLINK, PROP_LINK
 	 * argID refers to a parent argument of the proposition
 	 * 
-	 * For change type: PROP_MODIFICATION
-	 * argID should be null
+	 * For change type: PROP_MODIFICATION argID should be null
 	 * 
-	 * For change type: ARG_ADDITION, ARG_DELETION
-	 * argID refers to the child argument of the proposition.
+	 * For change type: ARG_ADDITION, ARG_DELETION argID refers to the child
+	 * argument of the proposition.
 	 */
 	public Long argID;
 	public int argPropIndex = -1;
@@ -113,17 +111,22 @@ public class Change implements Serializable {
 		this.changeType = changeType;
 	}
 
+	@Override
 	public String toString() {
 		return "id:" + id + "; changeType:" + changeType + "; argID:" + argID
-				+ "; argPropIndex:" + argPropIndex + "; argPro:" + argPro
-				+ "; propID:" + propID + "; content:" + content
-				+ "; propLinkCount:" + propLinkCount + "; date:" + date;
-				
+				+ "; propID:" + propID + "; content:" + content + "; date:"
+				+ date;
 	}
-	
-	public String toStringLong(){
-		return toString() + "; remoteAddr:" + remoteAddr + "; remoteHost:" + remoteHost
-		+ "; remotePort:" + remotePort + "; remoteUser:" + remoteUser;
+
+	public String toStringLong() {
+		return toString() + "; argPro:" + argPro + "; argPropIndex:"
+				+ argPropIndex + "; propLinkCount:" + propLinkCount;
+	}
+
+	public String toStringLonger() {
+		return toStringLong() + "; remoteAddr:" + remoteAddr + "; remoteHost:"
+				+ remoteHost + "; remotePort:" + remotePort + "; remoteUser:"
+				+ remoteUser;
 	}
 
 }

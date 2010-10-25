@@ -39,7 +39,7 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 					: argument.content.trim();
 			if (!trimmedArgumentTitle.equals(trimmedTextBoxContent)) {
 				argument.content = trimmedTextBoxContent;
-				ServerComm.updateArgument(argument);
+				ServerComm.updateArg(argument);
 			}
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
@@ -66,7 +66,7 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 								.getChild(indexOfThis - 1)).haveFocus();
 					}
 					remove();
-					ServerComm.deleteArgument(argument);
+					ServerComm.deleteArg(argument);
 
 					event.preventDefault();
 				}

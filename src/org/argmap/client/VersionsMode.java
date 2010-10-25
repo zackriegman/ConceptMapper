@@ -165,6 +165,7 @@ public class VersionsMode extends ResizeComposite implements
 
 						onChange(null);
 						resetState(treeClone);
+						logTreeWithChanges();
 						ArgMap.logEnd("vm.dv.c");
 					}
 				});
@@ -188,37 +189,54 @@ public class VersionsMode extends ResizeComposite implements
 			NodeChangesMaps changesMaps) {
 		ArgMap.logIndent("vm.ptwdnacab");
 		NodeChanges nodeChanges = viewNode.chooseNodeChanges(changesMaps);
-		for (Long id : nodeChanges.deletedChildIDs) {
-			
-			/* if the deletedChild is actually an unlinked proposition then we create an
-			 * unloaded proposition (with dummy child nodes) and do not recurse on the
-			 * children.  this is necessary because unlike a deleted proposition/argument
-			 * and unlinked proposition may have been unlinked while still having children
-			 * which means that when we undo the unlinking we need to show the children
-			 * at the time of unlinking.   */
-			if (viewNode instanceof ViewArgVer
-					&& changesMaps.unlinkedLinks.containsKey(id)) {
-				NodeChanges linkNodeChanges = changesMaps.propChanges.get( id );
-				Node node = changesMaps.unlinkedLinks.get(id);
-				ViewNodeVer deletedView = createChildWithDummiesAndLoadChanges(viewNode, node, linkNodeChanges, timeMachineMap);
-				viewNode.addDeletedItem(deletedView);
-			} 
-			
-			/* if we are not dealing with an unlinked proposition then we create a child
-			 * node and recurse on its children */
-			else {
-				ViewNodeVer deletedView = viewNode.createChild(id);
-				viewNode.addDeletedItem(deletedView);
-				recursivePrepAndBuild(deletedView, timeMachineMap, changesMaps);
-			}
-		}
-		for (int i = 0; i < viewNode.getChildCount(); i++) {
-			ViewNodeVer child = viewNode.getChildViewNode(i);
+		if (viewNode.isOpen()) {
+			for (Long id : nodeChanges.deletedChildIDs) {
 
-			/* check to make sure that the child is not a load dummy */
-			if (child instanceof ViewPropVer || child instanceof ViewArgVer) {
-				ArgMap.logln("vm.ptwdnacab", "" + child.getClass());
+				/*
+				 * if the deletedChild is actually an unlinked proposition then
+				 * we create an unloaded proposition (with dummy child nodes)
+				 * and do not recurse on the children. this is necessary because
+				 * unlike a deleted proposition/argument and unlinked
+				 * proposition may have been unlinked while still having
+				 * children which means that when we undo the unlinking we need
+				 * to show the children at the time of unlinking.
+				 */
+				if (viewNode instanceof ViewArgVer
+						&& changesMaps.unlinkedLinks.containsKey(id)) {
+					NodeChanges linkNodeChanges = changesMaps.propChanges
+							.get(id);
+					Node node = changesMaps.unlinkedLinks.get(id);
+					ViewNodeVer deletedView = createChildWithDummiesAndLoadChanges(
+							viewNode, node, id, linkNodeChanges, timeMachineMap);
+					viewNode.addDeletedItem(deletedView);
+				}
+
+				/*
+				 * if we are not dealing with an unlinked proposition then we
+				 * create a child node and recurse on its children
+				 */
+				else {
+					ViewNodeVer deletedView = viewNode.createChild(id);
+					viewNode.addDeletedItem(deletedView);
+					recursivePrepAndBuild(deletedView, timeMachineMap,
+							changesMaps);
+				}
+			}
+			for (int i = 0; i < viewNode.getChildCount(); i++) {
+				ViewNodeVer child = viewNode.getChildViewNode(i);
 				recursivePrepAndBuild(child, timeMachineMap, changesMaps);
+			}
+		} else {
+			for (Long id : nodeChanges.deletedChildIDs) {
+				viewNode.addDeletedItem(new ViewDummyVer(id));
+			}
+			for (int i = 0; i < viewNode.getChildCount(); i++) {
+				/*
+				 * TODO: remove the creation of dummies from
+				 * editmode.clonetree() and create them here for clarity... but
+				 * then how do we know how many are needed and what their ids
+				 * are?
+				 */
 			}
 		}
 
@@ -312,30 +330,58 @@ public class VersionsMode extends ResizeComposite implements
 		}
 	}
 
-	public ViewNodeVer createChildWithDummiesAndLoadChanges(ViewNodeVer parentView, Node childNode, NodeChanges childChanges,
+	public ViewNodeVer createChildWithDummiesAndLoadChanges(
+			ViewNodeVer parentView, Node childNode, Long childID,
+			NodeChanges childChanges,
 			SortedMultiMap<Date, ViewChange> viewChanges) {
-		
-		ViewNodeVer child = createChildWithDummies(parentView,
-				childNode, childChanges.deletedChildIDs);
 
-		loadChangesIntoNodeAndMap(child,
-				childChanges.changes, viewChanges);
-		
+		ViewNodeVer child = createChildWithDummies(parentView, childNode,
+				childID, childChanges.deletedChildIDs);
+
+		loadChangesIntoNodeAndMap(child, childChanges.changes, viewChanges);
+
 		return child;
 	}
 
-	public ViewNodeVer createChildWithDummies(ViewNodeVer parent, Node node,
-			List<Long> deletedChildIDs) {
-		ViewNodeVer child = parent.createChild(node);
-		child.setLoaded(false);
-		for (Long childDummyID : node.childIDs) {
-			ViewNode childDummy = new ViewDummyVer(childDummyID);
-			child.addItem(childDummy);
+	public ViewNodeVer createChildWithDummies(ViewNodeVer parentView,
+			Node childNode, Long childID, List<Long> deletedGrandChildIDs) {
+		ViewNodeVer child;
+
+		/*
+		 * childNode will be null where the child is currently deleted and
+		 * therefore the server does not have a currently existing copy of the
+		 * child node. In that case the child node needs to be regenerated
+		 * entirely from the change history, and a blank node can be used to
+		 * start with.
+		 */
+		if (childNode == null) {
+			child = parentView.createChild(childID);
+		} else {
+			child = parentView.createChild(childNode);
+			/*
+			 * only an undeleted node will have existing children to process
+			 * because a node can only be deleted after its children are
+			 * deleted. Therefore the following for loop creating dummies for
+			 * existing children is only need when childNode does not equal
+			 * null.
+			 */
+			for (Long childDummyID : childNode.childIDs) {
+				ViewNode childDummy = new ViewDummyVer(childDummyID);
+				child.addItem(childDummy);
+			}
 		}
-		for (Long deletedID : deletedChildIDs) {
+
+		/*
+		 * for both deleted and undeleted nodes, we need to create dummies for
+		 * the deleted children.
+		 */
+		for (Long deletedID : deletedGrandChildIDs) {
 			ViewNodeVer childDummy = new ViewDummyVer(deletedID);
 			child.addDeletedItem(childDummy);
 		}
+		
+		child.setLoaded(false);
+		child.setOpen(false);
 		return child;
 	}
 
@@ -353,10 +399,11 @@ public class VersionsMode extends ResizeComposite implements
 		viewNodeVer.clearDeletedViews();
 		/* for each dummy create a real and append it to the node */
 		for (ViewNodeVer deletedView : deletedViewList) {
-			NodeWithChanges nodeWithChanges = nodesWithChanges.get(deletedView.getNodeID());
+			Long deletedID = deletedView.getNodeID();
+			NodeWithChanges nodeWithChanges = nodesWithChanges.get(deletedID);
 			viewNodeVer.addDeletedItem(createChildWithDummiesAndLoadChanges(
-					viewNodeVer, nodeWithChanges.node, nodeWithChanges.nodeChanges,
-					viewChanges));
+					viewNodeVer, nodeWithChanges.node, deletedID,
+					nodeWithChanges.nodeChanges, viewChanges));
 		}
 
 		/*
@@ -374,7 +421,8 @@ public class VersionsMode extends ResizeComposite implements
 			NodeWithChanges nodeWithChanges = nodesWithChanges.get(id);
 			viewNodeVer
 					.addItem((ViewNode) createChildWithDummiesAndLoadChanges(
-							viewNodeVer, nodeWithChanges.node, nodeWithChanges.nodeChanges, viewChanges));
+							viewNodeVer, nodeWithChanges.node, id,
+							nodeWithChanges.nodeChanges, viewChanges));
 		}
 
 		viewNodeVer.setLoaded(true);
@@ -407,6 +455,10 @@ public class VersionsMode extends ResizeComposite implements
 						ServerComm.LocalCallback<Map<Long, NodeWithChanges>> {
 					ViewNodeVer viewNodeVer;
 
+					public Callback(ViewNodeVer viewNodeVer) {
+						this.viewNodeVer = viewNodeVer;
+					}
+
 					@Override
 					public void call(Map<Long, NodeWithChanges> nodesWithChanges) {
 						mergeLoadedNodes(viewNodeVer, nodesWithChanges);
@@ -419,15 +471,12 @@ public class VersionsMode extends ResizeComposite implements
 				 * proposition request a list of child arguments and vice-versa.
 				 */
 				if (viewNodeVer instanceof ViewArgVer) {
-					Callback callback = new Callback();
-					callback.viewNodeVer = viewNodeVer;
-					ServerComm.getPropsWithChanges(childIDs, callback);
+					ServerComm.getPropsWithChanges(childIDs, new Callback(
+							viewNodeVer));
 				} else if (viewNodeVer instanceof ViewPropVer) {
-					Callback callback = new Callback();
-					callback.viewNodeVer = viewNodeVer;
-					ServerComm.getArgsWithChanges(childIDs, callback);
+					ServerComm.getArgsWithChanges(childIDs, new Callback(
+							viewNodeVer));
 				}
-
 			} else {
 
 				ArgMap.log("vm.oo", "Adding View Changes: ");
@@ -440,6 +489,7 @@ public class VersionsMode extends ResizeComposite implements
 
 			}
 			ArgMap.logEnd("vm.oo");
+			logTreeWithChanges();
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
 		}
@@ -491,6 +541,16 @@ public class VersionsMode extends ResizeComposite implements
 		}
 	}
 
+	/*
+	 * this function gets all the changes of all the open descendants of the
+	 * ViewNodeVer passed to it. It does not return the changes of the
+	 * ViewNodeVer actually passed to it as those changes are dealt with
+	 * different (hidden instead of removed from the change list). It also does
+	 * not return the changes of closed descendants because those changes have
+	 * already been remove or do not need to be added upon the closing/opening
+	 * of the ViewNodeVer passed. (Dummy nodes have no changes so it skips dummy
+	 * nodes when collecting changes).
+	 */
 	public void recursiveGetViewChanges(ViewNodeVer viewNodeVer,
 			SortedMultiMap<Date, ViewChange> forAddOrRemove, boolean firstNode,
 			String logName) {
@@ -520,12 +580,16 @@ public class VersionsMode extends ResizeComposite implements
 		if (firstNode || viewNodeVer.isOpen()) {
 			for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
 				ViewNodeVer childView = viewNodeVer.getChildViewNode(i);
-				recursiveGetViewChanges(childView, forAddOrRemove, false,
-						logName);
+				if (!(childView instanceof ViewDummyVer)) {
+					recursiveGetViewChanges(childView, forAddOrRemove, false,
+							logName);
+				}
 			}
 			for (ViewNodeVer deletedView : viewNodeVer.getDeletedViewList()) {
-				recursiveGetViewChanges(deletedView, forAddOrRemove, false,
-						logName);
+				if (!(deletedView instanceof ViewDummyVer)) {
+					recursiveGetViewChanges(deletedView, forAddOrRemove, false,
+							logName);
+				}
 			}
 		}
 	}
@@ -536,12 +600,10 @@ public class VersionsMode extends ResizeComposite implements
 			if (treeItem.getChild(0).getStyleName().equals("loadDummyProp")) {
 				// ServerComm.getPropositionCurrentVersionAndHistory(prop,
 				// localCallback)
-				GWT
-						.log("VersionsMode.onClose[loadDummyProp]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
-			} else if (treeItem.getChild(0).getStyleName().equals(
-					"loadDummyArg")) {
-				GWT
-						.log("VersionsMode.onClose[loadDummyArg]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
+				GWT.log("VersionsMode.onClose[loadDummyProp]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
+			} else if (treeItem.getChild(0).getStyleName()
+					.equals("loadDummyArg")) {
+				GWT.log("VersionsMode.onClose[loadDummyArg]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
 			}
 		}
 
@@ -567,7 +629,7 @@ public class VersionsMode extends ResizeComposite implements
 				Callback callback = new Callback();
 				callback.propView = (ViewPropEdit) treeItem;
 
-				ServerComm.getPropositionCurrentVersionAndHistory(
+				ServerComm.getPropCurrentVersionAndHistory(
 						((ViewPropEdit) treeItem).proposition, callback);
 			} else if (child.getStyleName().equals("loadDummyArg")) {
 				class Callback implements LocalCallback<NodesWithHistory> {
@@ -584,7 +646,7 @@ public class VersionsMode extends ResizeComposite implements
 				Callback callback = new Callback();
 				callback.argView = (ViewArgVer) treeItem;
 
-				ServerComm.getArgumentCurrentVersionAndHistory(
+				ServerComm.getArgCurrentVersionAndHistory(
 						((ViewArgVer) treeItem).argument, callback);
 			}
 		}
@@ -759,11 +821,11 @@ public class VersionsMode extends ResizeComposite implements
 					argView.removeAndSaveChildView(vC.change.propID);
 					break;
 				}
-				case PROP_LINK: 
+				case PROP_LINK:
 				case PROP_ADDITION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
-					argView.reviveDeletedView(vC.change.propID, mapPropIndex
-							.get(vC));
+					argView.reviveDeletedView(vC.change.propID,
+							mapPropIndex.get(vC));
 					break;
 				}
 				case PROP_MODIFICATION: {
@@ -781,8 +843,8 @@ public class VersionsMode extends ResizeComposite implements
 				}
 				case ARG_ADDITION: {
 					ViewPropVer propView = (ViewPropVer) vC.viewNode;
-					propView.reviveDeletedView(vC.change.argID, mapArgIndex
-							.get(vC));
+					propView.reviveDeletedView(vC.change.argID,
+							mapArgIndex.get(vC));
 					break;
 				}
 				case ARG_DELETION: {
@@ -795,7 +857,7 @@ public class VersionsMode extends ResizeComposite implements
 					argView.setArgTitle(mapArgTitle.get(vC));
 					break;
 				}
-			}
+				}
 			}
 		}
 
@@ -828,9 +890,16 @@ public class VersionsMode extends ResizeComposite implements
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
 					argView.reviveDeletedView(vC.change.propID,
 							vC.change.argPropIndex);
-					ViewProp viewPropVer = argView
-							.getPropView(vC.change.argPropIndex);
-					viewPropVer.proposition.content = vC.change.content;
+					ViewNode viewNode = argView
+							.getChildView(vC.change.argPropIndex);
+					/*
+					 * need to check before cast because this might be a dummy
+					 * node (in which case we don't need to set the content
+					 * anyway...)
+					 */
+					if (viewNode instanceof ViewPropVer) {
+						((ViewPropVer) viewNode).proposition.content = vC.change.content;
+					}
 					break;
 				}
 				case PROP_LINK:
@@ -882,5 +951,35 @@ public class VersionsMode extends ResizeComposite implements
 				}
 			}
 		}
+	}
+
+	public void logTreeWithChanges() {
+		ArgMap.logStart("vm.ltwc");
+		for (int i = 0; i < treeClone.getItemCount(); i++) {
+			recursiveLogTreeWithChanges((ViewNodeVer) treeClone.getItem(i));
+		}
+		ArgMap.logEnd("vm.ltwc");
+	}
+
+	public void recursiveLogTreeWithChanges(ViewNodeVer viewNodeVer) {
+		ArgMap.logIndent("vm.ltwc");
+		ArgMap.logln("vm.ltwc", "node:" + viewNodeVer.toString());
+		if (!(viewNodeVer instanceof ViewDummyVer)) {
+			ArgMap.logln("vm.ltwc", "changes:");
+			ArgMap.logIndent("vm.ltwc");
+			for (ViewChange change : viewNodeVer.getViewChangeList()) {
+				ArgMap.logln("vm.ltwc", change.toString());
+			}
+			ArgMap.logUnindent("vm.ltwc");
+			ArgMap.logln("vm.ltwc", "children:");
+			for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
+				recursiveLogTreeWithChanges(viewNodeVer.getChildViewNode(i));
+			}
+			ArgMap.logln("vm.ltwc", "deleted children:");
+			for (ViewNodeVer delChild : viewNodeVer.getDeletedViewList()) {
+				recursiveLogTreeWithChanges(delChild);
+			}
+		}
+		ArgMap.logUnindent("vm.ltwc");
 	}
 }

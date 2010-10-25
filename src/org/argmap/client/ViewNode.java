@@ -3,7 +3,6 @@ package org.argmap.client;
 import java.util.LinkedList;
 import java.util.Queue;
 
-
 import com.google.gwt.user.client.ui.TreeItem;
 
 public abstract class ViewNode extends TreeItem {
@@ -67,14 +66,6 @@ public abstract class ViewNode extends TreeItem {
 			addItem(toRemove);
 		}
 	}
-
-	/*
-	 * public void logNodesRecursive(int level, String logName) {
-	 * ArgMap.logln(logName, ArgMap.spaces(level * 2) + toString() +
-	 * "; hashCode:" + hashCode()); for (int i = 0; i < getChildCount(); i++) {
-	 * ViewNode node = getChildView(i); node.logNodeRecursive(level + 1,
-	 * logName); } }
-	 */
 
 	public void logNodeRecursive(int level, String logName,
 			boolean includeChildrenOfClosedNodes) {

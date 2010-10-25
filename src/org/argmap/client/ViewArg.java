@@ -31,6 +31,7 @@ public abstract class ViewArg extends ViewNode {
 		initialize();
 	}
 	
+	@Override
 	public void setNode( Node node ){
 		argument = (Argument) node;
 		textBox.setText(argument.content);
@@ -72,6 +73,7 @@ public abstract class ViewArg extends ViewNode {
 		}
 	}
 
+	@Override
 	public Long getNodeID() {
 		return argument.id;
 	}
@@ -84,14 +86,18 @@ public abstract class ViewArg extends ViewNode {
 		return textBox.getText();
 	}
 
+	@Override
 	public String toString() {
 		return "text:" + getText() + "; arg:" + argument;
 	}
 
+	/*
 	public ViewProp getPropView(int index) {
 		return (ViewProp) getChild(index);
 	}
+	*/
 	
+	@Override
 	public Node getChildNodeFromNodeList( Long nodeID, Nodes nodes ){
 		return nodes.props.get( nodeID );
 	}

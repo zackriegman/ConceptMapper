@@ -120,8 +120,8 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		newArgView.setState(true);
 		this.setState(true);
 		newPropView.textArea.setFocus(true);
-		ServerComm.addArgument(pro, this.proposition, newArgView.argument);
-		ServerComm.addProposition(newPropView.proposition, newArgView.argument,
+		ServerComm.addArg(pro, this.proposition, newArgView.argument);
+		ServerComm.addProp(newPropView.proposition, newArgView.argument,
 				0);
 	}
 
@@ -176,7 +176,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			textArea.setText(textArea.getText()
 					+ nextPropView.textArea.getText());
 			textArea.setCursorPos(cursorPosition);
-			ServerComm.deleteProposition(nextPropView.proposition);
+			ServerComm.deleteProp(nextPropView.proposition);
 			nextPropView.remove();
 		}
 
@@ -191,7 +191,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			// with subsequent or preceeding propositions or
 			// parent arguments if this proposition is top level.
 			getTree().removeItem(this);
-			ServerComm.deleteProposition(this.proposition);
+			ServerComm.deleteProp(this.proposition);
 			deleted = true;
 			return;
 		}
@@ -255,7 +255,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			remove();
 			prePropView.updatePropOnServerIfChanged();
 		}
-		ServerComm.deleteProposition(this.proposition);
+		ServerComm.deleteProp(this.proposition);
 
 		deleted = true;
 
@@ -266,7 +266,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		 * to well...)
 		 */
 		if (parentArgViewRemoved == true) {
-			ServerComm.deleteArgument(parentArgView.argument);
+			ServerComm.deleteArg(parentArgView.argument);
 		}
 	}
 
@@ -287,7 +287,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		ViewPropEdit newPropView = new ViewPropEdit();
 		if (cursorPosition == 0) {
 			parentArgView().insertChildViewAt(treePosition, newPropView);
-			ServerComm.addProposition(newPropView.proposition,
+			ServerComm.addProp(newPropView.proposition,
 					parentArgView().argument, treePosition);
 		} else {
 			parentArgView().insertChildViewAt(treePosition + 1, newPropView);
@@ -306,7 +306,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			newPropView.textArea.setCursorPos(0);
 			newPropView.textArea.setFocus(true);
 
-			ServerComm.addProposition(newPropView.proposition,
+			ServerComm.addProp(newPropView.proposition,
 					parentArgView().argument, treePosition + 1);
 			updatePropOnServerIfChanged();
 		}
@@ -338,7 +338,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 					linkRemoveButton.setVisible(true);
 				}
 				lastPropositionWithFocus = this;
-				ServerComm.searchPropositions(textArea.getText(),
+				ServerComm.searchProps(textArea.getText(),
 						parentArgument(), getEditModeTree().searchCallback);
 
 			}
@@ -370,7 +370,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				: proposition.getContent().trim();
 		if (!trimmedPropositionContent.equals(trimmedTextAreaContent)) {
 			this.proposition.setContent(trimmedTextAreaContent);
-			ServerComm.updateProposition(this.proposition);
+			ServerComm.updateProp(this.proposition);
 		}
 	}
 
@@ -379,7 +379,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		try {
 			Object source = event.getSource();
 			if (source == textArea && !deleted) {
-				ServerComm.searchPropositions(textArea.getText(),
+				ServerComm.searchProps(textArea.getText(),
 						parentArgument(),
 						((EditModeTree) getTree()).searchCallback);
 			}

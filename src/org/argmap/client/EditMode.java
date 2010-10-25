@@ -60,7 +60,7 @@ public class EditMode extends ResizeComposite implements
 
 					tree.addItem(newPropView);
 					newPropView.haveFocus();
-					ServerComm.addProposition(newPropView.getProposition(),
+					ServerComm.addProp(newPropView.getProposition(),
 							null, 0);
 				} catch (Exception e) {
 					ServerComm.handleClientException(e);

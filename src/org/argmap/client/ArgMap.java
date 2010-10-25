@@ -19,13 +19,6 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: test versioning of unlinking
 
 //TODO: backspacing in an argument with children deletes them on the client (even though not deleted on the server)
-/*TODO: if you close a node in versions mode sometimes you can never open it again because it will 
- * never have children again given the dates available to click on.  For instance if you add a node, 
- * add a child, delete the child, and delete the node, all consecutively, and then go to a time when 
- * the node has children and close it, the node will never have children again because it doesn't have
- * children when it is created or when it is destroyed... and there are no visible events in between...
- * this should be a low priority fix, but it might take some ui creativity...
- */
 //TODO: add placeholder before earliest revision so that it can be undone
 //TODO: test/fix versioning of a single empty proposition
 //TODO: undeleting links does not restore their yellow color ...
@@ -42,6 +35,13 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: implement user accounts, email updates of changes, inviting friends
 //TODO: implement proposition strength voting, and scoring algorithm
 
+/*TODO: if you close a node in versions mode sometimes you can never open it again because it will 
+ * never have children again given the dates available to click on.  For instance if you add a node, 
+ * add a child, delete the child, and delete the node, all consecutively, and then go to a time when 
+ * the node has children and close it, the node will never have children again because it doesn't have
+ * children when it is created or when it is destroyed... and there are no visible events in between...
+ * this should be a low priority fix, but it might take some ui creativity...
+ */
 //TODO: linking: original linked item should also change color immediately upon first linking
 //TODO: linking: how will client automatically update link changes...
 
@@ -249,11 +249,12 @@ public class ArgMap implements EntryPoint {
 	public static void logln(String logName, String string) {
 		if (logName == null)
 			return;
+		String indent = spaces(logsCurrentIndent.get(logName) * 4);
+		
 		if (logsImmediatePrint.get(logName)) {
-			log(logName, string);
+			log(logName,  indent + string);
 		} else {
-			log(logName, "\n" + spaces(logsCurrentIndent.get(logName) * 2)
-					+ string);
+			log(logName, "\n" + indent + string);
 		}
 	}
 
@@ -261,13 +262,13 @@ public class ArgMap implements EntryPoint {
 		if (logName == null)
 			return;
 		Integer current = logsCurrentIndent.get(logName);
-		logsCurrentIndent.put(logName, current++);
+		logsCurrentIndent.put(logName, current+1);
 	}
 
 	public static void logUnindent(String logName) {
 		if (logName == null)
 			return;
 		Integer current = logsCurrentIndent.get(logName);
-		logsCurrentIndent.put(logName, current--);
+		logsCurrentIndent.put(logName, current-1);
 	}
 }

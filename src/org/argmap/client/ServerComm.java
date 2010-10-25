@@ -164,19 +164,19 @@ public class ServerComm {
 						"Server Reports Success Getting Changes"));
 	}
 
-	public static void getPropositionCurrentVersionAndHistory(Proposition prop,
+	public static void getPropCurrentVersionAndHistory(Proposition prop,
 			LocalCallback<NodesWithHistory> localCallback) {
 		argMapService
-				.getPropositionCurrentVersionAndHistory(
+				.getPropCurrentVersionAndHistory(
 						prop.id,
 						new ServerCallback<NodesWithHistory>(localCallback,
 								"Server Reports Success Fetching Proposition and History"));
 	}
 
-	public static void getArgumentCurrentVersionAndHistory(Argument arg,
+	public static void getArgCurrentVersionAndHistory(Argument arg,
 			LocalCallback<NodesWithHistory> localCallback) {
 		argMapService
-				.getArgumentCurrentVersionAndHistory(
+				.getArgCurrentVersionAndHistory(
 						arg.id,
 						new ServerCallback<NodesWithHistory>(localCallback,
 								"Server Reports Success Fetching Argument and History"));
@@ -185,7 +185,7 @@ public class ServerComm {
 	public static void getPropsWithChanges(List<Long> propIDs,
 			LocalCallback<Map<Long, NodeWithChanges>> localCallback) {
 		argMapService
-				.getPropositionsWithChanges(
+				.getPropsWithChanges(
 						propIDs,
 						new ServerCallback<Map<Long, NodeWithChanges>>(
 								localCallback,
@@ -195,25 +195,25 @@ public class ServerComm {
 	public static void getArgsWithChanges(List<Long> argIDs,
 			LocalCallback<Map<Long, NodeWithChanges>> localCallback) {
 		argMapService
-				.getArgumentsWithChanges(
+				.getArgsWithChanges(
 						argIDs,
 						new ServerCallback<Map<Long, NodeWithChanges>>(
 								localCallback,
 								"Server Reports Success Fetching Proposition With Changes"));
 	}
 
-	public static void searchPropositions(String string, Argument filterArg,
+	public static void searchProps(String string, Argument filterArg,
 			LocalCallback<List<Proposition>> localCallback) {
 		Long id = null;
 		if (filterArg != null) {
 			id = filterArg.id;
 		}
 
-		argMapService.searchPropositions(string, id,
+		argMapService.searchProps(string, id,
 				new ServerCallback<List<Proposition>>(localCallback, null));
 	}
 
-	public static void addArgument(boolean pro, Proposition parentProp,
+	public static void addArg(boolean pro, Proposition parentProp,
 			Argument newArg) {
 		class CommandAdd extends ServerCallbackWithDispatch<Argument> implements
 				Command {
@@ -229,7 +229,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				argMapService.addArgument(parentProp.id, pro, this);
+				argMapService.addArg(parentProp.id, pro, this);
 			}
 
 			@Override
@@ -247,7 +247,7 @@ public class ServerComm {
 		queueCommand(command);
 	}
 
-	public static void deleteProposition(Proposition prop) {
+	public static void deleteProp(Proposition prop) {
 		class CommandRemove extends ServerCallbackWithDispatch<Void> implements
 				Command {
 			Proposition prop;
@@ -258,7 +258,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				argMapService.deleteProposition(prop.id, this);
+				argMapService.deleteProp(prop.id, this);
 			}
 
 			@Override
@@ -271,7 +271,7 @@ public class ServerComm {
 		queueCommand(command);
 	}
 
-	public static void deleteArgument(Argument arg) {
+	public static void deleteArg(Argument arg) {
 		class CommandRemove extends ServerCallbackWithDispatch<Void> implements
 				Command {
 			Argument arg;
@@ -282,7 +282,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				argMapService.deleteArgument(arg.id, this);
+				argMapService.deleteArg(arg.id, this);
 			}
 
 			@Override
@@ -307,7 +307,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				argMapService.unlinkProposition(parentArg.id, unlinkProp.id,
+				argMapService.unlinkProp(parentArg.id, unlinkProp.id,
 						this);
 			}
 
@@ -322,7 +322,7 @@ public class ServerComm {
 		queueCommand(command);
 	}
 
-	public static void updateArgument(Argument arg) {
+	public static void updateArg(Argument arg) {
 		class CommandUpdate extends ServerCallbackWithDispatch<Void> implements
 				Command {
 			Argument arg;
@@ -333,7 +333,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				argMapService.updateArgument(arg.id, arg.content, this);
+				argMapService.updateArg(arg.id, arg.content, this);
 			}
 
 			@Override
@@ -347,7 +347,7 @@ public class ServerComm {
 		queueCommand(command);
 	}
 
-	public static void updateProposition(Proposition prop) {
+	public static void updateProp(Proposition prop) {
 		class CommandUpdate extends ServerCallbackWithDispatch<Void> implements
 				Command {
 			Proposition prop;
@@ -358,7 +358,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				argMapService.updateProposition(prop.id, prop.getContent(),
+				argMapService.updateProp(prop.id, prop.getContent(),
 						this);
 			}
 
@@ -373,7 +373,7 @@ public class ServerComm {
 		queueCommand(command);
 	}
 
-	public static void addProposition(Proposition newProposition,
+	public static void addProp(Proposition newProposition,
 			Argument parentArgument, int position) {
 		class CommandAdd extends ServerCallbackWithDispatch<Long> implements
 				Command {
@@ -388,10 +388,10 @@ public class ServerComm {
 			@Override
 			public void execute() {
 				if (parentArgument != null)
-					argMapService.addProposition(parentArgument.id, position,
+					argMapService.addProp(parentArgument.id, position,
 							newProposition.content, this);
 				else
-					argMapService.addProposition(null, 0,
+					argMapService.addProp(null, 0,
 							newProposition.content, this);
 			}
 

@@ -20,11 +20,11 @@ import org.apache.lucene.analysis.tokenattributes.TermAttribute;
 import org.argmap.client.ArgMapService;
 import org.argmap.client.Argument;
 import org.argmap.client.Change;
+import org.argmap.client.Change.ChangeType;
 import org.argmap.client.Node;
 import org.argmap.client.NodeChanges;
 import org.argmap.client.Nodes;
 import org.argmap.client.Proposition;
-import org.argmap.client.Change.ChangeType;
 
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -168,7 +168,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Long addProposition(Long parentArgID, int position, String content)
+	public Long addProp(Long parentArgID, int position, String content)
 			throws Exception {
 		try {
 
@@ -225,9 +225,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
-	// TODO
 	@Override
-	public void deleteProposition(Long propID) throws Exception {
+	public void deleteProp(Long propID) throws Exception {
 		try {
 			/* first get the stuff that we'll need for version control */
 			Change change = new Change(ChangeType.PROP_DELETION);
@@ -279,7 +278,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	/* the below functions are not yet used anywhere... consider deleting them */
 
 	@Override
-	public void unlinkProposition(Long parentArgID, Long propositionID)
+	public void unlinkProp(Long parentArgID, Long propositionID)
 			throws Exception {
 		try {
 			/* this will throw an exception if the argument doesn't exist */
@@ -312,7 +311,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public void updateProposition(Long propID, String content) throws Exception {
+	public void updateProp(Long propID, String content) throws Exception {
 		try {
 			println("propID:" + propID + "; content:" + content);
 
@@ -345,7 +344,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	}
 
-	public void deleteArgument(Long argID) throws Exception {
+	public void deleteArg(Long argID) throws Exception {
 		try {
 			Argument argument = ofy.get(Argument.class, argID);
 			if (!argument.childIDs.isEmpty()) {
@@ -379,7 +378,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Argument addArgument(Long parentPropID, boolean pro)
+	public Argument addArg(Long parentPropID, boolean pro)
 			throws Exception {
 		try {
 
@@ -415,7 +414,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public void updateArgument(Long argID, String content) throws Exception {
+	public void updateArg(Long argID, String content) throws Exception {
 		try {
 			Change change = new Change(ChangeType.ARG_MODIFICATION);
 			Argument arg = ofy.get(Argument.class, argID);
@@ -477,13 +476,21 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Map<Long, NodeWithChanges> getPropositionsWithChanges(
+	public Map<Long, NodeWithChanges> getPropsWithChanges(
 			List<Long> propIDs) throws Exception {
 		try {
 			Map<Long, NodeWithChanges> map = new HashMap<Long, NodeWithChanges>();
 			for (Long propID : propIDs) {
 				NodeWithChanges propWithChanges = new NodeWithChanges();
-				propWithChanges.node = ofy.get(Proposition.class, propID);
+				try {
+					propWithChanges.node = ofy.get(Proposition.class, propID);
+				} catch (EntityNotFoundException e) {
+					/*
+					 * if the node doesn't currently exist because it has been
+					 * deleted, just return null
+					 */
+					propWithChanges.node = null;
+				}
 				propWithChanges.nodeChanges = getPropChanges(propID);
 				map.put(propID, propWithChanges);
 			}
@@ -495,14 +502,23 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Map<Long, NodeWithChanges> getArgumentsWithChanges(List<Long> argIDs)
+	public Map<Long, NodeWithChanges> getArgsWithChanges(List<Long> argIDs)
 			throws Exception {
 		try {
 			Map<Long, NodeWithChanges> map = new HashMap<Long, NodeWithChanges>();
 			for (Long argID : argIDs) {
 				NodeWithChanges argWithChanges = new NodeWithChanges();
-				argWithChanges.node = ofy.get(Argument.class, argID);
-				argWithChanges.nodeChanges = getArgChanges(argID, argWithChanges.unlinkedLinks);
+				try {
+					argWithChanges.node = ofy.get(Argument.class, argID);
+				} catch (EntityNotFoundException e) {
+					/*
+					 * if the node doesn't currently exist because it has been
+					 * deleted, just return null
+					 */
+					argWithChanges.node = null;
+				}
+				argWithChanges.nodeChanges = getArgChanges(argID,
+						argWithChanges.unlinkedLinks);
 				map.put(argID, argWithChanges);
 			}
 			return map;
@@ -513,7 +529,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public NodesWithHistory getPropositionCurrentVersionAndHistory(Long propID)
+	public NodesWithHistory getPropCurrentVersionAndHistory(Long propID)
 			throws Exception {
 		try {
 			return getPropOrArgCurrentVersionAndHistory(propID, null);
@@ -524,7 +540,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public NodesWithHistory getArgumentCurrentVersionAndHistory(Long argID)
+	public NodesWithHistory getArgCurrentVersionAndHistory(Long argID)
 			throws Exception {
 		try {
 			return getPropOrArgCurrentVersionAndHistory(null, argID);
@@ -628,7 +644,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			return;
 		}
 
-		NodeChanges nodeChanges = getArgChanges(argID, nodeChangesMaps.unlinkedLinks);
+		NodeChanges nodeChanges = getArgChanges(argID,
+				nodeChangesMaps.unlinkedLinks);
 		nodeChangesMaps.argChanges.put(argID, nodeChanges);
 
 		for (Long id : nodeChanges.deletedChildIDs) {
@@ -636,14 +653,16 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
-	public NodeChanges getArgChanges(Long argID, Map<Long, Proposition> unlinkedLinks ) throws Exception {
+	public NodeChanges getArgChanges(Long argID,
+			Map<Long, Proposition> unlinkedLinks) throws Exception {
 		NodeChanges nodeChanges = new NodeChanges();
 		Query<Change> query = ofy.query(Change.class).filter("argID = ", argID);
 		for (Change change : query) {
 			switch (change.changeType) {
 			case PROP_UNLINK:
-				if( !unlinkedLinks.containsKey(change.propID)){
-					unlinkedLinks.put(change.propID, ofy.get(Proposition.class, change.propID));
+				if (!unlinkedLinks.containsKey(change.propID)) {
+					unlinkedLinks.put(change.propID,
+							ofy.get(Proposition.class, change.propID));
 				}
 			case PROP_DELETION:
 				nodeChanges.deletedChildIDs.add(change.propID);
@@ -687,8 +706,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		List<Long> deletedArgs = new LinkedList<Long>();
 
 		if (propIDs != null && !propIDs.isEmpty()) {
-			Query<Change> query = ofy.query(Change.class).filter("propID in",
-					propIDs).order("-date");
+			Query<Change> query = ofy.query(Change.class)
+					.filter("propID in", propIDs).order("-date");
 			if (date != null) {
 				query = query.filter("date <", date);
 			}
@@ -702,8 +721,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 
 		if (argIDs != null && !argIDs.isEmpty()) {
-			Query<Change> query = ofy.query(Change.class).filter("argID in",
-					argIDs).order("-date");
+			Query<Change> query = ofy.query(Change.class)
+					.filter("argID in", argIDs).order("-date");
 			if (date != null) {
 				query = query.filter("date <", date);
 			}
@@ -727,7 +746,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public List<Proposition> searchPropositions(String string, Long filterArgID)
+	public List<Proposition> searchProps(String string, Long filterArgID)
 			throws Exception {
 		try {
 			// System.out.println("start:  searchPropositions");
@@ -839,7 +858,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			}
 			/*
 			 * can't reuse the removeProposition function because don't want to
-			 * delete the argument where it is empty.
+			 * delete the argument where it is empty. [just add the link before
+			 * deleting then...]
 			 */
 			else if (query.countAll() == 1) {
 				Change change = new Change(ChangeType.PROP_DELETION);

@@ -15,23 +15,23 @@ public interface ArgMapService extends RemoteService {
 	
 	public void logClientException( String exceptionStr );
 
-	public Long addProposition(Long parentArgID, int position, String content) throws Exception;
+	public Long addProp(Long parentArgID, int position, String content) throws Exception;
 
-	public void deleteProposition(Long propID) throws Exception;
+	public void deleteProp(Long propID) throws Exception;
 	
-	public void deleteArgument(Long argID) throws Exception;
+	public void deleteArg(Long argID) throws Exception;
 
-	public Argument addArgument(Long parentPropID, boolean pro)
+	public Argument addArg(Long parentPropID, boolean pro)
 			throws Exception;
 
-	public void updateProposition(Long propID, String content) throws Exception;
+	public void updateProp(Long propID, String content) throws Exception;
 	
-	public void updateArgument(Long argID, String content) throws Exception;
+	public void updateArg(Long argID, String content) throws Exception;
 
 	public void linkProposition(Long parentArgID, int position,
 			Long propositionID) throws Exception;
 
-	public void unlinkProposition(Long parentArgID, Long propositionID)
+	public void unlinkProp(Long parentArgID, Long propositionID)
 			throws Exception;
 
 	public class AllPropsAndArgs implements Serializable {
@@ -52,10 +52,10 @@ public interface ArgMapService extends RemoteService {
 		public SortedMap<Date, Change> changes;
 	}
 
-	public NodesWithHistory getPropositionCurrentVersionAndHistory(
+	public NodesWithHistory getPropCurrentVersionAndHistory(
 			Long propID) throws Exception;
 
-	public NodesWithHistory getArgumentCurrentVersionAndHistory(Long argID)
+	public NodesWithHistory getArgCurrentVersionAndHistory(Long argID)
 			throws Exception;
 	
 	public class NodeWithChanges implements Serializable {
@@ -65,9 +65,9 @@ public interface ArgMapService extends RemoteService {
 		public Map<Long, Proposition> unlinkedLinks = new HashMap<Long, Proposition>();
 	}
 	
-	public Map<Long, NodeWithChanges> getPropositionsWithChanges( List<Long> propIDs ) throws Exception;
+	public Map<Long, NodeWithChanges> getPropsWithChanges( List<Long> propIDs ) throws Exception;
 	
-	public Map<Long, NodeWithChanges> getArgumentsWithChanges( List<Long> argIDs ) throws Exception;
+	public Map<Long, NodeWithChanges> getArgsWithChanges( List<Long> argIDs ) throws Exception;
 	
 	public class NodeChangesMaps implements Serializable {
 		private static final long serialVersionUID = 1L;
@@ -100,6 +100,6 @@ public interface ArgMapService extends RemoteService {
 	/* to replace getRevisions above*/
 	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs) throws Exception;
 	
-	public List<Proposition> searchPropositions( String string, Long filerArgID ) throws Exception;
+	public List<Proposition> searchProps( String string, Long filerArgID ) throws Exception;
 
 }
