@@ -4,9 +4,9 @@ package org.argmap.client;
 import java.util.List;
 import java.util.Map;
 
-import org.argmap.client.ArgMapService.AllPropsAndArgs;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
+import org.argmap.client.ArgMapService.PropsAndArgs;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -42,8 +42,6 @@ public interface ArgMapServiceAsync {
 	void addProp(Long parentArgID, int position, String content,
 			AsyncCallback<Long> callback);
 
-	void getAllPropsAndArgs(AsyncCallback<AllPropsAndArgs> callback);
-
 	void updateArg(Long argID, String content, AsyncCallback<Void> callback);
 
 	void getChanges(List<Long> propIDs, List<Long> argIDs,
@@ -58,6 +56,8 @@ public interface ArgMapServiceAsync {
 
 	void getArgsWithChanges(List<Long> argIDs,
 			AsyncCallback<Map<Long, NodeWithChanges>> callback);
+
+	void getPropsAndArgs(int depthLimit, AsyncCallback<PropsAndArgs> callback);
 
 
 

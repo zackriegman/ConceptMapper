@@ -3,31 +3,44 @@ package org.argmap.client;
 import java.util.List;
 
 import org.argmap.client.ArgMap.MessageType;
-import org.argmap.client.ArgMapService.AllPropsAndArgs;
+import org.argmap.client.ArgMapService.PropsAndArgs;
 import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.OpenEvent;
+import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
 public class EditMode extends ResizeComposite implements
-		LocalCallback<List<Proposition>> {
+		LocalCallback<List<Proposition>>, KeyDownHandler, OpenHandler<TreeItem>, CloseHandler<TreeItem> {
 
-	private static HTML messageArea = new HTML();
-	private final Label searchLabel = new Label(
+	private static HTML sideMessageArea = new HTML();
+	private final Label sideSearchLabel = new Label(
 			"Would you like to use one of these already existing propositions?");
-	private final FlexTable searchResults = new FlexTable();
+	private final FlexTable sideSearchResults = new FlexTable();
+	private final ScrollPanel sideSearchScroll;
+	private final ScrollPanel sideMessageScroll;
+	private final SplitLayoutPanel sideSplit = new SplitLayoutPanel();
+	
+	TextBox searchTextBox = new TextBox();
 	private final EditModeTree tree;
 
 	public EditMode() {
@@ -36,15 +49,15 @@ public class EditMode extends ResizeComposite implements
 		FlowPanel mainPanel = new FlowPanel();
 
 		SplitLayoutPanel mainSplit = new SplitLayoutPanel();
-		SplitLayoutPanel sideSplit = new SplitLayoutPanel();
-
-		sideSplit.addNorth(new ScrollPanel(messageArea), 280);
-
-		FlowPanel searchFlowPanel = new FlowPanel();
-		searchFlowPanel.add(searchLabel);
-		searchLabel.setVisible(false);
-		searchFlowPanel.add(searchResults);
-		sideSplit.add(new ScrollPanel(searchFlowPanel));
+		
+		FlowPanel sideSearchArea = new FlowPanel();
+		sideSearchArea.add(sideSearchLabel);
+		sideSearchLabel.setVisible(false);
+		sideSearchArea.add(sideSearchResults);
+		sideSearchScroll = new ScrollPanel(sideSearchArea);
+		
+		sideMessageScroll = new ScrollPanel(sideMessageArea);
+		sideSplit.add( sideMessageScroll );
 
 		Button addPropButton = new Button("Add a new proposition");
 		addPropButton.addClickHandler(new ClickHandler() {
@@ -68,17 +81,52 @@ public class EditMode extends ResizeComposite implements
 			}
 		});
 
-		mainPanel.add(addPropButton);
+		HorizontalPanel searchBoxPanel = new HorizontalPanel();
+		searchTextBox.addKeyDownHandler( this );
+		searchTextBox.setVisibleLength(50);
+		searchBoxPanel.add( new Label("Search:"));
+		searchBoxPanel.add( searchTextBox );
+		searchBoxPanel.add( addPropButton );
+		mainPanel.add(searchBoxPanel);
 
 		tree = new EditModeTree();
+		tree.addCloseHandlerTracked( this );
+		tree.addOpenHandlerTracked( this );
 		tree.searchCallback = this;
 
 		mainPanel.add(tree);
 
-		ServerComm.fetchProps(new ServerComm.LocalCallback<AllPropsAndArgs>() {
+		
+		ServerComm.getRootProps(3, new ServerComm.LocalCallback<PropsAndArgs>() {
 
 			@Override
-			public void call(AllPropsAndArgs allNodes) {
+			public void call(PropsAndArgs allNodes) {
+				try {
+					ArgMap.logStart("em.em.cb");
+					ArgMap.log("em.em.cb", "Prop Tree From Server");
+					for (Long propID : allNodes.rootProps.keySet()) {
+
+						Proposition proposition = allNodes.rootProps
+								.get(propID);
+						ViewProp propView = new ViewPropEdit();
+						propView.recursiveBuildViewNode(proposition, allNodes.nodes);
+
+						tree.addItem(propView);
+						propView.logNodeRecursive(0, "em.em.cb", true);
+					}
+					tree.resetState();
+					ArgMap.logEnd("em.em.cb");
+				} catch (Exception e) {
+					ServerComm.handleClientException(e);
+				}
+			}
+		});
+		
+		
+		if(false) ServerComm.getRootProps(100, new ServerComm.LocalCallback<PropsAndArgs>() {
+
+			@Override
+			public void call(PropsAndArgs allNodes) {
 				try {
 
 					ArgMap.logStart("em.em.cb");
@@ -93,7 +141,7 @@ public class EditMode extends ResizeComposite implements
 						tree.addItem(propView);
 						propView.logNodeRecursive(0, "em.em.cb", true);
 					}
-					openTree();
+					tree.resetState();
 					ArgMap.logEnd("em.em.cb");
 				} catch (Exception e) {
 					ServerComm.handleClientException(e);
@@ -109,7 +157,7 @@ public class EditMode extends ResizeComposite implements
 	}
 
 	public static void log(String string) {
-		messageArea.setHTML(messageArea.getHTML() + string);
+		sideMessageArea.setHTML(sideMessageArea.getHTML() + string);
 	}
 
 	@Override
@@ -177,16 +225,22 @@ public class EditMode extends ResizeComposite implements
 				}
 			}
 		}
-		searchResults.removeAllRows();
+		sideSearchResults.removeAllRows();
 		if (propMatches.size() > 0) {
-			searchLabel.setVisible(true);
+			if( ! sideSearchScroll.isAttached() ){
+				sideSplit.remove(sideMessageScroll);
+				sideSplit.addSouth( sideSearchScroll, 400);
+				sideSplit.add(sideMessageScroll);
+			}
+			sideSearchLabel.setVisible(true);
 		} else {
-			searchLabel.setVisible(false);
+			sideSplit.remove(sideSearchScroll );
+			sideSearchLabel.setVisible(false);
 		}
 		int i = 0;
 		for (Proposition prop : propMatches) {
-			searchResults.setText(i, 0, prop.getContent());
-			searchResults.setWidget(i, 1, new SearchButton(i, propMatches));
+			sideSearchResults.setText(i, 0, prop.getContent());
+			sideSearchResults.setWidget(i, 1, new SearchButton(i, propMatches));
 			i++;
 		}
 	}
@@ -197,7 +251,7 @@ public class EditMode extends ResizeComposite implements
 	 * the events from doing their default behavior or propagating doesn't seem
 	 * to work. I found this fix on stack overflow
 	 */
-	public class EditModeTree extends Tree {
+	public class EditModeTree extends ArgTree {
 		public LocalCallback<List<Proposition>> searchCallback;
 
 		@Override
@@ -277,16 +331,47 @@ public class EditMode extends ResizeComposite implements
 		}
 	}
 
-	private void openTree() {
-		for (int i = 0; i < tree.getItemCount(); i++) {
-			recursiveOpenTreeItem(tree.getItem(i));
+//	private void openTree() {
+//		for (int i = 0; i < tree.getItemCount(); i++) {
+//			recursiveOpenTreeItem(tree.getItem(i));
+//		}
+//	}
+
+//	private void recursiveOpenTreeItem(TreeItem item) {
+//		item.setState(true);
+//		for (int i = 0; i < item.getChildCount(); i++) {
+//			recursiveOpenTreeItem(item.getChild(i));
+//		}
+//	}
+
+	@Override
+	public void onKeyDown(KeyDownEvent event) {
+		int charCode = event.getNativeKeyCode();
+		Object source = event.getSource();
+		if (source == searchTextBox) {
+			if (charCode == 32) {
+//				ServerComm.searchProps(searchTextBox.getText(), null, new LocalCallback<List<Proposition>>() {
+//					
+//					@Override
+//					public void call(List<Proposition> t) {
+//						//TODO add list to main panel with dummy nodes ready for lazy load!
+//						
+//					}
+//				});
+			}
 		}
+		
 	}
 
-	private void recursiveOpenTreeItem(TreeItem item) {
-		item.setState(true);
-		for (int i = 0; i < item.getChildCount(); i++) {
-			recursiveOpenTreeItem(item.getChild(i));
-		}
+	@Override
+	public void onClose(CloseEvent<TreeItem> event) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onOpen(OpenEvent<TreeItem> event) {
+		// TODO Auto-generated method stub
+		
 	}
 }

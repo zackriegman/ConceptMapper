@@ -6,9 +6,9 @@ import java.util.Map;
 import java.util.Queue;
 
 import org.argmap.client.ArgMap.MessageType;
-import org.argmap.client.ArgMapService.AllPropsAndArgs;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
+import org.argmap.client.ArgMapService.PropsAndArgs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
@@ -143,8 +143,8 @@ public class ServerComm {
 		public abstract void doOnSuccess(T result);
 	}
 
-	public static void fetchProps(LocalCallback<AllPropsAndArgs> localCallback) {
-		argMapService.getAllPropsAndArgs(new ServerCallback<AllPropsAndArgs>(
+	public static void getRootProps(int depthLimit, LocalCallback<PropsAndArgs> localCallback) {
+		argMapService.getPropsAndArgs(depthLimit, new ServerCallback<PropsAndArgs>(
 				localCallback, "Server Reports Success Fetching Props"));
 	}
 

@@ -7,6 +7,9 @@ import com.google.gwt.user.client.ui.TreeItem;
 
 public abstract class ViewNode extends TreeItem {
 	public abstract Long getNodeID();
+	
+	public boolean isOpen = true;
+	private boolean isLoaded = true;
 
 	public abstract ViewNode createViewNodeVerClone();
 
@@ -89,16 +92,41 @@ public abstract class ViewNode extends TreeItem {
 	}
 
 	public abstract ViewNode createChild();
-	public abstract Node getChildNodeFromNodeList( Long nodeID, Nodes nodes );
-	public abstract void setNode( Node node );
-	
+
+	public abstract Node getChildNodeFromNodeList(Long nodeID, Nodes nodes);
+
+	public abstract void setNode(Node node);
+
 	public void recursiveBuildViewNode(Node node, Nodes nodes) {
-		setNode( node );
+		setNode(node);
 		for (Long nodeID : node.childIDs) {
 			ViewNode childView = createChild();
-			Node childNode = getChildNodeFromNodeList( nodeID, nodes );
-			addItem(childView);
-			childView.recursiveBuildViewNode(childNode, nodes);
+			Node childNode = getChildNodeFromNodeList(nodeID, nodes);
+			if (childNode != null) {
+				addItem(childView);
+				childView.recursiveBuildViewNode(childNode, nodes);
+			}
+			else {
+				addItem( new ViewDummyVer(nodeID) );
+				isOpen = false;
+				isLoaded = false;
+			}
 		}
+	}
+	
+	public boolean isOpen(){
+		return isOpen;
+	}
+	
+	public void setOpen( boolean open ){
+		this.isOpen = open;
+	}
+
+	public boolean isLoaded(){
+		return isLoaded;
+	}
+	
+	public void setLoaded( boolean isLoaded ){
+		this.isLoaded = isLoaded;
 	}
 }

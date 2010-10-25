@@ -12,8 +12,6 @@ import org.argmap.client.ArgMapService.NodeChangesMaps;
 
 public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	public List<ViewChange> viewChanges = new ArrayList<ViewChange>();
-	public boolean open = true;
-	private boolean isLoaded = true;
 	public Map<Long, ViewNodeVer> deletedViews = new HashMap<Long, ViewNodeVer>();
 	public Date closedDate;
 	
@@ -126,25 +124,10 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	public Collection<ViewNodeVer> getDeletedViewList(){
 		return deletedViews.values();
 	}
-	
-	public boolean isOpen(){
-		return open;
-	}
-	
-	public void setOpen( boolean open ){
-		this.open = open;
-	}
 
 	@Override
 	public NodeChanges chooseNodeChanges(NodeChangesMaps changesMaps) {
 		return changesMaps.argChanges.get(getNodeID());
-	}
-	
-	public boolean isLoaded(){
-		return isLoaded;
-	}
-	public void setLoaded( boolean isLoaded ){
-		this.isLoaded = isLoaded;
 	}
 
 	@Override

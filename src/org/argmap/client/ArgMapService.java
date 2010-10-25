@@ -34,14 +34,14 @@ public interface ArgMapService extends RemoteService {
 	public void unlinkProp(Long parentArgID, Long propositionID)
 			throws Exception;
 
-	public class AllPropsAndArgs implements Serializable {
+	public class PropsAndArgs implements Serializable {
 		/* added to suppress warnings */
 		private static final long serialVersionUID = 1L;
 		public Map<Long, Proposition> rootProps;
 		public Nodes nodes;
 	}
 	
-	public AllPropsAndArgs getAllPropsAndArgs();
+	public PropsAndArgs getPropsAndArgs(int depthLimit);
 	
 	public Nodes replaceWithLinkAndGet(Long parentArgID, Long linkPropID, Long removePropID) throws Exception;
 

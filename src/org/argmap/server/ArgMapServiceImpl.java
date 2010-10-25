@@ -80,8 +80,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public AllPropsAndArgs getAllPropsAndArgs() {
-		AllPropsAndArgs propsAndArgs = new AllPropsAndArgs();
+	public PropsAndArgs getPropsAndArgs(int depthLimit) {
+		PropsAndArgs propsAndArgs = new PropsAndArgs();
 		try {
 			/*
 			 * TODO: now that we aren't building a prop tree any longer there is
@@ -96,7 +96,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 			for (Proposition prop : propQuery) {
 				rootProps.put(prop.id, prop);
-				recursiveGetProps(prop, nodes);
+				recursiveGetProps(prop, nodes, depthLimit);
 			}
 			propsAndArgs.rootProps = rootProps;
 			propsAndArgs.nodes = nodes;
@@ -107,7 +107,10 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		return propsAndArgs;
 	}
 
-	private void recursiveGetProps(Proposition prop, Nodes nodes) {
+	private void recursiveGetProps(Proposition prop, Nodes nodes, int depthLimit ) {
+		if( depthLimit == 0 ){
+			return;
+		}
 
 		/* get all the prop's arguments */
 		Map<Long, Argument> argMap = ofy.get(Argument.class, prop.childIDs);
@@ -118,12 +121,16 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				/* add it */
 				nodes.args.put(arg.id, arg);
 				/* add it's children */
-				recursiveGetArgs(arg, nodes);
+				recursiveGetArgs(arg, nodes, depthLimit - 1);
 			}
 		}
 	}
 
-	private void recursiveGetArgs(Argument arg, Nodes nodes) {
+	private void recursiveGetArgs(Argument arg, Nodes nodes, int depthLimit) {
+		if( depthLimit == 0 ){
+			return;
+		}
+		
 		/* get all the props in the argument */
 		Map<Long, Proposition> propMap = ofy.get(Proposition.class,
 				arg.childIDs);
@@ -133,7 +140,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				/* add it */
 				nodes.props.put(prop.id, prop);
 				/* add it's children */
-				recursiveGetProps(prop, nodes);
+				recursiveGetProps(prop, nodes, depthLimit -1);
 			}
 		}
 	}
@@ -824,7 +831,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 			Nodes nodes = new Nodes();
 			nodes.props.put(linkProp.id, linkProp);
-			recursiveGetProps(linkProp, nodes);
+			recursiveGetProps(linkProp, nodes, 100);
 			return nodes;
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Uncaught exception", e);
@@ -836,4 +843,5 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	public void logClientException(String exceptionStr) {
 		log.severe("CLIENT EXCEPTION (string)" + exceptionStr);
 	}
+
 }

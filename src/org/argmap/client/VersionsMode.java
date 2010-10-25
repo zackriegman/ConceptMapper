@@ -33,15 +33,13 @@ public class VersionsMode extends ResizeComposite implements
 
 	private final ListBox versionList = new ListBox();
 	private final EditMode editMode;
-	private Tree treeClone = null;
+	private ArgTree treeClone = null;
 	private final ScrollPanel treePanel = new ScrollPanel();
 	private final int LIST_WIDTH = 20;
 
 	// SplitLayoutPanel mainPanel;
 
 	private HandlerRegistration listBoxChangeHandlerRegistration;
-	private HandlerRegistration treeOpenHandlerRegistration;
-	private HandlerRegistration treeCloseHandlerRegistration;
 
 	/*
 	 * variables related to moving the tree forwards and backwards in time
@@ -71,44 +69,29 @@ public class VersionsMode extends ResizeComposite implements
 		initWidget(mainPanel);
 	}
 
-	public void resetState(Tree tree) {
-		treeOpenHandlerRegistration.removeHandler();
-		treeCloseHandlerRegistration.removeHandler();
-		for (int i = 0; i < tree.getItemCount(); i++) {
-			recursiveResetState(tree.getItem(i));
-		}
-		treeClone.addOpenHandler(this);
-		treeClone.addCloseHandler(this);
-	}
-
-	public void recursiveResetState(TreeItem item) {
-		/*
-		 * if this item has children, and the first child is not a dummy node
-		 * place holder loading message
-		 */
-		if (item.getChildCount() > 0
-				&& !(item.getChild(0) instanceof ViewDummyVer)) {
-			item.setState(((ViewNodeVer) item).isOpen());
-			for (int i = 0; i < item.getChildCount(); i++) {
-				recursiveResetState(item.getChild(i));
-			}
-		}
-	}
-
-	public void recursiveResetState_DELETE_ME(TreeItem item) {
-		/*
-		 * if this item has children, and the first child is not a dummy node
-		 * place holder loading message
-		 */
-		if (item.getChildCount() > 0
-				&& !item.getChild(0).getStyleName().equals("loadDummyProp")
-				&& !item.getChild(0).getStyleName().equals("loadDummyArg")) {
-			item.setState(true);
-			for (int i = 0; i < item.getChildCount(); i++) {
-				recursiveResetState(item.getChild(i));
-			}
-		}
-	}
+//	public void resetState(Tree tree) {
+//		treeOpenHandlerRegistration.removeHandler();
+//		treeCloseHandlerRegistration.removeHandler();
+//		for (int i = 0; i < tree.getItemCount(); i++) {
+//			recursiveResetState(tree.getItem(i));
+//		}
+//		treeClone.addOpenHandler(this);
+//		treeClone.addCloseHandler(this);
+//	}
+//
+//	public void recursiveResetState(TreeItem item) {
+//		/*
+//		 * if this item has children, and the first child is not a dummy node
+//		 * place holder loading message
+//		 */
+//		if (item.getChildCount() > 0
+//				&& !(item.getChild(0) instanceof ViewDummyVer)) {
+//			item.setState(((ViewNodeVer) item).isOpen());
+//			for (int i = 0; i < item.getChildCount(); i++) {
+//				recursiveResetState(item.getChild(i));
+//			}
+//		}
+//	}
 
 	public void displayVersions() {
 		versionList.clear();
@@ -128,11 +111,9 @@ public class VersionsMode extends ResizeComposite implements
 						ArgMap.log("vm.dv.c", "Got back these changes:\n"
 								+ changesMaps.toString());
 
-						treeClone = new Tree();
-						treeCloseHandlerRegistration = treeClone
-								.addCloseHandler(VersionsMode.this);
-						treeOpenHandlerRegistration = treeClone
-								.addOpenHandler(VersionsMode.this);
+						treeClone = new ArgTree();
+						treeClone.addCloseHandlerTracked(VersionsMode.this);
+						treeClone.addOpenHandlerTracked(VersionsMode.this);
 						/*
 						 * TODO this could be done outside of the callback to
 						 * reduce the user's wait time, but would need to ensure
@@ -159,7 +140,7 @@ public class VersionsMode extends ResizeComposite implements
 						versionList.setSelectedIndex(0);
 
 						onChange(null);
-						resetState(treeClone);
+						treeClone.resetState();
 						logTreeWithChanges();
 						ArgMap.logEnd("vm.dv.c");
 					}
@@ -672,7 +653,7 @@ public class VersionsMode extends ResizeComposite implements
 					true));
 		}
 		this.currentDate = newDate;
-		resetState(treeClone);
+		treeClone.resetState();
 		ArgMap.logEnd("tm.ttd");
 	}
 

@@ -14,7 +14,6 @@ public interface ViewNodeVer {
 	
 	public Collection<ViewNodeVer> getDeletedViewList();
 	public void clearDeletedViews();
-	/*public ViewNodeVer createDeletedView(Long id);*/
 	public void addDeletedItem( ViewNodeVer viewNodeVer );
 	
 	public int getChildCount();
