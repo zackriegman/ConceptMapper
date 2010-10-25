@@ -62,21 +62,28 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 	}
 	
 
-	public ViewArgVer createDeletedView(Long id) {
-		/*
-		 * this view is just empty; can set to false, because real value will be
-		 * set before it is used when the time machine goes back in time...
-		 */
+//	public ViewArgVer createDeletedView(Long id) {
+//		/*
+//		 * this view is just empty; can set to false, because real value will be
+//		 * set before it is used when the time machine goes back in time...
+//		 */
+//		Argument argument = new Argument();
+//		argument.id = id;
+//		ViewArgVer deletedView = new ViewArgVer(argument);
+//		deletedView.setState(true);
+//		deletedViews.put(id, deletedView );
+//		return deletedView;
+//	}
+	
+	public ViewArgVer createChild( Long id ){
 		Argument argument = new Argument();
 		argument.id = id;
-		ViewArgVer deletedView = new ViewArgVer(argument);
-		deletedView.setState(true);
-		deletedViews.put(id, deletedView );
-		return deletedView;
+		ViewArgVer viewArgVer = new ViewArgVer(argument);
+		return viewArgVer;
 	}
 	
 	@Override
-	public ViewNode createChildView(){
+	public ViewNode createChild(){
 		return new ViewArgVer();
 	}
 

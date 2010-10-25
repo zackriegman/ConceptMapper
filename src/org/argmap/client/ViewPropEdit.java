@@ -389,7 +389,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	}
 
-	public ViewNode createChildView() {
+	public ViewNode createChild() {
 		return new ViewArgEdit();
 	}
 }

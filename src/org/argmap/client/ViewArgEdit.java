@@ -76,7 +76,7 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 		}
 	}
 	
-	public ViewNode createChildView(){
+	public ViewNode createChild(){
 		return new ViewPropEdit();
 	}
 }

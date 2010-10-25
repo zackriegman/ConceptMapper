@@ -16,9 +16,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-/*TODO: implement loading of unlinked propositions from the server in versionsmode: see implementation notes
- * versioning lazy loading:Links:deleted for more info */
-//TODO: look at backwards/forwards of linking/unlinking ... I'm not sure I ever finished writing that code
 //TODO: test versioning of unlinking
 
 //TODO: backspacing in an argument with children deletes them on the client (even though not deleted on the server)
@@ -29,21 +26,24 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
  * children when it is created or when it is destroyed... and there are no visible events in between...
  * this should be a low priority fix, but it might take some ui creativity...
  */
+//TODO: add placeholder before earliest revision so that it can be undone
 //TODO: test/fix versioning of a single empty proposition
 //TODO: undeleting links does not restore their yellow color ...
-//TODO: lazy load closed items in versions mode
 //TODO: prevent circular linking from crashing program...
 
-//TODO: linking: original linked item should also change color immediately upon first linking
-//TODO: linking: how will client automatically update link changes...
+//TODO: new search feature
+//TODO: version mode should only display toplevel propositions that are open...
 
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
-//TODO: lazy load in editmode (maybe a few layers deep in advance) instead of loading the entire tree
+//TODO: lazy load in editmode (maybe a few layers deep in advance) instead of loading the entire tree (and create a button to open all (or maybe ten) levels of children at once
 //TODO: provide a way to see deleted top level nodes
 //TODO: add helpful message along the side (tips box)
 //TODO: poll server every few seconds for server side changes (this has to come after versioning I think)
 //TODO: implement user accounts, email updates of changes, inviting friends
 //TODO: implement proposition strength voting, and scoring algorithm
+
+//TODO: linking: original linked item should also change color immediately upon first linking
+//TODO: linking: how will client automatically update link changes...
 
 /*TODO: implement locking when modifying a parent and deleting/adding nodes to make sure that two simultaneous
  * changes (modifying the parent or deleteing/adding two different child nodes) do not clobber each other

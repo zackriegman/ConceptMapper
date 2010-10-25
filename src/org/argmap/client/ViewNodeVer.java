@@ -14,13 +14,14 @@ public interface ViewNodeVer {
 	
 	public Collection<ViewNodeVer> getDeletedViewList();
 	public void clearDeletedViews();
-	public ViewNodeVer createDeletedView(Long id);
+	/*public ViewNodeVer createDeletedView(Long id);*/
 	public void addDeletedItem( ViewNodeVer viewNodeVer );
 	
 	public int getChildCount();
 	public ViewNodeVer getChildViewNode( int i );
 	public void addItem( TreeItem item );
 	public ViewNodeVer createChild( Node node );
+	public ViewNodeVer createChild( Long nodeID );
 	public void remove();
 	
 	public boolean getState();

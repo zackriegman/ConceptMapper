@@ -97,14 +97,14 @@ public abstract class ViewNode extends TreeItem {
 		}
 	}
 
-	public abstract ViewNode createChildView();
+	public abstract ViewNode createChild();
 	public abstract Node getChildNodeFromNodeList( Long nodeID, Nodes nodes );
 	public abstract void setNode( Node node );
 	
 	public void recursiveBuildViewNode(Node node, Nodes nodes) {
 		setNode( node );
 		for (Long nodeID : node.childIDs) {
-			ViewNode childView = createChildView();
+			ViewNode childView = createChild();
 			Node childNode = getChildNodeFromNodeList( nodeID, nodes );
 			addItem(childView);
 			childView.recursiveBuildViewNode(childNode, nodes);

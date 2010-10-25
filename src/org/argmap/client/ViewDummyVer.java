@@ -82,12 +82,6 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	}
 
 	@Override
-	public ViewNodeVer createDeletedView(Long id) {
-		assert false;
-		return null;
-	}
-
-	@Override
 	public boolean isLoaded() {
 		assert false;
 		return false;
@@ -107,7 +101,7 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	*/
 
 	@Override
-	public ViewNode createChildView() {
+	public ViewNode createChild() {
 		assert false;
 		return null;
 	}
@@ -139,6 +133,12 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	@Override
 	public void clearDeletedViews() {
 		assert false;
+	}
+
+	@Override
+	public ViewNodeVer createChild(Long nodeID) {
+		assert false;
+		return null;
 	}
 
 	

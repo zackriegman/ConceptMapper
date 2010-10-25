@@ -189,15 +189,28 @@ public class VersionsMode extends ResizeComposite implements
 		ArgMap.logIndent("vm.ptwdnacab");
 		NodeChanges nodeChanges = viewNode.chooseNodeChanges(changesMaps);
 		for (Long id : nodeChanges.deletedChildIDs) {
-			ViewNodeVer deletedView;
+			
+			/* if the deletedChild is actually an unlinked proposition then we create an
+			 * unloaded proposition (with dummy child nodes) and do not recurse on the
+			 * children.  this is necessary because unlike a deleted proposition/argument
+			 * and unlinked proposition may have been unlinked while still having children
+			 * which means that when we undo the unlinking we need to show the children
+			 * at the time of unlinking.   */
 			if (viewNode instanceof ViewArgVer
 					&& changesMaps.unlinkedLinks.containsKey(id)) {
-				deletedView = viewNode.createDeletedView(changesMaps.unlinkedLinks.get(id));
-
-			} else {
-				deletedView = viewNode.createDeletedView(id);
+				NodeChanges linkNodeChanges = changesMaps.propChanges.get( id );
+				Node node = changesMaps.unlinkedLinks.get(id);
+				ViewNodeVer deletedView = createChildWithDummiesAndLoadChanges(viewNode, node, linkNodeChanges, timeMachineMap);
+				viewNode.addDeletedItem(deletedView);
+			} 
+			
+			/* if we are not dealing with an unlinked proposition then we create a child
+			 * node and recurse on its children */
+			else {
+				ViewNodeVer deletedView = viewNode.createChild(id);
+				viewNode.addDeletedItem(deletedView);
+				recursivePrepAndBuild(deletedView, timeMachineMap, changesMaps);
 			}
-			recursivePrepAndBuild(deletedView, timeMachineMap, changesMaps);
 		}
 		for (int i = 0; i < viewNode.getChildCount(); i++) {
 			ViewNodeVer child = viewNode.getChildViewNode(i);
@@ -299,23 +312,30 @@ public class VersionsMode extends ResizeComposite implements
 		}
 	}
 
-	public ViewNodeVer createChildWithDummies(ViewNodeVer parent, Long id,
-			Map<Long, NodeWithChanges> nodesWithChanges,
+	public ViewNodeVer createChildWithDummiesAndLoadChanges(ViewNodeVer parentView, Node childNode, NodeChanges childChanges,
 			SortedMultiMap<Date, ViewChange> viewChanges) {
-		NodeWithChanges childNodeWithChanges = nodesWithChanges.get(id);
-		ViewNodeVer child = parent.createChild(childNodeWithChanges.node);
+		
+		ViewNodeVer child = createChildWithDummies(parentView,
+				childNode, childChanges.deletedChildIDs);
+
+		loadChangesIntoNodeAndMap(child,
+				childChanges.changes, viewChanges);
+		
+		return child;
+	}
+
+	public ViewNodeVer createChildWithDummies(ViewNodeVer parent, Node node,
+			List<Long> deletedChildIDs) {
+		ViewNodeVer child = parent.createChild(node);
 		child.setLoaded(false);
-		for (Long childDummyID : childNodeWithChanges.node.childIDs) {
+		for (Long childDummyID : node.childIDs) {
 			ViewNode childDummy = new ViewDummyVer(childDummyID);
 			child.addItem(childDummy);
 		}
-		for (Long deletedID : childNodeWithChanges.nodeChanges.deletedChildIDs) {
+		for (Long deletedID : deletedChildIDs) {
 			ViewNodeVer childDummy = new ViewDummyVer(deletedID);
 			child.addDeletedItem(childDummy);
 		}
-
-		loadChangesIntoNodeAndMap(child,
-				childNodeWithChanges.nodeChanges.changes, viewChanges);
 		return child;
 	}
 
@@ -333,8 +353,10 @@ public class VersionsMode extends ResizeComposite implements
 		viewNodeVer.clearDeletedViews();
 		/* for each dummy create a real and append it to the node */
 		for (ViewNodeVer deletedView : deletedViewList) {
-			viewNodeVer.addDeletedItem(createChildWithDummies(viewNodeVer,
-					deletedView.getNodeID(), nodesWithChanges, viewChanges));
+			NodeWithChanges nodeWithChanges = nodesWithChanges.get(deletedView.getNodeID());
+			viewNodeVer.addDeletedItem(createChildWithDummiesAndLoadChanges(
+					viewNodeVer, nodeWithChanges.node, nodeWithChanges.nodeChanges,
+					viewChanges));
 		}
 
 		/*
@@ -349,8 +371,10 @@ public class VersionsMode extends ResizeComposite implements
 		}
 		/* for each dummy create a real and append it to the node */
 		for (Long id : dummyIDs) {
-			viewNodeVer.addItem((ViewNode) createChildWithDummies(viewNodeVer,
-					id, nodesWithChanges, viewChanges));
+			NodeWithChanges nodeWithChanges = nodesWithChanges.get(id);
+			viewNodeVer
+					.addItem((ViewNode) createChildWithDummiesAndLoadChanges(
+							viewNodeVer, nodeWithChanges.node, nodeWithChanges.nodeChanges, viewChanges));
 		}
 
 		viewNodeVer.setLoaded(true);
@@ -729,18 +753,15 @@ public class VersionsMode extends ResizeComposite implements
 			for (ViewChange vC : changeList) {
 				ArgMap.logln("tm.ttd", "processing: " + vC.change);
 				switch (vC.change.changeType) {
+				case PROP_UNLINK:
 				case PROP_DELETION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
-					// TODO: root prop additions? who keeps the add/remove of
-					// the prop??!!??
 					argView.removeAndSaveChildView(vC.change.propID);
 					break;
 				}
+				case PROP_LINK: 
 				case PROP_ADDITION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
-					// TODO: root prop additions? who keeps the add/remove of
-					// the prop??!!??
-
 					argView.reviveDeletedView(vC.change.propID, mapPropIndex
 							.get(vC));
 					break;
@@ -774,46 +795,7 @@ public class VersionsMode extends ResizeComposite implements
 					argView.setArgTitle(mapArgTitle.get(vC));
 					break;
 				}
-				case PROP_UNLINK: {
-					ViewArgVer argView = (ViewArgVer) vC.viewNode;
-					argView.removeAndSaveChildView(vC.change.propID);
-					/*
-					 * reverse this: ArgumentView argView =
-					 * argViewIndex.get(change.argID); PropositionView propView
-					 * = propViewIndex.get(change.propID);
-					 * argView.removeItem(propView);
-					 */
-					break;
-				}
-				case PROP_LINK: {
-					ViewArgVer argView = (ViewArgVer) vC.viewNode;
-					// TODO: root prop additions? who keeps the add/remove of
-					// the prop??!!??
-					argView.reviveDeletedView(vC.change.propID, mapPropIndex
-							.get(vC));
-
-					/*
-					 * TODO need to think through linking and unlinking in more
-					 * detail. What I have here will not be enough. Specifically
-					 * the server probably doesn't currently send the linked
-					 * proposition's content which will be important for the
-					 * client to display when reviewing revisions. Furthermore,
-					 * with all the other operations, a given change will only
-					 * add a node. But here the change will add hundreds of
-					 * nodes, the children of the linked proposition. Probably
-					 * the way to show that is simply to add the proposition,
-					 * and then lazy load the tree as someone browses.
-					 */
-					/*
-					 * reverse this: ArgumentView argView =
-					 * argViewIndex.get(change.argID); PropositionView propView
-					 * = propViewIndex.get(change.propID);
-					 * argView.insertPropositionViewAt(change.argPropIndex,
-					 * propView);
-					 */
-					break;
-				}
-				}
+			}
 			}
 		}
 
@@ -836,10 +818,14 @@ public class VersionsMode extends ResizeComposite implements
 			for (ViewChange vC : changeList) {
 				ArgMap.logln("tm.ttd", "processing: " + vC.change);
 				switch (vC.change.changeType) {
+				case PROP_UNLINK: {
+					ViewArgVer argView = (ViewArgVer) vC.viewNode;
+					argView.reviveDeletedView(vC.change.propID,
+							vC.change.argPropIndex);
+					break;
+				}
 				case PROP_DELETION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
-					// TODO: root prop additions? who keeps the add/remove of
-					// the prop??!!??
 					argView.reviveDeletedView(vC.change.propID,
 							vC.change.argPropIndex);
 					ViewProp viewPropVer = argView
@@ -847,10 +833,9 @@ public class VersionsMode extends ResizeComposite implements
 					viewPropVer.proposition.content = vC.change.content;
 					break;
 				}
+				case PROP_LINK:
 				case PROP_ADDITION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
-					// TODO: root prop additions? who keeps the add/remove of
-					// the prop??!!??
 					int index = argView.indexOfChildWithID(vC.change.propID);
 					mapPropIndex.put(vC, index);
 					argView.removeAndSaveChildView(vC.change.propID);
@@ -892,59 +877,6 @@ public class VersionsMode extends ResizeComposite implements
 					/* NOTE: see not regarding arg modification */
 					mapArgTitle.put(vC, argView.getArgTitle());
 					argView.setArgTitle(vC.change.content);
-					break;
-				}
-				case PROP_UNLINK: {
-					ViewArgVer argView = (ViewArgVer) vC.viewNode;
-					// TODO: root prop additions? who keeps the add/remove of
-					// the prop??!!??
-					argView.reviveDeletedView(vC.change.propID,
-							vC.change.argPropIndex);
-
-					/*
-					 * hmmm... linking might be a problem... how do we know if
-					 * we need to remove the node from the index... it might be
-					 * referenced elsewhere. Perhaps more importantly... a
-					 * treeItem probably cannot be anchored to two different
-					 * places in a a tree (look into this...but I think you can
-					 * request a treeItem's parent, which wouldn't work if it
-					 * can be anchored in two places). In that case we would
-					 * need two propView objects to represent the linked
-					 * proposition in two different places. But how will that
-					 * work with the index? I guess we could look it up by
-					 * argID, and then search the argument for children with
-					 * that ID?
-					 * 
-					 * ViewArgVer argView = argViewIndex.get(change.argID);
-					 * ViewPropVer propView = propViewIndex.get(change.propID);
-					 * argView.removeItem(propView);
-					 */
-					break;
-				}
-				case PROP_LINK: {
-					ViewArgVer argView = (ViewArgVer) vC.viewNode;
-					int index = argView.indexOfChildWithID(vC.change.propID);
-					mapPropIndex.put(vC, index);
-					argView.removeAndSaveChildView(vC.change.propID);
-
-					/*
-					 * ViewArgVer argView = argViewIndex.get(change.argID);
-					 * ViewPropVer propView = propViewIndex.get(change.propID);
-					 * 
-					 * TODO need to think through linking and unlinking in more
-					 * detail. What I have here will not be enough. Specifically
-					 * the server probably doesn't currently send the linked
-					 * proposition's content which will be important for the
-					 * client to display when reviewing revisions. Furthermore,
-					 * with all the other operations, a given change will only
-					 * add a node. But here the change will add hundreds of
-					 * nodes, the children of the linked proposition. Probably
-					 * the way to show that is simply to add the proposition,
-					 * and then lazy load the tree and someone browses.
-					 * 
-					 * argView.insertPropositionViewAt(change.argPropIndex,
-					 * propView);
-					 */
 					break;
 				}
 				}

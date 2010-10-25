@@ -51,25 +51,36 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 		insertChildViewAt(index, viewNode);
 	}
 
-	public ViewPropVer createDeletedView(Long id) {
-		/*
-		 * this view is just empty; can set to false, because real value will be
-		 * set before it is used when the time machine goes back in time...
-		 */
-		ViewPropVer deletedView = new ViewPropVer(id);
-		deletedView.setState(true);
-		deletedViews.put(id, deletedView);
-		return deletedView;
-	}
+//	public ViewPropVer createDeletedView(Long id) {
+//		/*
+//		 * this view is just empty; can set to false, because real value will be
+//		 * set before it is used when the time machine goes back in time...
+//		 */
+//		ViewPropVer deletedView = new ViewPropVer(id);
+//		deletedView.setState(true);
+//		deletedViews.put(id, deletedView);
+//		return deletedView;
+//	}
 	
 	@Override
-	public ViewNode createChildView(){
+	public ViewNode createChild(){
 		return new ViewPropVer();
 	}
 	
 	@Override
 	public ViewNodeVer createChild(Node node) {
 		return new ViewPropVer( (Proposition) node );
+	}
+	
+	@Override
+	public ViewNodeVer createChild(Long nodeID) {
+		return new ViewPropVer( nodeID );
+	}
+	
+	public void addDeletedItem( ViewNodeVer viewNodeVer ){
+		assert viewNodeVer.getNodeID() != null;
+		deletedViews.put( viewNodeVer.getNodeID(), viewNodeVer );
+		
 	}
 	
 	/*
@@ -116,19 +127,6 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 		return deletedViews.values();
 	}
 	
-	/*
-	 * also delete this in view prop ver*/
-	public void addDeletedViewVer( ViewNodeVer viewNode ){
-		deletedViews.put( viewNode.getNodeID(), viewNode );
-	}
-	*/
-	
-	public void addDeletedItem( ViewNodeVer viewNodeVer ){
-		assert viewNodeVer.getNodeID() != null;
-		deletedViews.put( viewNodeVer.getNodeID(), viewNodeVer );
-		
-	}
-	
 	public boolean isOpen(){
 		return open;
 	}
@@ -148,11 +146,6 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	public void setLoaded( boolean isLoaded ){
 		this.isLoaded = isLoaded;
 	}
-	
-	
-
-
-
 
 	@Override
 	public void clearDeletedViews() {
