@@ -57,7 +57,7 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 			Object source = event.getSource();
 			if (source == textBox) {
 				if ((charCode == KeyCodes.KEY_BACKSPACE || charCode == KeyCodes.KEY_DELETE)
-						&& textBox.getText().equals("")) {
+						&& textBox.getText().equals("") && getChildCount() == 0) {
 					int indexOfThis = getParentItem().getChildIndex(this);
 					if (indexOfThis == 0) {
 						((ViewPropEdit) getParentItem()).haveFocus();
@@ -76,6 +76,7 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 		}
 	}
 	
+	@Override
 	public ViewNode createChild(){
 		return new ViewPropEdit();
 	}

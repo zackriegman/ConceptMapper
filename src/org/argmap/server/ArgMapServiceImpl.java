@@ -48,22 +48,18 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	// warnings...
 	private final Objectify ofy = ObjectifyService.begin();
 
-	public void test() {
-		// ofy.delete(ofy.query( Change.class ));
-		// ofy.delete(Argument.class, 817);
-		// println ("deleted Argument 817");
-	}
-
-	public void println(String message) {
+	private void println(String message) {
 		log.fine(message);
 	}
 
-	public void deleteAllArgsAndProps() {
+	@SuppressWarnings("unused")
+	private void deleteAllArgsAndProps() {
 		ofy.delete(ofy.query(Argument.class));
 		ofy.delete(ofy.query(Proposition.class));
 	}
 
-	public void printAllPropsAndArgs() {
+	@SuppressWarnings("unused")
+	private void printAllPropsAndArgs() {
 		println("Arguments: ");
 		for (Argument arg : ofy.query(Argument.class)) {
 			printArgument(arg);
@@ -75,11 +71,11 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	}
 
-	public void printArgument(Argument arg) {
+	private void printArgument(Argument arg) {
 		println(arg.toString());
 	}
 
-	public void printProposition(Proposition prop) {
+	private void printProposition(Proposition prop) {
 		println(prop.toString());
 	}
 
@@ -111,32 +107,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		return propsAndArgs;
 	}
 
-	/*
-	 * public void printProps(Proposition[] props) { for (Proposition prop :
-	 * props) { printPropRecursive(prop, 0); } }
-	 */
-
-	public String spaces(int spaces) {
-		String string = "";
-		for (int i = 0; i < spaces; i++) {
-			string = string + " ";
-		}
-		return string;
-	}
-
-	/*
-	 * public void printPropRecursive(Proposition propParent, int level) {
-	 * println(spaces(level) + propParent.toString()); for (Argument arg :
-	 * propParent.args) { String printString = spaces(level + 1); if (arg.pro ==
-	 * true) printString = printString + "pro - id:"; else printString =
-	 * printString + "con - id:";
-	 * 
-	 * printString = printString + arg.id; println(printString); for
-	 * (Proposition prop : arg.props) { printPropRecursive(prop, level + 2); } }
-	 * }
-	 */
-
-	public void recursiveGetProps(Proposition prop, Nodes nodes) {
+	private void recursiveGetProps(Proposition prop, Nodes nodes) {
 
 		/* get all the prop's arguments */
 		Map<Long, Argument> argMap = ofy.get(Argument.class, prop.childIDs);
@@ -152,7 +123,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
-	public void recursiveGetArgs(Argument arg, Nodes nodes) {
+	private void recursiveGetArgs(Argument arg, Nodes nodes) {
 		/* get all the props in the argument */
 		Map<Long, Proposition> propMap = ofy.get(Proposition.class,
 				arg.childIDs);
@@ -443,7 +414,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
-	public void saveVersionInfo(Change change) {
+	private void saveVersionInfo(Change change) {
 		change.date = new Date();
 		change.remoteAddr = getThreadLocalRequest().getRemoteAddr();
 		change.remoteHost = getThreadLocalRequest().getRemoteHost();
@@ -528,78 +499,80 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
-	@Override
-	public NodesWithHistory getPropCurrentVersionAndHistory(Long propID)
-			throws Exception {
-		try {
-			return getPropOrArgCurrentVersionAndHistory(propID, null);
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Uncaught exception", e);
-			throw e;
-		}
-	}
+//	@Override
+//	public NodesWithHistory getPropCurrentVersionAndHistory(Long propID)
+//			throws Exception {
+//		try {
+//			return getPropOrArgCurrentVersionAndHistory(propID, null);
+//		} catch (Exception e) {
+//			log.log(Level.SEVERE, "Uncaught exception", e);
+//			throw e;
+//		}
+//	}
 
-	@Override
-	public NodesWithHistory getArgCurrentVersionAndHistory(Long argID)
-			throws Exception {
-		try {
-			return getPropOrArgCurrentVersionAndHistory(null, argID);
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Uncaught exception", e);
-			throw e;
-		}
-	}
+	
+//	@Override
+//	public NodesWithHistory getArgCurrentVersionAndHistory(Long argID)
+//			throws Exception {
+//		try {
+//			return getPropOrArgCurrentVersionAndHistory(null, argID);
+//		} catch (Exception e) {
+//			log.log(Level.SEVERE, "Uncaught exception", e);
+//			throw e;
+//		}
+//	}
+	
 
 	/*
 	 * warning: I commented out critical code so this function will not work as
 	 * expected... it's meant to be deleted soon
 	 */
-	private NodesWithHistory getPropOrArgCurrentVersionAndHistory(Long propID,
-			Long argID) throws Exception {
-		try {
-			println("start getPropositionCurrentVersionAndHistory()");
-			NodesWithHistory versions = new NodesWithHistory();
-			versions.nodes = new Nodes();
-			try {
-				if (propID != null && argID == null) {
-					Proposition proposition = ofy
-							.get(Proposition.class, propID);
-					versions.nodes.props.put(proposition.id, proposition);
-					recursiveGetProps(proposition, versions.nodes);
-				}
-				if (argID != null && propID == null) {
-					Argument argument = ofy.get(Argument.class, argID);
-					versions.nodes.args.put(argument.id, argument);
-					recursiveGetArgs(argument, versions.nodes);
-				} else {
-					throw new Exception(
-							"getPropOrArgCurrentVersionAndHistory: Only one non-null value accepted");
-				}
-			} catch (EntityNotFoundException e) {
-				/*
-				 * if the prop is not found that merely means it doesn't exist
-				 * in the current version of the tree... not a problem since it
-				 * might have been deleted. In that case we don't need to look
-				 * for its children either because they have also been deleted.
-				 */
-			}
+//	private NodesWithHistory getPropOrArgCurrentVersionAndHistory(Long propID,
+//			Long argID) throws Exception {
+//		try {
+//			println("start getPropositionCurrentVersionAndHistory()");
+//			NodesWithHistory versions = new NodesWithHistory();
+//			versions.nodes = new Nodes();
+//			try {
+//				if (propID != null && argID == null) {
+//					Proposition proposition = ofy
+//							.get(Proposition.class, propID);
+//					versions.nodes.props.put(proposition.id, proposition);
+//					recursiveGetProps(proposition, versions.nodes);
+//				}
+//				if (argID != null && propID == null) {
+//					Argument argument = ofy.get(Argument.class, argID);
+//					versions.nodes.args.put(argument.id, argument);
+//					recursiveGetArgs(argument, versions.nodes);
+//				} else {
+//					throw new Exception(
+//							"getPropOrArgCurrentVersionAndHistory: Only one non-null value accepted");
+//				}
+//			} catch (EntityNotFoundException e) {
+//				/*
+//				 * if the prop is not found that merely means it doesn't exist
+//				 * in the current version of the tree... not a problem since it
+//				 * might have been deleted. In that case we don't need to look
+//				 * for its children either because they have also been deleted.
+//				 */
+//			}
+//
+//			/*
+//			 * I deleted the get revisions method so this is throwing an error
+//			 * versions.changes = getRevisions(null, new ArrayList<Long>(
+//			 * versions.nodes.props.keySet()), new ArrayList<Long>(
+//			 * versions.nodes.args.keySet()));
+//			 */
+//
+//			println("end start getPropositionCurrentVersionAndHistory()");
+//			return versions;
+//		} catch (Exception e) {
+//			log.log(Level.SEVERE, "Uncaught exception", e);
+//			throw e;
+//		}
+//	}
 
-			/*
-			 * I deleted the get revisions method so this is throwing an error
-			 * versions.changes = getRevisions(null, new ArrayList<Long>(
-			 * versions.nodes.props.keySet()), new ArrayList<Long>(
-			 * versions.nodes.args.keySet()));
-			 */
-
-			println("end start getPropositionCurrentVersionAndHistory()");
-			return versions;
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Uncaught exception", e);
-			throw e;
-		}
-	}
-
-	public void recursiveGetPropChanges(Long propID,
+	private void recursiveGetPropChanges(Long propID,
 			NodeChangesMaps nodeChangesMaps) throws Exception {
 		if (nodeChangesMaps.propChanges.containsKey(propID)) {
 			return;
@@ -612,8 +585,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			recursiveGetArgChanges(id, nodeChangesMaps);
 		}
 	}
-
-	public NodeChanges getPropChanges(Long propID) throws Exception {
+	
+	private NodeChanges getPropChanges(Long propID) throws Exception {
 		NodeChanges nodeChanges = new NodeChanges();
 		Query<Change> query = ofy.query(Change.class).filter("propID = ",
 				propID);
@@ -638,7 +611,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		return nodeChanges;
 	}
 
-	public void recursiveGetArgChanges(Long argID,
+	private void recursiveGetArgChanges(Long argID,
 			NodeChangesMaps nodeChangesMaps) throws Exception {
 		if (nodeChangesMaps.argChanges.containsKey(argID)) {
 			return;
@@ -653,7 +626,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
-	public NodeChanges getArgChanges(Long argID,
+	private NodeChanges getArgChanges(Long argID,
 			Map<Long, Proposition> unlinkedLinks) throws Exception {
 		NodeChanges nodeChanges = new NodeChanges();
 		Query<Change> query = ofy.query(Change.class).filter("argID = ", argID);
@@ -682,64 +655,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		return nodeChanges;
 	}
 
-	public void recursiveQueryChanges(List<Long> propIDs, List<Long> argIDs,
-			Map<Date, Change> map, Date date) {
-		// TODO: DELETE THIS METHOD
-		println("recursiveQueryChanges: propIDs:");
-		if (propIDs != null) {
-			String printString = "*";
-			for (Long id : propIDs) {
-				printString = printString + " - " + id;
-			}
-			println(printString);
-		}
-		println("recursiveQueryChanges: argIDs:");
-		if (argIDs != null) {
-			String printString = "*";
-			for (Long id : argIDs) {
-				printString = printString + " - " + id;
-			}
-			println(printString);
-		}
-
-		List<Long> deletedProps = new LinkedList<Long>();
-		List<Long> deletedArgs = new LinkedList<Long>();
-
-		if (propIDs != null && !propIDs.isEmpty()) {
-			Query<Change> query = ofy.query(Change.class)
-					.filter("propID in", propIDs).order("-date");
-			if (date != null) {
-				query = query.filter("date <", date);
-			}
-
-			for (Change change : query) {
-				map.put(change.date, change);
-				if (change.changeType == Change.ChangeType.ARG_DELETION) {
-					deletedArgs.add(change.argID);
-				}
-			}
-		}
-
-		if (argIDs != null && !argIDs.isEmpty()) {
-			Query<Change> query = ofy.query(Change.class)
-					.filter("argID in", argIDs).order("-date");
-			if (date != null) {
-				query = query.filter("date <", date);
-			}
-			for (Change change : query) {
-				map.put(change.date, change);
-				// TODO must handle unlinking here as well
-				if (change.changeType == Change.ChangeType.PROP_DELETION) {
-					deletedProps.add(change.propID);
-				}
-			}
-		}
-		if (!deletedProps.isEmpty() || !deletedArgs.isEmpty()) {
-			recursiveQueryChanges(deletedProps, deletedArgs, map, date);
-		}
-	}
-
-	public void printAllChanges() {
+	@SuppressWarnings("unused")
+	private void printAllChanges() {
 		println("");
 		for (Change change : ofy.query(Change.class))
 			println("" + change.toString());

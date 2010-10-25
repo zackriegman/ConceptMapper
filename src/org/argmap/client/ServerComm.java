@@ -9,7 +9,6 @@ import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.AllPropsAndArgs;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
-import org.argmap.client.ArgMapService.NodesWithHistory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
@@ -162,24 +161,6 @@ public class ServerComm {
 		argMapService.getChanges(propIDs, argIDs,
 				new ServerCallback<NodeChangesMaps>(localCallback,
 						"Server Reports Success Getting Changes"));
-	}
-
-	public static void getPropCurrentVersionAndHistory(Proposition prop,
-			LocalCallback<NodesWithHistory> localCallback) {
-		argMapService
-				.getPropCurrentVersionAndHistory(
-						prop.id,
-						new ServerCallback<NodesWithHistory>(localCallback,
-								"Server Reports Success Fetching Proposition and History"));
-	}
-
-	public static void getArgCurrentVersionAndHistory(Argument arg,
-			LocalCallback<NodesWithHistory> localCallback) {
-		argMapService
-				.getArgCurrentVersionAndHistory(
-						arg.id,
-						new ServerCallback<NodesWithHistory>(localCallback,
-								"Server Reports Success Fetching Argument and History"));
 	}
 
 	public static void getPropsWithChanges(List<Long> propIDs,

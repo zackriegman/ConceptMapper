@@ -51,12 +51,6 @@ public interface ArgMapService extends RemoteService {
 		public Nodes nodes;
 		public SortedMap<Date, Change> changes;
 	}
-
-	public NodesWithHistory getPropCurrentVersionAndHistory(
-			Long propID) throws Exception;
-
-	public NodesWithHistory getArgCurrentVersionAndHistory(Long argID)
-			throws Exception;
 	
 	public class NodeWithChanges implements Serializable {
 		private static final long serialVersionUID = 1L;
@@ -97,7 +91,6 @@ public interface ArgMapService extends RemoteService {
 		
 	}
 	
-	/* to replace getRevisions above*/
 	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs) throws Exception;
 	
 	public List<Proposition> searchProps( String string, Long filerArgID ) throws Exception;

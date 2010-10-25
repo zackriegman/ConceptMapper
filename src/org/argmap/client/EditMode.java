@@ -25,10 +25,10 @@ public class EditMode extends ResizeComposite implements
 		LocalCallback<List<Proposition>> {
 
 	private static HTML messageArea = new HTML();
-	private Label searchLabel = new Label(
+	private final Label searchLabel = new Label(
 			"Would you like to use one of these already existing propositions?");
-	private FlexTable searchResults = new FlexTable();
-	private EditModeTree tree;
+	private final FlexTable searchResults = new FlexTable();
+	private final EditModeTree tree;
 
 	public EditMode() {
 		super();
@@ -46,7 +46,7 @@ public class EditMode extends ResizeComposite implements
 		searchFlowPanel.add(searchResults);
 		sideSplit.add(new ScrollPanel(searchFlowPanel));
 
-		Button addPropButton = new Button("Add A New Proposition");
+		Button addPropButton = new Button("Add a new proposition");
 		addPropButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
@@ -80,19 +80,7 @@ public class EditMode extends ResizeComposite implements
 			@Override
 			public void call(AllPropsAndArgs allNodes) {
 				try {
-					/*
-					 * GWT.log("Root Props:"); for (Long propID :
-					 * allNodes.rootProps.keySet()) { GWT.log("propID:" + propID
-					 * + "; prop:" + allNodes.rootProps.get(propID).toString());
-					 * } GWT.log("Props:"); for (Long propID :
-					 * allNodes.nodes.props.keySet()) { GWT.log("propID:" +
-					 * propID + "; prop:" +
-					 * allNodes.nodes.props.get(propID).toString()); }
-					 * GWT.log("Args:"); for (Long argID :
-					 * allNodes.nodes.args.keySet()) { GWT.log("argID:" + argID
-					 * + "; arg:" + allNodes.nodes.args.get(argID).toString());
-					 * }
-					 */
+
 					ArgMap.logStart("em.em.cb");
 					ArgMap.log("em.em.cb", "Prop Tree From Server");
 					for (Long propID : allNodes.rootProps.keySet()) {
@@ -101,12 +89,7 @@ public class EditMode extends ResizeComposite implements
 								.get(propID);
 						ViewProp propView = new ViewPropEdit();
 						propView.recursiveBuildViewNode(proposition, allNodes.nodes);
-						/* TODO remove this and factories...
-						ViewProp propView = ViewProp
-								.recursiveBuildPropositionView(proposition,
-										allNodes.nodes, ViewPropEdit.FACTORY,
-										ViewArgEdit.FACTORY);
-										*/
+
 						tree.addItem(propView);
 						propView.logNodeRecursive(0, "em.em.cb", true);
 					}
@@ -160,13 +143,7 @@ public class EditMode extends ResizeComposite implements
 										.get(linkPropID);
 								ViewProp newViewProp = new ViewPropEdit();
 								newViewProp.recursiveBuildViewNode(proposition, nodes);
-								/*
-								ViewProp newPropView = ViewProp
-										.recursiveBuildPropositionView(
-												proposition, nodes,
-												ViewPropEdit.FACTORY,
-												ViewArgEdit.FACTORY);
-												*/
+
 								parentArgView.insertChildViewAt(propIndex,
 										newViewProp);
 							}

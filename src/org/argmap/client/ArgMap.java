@@ -16,9 +16,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: test versioning of unlinking
-
-//TODO: backspacing in an argument with children deletes them on the client (even though not deleted on the server)
 //TODO: add placeholder before earliest revision so that it can be undone
 //TODO: test/fix versioning of a single empty proposition
 //TODO: undeleting links does not restore their yellow color ...
@@ -35,12 +32,15 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: implement user accounts, email updates of changes, inviting friends
 //TODO: implement proposition strength voting, and scoring algorithm
 
-/*TODO: if you close a node in versions mode sometimes you can never open it again because it will 
+/*TODO: if you close a node in versions mode sometimes you can never open it again (in that versions
+ * session) because it will 
  * never have children again given the dates available to click on.  For instance if you add a node, 
  * add a child, delete the child, and delete the node, all consecutively, and then go to a time when 
  * the node has children and close it, the node will never have children again because it doesn't have
  * children when it is created or when it is destroyed... and there are no visible events in between...
- * this should be a low priority fix, but it might take some ui creativity...
+ * this should be a low priority fix, but it might take some ui creativity... ui creativity should be minimal
+ * just add a placeholder element like "-----" for instance... but need to think about how to detect when
+ * this is necessary and what date to assign the placeholder...
  */
 //TODO: linking: original linked item should also change color immediately upon first linking
 //TODO: linking: how will client automatically update link changes...
@@ -83,9 +83,9 @@ public class ArgMap implements EntryPoint {
 
 	public void onModuleLoad() {
 		try {
-			modePanel.add(editMode, "Edit");
+			modePanel.add(editMode, "Find And Collaborate");
 			versionsMode = new VersionsMode(editMode);
-			modePanel.add(versionsMode, "Versions");
+			modePanel.add(versionsMode, "History");
 
 			modePanel.addSelectionHandler(new SelectionHandler<Integer>() {
 

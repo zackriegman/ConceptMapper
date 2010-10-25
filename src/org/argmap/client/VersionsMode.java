@@ -11,10 +11,7 @@ import java.util.Map;
 
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
-import org.argmap.client.ArgMapService.NodesWithHistory;
-import org.argmap.client.ServerComm.LocalCallback;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -53,8 +50,6 @@ public class VersionsMode extends ResizeComposite implements
 	private Map<ViewChange, String> mapArgTitle;
 	private Map<ViewChange, Integer> mapPropIndex;
 	private Map<ViewChange, Integer> mapArgIndex;
-	// private TimeTraveler mainTT; // TODO DELETE this line
-	// private TimeMachine mainTM;
 	private SortedMultiMap<Date, ViewChange> timeMachineMap;
 	private Date currentDate;
 
@@ -593,145 +588,6 @@ public class VersionsMode extends ResizeComposite implements
 			}
 		}
 	}
-
-	public void onClose_DELETE_ME(CloseEvent<TreeItem> event) {
-		TreeItem treeItem = event.getTarget();
-		if (treeItem.getChildCount() > 0) {
-			if (treeItem.getChild(0).getStyleName().equals("loadDummyProp")) {
-				// ServerComm.getPropositionCurrentVersionAndHistory(prop,
-				// localCallback)
-				GWT.log("VersionsMode.onClose[loadDummyProp]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
-			} else if (treeItem.getChild(0).getStyleName()
-					.equals("loadDummyArg")) {
-				GWT.log("VersionsMode.onClose[loadDummyArg]:  NOT REMOVING -- METHOD NOT IMPLEMENTED!");
-			}
-		}
-
-	}
-
-	public void onOpen_DELETE_ME(OpenEvent<TreeItem> event) {
-		TreeItem treeItem = event.getTarget();
-		if (treeItem.getChildCount() > 0) {
-			TreeItem child = treeItem.getChild(0);
-			if (child.getStyleName().equals("loadDummyProp")) {
-				class Callback implements
-						ServerComm.LocalCallback<NodesWithHistory> {
-					ViewPropEdit propView;
-
-					@Override
-					public void call(NodesWithHistory propTreeWithHistory) {
-						/*
-						 * mergeLoadedProposition_DELETE_ME(propView.proposition,
-						 * propTreeWithHistory);
-						 */
-					}
-				}
-				Callback callback = new Callback();
-				callback.propView = (ViewPropEdit) treeItem;
-
-				ServerComm.getPropCurrentVersionAndHistory(
-						((ViewPropEdit) treeItem).proposition, callback);
-			} else if (child.getStyleName().equals("loadDummyArg")) {
-				class Callback implements LocalCallback<NodesWithHistory> {
-					ViewArgVer argView;
-
-					@Override
-					public void call(NodesWithHistory argTreeWithHistory) {
-						/*
-						 * mergeLoadedArgument_DELETE_ME(argView.argument,
-						 * argTreeWithHistory);
-						 */
-					}
-				}
-				Callback callback = new Callback();
-				callback.argView = (ViewArgVer) treeItem;
-
-				ServerComm.getArgCurrentVersionAndHistory(
-						((ViewArgVer) treeItem).argument, callback);
-			}
-		}
-
-	}
-
-	/*
-	 * public void mergeLoadedProposition_DELETE_ME(Proposition proposition,
-	 * NodesWithHistory propTreeWithHistory) {
-	 * 
-	 * ArgMap.logStart("vm.mlp"); Map<Long, ViewPropVer> propViewIndex = new
-	 * HashMap<Long, ViewPropVer>(); Map<Long, ViewArgVer> argViewIndex = new
-	 * HashMap<Long, ViewArgVer>();
-	 * 
-	 * 
-	 * ViewPropVer propGraft = ViewProp.recursiveBuildPropositionView(
-	 * proposition, propTreeWithHistory.nodes, propViewIndex, argViewIndex,
-	 * ViewPropVer.FACTORY, ViewArgVer.FACTORY);
-	 * 
-	 * 
-	 * ArgMap.log("vm.mlp", "propTree before timeTravel:");
-	 * propGraft.logNodeRecursive(0, "vm.mlp", true); // TimeTraveler
-	 * timeTraveler = new // TimeTraveler(propTreeWithHistory.changes,
-	 * propViewIndex, // argViewIndex, null);
-	 * 
-	 * 
-	 * // propViewParent.getChild(0).remove(); while (propTree.getChildCount()
-	 * // > 0) { TreeItem transplant = propTree.getChild(0); //
-	 * transplant.remove(); propViewParent.addItem(transplant); }
-	 * 
-	 * 
-	 * // timeTraveler.travelToDate(mainTT.getCurrentDate());
-	 * ArgMap.log("vm.mlp", "propTree after timeTravel:");
-	 * propGraft.logNodeRecursive(0, "vm.mlp", true);
-	 * 
-	 * // ViewPropVer view = mainTT.absorb(timeTraveler, propGraft);
-	 * ArgMap.log("vm.mlp", "old propview after grafting:"); //
-	 * view.logNodeRecursive(0, "vm.mlp"); ArgMap.log("vm.mlp",
-	 * "----------------");
-	 * 
-	 * loadVersionListFromTimeMachine();
-	 * 
-	 * // GWT.log("Prop tree transplant"); // printPropRecursive(propTree, 0);
-	 * ArgMap.log("vm.mlp", "changes"); for (Change change :
-	 * propTreeWithHistory.changes.values()) { GWT.log(change.toString()); }
-	 * ArgMap.log("vm.mlp", "mergeLoadedPropositon: start"); }
-	 * 
-	 * public void mergeLoadedArgument_DELETE_ME(Argument argument,
-	 * NodesWithHistory argTreeWithHistory) {
-	 * 
-	 * ArgMap.logStart("vm.mla"); Map<Long, ViewPropVer> propViewIndex = new
-	 * HashMap<Long, ViewPropVer>(); Map<Long, ViewArgVer> argViewIndex = new
-	 * HashMap<Long, ViewArgVer>();
-	 * 
-	 * ViewArgVer argGraft = ViewArg.recursiveBuildArgumentView(argument,
-	 * argTreeWithHistory.nodes, propViewIndex, argViewIndex,
-	 * ViewPropVer.FACTORY, ViewArgVer.FACTORY);
-	 * 
-	 * ArgMap.log("vm.mla", "propTree before timeTravel:");
-	 * argGraft.logNodeRecursive(0, "vm.mla", true); // TimeTraveler
-	 * timeTraveler = new // TimeTraveler(argTreeWithHistory.changes,
-	 * propViewIndex, argViewIndex, // null);
-	 * 
-	 * 
-	 * // propViewParent.getChild(0).remove(); while (propTree.getChildCount()
-	 * // > 0) { TreeItem transplant = propTree.getChild(0); //
-	 * transplant.remove(); propViewParent.addItem(transplant); }
-	 * 
-	 * 
-	 * // timeTraveler.travelToDate(mainTT.getCurrentDate());
-	 * ArgMap.log("vm.mla", "argTree after timeTravel:");
-	 * argGraft.logNodeRecursive(0, "vm.mla", true);
-	 * 
-	 * // ViewArgVer view = mainTT.absorb(timeTraveler, argGraft);
-	 * ArgMap.log("vm.mla", "old propview after grafting:"); //
-	 * view.logNodeRecursive(0, "vm.mla"); ArgMap.log("vm.mla",
-	 * "----------------");
-	 * 
-	 * loadVersionListFromTimeMachine();
-	 * 
-	 * // GWT.log("Prop tree transplant"); // printPropRecursive(propTree, 0);
-	 * ArgMap.log("vm.mla", "changes"); for (Change change :
-	 * argTreeWithHistory.changes.values()) { GWT.log(change.toString()); }
-	 * ArgMap.logEnd("vm.mla"); }
-	 */
 
 	@Override
 	public void onChange(ChangeEvent event) {

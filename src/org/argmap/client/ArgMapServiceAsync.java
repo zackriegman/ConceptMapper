@@ -7,7 +7,6 @@ import java.util.Map;
 import org.argmap.client.ArgMapService.AllPropsAndArgs;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
-import org.argmap.client.ArgMapService.NodesWithHistory;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -44,12 +43,6 @@ public interface ArgMapServiceAsync {
 			AsyncCallback<Long> callback);
 
 	void getAllPropsAndArgs(AsyncCallback<AllPropsAndArgs> callback);
-
-	void getPropCurrentVersionAndHistory(Long propID,
-			AsyncCallback<NodesWithHistory> callback);
-
-	void getArgCurrentVersionAndHistory(Long argID,
-			AsyncCallback<NodesWithHistory> callback);
 
 	void updateArg(Long argID, String content, AsyncCallback<Void> callback);
 
