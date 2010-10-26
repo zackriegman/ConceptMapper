@@ -23,6 +23,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	private static ViewPropEdit lastPropositionWithFocus = null;
 	private final Button proButton;
 	private final Button conButton;
+	private final Button expandButton;
 	private Button linkRemoveButton;
 	private Button linkEditButton;
 	private final HorizontalPanel buttonsPanel;
@@ -44,12 +45,16 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		mainPanel.add(buttonsPanel);
 		proButton = new Button("For");
 		conButton = new Button("Against");
+		expandButton = new Button("+");
 		buttonsPanel.add(proButton);
 		buttonsPanel.add(conButton);
+		buttonsPanel.add(expandButton);
 		proButton.addClickHandler(this);
 		conButton.addClickHandler(this);
+		expandButton.addClickHandler(this);
 		proButton.setVisible(false);
 		conButton.setVisible(false);
+		expandButton.setVisible(false);
 
 		if (proposition.linkCount > 1) {
 			setNodeLink( true );
@@ -107,6 +112,11 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			} else if (event.getSource() == linkEditButton) {
 				textArea.setReadOnly(false);
 			}
+			else if( event.getSource() == expandButton ){
+				getEditModeTree().getEditMode().loadFromServer(this, 10);
+				setOpen( true );
+				getEditModeTree().resetState();
+			}
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
 		}
@@ -117,8 +127,9 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		ViewPropEdit newPropView = new ViewPropEdit();
 		newArgView.addItem(newPropView);
 		this.addItem(newArgView);
-		newArgView.setState(true);
-		this.setState(true);
+		newArgView.setOpen( true );
+		this.setOpen( true );
+		((EditModeTree)getTree()).resetState();
 		newPropView.textArea.setFocus(true);
 		ServerComm.addArg(pro, this.proposition, newArgView.argument);
 		ServerComm.addProp(newPropView.proposition, newArgView.argument,
@@ -324,6 +335,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 						&& lastPropositionWithFocus != null) {
 					lastPropositionWithFocus.proButton.setVisible(false);
 					lastPropositionWithFocus.conButton.setVisible(false);
+					lastPropositionWithFocus.expandButton.setVisible(false);
 					if (lastPropositionWithFocus.linkEditButton != null) {
 						lastPropositionWithFocus.linkEditButton
 								.setVisible(false);
@@ -334,6 +346,8 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				// make this proposition's button's visible
 				proButton.setVisible(true);
 				conButton.setVisible(true);
+				expandButton.setVisible(true);
+				//expandButton.setEnabled( false );
 				if (linkEditButton != null) {
 					linkEditButton.setVisible(true);
 					linkRemoveButton.setVisible(true);

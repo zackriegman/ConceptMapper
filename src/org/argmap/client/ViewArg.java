@@ -39,6 +39,15 @@ public abstract class ViewArg extends ViewNode {
 	}
 	
 	@Override
+	public Argument getNode(){
+		return argument;
+	}
+	
+	/*
+	 * TODO: move this method from ViewArg and the equivalent from ViewProp
+	 * into ViewArgVer and ViewPropVer.
+	 */
+	@Override
 	public ViewNode createViewNodeVerClone() {
 		ViewArgVer argView = new ViewArgVer(new Argument(argument));
 		argView.setOpen(getModifiedState());

@@ -141,6 +141,12 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 		return null;
 	}
 
+	@Override
+	public Node getNode() {
+		assert false;
+		return null;
+	}
+
 	
 
 }

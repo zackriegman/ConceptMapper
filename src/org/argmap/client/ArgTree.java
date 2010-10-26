@@ -14,38 +14,49 @@ public class ArgTree extends Tree {
 	List<CloseHandler<TreeItem>> closeHandlerList = new ArrayList<CloseHandler<TreeItem>>();
 	List<HandlerRegistration> openHandlerRegistrationList = new ArrayList<HandlerRegistration>();
 	List<HandlerRegistration> closeHandlerRegistrationList = new ArrayList<HandlerRegistration>();
+
 	
 	public void resetState() {
-		for( HandlerRegistration registration : openHandlerRegistrationList){
-			registration.removeHandler();
-		}
-		for( HandlerRegistration registration : closeHandlerRegistrationList){
-			registration.removeHandler();
-		}
-		
+		setStateHandlersOff();
+
 		for (int i = 0; i < getItemCount(); i++) {
 			recursiveResetState(getItem(i));
 		}
-		
-		for(OpenHandler<TreeItem> handler : openHandlerList){
-			addOpenHandler( handler );
+
+		setStateHandlersOn();
+	}
+
+	public void setStateHandlersOff() {
+		for (HandlerRegistration registration : openHandlerRegistrationList) {
+			registration.removeHandler();
 		}
-		for(CloseHandler<TreeItem> handler : closeHandlerList){
-			addCloseHandler( handler );
+		for (HandlerRegistration registration : closeHandlerRegistrationList) {
+			registration.removeHandler();
 		}
 	}
-	
-	public HandlerRegistration addOpenHandlerTracked( OpenHandler<TreeItem> handler ){
+
+	public void setStateHandlersOn() {
+		for (OpenHandler<TreeItem> handler : openHandlerList) {
+			addOpenHandler(handler);
+		}
+		for (CloseHandler<TreeItem> handler : closeHandlerList) {
+			addCloseHandler(handler);
+		}
+	}
+
+	public HandlerRegistration addOpenHandlerTracked(
+			OpenHandler<TreeItem> handler) {
 		openHandlerList.add(handler);
 		HandlerRegistration registration = addOpenHandler(handler);
-		openHandlerRegistrationList.add( registration );
+		openHandlerRegistrationList.add(registration);
 		return registration;
 	}
-	
-	public HandlerRegistration addCloseHandlerTracked( CloseHandler<TreeItem> handler ){
+
+	public HandlerRegistration addCloseHandlerTracked(
+			CloseHandler<TreeItem> handler) {
 		closeHandlerList.add(handler);
 		HandlerRegistration registration = addCloseHandler(handler);
-		closeHandlerRegistrationList.add( registration );
+		closeHandlerRegistrationList.add(registration);
 		return registration;
 	}
 
@@ -56,7 +67,7 @@ public class ArgTree extends Tree {
 		 */
 		if (item.getChildCount() > 0
 				&& !(item.getChild(0) instanceof ViewDummyVer)) {
-			item.setState(((ViewNode)item).isOpen());
+			item.setState(((ViewNode) item).isOpen());
 			for (int i = 0; i < item.getChildCount(); i++) {
 				recursiveResetState(item.getChild(i));
 			}

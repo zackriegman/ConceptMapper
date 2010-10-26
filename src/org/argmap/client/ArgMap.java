@@ -16,7 +16,8 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-
+//TODO: lazy load in editmode (maybe a few layers deep in advance) instead of loading the entire tree (and create a button to open all (or maybe ten) levels of children at once
+//TODO: do we still need the isOpen() function?  maybe we only need isLoaded()... what is the purpose of isOpen()?
 //TODO: new search feature
 //TODO: versionsmode display only opened top level nodes.
 
@@ -24,12 +25,11 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: prevent circular linking from crashing program...
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 
-//TODO: lazy load in editmode (maybe a few layers deep in advance) instead of loading the entire tree (and create a button to open all (or maybe ten) levels of children at once
 //TODO: provide a way to see deleted top level nodes
-//TODO: add helpful message along the side (tips box)
-//TODO: poll server every few seconds for server side changes (this has to come after versioning I think)
 //TODO: implement user accounts, email updates of changes, inviting friends
 //TODO: implement proposition strength voting, and scoring algorithm
+//TODO: poll server every few seconds for server side changes (this has to come after versioning I think)
+//TODO: add helpful message along the side (tips box)
 
 /*TODO: if you close a node in versions mode sometimes you can never open it again (in that versions
  * session) because it will 

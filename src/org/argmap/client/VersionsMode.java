@@ -69,30 +69,6 @@ public class VersionsMode extends ResizeComposite implements
 		initWidget(mainPanel);
 	}
 
-//	public void resetState(Tree tree) {
-//		treeOpenHandlerRegistration.removeHandler();
-//		treeCloseHandlerRegistration.removeHandler();
-//		for (int i = 0; i < tree.getItemCount(); i++) {
-//			recursiveResetState(tree.getItem(i));
-//		}
-//		treeClone.addOpenHandler(this);
-//		treeClone.addCloseHandler(this);
-//	}
-//
-//	public void recursiveResetState(TreeItem item) {
-//		/*
-//		 * if this item has children, and the first child is not a dummy node
-//		 * place holder loading message
-//		 */
-//		if (item.getChildCount() > 0
-//				&& !(item.getChild(0) instanceof ViewDummyVer)) {
-//			item.setState(((ViewNodeVer) item).isOpen());
-//			for (int i = 0; i < item.getChildCount(); i++) {
-//				recursiveResetState(item.getChild(i));
-//			}
-//		}
-//	}
-
 	public void displayVersions() {
 		versionList.clear();
 		versionList.addItem("Loading Revision History From Server...");

@@ -22,6 +22,7 @@ public abstract class ViewProp extends ViewNode {
 	
 	public void setNodeLink( boolean link ){};
 	
+	@Override
 	public void setNode( Node node ){
 		proposition = (Proposition)node;
 		setContent(proposition.getContent());
@@ -33,11 +34,18 @@ public abstract class ViewProp extends ViewNode {
 			setNodeLink( true );
 		}
 	}
+	
+	@Override
+	public Proposition getNode(){
+		return proposition;
+	}
 
+	@Override
 	public String toString() {
 		return "textArea:" + textArea.getText() + "; prop:" + proposition;
 	}
 
+	@Override
 	public Long getNodeID() {
 		return proposition.id;
 	}
@@ -92,6 +100,7 @@ public abstract class ViewProp extends ViewNode {
 			this(80);
 		}
 
+		@Override
 		public void setText(String text) {
 			super.setText(text);
 			resize();
@@ -125,6 +134,7 @@ public abstract class ViewProp extends ViewNode {
 		}
 	}
 	
+	@Override
 	public Node getChildNodeFromNodeList( Long nodeID, Nodes nodes ){
 		return nodes.args.get( nodeID );
 	}

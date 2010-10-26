@@ -20,14 +20,14 @@ import org.apache.lucene.analysis.tokenattributes.TermAttribute;
 import org.argmap.client.ArgMapService;
 import org.argmap.client.Argument;
 import org.argmap.client.Change;
+import org.argmap.client.Change.ChangeType;
 import org.argmap.client.Node;
 import org.argmap.client.NodeChanges;
 import org.argmap.client.Nodes;
 import org.argmap.client.Proposition;
-import org.argmap.client.Change.ChangeType;
 
-import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.googlecode.objectify.NotFoundException;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.Query;
@@ -107,8 +107,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		return propsAndArgs;
 	}
 
-	private void recursiveGetProps(Proposition prop, Nodes nodes, int depthLimit ) {
-		if( depthLimit == 0 ){
+	private void recursiveGetProps(Proposition prop, Nodes nodes, int depthLimit) {
+		if (depthLimit == 0) {
 			return;
 		}
 
@@ -127,10 +127,10 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	private void recursiveGetArgs(Argument arg, Nodes nodes, int depthLimit) {
-		if( depthLimit == 0 ){
+		if (depthLimit == 0) {
 			return;
 		}
-		
+
 		/* get all the props in the argument */
 		Map<Long, Proposition> propMap = ofy.get(Proposition.class,
 				arg.childIDs);
@@ -139,8 +139,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			if (!nodes.props.containsKey(prop.id)) {
 				/* add it */
 				nodes.props.put(prop.id, prop);
-				/* add it's children */
-				recursiveGetProps(prop, nodes, depthLimit -1);
+				/* add it's descendants */
+				recursiveGetProps(prop, nodes, depthLimit - 1);
 			}
 		}
 	}
@@ -222,13 +222,13 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 					"childIDs", propID);
 
 			/* only delete a proposition that is used in 1 or fewer arguments */
-			if (query.countAll() > 1) {
+			if (query.count() > 1) {
 				throw new Exception(
 						"cannot delete a proposition used by more than one argument; delink from other arguments before deleting");
 			}
 
 			/* if the proposition is used in an argument */
-			else if (query.countAll() == 1) {
+			else if (query.count() == 1) {
 				Argument argument = query.iterator().next();
 
 				/* record the versioning information */
@@ -356,8 +356,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Argument addArg(Long parentPropID, boolean pro)
-			throws Exception {
+	public Argument addArg(Long parentPropID, boolean pro) throws Exception {
 		try {
 
 			/*
@@ -454,15 +453,15 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Map<Long, NodeWithChanges> getPropsWithChanges(
-			List<Long> propIDs) throws Exception {
+	public Map<Long, NodeWithChanges> getPropsWithChanges(List<Long> propIDs)
+			throws Exception {
 		try {
 			Map<Long, NodeWithChanges> map = new HashMap<Long, NodeWithChanges>();
 			for (Long propID : propIDs) {
 				NodeWithChanges propWithChanges = new NodeWithChanges();
 				try {
 					propWithChanges.node = ofy.get(Proposition.class, propID);
-				} catch (EntityNotFoundException e) {
+				} catch (NotFoundException e) {
 					/*
 					 * if the node doesn't currently exist because it has been
 					 * deleted, just return null
@@ -488,7 +487,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				NodeWithChanges argWithChanges = new NodeWithChanges();
 				try {
 					argWithChanges.node = ofy.get(Argument.class, argID);
-				} catch (EntityNotFoundException e) {
+				} catch (NotFoundException e) {
 					/*
 					 * if the node doesn't currently exist because it has been
 					 * deleted, just return null
@@ -506,78 +505,77 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
-//	@Override
-//	public NodesWithHistory getPropCurrentVersionAndHistory(Long propID)
-//			throws Exception {
-//		try {
-//			return getPropOrArgCurrentVersionAndHistory(propID, null);
-//		} catch (Exception e) {
-//			log.log(Level.SEVERE, "Uncaught exception", e);
-//			throw e;
-//		}
-//	}
+	// @Override
+	// public NodesWithHistory getPropCurrentVersionAndHistory(Long propID)
+	// throws Exception {
+	// try {
+	// return getPropOrArgCurrentVersionAndHistory(propID, null);
+	// } catch (Exception e) {
+	// log.log(Level.SEVERE, "Uncaught exception", e);
+	// throw e;
+	// }
+	// }
 
-	
-//	@Override
-//	public NodesWithHistory getArgCurrentVersionAndHistory(Long argID)
-//			throws Exception {
-//		try {
-//			return getPropOrArgCurrentVersionAndHistory(null, argID);
-//		} catch (Exception e) {
-//			log.log(Level.SEVERE, "Uncaught exception", e);
-//			throw e;
-//		}
-//	}
-	
+	// @Override
+	// public NodesWithHistory getArgCurrentVersionAndHistory(Long argID)
+	// throws Exception {
+	// try {
+	// return getPropOrArgCurrentVersionAndHistory(null, argID);
+	// } catch (Exception e) {
+	// log.log(Level.SEVERE, "Uncaught exception", e);
+	// throw e;
+	// }
+	// }
 
 	/*
 	 * warning: I commented out critical code so this function will not work as
 	 * expected... it's meant to be deleted soon
 	 */
-//	private NodesWithHistory getPropOrArgCurrentVersionAndHistory(Long propID,
-//			Long argID) throws Exception {
-//		try {
-//			println("start getPropositionCurrentVersionAndHistory()");
-//			NodesWithHistory versions = new NodesWithHistory();
-//			versions.nodes = new Nodes();
-//			try {
-//				if (propID != null && argID == null) {
-//					Proposition proposition = ofy
-//							.get(Proposition.class, propID);
-//					versions.nodes.props.put(proposition.id, proposition);
-//					recursiveGetProps(proposition, versions.nodes);
-//				}
-//				if (argID != null && propID == null) {
-//					Argument argument = ofy.get(Argument.class, argID);
-//					versions.nodes.args.put(argument.id, argument);
-//					recursiveGetArgs(argument, versions.nodes);
-//				} else {
-//					throw new Exception(
-//							"getPropOrArgCurrentVersionAndHistory: Only one non-null value accepted");
-//				}
-//			} catch (EntityNotFoundException e) {
-//				/*
-//				 * if the prop is not found that merely means it doesn't exist
-//				 * in the current version of the tree... not a problem since it
-//				 * might have been deleted. In that case we don't need to look
-//				 * for its children either because they have also been deleted.
-//				 */
-//			}
-//
-//			/*
-//			 * I deleted the get revisions method so this is throwing an error
-//			 * versions.changes = getRevisions(null, new ArrayList<Long>(
-//			 * versions.nodes.props.keySet()), new ArrayList<Long>(
-//			 * versions.nodes.args.keySet()));
-//			 */
-//
-//			println("end start getPropositionCurrentVersionAndHistory()");
-//			return versions;
-//		} catch (Exception e) {
-//			log.log(Level.SEVERE, "Uncaught exception", e);
-//			throw e;
-//		}
-//	}
+	// private NodesWithHistory getPropOrArgCurrentVersionAndHistory(Long
+	// propID,
+	// Long argID) throws Exception {
+	// try {
+	// println("start getPropositionCurrentVersionAndHistory()");
+	// NodesWithHistory versions = new NodesWithHistory();
+	// versions.nodes = new Nodes();
+	// try {
+	// if (propID != null && argID == null) {
+	// Proposition proposition = ofy
+	// .get(Proposition.class, propID);
+	// versions.nodes.props.put(proposition.id, proposition);
+	// recursiveGetProps(proposition, versions.nodes);
+	// }
+	// if (argID != null && propID == null) {
+	// Argument argument = ofy.get(Argument.class, argID);
+	// versions.nodes.args.put(argument.id, argument);
+	// recursiveGetArgs(argument, versions.nodes);
+	// } else {
+	// throw new Exception(
+	// "getPropOrArgCurrentVersionAndHistory: Only one non-null value accepted");
+	// }
+	// } catch (EntityNotFoundException e) {
+	// /*
+	// * if the prop is not found that merely means it doesn't exist
+	// * in the current version of the tree... not a problem since it
+	// * might have been deleted. In that case we don't need to look
+	// * for its children either because they have also been deleted.
+	// */
+	// }
+	//
+	// /*
+	// * I deleted the get revisions method so this is throwing an error
+	// * versions.changes = getRevisions(null, new ArrayList<Long>(
+	// * versions.nodes.props.keySet()), new ArrayList<Long>(
+	// * versions.nodes.args.keySet()));
+	// */
+	//
+	// println("end start getPropositionCurrentVersionAndHistory()");
+	// return versions;
+	// } catch (Exception e) {
+	// log.log(Level.SEVERE, "Uncaught exception", e);
+	// throw e;
+	// }
+	// }
 
 	private void recursiveGetPropChanges(Long propID,
 			NodeChangesMaps nodeChangesMaps) throws Exception {
@@ -592,7 +590,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			recursiveGetArgChanges(id, nodeChangesMaps);
 		}
 	}
-	
+
 	private NodeChanges getPropChanges(Long propID) throws Exception {
 		NodeChanges nodeChanges = new NodeChanges();
 		Query<Change> query = ofy.query(Change.class).filter("propID = ",
@@ -771,7 +769,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 					"childIDs", removePropID);
 
 			/* only delete a proposition that is used in 1 or fewer arguments. */
-			if (query.countAll() == 0) {
+			if (query.count() == 0) {
 				Change change = new Change(ChangeType.PROP_DELETION);
 				change.propID = removeProp.id;
 				change.content = removeProp.content;
@@ -785,7 +783,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			 * delete the argument where it is empty. [just add the link before
 			 * deleting then...]
 			 */
-			else if (query.countAll() == 1) {
+			else if (query.count() == 1) {
 				Change change = new Change(ChangeType.PROP_DELETION);
 				change.propID = removeProp.id;
 				change.content = removeProp.content;
@@ -804,7 +802,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			 * unlinkProposition function because don't want to delete the
 			 * argument where it is empty.
 			 */
-			else if (query.countAll() > 1) {
+			else if (query.count() > 1) {
 				Change change = new Change(ChangeType.PROP_UNLINK);
 				change.argID = parentArgID;
 				change.propID = removePropID;
@@ -845,22 +843,24 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Nodes getNodes(List<Long> nodeIDs, int depth, NodeType type)
+	public Nodes getNodesChildren(List<Long> nodeIDs, int depth)
 			throws Exception {
-		Nodes nodes = new Nodes();
-		for( Long id : nodeIDs ){
-			if( type == NodeType.ARG){
-				recursiveGetArgs(ofy.get(Argument.class, id), nodes, depth);
+		try {
+			Nodes nodes = new Nodes();
+			for (Long id : nodeIDs) {
+				try {
+					Argument arg = ofy.get(Argument.class, id);
+					recursiveGetArgs(arg, nodes, depth);
+				} catch (NotFoundException e) {
+					Proposition prop = ofy.get(Proposition.class, id);
+					recursiveGetProps(prop, nodes, depth);
+				}
 			}
-			else if( type == NodeType.PROP){
-				recursiveGetProps(ofy.get(Proposition.class, id), nodes, depth);
-			}
-			else {
-				throw new Exception( "unrecognized type for getNodes()");
-			}
+			return nodes;
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Uncaught exception", e);
+			throw e;
 		}
-		return nodes;
-		
 	}
 
 }
