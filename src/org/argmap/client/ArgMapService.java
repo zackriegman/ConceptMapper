@@ -59,6 +59,12 @@ public interface ArgMapService extends RemoteService {
 		public Map<Long, Proposition> unlinkedLinks = new HashMap<Long, Proposition>();
 	}
 	
+	enum NodeType {
+		ARG, PROP
+	}
+	
+	public Nodes getNodes( List<Long> nodeIDs, int depth, NodeType type ) throws Exception;
+	
 	public Map<Long, NodeWithChanges> getPropsWithChanges( List<Long> propIDs ) throws Exception;
 	
 	public Map<Long, NodeWithChanges> getArgsWithChanges( List<Long> argIDs ) throws Exception;

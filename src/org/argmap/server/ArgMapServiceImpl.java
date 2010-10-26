@@ -20,11 +20,11 @@ import org.apache.lucene.analysis.tokenattributes.TermAttribute;
 import org.argmap.client.ArgMapService;
 import org.argmap.client.Argument;
 import org.argmap.client.Change;
-import org.argmap.client.Change.ChangeType;
 import org.argmap.client.Node;
 import org.argmap.client.NodeChanges;
 import org.argmap.client.Nodes;
 import org.argmap.client.Proposition;
+import org.argmap.client.Change.ChangeType;
 
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -842,6 +842,25 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public void logClientException(String exceptionStr) {
 		log.severe("CLIENT EXCEPTION (string)" + exceptionStr);
+	}
+
+	@Override
+	public Nodes getNodes(List<Long> nodeIDs, int depth, NodeType type)
+			throws Exception {
+		Nodes nodes = new Nodes();
+		for( Long id : nodeIDs ){
+			if( type == NodeType.ARG){
+				recursiveGetArgs(ofy.get(Argument.class, id), nodes, depth);
+			}
+			else if( type == NodeType.PROP){
+				recursiveGetProps(ofy.get(Proposition.class, id), nodes, depth);
+			}
+			else {
+				throw new Exception( "unrecognized type for getNodes()");
+			}
+		}
+		return nodes;
+		
 	}
 
 }

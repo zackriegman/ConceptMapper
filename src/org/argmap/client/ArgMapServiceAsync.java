@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.argmap.client.ArgMapService.NodeChangesMaps;
+import org.argmap.client.ArgMapService.NodeType;
 import org.argmap.client.ArgMapService.NodeWithChanges;
 import org.argmap.client.ArgMapService.PropsAndArgs;
 
@@ -59,7 +60,6 @@ public interface ArgMapServiceAsync {
 
 	void getPropsAndArgs(int depthLimit, AsyncCallback<PropsAndArgs> callback);
 
-
-
-
+	void getNodes(List<Long> nodeIDs, int depth,
+			NodeType type, AsyncCallback<Nodes> callback);
 }

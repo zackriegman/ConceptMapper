@@ -7,6 +7,7 @@ import java.util.Queue;
 
 import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
+import org.argmap.client.ArgMapService.NodeType;
 import org.argmap.client.ArgMapService.NodeWithChanges;
 import org.argmap.client.ArgMapService.PropsAndArgs;
 
@@ -146,6 +147,16 @@ public class ServerComm {
 	public static void getRootProps(int depthLimit, LocalCallback<PropsAndArgs> localCallback) {
 		argMapService.getPropsAndArgs(depthLimit, new ServerCallback<PropsAndArgs>(
 				localCallback, "Server Reports Success Fetching Props"));
+	}
+	
+	public static void getArgs( List<Long> argIDs, int depth, LocalCallback<Nodes> localCallback ){
+		argMapService.getNodes(argIDs, depth, NodeType.ARG, new ServerCallback<Nodes>(localCallback, "Server Reports Success" +
+				"Fetching Args"));
+	}
+	
+	public static void getProps( List<Long> propIDs, int depth, LocalCallback<Nodes> localCallback ){
+		argMapService.getNodes(propIDs, depth, NodeType.PROP, new ServerCallback<Nodes>(localCallback, "Server Reports Success" +
+				"Fetching Props"));
 	}
 
 	public static void getChanges(List<Proposition> props, List<Argument> args,

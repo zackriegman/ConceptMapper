@@ -1,5 +1,6 @@
 package org.argmap.client;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.argmap.client.ArgMap.MessageType;
@@ -30,7 +31,8 @@ import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
 public class EditMode extends ResizeComposite implements
-		LocalCallback<List<Proposition>>, KeyDownHandler, OpenHandler<TreeItem>, CloseHandler<TreeItem> {
+		LocalCallback<List<Proposition>>, KeyDownHandler,
+		OpenHandler<TreeItem>, CloseHandler<TreeItem> {
 
 	private static HTML sideMessageArea = new HTML();
 	private final Label sideSearchLabel = new Label(
@@ -39,7 +41,7 @@ public class EditMode extends ResizeComposite implements
 	private final ScrollPanel sideSearchScroll;
 	private final ScrollPanel sideMessageScroll;
 	private final SplitLayoutPanel sideSplit = new SplitLayoutPanel();
-	
+
 	TextBox searchTextBox = new TextBox();
 	private final EditModeTree tree;
 
@@ -49,15 +51,15 @@ public class EditMode extends ResizeComposite implements
 		FlowPanel mainPanel = new FlowPanel();
 
 		SplitLayoutPanel mainSplit = new SplitLayoutPanel();
-		
+
 		FlowPanel sideSearchArea = new FlowPanel();
 		sideSearchArea.add(sideSearchLabel);
 		sideSearchLabel.setVisible(false);
 		sideSearchArea.add(sideSearchResults);
 		sideSearchScroll = new ScrollPanel(sideSearchArea);
-		
+
 		sideMessageScroll = new ScrollPanel(sideMessageArea);
-		sideSplit.add( sideMessageScroll );
+		sideSplit.add(sideMessageScroll);
 
 		Button addPropButton = new Button("Add a new proposition");
 		addPropButton.addClickHandler(new ClickHandler() {
@@ -73,8 +75,7 @@ public class EditMode extends ResizeComposite implements
 
 					tree.addItem(newPropView);
 					newPropView.haveFocus();
-					ServerComm.addProp(newPropView.getProposition(),
-							null, 0);
+					ServerComm.addProp(newPropView.getProposition(), null, 0);
 				} catch (Exception e) {
 					ServerComm.handleClientException(e);
 				}
@@ -82,72 +83,76 @@ public class EditMode extends ResizeComposite implements
 		});
 
 		HorizontalPanel searchBoxPanel = new HorizontalPanel();
-		searchTextBox.addKeyDownHandler( this );
+		searchTextBox.addKeyDownHandler(this);
 		searchTextBox.setVisibleLength(50);
-		searchBoxPanel.add( new Label("Search:"));
-		searchBoxPanel.add( searchTextBox );
-		searchBoxPanel.add( addPropButton );
+		searchBoxPanel.add(new Label("Search:"));
+		searchBoxPanel.add(searchTextBox);
+		searchBoxPanel.add(addPropButton);
 		mainPanel.add(searchBoxPanel);
 
 		tree = new EditModeTree();
-		tree.addCloseHandlerTracked( this );
-		tree.addOpenHandlerTracked( this );
+		tree.addCloseHandlerTracked(this);
+		tree.addOpenHandlerTracked(this);
 		tree.searchCallback = this;
 
 		mainPanel.add(tree);
 
-		
-		ServerComm.getRootProps(3, new ServerComm.LocalCallback<PropsAndArgs>() {
+		ServerComm.getRootProps(3,
+				new ServerComm.LocalCallback<PropsAndArgs>() {
 
-			@Override
-			public void call(PropsAndArgs allNodes) {
-				try {
-					ArgMap.logStart("em.em.cb");
-					ArgMap.log("em.em.cb", "Prop Tree From Server");
-					for (Long propID : allNodes.rootProps.keySet()) {
+					@Override
+					public void call(PropsAndArgs allNodes) {
+						try {
+							ArgMap.logStart("em.em.cb");
+							ArgMap.log("em.em.cb", "Prop Tree From Server");
+							for (Long propID : allNodes.rootProps.keySet()) {
 
-						Proposition proposition = allNodes.rootProps
-								.get(propID);
-						ViewProp propView = new ViewPropEdit();
-						propView.recursiveBuildViewNode(proposition, allNodes.nodes);
+								Proposition proposition = allNodes.rootProps
+										.get(propID);
+								ViewProp propView = new ViewPropEdit();
+								propView.recursiveBuildViewNode(proposition,
+										allNodes.nodes);
 
-						tree.addItem(propView);
-						propView.logNodeRecursive(0, "em.em.cb", true);
+								tree.addItem(propView);
+								propView.logNodeRecursive(0, "em.em.cb", true);
+							}
+							tree.resetState();
+							ArgMap.logEnd("em.em.cb");
+						} catch (Exception e) {
+							ServerComm.handleClientException(e);
+						}
 					}
-					tree.resetState();
-					ArgMap.logEnd("em.em.cb");
-				} catch (Exception e) {
-					ServerComm.handleClientException(e);
-				}
-			}
-		});
-		
-		
-		if(false) ServerComm.getRootProps(100, new ServerComm.LocalCallback<PropsAndArgs>() {
+				});
 
-			@Override
-			public void call(PropsAndArgs allNodes) {
-				try {
+		if (false)
+			ServerComm.getRootProps(100,
+					new ServerComm.LocalCallback<PropsAndArgs>() {
 
-					ArgMap.logStart("em.em.cb");
-					ArgMap.log("em.em.cb", "Prop Tree From Server");
-					for (Long propID : allNodes.rootProps.keySet()) {
+						@Override
+						public void call(PropsAndArgs allNodes) {
+							try {
 
-						Proposition proposition = allNodes.rootProps
-								.get(propID);
-						ViewProp propView = new ViewPropEdit();
-						propView.recursiveBuildViewNode(proposition, allNodes.nodes);
+								ArgMap.logStart("em.em.cb");
+								ArgMap.log("em.em.cb", "Prop Tree From Server");
+								for (Long propID : allNodes.rootProps.keySet()) {
 
-						tree.addItem(propView);
-						propView.logNodeRecursive(0, "em.em.cb", true);
-					}
-					tree.resetState();
-					ArgMap.logEnd("em.em.cb");
-				} catch (Exception e) {
-					ServerComm.handleClientException(e);
-				}
-			}
-		});
+									Proposition proposition = allNodes.rootProps
+											.get(propID);
+									ViewProp propView = new ViewPropEdit();
+									propView.recursiveBuildViewNode(
+											proposition, allNodes.nodes);
+
+									tree.addItem(propView);
+									propView.logNodeRecursive(0, "em.em.cb",
+											true);
+								}
+								tree.resetState();
+								ArgMap.logEnd("em.em.cb");
+							} catch (Exception e) {
+								ServerComm.handleClientException(e);
+							}
+						}
+					});
 
 		tree.setAnimationEnabled(false);
 
@@ -190,7 +195,8 @@ public class EditMode extends ResizeComposite implements
 								Proposition proposition = nodes.props
 										.get(linkPropID);
 								ViewProp newViewProp = new ViewPropEdit();
-								newViewProp.recursiveBuildViewNode(proposition, nodes);
+								newViewProp.recursiveBuildViewNode(proposition,
+										nodes);
 
 								parentArgView.insertChildViewAt(propIndex,
 										newViewProp);
@@ -216,9 +222,10 @@ public class EditMode extends ResizeComposite implements
 								parentArgView.argument, propToLinkTo,
 								propViewToRemove.proposition, callback);
 					} else {
-						ArgMap.message(
-								"Cannot link to existing proposition when proposition currently being edited has children",
-								MessageType.ERROR);
+						ArgMap
+								.message(
+										"Cannot link to existing proposition when proposition currently being edited has children",
+										MessageType.ERROR);
 					}
 				} catch (Exception e) {
 					ServerComm.handleClientException(e);
@@ -227,14 +234,14 @@ public class EditMode extends ResizeComposite implements
 		}
 		sideSearchResults.removeAllRows();
 		if (propMatches.size() > 0) {
-			if( ! sideSearchScroll.isAttached() ){
+			if (!sideSearchScroll.isAttached()) {
 				sideSplit.remove(sideMessageScroll);
-				sideSplit.addSouth( sideSearchScroll, 400);
+				sideSplit.addSouth(sideSearchScroll, 400);
 				sideSplit.add(sideMessageScroll);
 			}
 			sideSearchLabel.setVisible(true);
 		} else {
-			sideSplit.remove(sideSearchScroll );
+			sideSplit.remove(sideSearchScroll);
 			sideSearchLabel.setVisible(false);
 		}
 		int i = 0;
@@ -323,26 +330,26 @@ public class EditMode extends ResizeComposite implements
 				args.add(argView.argument);
 				if (argView.getState() || propView.getChildCount() == 0) {
 					for (int j = 0; j < argView.getChildCount(); j++) {
-						recursiveGetOpenPropsAndArgs(
-								(ViewPropEdit) argView.getChild(j), props, args);
+						recursiveGetOpenPropsAndArgs((ViewPropEdit) argView
+								.getChild(j), props, args);
 					}
 				}
 			}
 		}
 	}
 
-//	private void openTree() {
-//		for (int i = 0; i < tree.getItemCount(); i++) {
-//			recursiveOpenTreeItem(tree.getItem(i));
-//		}
-//	}
+	// private void openTree() {
+	// for (int i = 0; i < tree.getItemCount(); i++) {
+	// recursiveOpenTreeItem(tree.getItem(i));
+	// }
+	// }
 
-//	private void recursiveOpenTreeItem(TreeItem item) {
-//		item.setState(true);
-//		for (int i = 0; i < item.getChildCount(); i++) {
-//			recursiveOpenTreeItem(item.getChild(i));
-//		}
-//	}
+	// private void recursiveOpenTreeItem(TreeItem item) {
+	// item.setState(true);
+	// for (int i = 0; i < item.getChildCount(); i++) {
+	// recursiveOpenTreeItem(item.getChild(i));
+	// }
+	// }
 
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
@@ -350,28 +357,69 @@ public class EditMode extends ResizeComposite implements
 		Object source = event.getSource();
 		if (source == searchTextBox) {
 			if (charCode == 32) {
-//				ServerComm.searchProps(searchTextBox.getText(), null, new LocalCallback<List<Proposition>>() {
-//					
-//					@Override
-//					public void call(List<Proposition> t) {
-//						//TODO add list to main panel with dummy nodes ready for lazy load!
-//						
-//					}
-//				});
+				// ServerComm.searchProps(searchTextBox.getText(), null, new
+				// LocalCallback<List<Proposition>>() {
+				//					
+				// @Override
+				// public void call(List<Proposition> t) {
+				// //TODO add list to main panel with dummy nodes ready for lazy
+				// load!
+				//						
+				// }
+				// });
 			}
 		}
-		
+
 	}
 
 	@Override
 	public void onClose(CloseEvent<TreeItem> event) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void onOpen(OpenEvent<TreeItem> event) {
-		// TODO Auto-generated method stub
-		
+		if (event.getSource() instanceof ViewNode) {
+			ViewNode source = (ViewNode) event.getSource();
+			List<Long> list = new ArrayList<Long>(source.getChildCount());
+			for (int i = 0; i < source.getChildCount(); i++) {
+				list.add(((ViewNode) source.getChild(i)).getNodeID());
+			}
+
+			class Callback implements LocalCallback<Nodes> {
+				List<Long> nodeIDs;
+				ViewNode source;
+
+				@Override
+				public void call(Nodes nodes) {
+					while( source.getChildCount() > 0){
+						source.getChild(0).remove();
+					}
+					
+					for( Long id : nodeIDs ){
+						if( source instanceof ViewArg ){
+							
+						} else if (source instanceof ViewProp ){
+							
+						}
+					}
+
+				}
+			}
+
+			Callback callback = new Callback();
+			callback.nodeIDs = list;
+			callback.source = source;
+
+			if (source instanceof ViewArg) {
+				ServerComm.getArgs(list, 1, callback);
+			} else if (source instanceof ViewProp) {
+				ServerComm.getProps(list, 1, callback);
+			} else {
+				assert false;
+			}
+		}
+
 	}
 }
