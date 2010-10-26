@@ -16,6 +16,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
+//TODO: test linking/unlinking in both edit and versions mode to see how it interacts with lazy load implementation in editmode
 //TODO: search area should not be in main scroll panel, props and args a little smaller, side panel a little smaller, fix auto resize of prop
 //TODO: new search feature
 //TODO: versionsmode display only opened top level nodes.
