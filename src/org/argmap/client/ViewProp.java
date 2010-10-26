@@ -4,20 +4,27 @@ package org.argmap.client;
 
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.user.client.ui.FocusPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public abstract class ViewProp extends ViewNode {
 
 	protected TextArea textArea = new TextAreaSloppyGrow();
+	//protected TextArea textArea = new TextArea();
 	protected VerticalPanel mainPanel = new VerticalPanel();
+	protected HorizontalPanel topPanel = new HorizontalPanel();
+	protected FocusPanel focusPanel;
 	public Proposition proposition;
 
 	public ViewProp(Proposition proposition) {
 		super();
 		setNode( proposition );
-		mainPanel.add(textArea);
-		this.setWidget(mainPanel);
+		mainPanel.add(topPanel);
+		topPanel.add(textArea);
+		focusPanel = new FocusPanel( mainPanel );
+		this.setWidget(focusPanel);
 	}
 	
 	public void setNodeLink( boolean link ){};

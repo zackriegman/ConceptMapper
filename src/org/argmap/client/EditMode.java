@@ -41,6 +41,7 @@ public class EditMode extends ResizeComposite implements
 	private final FlexTable sideSearchResults = new FlexTable();
 	private final ScrollPanel sideSearchScroll;
 	private final ScrollPanel sideMessageScroll;
+	public final ScrollPanel mainScrollPanel;
 	private final SplitLayoutPanel sideSplit = new SplitLayoutPanel();
 
 	TextBox searchTextBox = new TextBox();
@@ -158,7 +159,8 @@ public class EditMode extends ResizeComposite implements
 		tree.setAnimationEnabled(false);
 
 		mainSplit.addEast(sideSplit, 400);
-		mainSplit.add(new ScrollPanel(mainPanel));
+		mainScrollPanel = new ScrollPanel(mainPanel);
+		mainSplit.add( mainScrollPanel );
 		initWidget(mainSplit);
 	}
 
@@ -386,7 +388,7 @@ public class EditMode extends ResizeComposite implements
 	public void onClose(CloseEvent<TreeItem> event) {
 		if (event.getSource() instanceof ViewNode) {
 			ViewNode source = (ViewNode) event.getSource();
-			source.setOpen(false);
+			//source.setOpen(false);
 		}
 	}
 
@@ -423,7 +425,7 @@ public class EditMode extends ResizeComposite implements
 		ArgMap.logStart("em.op");
 		if (event.getTarget() instanceof ViewNode) {
 			ViewNode source = (ViewNode) event.getTarget();
-			source.setOpen(true);
+			//source.setOpen(true);
 			if (!source.isLoaded()) {
 				loadFromServer(source, 1);
 			}

@@ -1,16 +1,26 @@
 package org.argmap.client;
 
+import org.argmap.client.EditMode.EditModeTree;
+
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.user.client.ui.Button;
 
 public class ViewArgEdit extends ViewArg implements ChangeHandler,
-		KeyDownHandler {
+		KeyDownHandler, MouseOverHandler, MouseOutHandler, ClickHandler {
 
-	
-	public ViewArgEdit(){
+	private final Button expandButton = new Button("+");
+
+	public ViewArgEdit() {
 		super();
 		initialize();
 	}
@@ -25,9 +35,13 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 		initialize();
 	}
 
-	public void initialize() {
+	private final void initialize() {
 		textBox.addChangeHandler(this);
 		textBox.addKeyDownHandler(this);
+		focusPanel.addMouseOutHandler(this);
+		focusPanel.addMouseOverHandler(this);
+		expandButton.setStylePrimaryName("expandButton");
+		expandButton.addClickHandler(this);
 	}
 
 	@Override
@@ -75,9 +89,34 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 			ServerComm.handleClientException(e);
 		}
 	}
-	
+
 	@Override
-	public ViewNode createChild(){
+	public ViewNode createChild() {
 		return new ViewPropEdit();
+	}
+
+	@Override
+	public void onMouseOut(MouseOutEvent event) {
+		horizontalPanel.remove(expandButton);
+	}
+
+	@Override
+	public void onMouseOver(MouseOverEvent event) {
+		if (!isLoaded()) {
+			horizontalPanel.add(expandButton);
+		}
+	}
+
+	private EditModeTree getEditModeTree() {
+		return (EditModeTree) getTree();
+	}
+
+	@Override
+	public void onClick(ClickEvent event) {
+		expandButton.setVisible(false);
+		getEditModeTree().getEditMode().loadFromServer(this, 10);
+		setOpen(true);
+		getEditModeTree().resetState();
+
 	}
 }

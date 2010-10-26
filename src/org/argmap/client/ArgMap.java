@@ -16,12 +16,11 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: lazy load in editmode (maybe a few layers deep in advance) instead of loading the entire tree (and create a button to open all (or maybe ten) levels of children at once
-//TODO: do we still need the isOpen() function?  maybe we only need isLoaded()... what is the purpose of isOpen()?
+//TODO: search area should not be in main scroll panel, props and args a little smaller, side panel a little smaller, fix auto resize of prop
 //TODO: new search feature
 //TODO: versionsmode display only opened top level nodes.
 
-
+//TODO: figure out CSS inheritance
 //TODO: prevent circular linking from crashing program...
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 

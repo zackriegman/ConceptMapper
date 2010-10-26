@@ -69,3 +69,14 @@
 .messageArea {
 	text-align: center;
 }
+
+.expandButton {
+	background: transparent;
+	margin-left: .5em;
+	border-color: #00f;
+	border-width: 1px;
+	border-style: solid;
+	
+	/*height: 1.5em;
+	width: 1.5em;*/
+}

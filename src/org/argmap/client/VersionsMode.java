@@ -491,7 +491,7 @@ public class VersionsMode extends ResizeComposite implements
 			}
 
 			loadVersionListFromTimeMachine();
-			viewNodeVer.setOpen(false);
+			//viewNodeVer.setOpen(false);
 			ArgMap.logEnd("vm.oc");
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);

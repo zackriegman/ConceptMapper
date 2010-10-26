@@ -2,6 +2,7 @@ package org.argmap.client;
 
 
 
+import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
@@ -10,7 +11,8 @@ public abstract class ViewArg extends ViewNode {
 	public Argument argument;
 	protected Label label;
 	protected TextBox textBox;
-	HorizontalPanel horizontalPanel;
+	protected FocusPanel focusPanel;
+	protected HorizontalPanel horizontalPanel;
 
 	public ViewArg(Argument arg) {
 		super();
@@ -55,7 +57,7 @@ public abstract class ViewArg extends ViewNode {
 		return argView;
 	}
 
-	private void initialize() {
+	private final void initialize() {
 		label = new Label();
 		textBox = new TextBox();
 		textBox.setVisibleLength(Argument.MAX_LENGTH);
@@ -64,7 +66,8 @@ public abstract class ViewArg extends ViewNode {
 		horizontalPanel.setWidth("51.5em");
 		horizontalPanel.add(label);
 		horizontalPanel.add(textBox);
-		setWidget(horizontalPanel);
+		focusPanel = new FocusPanel( horizontalPanel );
+		setWidget(focusPanel);
 	}
 	
 	public void setPro( boolean pro ){

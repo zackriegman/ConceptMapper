@@ -13,12 +13,17 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextArea;
 
 public class ViewPropEdit extends ViewProp implements ClickHandler,
-		KeyDownHandler, KeyUpHandler, FocusHandler, ChangeHandler {
+		KeyDownHandler, KeyUpHandler, FocusHandler, ChangeHandler,
+		MouseOverHandler, MouseOutHandler {
 
 	private static ViewPropEdit lastPropositionWithFocus = null;
 	private final Button proButton;
@@ -45,33 +50,38 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		mainPanel.add(buttonsPanel);
 		proButton = new Button("For");
 		conButton = new Button("Against");
-		expandButton = new Button("+");
 		buttonsPanel.add(proButton);
 		buttonsPanel.add(conButton);
-		buttonsPanel.add(expandButton);
+
 		proButton.addClickHandler(this);
 		conButton.addClickHandler(this);
-		expandButton.addClickHandler(this);
 		proButton.setVisible(false);
 		conButton.setVisible(false);
+
+		expandButton = new Button("+");
+		expandButton.addClickHandler(this);
 		expandButton.setVisible(false);
+		expandButton.setStylePrimaryName("expandButton");
 
 		if (proposition.linkCount > 1) {
-			setNodeLink( true );
+			setNodeLink(true);
 		} else {
-			setNodeLink( false );
+			setNodeLink(false);
 		}
 
 		textArea.addKeyDownHandler(this);
 		textArea.addKeyUpHandler(this);
 		textArea.addFocusHandler(this);
 		textArea.addChangeHandler(this);
+		focusPanel.addFocusHandler(this);
+		focusPanel.addMouseOverHandler(this);
+		focusPanel.addMouseOutHandler(this);
 		setState(true);
 	}
 
 	@Override
 	public void setNodeLink(boolean link) {
-		if (link && linkRemoveButton == null ) {
+		if (link && linkRemoveButton == null) {
 			linkRemoveButton = new Button("Unlink");
 			linkEditButton = new Button("Edit");
 			buttonsPanel.add(linkRemoveButton);
@@ -81,7 +91,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			linkRemoveButton.setVisible(false);
 			linkEditButton.setVisible(false);
 			textArea.setReadOnly(true);
-		} else if (!link && linkRemoveButton != null){
+		} else if (!link && linkRemoveButton != null) {
 			buttonsPanel.remove(linkRemoveButton);
 			buttonsPanel.remove(linkEditButton);
 			linkRemoveButton = null;
@@ -111,10 +121,10 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				remove();
 			} else if (event.getSource() == linkEditButton) {
 				textArea.setReadOnly(false);
-			}
-			else if( event.getSource() == expandButton ){
+			} else if (event.getSource() == expandButton) {
+				expandButton.setVisible(false);
 				getEditModeTree().getEditMode().loadFromServer(this, 10);
-				setOpen( true );
+				setOpen(true);
 				getEditModeTree().resetState();
 			}
 		} catch (Exception e) {
@@ -127,13 +137,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		ViewPropEdit newPropView = new ViewPropEdit();
 		newArgView.addItem(newPropView);
 		this.addItem(newArgView);
-		newArgView.setOpen( true );
-		this.setOpen( true );
-		((EditModeTree)getTree()).resetState();
+		newArgView.setOpen(true);
+		this.setOpen(true);
+		((EditModeTree) getTree()).resetState();
 		newPropView.textArea.setFocus(true);
 		ServerComm.addArg(pro, this.proposition, newArgView.argument);
-		ServerComm.addProp(newPropView.proposition, newArgView.argument,
-				0);
+		ServerComm.addProp(newPropView.proposition, newArgView.argument, 0);
 	}
 
 	@Override
@@ -144,7 +153,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			if (source == textArea) {
 				if (charCode == KeyCodes.KEY_ENTER && parentArgView() == null) {
 					onChange(null);
-					addArgument( true );
+					addArgument(true);
 					event.preventDefault();
 				} else if (charCode == KeyCodes.KEY_ENTER
 						&& parentArgView() != null) {
@@ -325,37 +334,13 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	}
 
-	@Override
 	public void onFocus(FocusEvent event) {
 		try {
 			Object source = event.getSource();
 			if (source == textArea) {
-				// if another Proposition's buttons are visible hide them
-				if (lastPropositionWithFocus != this
-						&& lastPropositionWithFocus != null) {
-					lastPropositionWithFocus.proButton.setVisible(false);
-					lastPropositionWithFocus.conButton.setVisible(false);
-					lastPropositionWithFocus.expandButton.setVisible(false);
-					if (lastPropositionWithFocus.linkEditButton != null) {
-						lastPropositionWithFocus.linkEditButton
-								.setVisible(false);
-						lastPropositionWithFocus.linkRemoveButton
-								.setVisible(false);
-					}
-				}
-				// make this proposition's button's visible
-				proButton.setVisible(true);
-				conButton.setVisible(true);
-				expandButton.setVisible(true);
-				//expandButton.setEnabled( false );
-				if (linkEditButton != null) {
-					linkEditButton.setVisible(true);
-					linkRemoveButton.setVisible(true);
-				}
-				lastPropositionWithFocus = this;
-				ServerComm.searchProps(textArea.getText(),
-						parentArgument(), getEditModeTree().searchCallback);
-
+				updateButtons();
+				ServerComm.searchProps(textArea.getText(), parentArgument(),
+						getEditModeTree().searchCallback);
 			}
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
@@ -364,6 +349,34 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	private EditModeTree getEditModeTree() {
 		return (EditModeTree) getTree();
+	}
+
+	/*
+	 * TODO: delete this method not using this while I test out having the
+	 * buttons appear on mouseover events...
+	 */
+	private void updateButtons() {
+		// if another Proposition's buttons are visible hide them
+		if (lastPropositionWithFocus != this
+				&& lastPropositionWithFocus != null) {
+			lastPropositionWithFocus.proButton.setVisible(false);
+			lastPropositionWithFocus.conButton.setVisible(false);
+			lastPropositionWithFocus.expandButton.setVisible(false);
+			if (lastPropositionWithFocus.linkEditButton != null) {
+				lastPropositionWithFocus.linkEditButton.setVisible(false);
+				lastPropositionWithFocus.linkRemoveButton.setVisible(false);
+			}
+		}
+		// make this proposition's button's visible
+		proButton.setVisible(true);
+		conButton.setVisible(true);
+		expandButton.setVisible(true);
+		// expandButton.setEnabled( false );
+		if (linkEditButton != null) {
+			linkEditButton.setVisible(true);
+			linkRemoveButton.setVisible(true);
+		}
+		lastPropositionWithFocus = this;
 	}
 
 	@Override
@@ -394,8 +407,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		try {
 			Object source = event.getSource();
 			if (source == textArea && !deleted) {
-				ServerComm.searchProps(textArea.getText(),
-						parentArgument(),
+				ServerComm.searchProps(textArea.getText(), parentArgument(),
 						((EditModeTree) getTree()).searchCallback);
 			}
 		} catch (Exception e) {
@@ -407,5 +419,38 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	@Override
 	public ViewNode createChild() {
 		return new ViewArgEdit();
+	}
+
+	@Override
+	public void onMouseOut(MouseOutEvent event) {
+		topPanel.remove(expandButton);
+
+		
+//		proButton.setVisible(false);
+//		conButton.setVisible(false);
+//		expandButton.setVisible(false);
+//		if (linkEditButton != null) {
+//			linkEditButton.setVisible(false);
+//			linkRemoveButton.setVisible(false);
+//		}
+	}
+
+	@Override
+	public void onMouseOver(MouseOverEvent event) {
+		try {
+			if (!isLoaded()) {
+				topPanel.add(expandButton);
+				expandButton.setVisible(true);
+			}
+			
+//			proButton.setVisible(true);
+//			conButton.setVisible(true);
+//			if (linkEditButton != null) {
+//				linkEditButton.setVisible(true);
+//				linkRemoveButton.setVisible(true);
+//			}
+		} catch (Exception e) {
+			ServerComm.handleClientException(e);
+		}
 	}
 }

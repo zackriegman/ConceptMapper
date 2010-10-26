@@ -60,7 +60,6 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	@Override
 	public void setOpen(boolean open) {
 		assert false;
-		
 	}
 
 	/* TODO: this is the only implemented method... explain why that is... */
