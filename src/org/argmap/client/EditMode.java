@@ -11,8 +11,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.user.client.DOM;
@@ -31,7 +31,7 @@ import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
 public class EditMode extends ResizeComposite implements
-		LocalCallback<List<Proposition>>, KeyDownHandler, OpenHandler<TreeItem> {
+		LocalCallback<PropsAndArgs>, KeyUpHandler, OpenHandler<TreeItem> {
 
 	private static HTML sideMessageArea = new HTML();
 	private final Label sideSearchLabel = new Label(
@@ -51,7 +51,7 @@ public class EditMode extends ResizeComposite implements
 		/******************
 		 * setup side bar *
 		 ******************/
-		
+
 		sideSearchLabel.setVisible(false);
 		FlowPanel sideSearchArea = new FlowPanel();
 		sideSearchArea.add(sideSearchLabel);
@@ -61,13 +61,15 @@ public class EditMode extends ResizeComposite implements
 		sideMessageScroll = new ScrollPanel(sideMessageArea);
 
 		sideSplit.add(sideMessageScroll);
-		/* sideSearchScroll is not added here. Instead it is added/removed as
-		 * necessary depending on whether there are search results */
+		/*
+		 * sideSearchScroll is not added here. Instead it is added/removed as
+		 * necessary depending on whether there are search results
+		 */
 
 		/*******************
 		 * setup main area *
 		 *******************/
-		
+
 		/*
 		 * setup the search box
 		 */
@@ -84,13 +86,13 @@ public class EditMode extends ResizeComposite implements
 			}
 		});
 
-		searchTextBox.addKeyDownHandler(this);
+		searchTextBox.addKeyUpHandler(this);
 		searchTextBox.addStyleName("searchTextBox");
-		//searchTextBox.setVisibleLength(60);
+		// searchTextBox.setVisibleLength(60);
 		Label searchLabel = new Label("Search:");
 		searchLabel.addStyleName("searchLabel");
 		FlowPanel searchBoxPanel = new FlowPanel();
-		searchBoxPanel.addStyleName( "searchBoxPanel" );
+		searchBoxPanel.addStyleName("searchBoxPanel");
 		searchBoxPanel.add(searchLabel);
 		searchBoxPanel.add(searchTextBox);
 		searchBoxPanel.add(addPropButton);
@@ -103,10 +105,9 @@ public class EditMode extends ResizeComposite implements
 		 */
 		tree = new EditModeTree(this);
 		tree.addOpenHandlerTracked(this);
-		tree.searchCallback = this;
 		tree.setAnimationEnabled(false);
 		treeScrollPanel = new ScrollPanel(tree);
-		
+
 		/*
 		 * add the search box and tree to the main area
 		 */
@@ -117,7 +118,7 @@ public class EditMode extends ResizeComposite implements
 		/*************************
 		 * set up the whole page *
 		 *************************/
-		
+
 		SplitLayoutPanel mainSplit = new SplitLayoutPanel();
 		mainSplit.addEast(sideSplit, 300);
 		mainSplit.add(mainPanel);
@@ -126,8 +127,8 @@ public class EditMode extends ResizeComposite implements
 		/*****************
 		 * get the props *
 		 *****************/
-		
-		ServerComm.getRootProps(3,
+
+		ServerComm.getRootProps(0,
 				new ServerComm.LocalCallback<PropsAndArgs>() {
 
 					@Override
@@ -135,10 +136,8 @@ public class EditMode extends ResizeComposite implements
 						try {
 							ArgMap.logStart("em.em.cb");
 							ArgMap.log("em.em.cb", "Prop Tree From Server");
-							for (Long propID : allNodes.rootProps.keySet()) {
+							for (Proposition proposition : allNodes.rootProps) {
 
-								Proposition proposition = allNodes.rootProps
-										.get(propID);
 								ViewProp propView = new ViewPropEdit();
 								propView.recursiveBuildViewNode(proposition,
 										allNodes.nodes);
@@ -154,8 +153,8 @@ public class EditMode extends ResizeComposite implements
 					}
 				});
 	}
-	
-	private void addRootProp(){
+
+	private void addRootProp() {
 		ViewPropEdit newPropView = new ViewPropEdit();
 
 		// close the other tree items
@@ -163,6 +162,8 @@ public class EditMode extends ResizeComposite implements
 			tree.getItem(i).setState(false);
 		}
 
+		newPropView.setContent(searchTextBox.getText());
+		newPropView.getProposition().setContent(searchTextBox.getText());
 		tree.addItem(newPropView);
 		newPropView.haveFocus();
 		ServerComm.addProp(newPropView.getProposition(), null, 0);
@@ -173,7 +174,7 @@ public class EditMode extends ResizeComposite implements
 	}
 
 	@Override
-	public void call(List<Proposition> propMatches) {
+	public void call(PropsAndArgs propMatches) {
 		class SearchButton extends Button implements ClickHandler {
 			int resultIndex;
 			List<Proposition> propMatches;
@@ -239,7 +240,7 @@ public class EditMode extends ResizeComposite implements
 			}
 		}
 		sideSearchResults.removeAllRows();
-		if (propMatches.size() > 0) {
+		if (propMatches.rootProps.size() > 0) {
 			if (!sideSearchScroll.isAttached()) {
 				sideSplit.remove(sideMessageScroll);
 				sideSplit.addSouth(sideSearchScroll, 400);
@@ -251,9 +252,10 @@ public class EditMode extends ResizeComposite implements
 			sideSearchLabel.setVisible(false);
 		}
 		int i = 0;
-		for (Proposition prop : propMatches) {
+		for (Proposition prop : propMatches.rootProps) {
 			sideSearchResults.setText(i, 0, prop.getContent());
-			sideSearchResults.setWidget(i, 1, new SearchButton(i, propMatches));
+			sideSearchResults.setWidget(i, 1, new SearchButton(i,
+					propMatches.rootProps));
 			i++;
 		}
 	}
@@ -265,7 +267,6 @@ public class EditMode extends ResizeComposite implements
 	 * to work. I found this fix on stack overflow
 	 */
 	public class EditModeTree extends ArgTree {
-		public LocalCallback<List<Proposition>> searchCallback;
 
 		EditMode editMode;
 
@@ -355,22 +356,29 @@ public class EditMode extends ResizeComposite implements
 	}
 
 	@Override
-	public void onKeyDown(KeyDownEvent event) {
-		int charCode = event.getNativeKeyCode();
+	public void onKeyUp(KeyUpEvent event) {
+		//int charCode = event.getNativeKeyCode();
 		Object source = event.getSource();
 		if (source == searchTextBox) {
-			if (charCode == 32) {
-				 ServerComm.searchProps(searchTextBox.getText(), null, new
-				 LocalCallback<List<Proposition>>() {
-				
-				 @Override
-				 public void call(List<Proposition> t) {
-				 //TODO add list to main panel with dummy nodes ready for lazy
-				 load!
-				
-				 }
-				 });
-			}
+			// if (charCode == 32) { //keeping this around to I remember how to select for space bar...
+			ServerComm.searchProps(searchTextBox.getText(), null, null,
+					new LocalCallback<PropsAndArgs>() {
+
+						@Override
+						public void call(PropsAndArgs results) {
+							tree.clear();
+							for (Proposition proposition : results.rootProps) {
+
+								ViewProp propView = new ViewPropEdit();
+								propView.recursiveBuildViewNode(proposition,
+										results.nodes);
+
+								tree.addItem(propView);
+							}
+							tree.resetState();
+						}
+					});
+
 		}
 
 	}

@@ -19,6 +19,7 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: new search feature
 //TODO: versionsmode display only opened top level nodes.
 //TODO: batch open icon not visible/clickable on props that reach right screen edge
+//TODO: searched for "use this" even when proposition has children, and throws an error if you click on "use this"
 //TODO: test in chrome, safari, ie8, opera,
 
 //TODO: figure out CSS inheritance

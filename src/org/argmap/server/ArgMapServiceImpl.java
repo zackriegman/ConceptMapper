@@ -2,6 +2,7 @@ package org.argmap.server;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -91,11 +92,10 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
 					"linkCount =", 0);
 
-			Map<Long, Proposition> rootProps = new HashMap<Long, Proposition>();
+			List<Proposition> rootProps = propQuery.list();
 			Nodes nodes = new Nodes();
 
-			for (Proposition prop : propQuery) {
-				rootProps.put(prop.id, prop);
+			for (Proposition prop : rootProps) {
 				recursiveGetProps(prop, nodes, depthLimit);
 			}
 			propsAndArgs.rootProps = rootProps;
@@ -153,6 +153,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			// println("addProposition(): parentArgID:"+parentArgID+"; position:"+position+"; content:"+content);
 			Proposition newProposition = new Proposition();
 			newProposition.content = content;
+			newProposition.tokens = getTokensForIndexingOrQuery(content, 30);
 			Argument parentArg = null;
 
 			if (parentArgID != null) {
@@ -668,18 +669,83 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public List<Proposition> searchProps(String string, Long filterArgID)
+	public PropsAndArgs searchProps(String string, Long filterArgID, Long filterPropID)
+			throws Exception {
+		try {
+			Set<String> tokenSet = getTokensForIndexingOrQuery(string, 5);
+			List<String> tokens = new ArrayList<String>(tokenSet);
+			if (tokens.isEmpty()) {
+				return getPropsAndArgs(0);
+			}
+			Argument filterArg = null;
+			if (filterArgID != null) {
+				filterArg = ofy.get(Argument.class, filterArgID);
+			}
+			List<Proposition> results = new LinkedList<Proposition>();
+			Set<Long> duplicateFilter = new HashSet<Long>();
+
+			/*
+			 * this runs through all the possible combinations of tokens that
+			 * can be searched for (eventually it should stop when it gets a
+			 * certain number or has spent a certain amount of time searching,
+			 * and let the client re-request to continue where it left off if
+			 * the client wants more results...or wants to continue waiting...).
+			 * It starts by searching for all the tokens, and then searches for
+			 * each combination of one fewer than all the tokens, then for two
+			 * fewer, and so forth until it gets to just one term.
+			 */
+			int comboCount = 0;
+			int[] combination;
+			for (int i = tokens.size(); i > 0; i--) {
+				CombinationGenerator x = new CombinationGenerator(
+						tokens.size(), i);
+				while (x.hasMore()) {
+					comboCount++;
+					combination = x.getNext();
+					Query<Proposition> query = ofy.query(Proposition.class);
+					for (int j = 0; j < combination.length; j++) {
+						query.filter("tokens", tokens.get(combination[j]));
+					}
+					for (Proposition proposition : query) {
+						if ((filterArg != null
+								&& filterArg.childIDs.contains(proposition.id)) ||
+								proposition.id.equals(filterPropID) ) {
+							continue;
+						}
+						if (duplicateFilter.add(proposition.id)) {
+							results.add(proposition);
+						}
+					}
+				}
+			}
+			log.fine("comboCount: " + comboCount);
+
+			PropsAndArgs propsAndArgs = new PropsAndArgs();
+			propsAndArgs.rootProps = results;
+			propsAndArgs.nodes = new Nodes();
+
+			return propsAndArgs;
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Uncaught exception", e);
+			throw e;
+		}
+	}
+
+	public PropsAndArgs searchProps_OLD(String string, Long filterArgID)
 			throws Exception {
 		try {
 			// System.out.println("start:  searchPropositions");
 			Set<String> tokens = getTokensForIndexingOrQuery(string, 5);
+			if (tokens.isEmpty()) {
+				return getPropsAndArgs(0);
+			}
 			/*
 			 * String printString = ""; for (String str : tokens) { printString
 			 * = printString + " " + str; } System.out.println("searching for: "
 			 * + printString);
 			 */
-			Query<Proposition> query = ofy.query(Proposition.class);
 
+			Query<Proposition> query = ofy.query(Proposition.class);
 			for (String token : tokens) {
 				query.filter("tokens", token);
 			}
@@ -697,7 +763,11 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				}
 				results.add(proposition);
 			}
-			return results;
+			PropsAndArgs propsAndArgs = new PropsAndArgs();
+			propsAndArgs.rootProps = results;
+			propsAndArgs.nodes = new Nodes();
+
+			return propsAndArgs;
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Uncaught exception", e);
 			throw e;
@@ -714,9 +784,11 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	public static Set<String> getTokensForIndexingOrQuery(String index_raw,
 			int maximumNumberOfTokensToReturn) {
 
-		String indexCleanedOfHTMLTags = index_raw.replaceAll("\\<.*?>", " ");
-
 		Set<String> returnSet = new HashSet<String>();
+		if (index_raw == null) {
+			return returnSet;
+		}
+		String indexCleanedOfHTMLTags = index_raw.replaceAll("\\<.*?>", " ");
 
 		try {
 

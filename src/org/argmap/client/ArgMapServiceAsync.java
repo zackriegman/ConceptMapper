@@ -32,9 +32,6 @@ public interface ArgMapServiceAsync {
 	void unlinkProp(Long parentArgID, Long propositionID,
 			AsyncCallback<Void> callback);
 
-	void searchProps(String string, Long filterArgID,
-			AsyncCallback<List<Proposition>> callback);
-
 	void replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
 			Long removePropID, AsyncCallback<Nodes> callback);
 
@@ -61,4 +58,7 @@ public interface ArgMapServiceAsync {
 
 	void getNodesChildren(List<Long> nodeIDs, int depth,
 			AsyncCallback<Nodes> callback);
+
+	void searchProps(String string, Long filerArgID, Long filterPropID,
+			AsyncCallback<PropsAndArgs> callback);
 }

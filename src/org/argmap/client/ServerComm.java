@@ -188,15 +188,13 @@ public class ServerComm {
 								"Server Reports Success Fetching Proposition With Changes"));
 	}
 
-	public static void searchProps(String string, Argument filterArg,
-			LocalCallback<List<Proposition>> localCallback) {
-		Long id = null;
-		if (filterArg != null) {
-			id = filterArg.id;
-		}
+	public static void searchProps(String string, Argument filterArg, Proposition filterProp,
+			LocalCallback<PropsAndArgs> localCallback) {
+		Long argID = filterArg == null ? null : filterArg.id;
+		Long propID = filterProp == null ? null : filterProp.id;
 
-		argMapService.searchProps(string, id,
-				new ServerCallback<List<Proposition>>(localCallback, null));
+		argMapService.searchProps(string, argID, propID,
+				new ServerCallback<PropsAndArgs>(localCallback, null));
 	}
 
 	public static void addArg(boolean pro, Proposition parentProp,

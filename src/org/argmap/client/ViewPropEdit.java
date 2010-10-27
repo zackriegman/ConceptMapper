@@ -123,7 +123,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				textArea.setReadOnly(false);
 			} else if (event.getSource() == expandButton) {
 				expandButton.setVisible(false);
-				getEditModeTree().getEditMode().loadFromServer(this, 10);
+				getEditMode().loadFromServer(this, 10);
 				setOpen(true);
 				getEditModeTree().resetState();
 			}
@@ -339,14 +339,18 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			Object source = event.getSource();
 			if (source == textArea) {
 				updateButtons();
-				ServerComm.searchProps(textArea.getText(), parentArgument(),
-						getEditModeTree().searchCallback);
+				ServerComm.searchProps(textArea.getText(), parentArgument(), proposition,
+						getEditMode());
 			}
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
 		}
 	}
 
+	private EditMode getEditMode() {
+		return ((EditModeTree) getTree()).getEditMode();
+	}
+	
 	private EditModeTree getEditModeTree() {
 		return (EditModeTree) getTree();
 	}
@@ -407,8 +411,8 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		try {
 			Object source = event.getSource();
 			if (source == textArea && !deleted) {
-				ServerComm.searchProps(textArea.getText(), parentArgument(),
-						((EditModeTree) getTree()).searchCallback);
+				ServerComm.searchProps(textArea.getText(), parentArgument(), proposition,
+						getEditMode());
 			}
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);

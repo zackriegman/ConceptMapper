@@ -37,7 +37,7 @@ public interface ArgMapService extends RemoteService {
 	public class PropsAndArgs implements Serializable {
 		/* added to suppress warnings */
 		private static final long serialVersionUID = 1L;
-		public Map<Long, Proposition> rootProps;
+		public List<Proposition> rootProps;
 		public Nodes nodes;
 	}
 	
@@ -95,6 +95,6 @@ public interface ArgMapService extends RemoteService {
 	
 	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs) throws Exception;
 	
-	public List<Proposition> searchProps( String string, Long filerArgID ) throws Exception;
+	public PropsAndArgs searchProps( String string, Long filerArgID, Long filterPropID ) throws Exception;
 
 }

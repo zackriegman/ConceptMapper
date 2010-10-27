@@ -2,7 +2,6 @@ package org.argmap.client;
 
 
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.ui.FocusPanel;
@@ -125,9 +124,9 @@ public abstract class ViewProp extends ViewNode {
 			// ArgMap("onKeyPress: line estimate = " + lineEstimate
 			// );
 			setVisibleLines(lineEstimate);
-			GWT.log("line estimate:"+lineEstimate);
-			GWT.log("length:" + length);
-			GWT.log("widthInCharacters:" + widthInCharacters);
+//			GWT.log("line estimate:"+lineEstimate);
+//			GWT.log("length:" + length);
+//			GWT.log("widthInCharacters:" + widthInCharacters);
 			//setVisibleLines(10);
 		}
 

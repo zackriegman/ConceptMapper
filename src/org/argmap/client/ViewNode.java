@@ -100,7 +100,6 @@ public abstract class ViewNode extends TreeItem {
 
 	/*
 	 * As far as I can tell this is currently only used in EditMode.
-	 * As such it does not bother with isOpen.
 	 */
 	public void recursiveBuildViewNode(Node node, Nodes nodes) {
 		setNode(node);
