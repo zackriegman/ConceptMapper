@@ -3,11 +3,14 @@ package org.argmap.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
@@ -109,5 +112,24 @@ public class ArgTree extends Tree {
 			}
 		}
 	}
+	
+	/*
+	 * solves the annoying problem where the tree scrolls to a previously selected node when opening a new node
+	 * thereby often putting the new node out of view.
+	 */
+	@Override
+	  public void onBrowserEvent(Event event) {
+	    int eventType = DOM.eventGetType(event);
+
+	    switch (eventType) {
+	      case Event.ONCLICK:
+	        Element e = DOM.eventGetTarget(event);
+	        if (e.getTagName().equals("IMG")) {
+	          return;
+	        }
+	    }
+
+	    super.onBrowserEvent(event);
+	  } 
 
 }

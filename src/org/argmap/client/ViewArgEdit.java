@@ -83,6 +83,15 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 					ServerComm.deleteArg(argument);
 
 					event.preventDefault();
+				} else if (charCode == KeyCodes.KEY_ENTER
+						&& textBox.getCursorPos() == textBox.getText().length()) {
+					ViewPropEdit newPropView = new ViewPropEdit();
+					insertChildViewAt(0, newPropView);
+					newPropView.haveFocus();
+					ServerComm.addProp(newPropView.proposition,
+							argument, 0);
+					event.preventDefault();
+
 				}
 			}
 		} catch (Exception e) {

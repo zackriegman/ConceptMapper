@@ -8,6 +8,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 
 public abstract class ViewArg extends ViewNode {
+	private static final String ARG_WIDTH = "48.5em";
 	public Argument argument;
 	protected Label label;
 	protected TextBox textBox;
@@ -63,7 +64,7 @@ public abstract class ViewArg extends ViewNode {
 		textBox.setVisibleLength(Argument.MAX_LENGTH);
 		textBox.setMaxLength(Argument.MAX_LENGTH);
 		horizontalPanel = new HorizontalPanel();
-		horizontalPanel.setWidth("51.5em");
+		horizontalPanel.setWidth( ARG_WIDTH );
 		horizontalPanel.add(label);
 		horizontalPanel.add(textBox);
 		focusPanel = new FocusPanel( horizontalPanel );
@@ -76,12 +77,12 @@ public abstract class ViewArg extends ViewNode {
 		}
 		if (pro) {
 			label.setText("Argument For: ");
-			horizontalPanel.setStylePrimaryName("proArg");
-			textBox.setStylePrimaryName("proArgTextBox");
+			horizontalPanel.addStyleName("proArg");
+			textBox.addStyleName("proArgTextBox");
 		} else {
 			label.setText("Argument Against: ");
-			horizontalPanel.setStylePrimaryName("conArg");
-			textBox.setStylePrimaryName("conArgTextBox");
+			horizontalPanel.addStyleName("conArg");
+			textBox.addStyleName("conArgTextBox");
 		}
 	}
 

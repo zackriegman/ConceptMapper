@@ -1,37 +1,60 @@
 /** Add css rules here for your application. */
+.flowPanel-left {
+	float: left;
+}
 
 .propositionTextArea {
 	border: 1px dotted #00f;
 	padding: .5em;
-	font-family: arial,sans-serif;
-	font-size:	12.8px;
+	font-family: arial, sans-serif;
+	font-size: 12.8px;
 }
+
+.searchBoxPanel {
+	background-color: #D0E4F6; /*#92C1F0;*/
+	padding: .5em;
+}
+
+.addPropButton {
+	/*height: 1em;*/
+	/*font-size: 1em;*/
+	}
+
+.searchTextBox {
+	margin-left: .5em;
+	margin-right: 1em;
+	width: 40em;
+}
+
+.searchLabel {
+	margin-top: .15em;
+	}
 
 .linkedPropositionTextArea {
 	border: 1px dotted #00f;
 	padding: .5em;
 	/*background-color: #FFF1A8;*/ /*background-color: #FFFF8B;*/
 	background-color: #FFFFCC;
-	font-family: arial,sans-serif;
-	font-size:	12.8px;
+	font-family: arial, sans-serif;
+	font-size: 12.8px;
 }
 
 .proArgTextBox {
 	border-style: solid;
-	border-color: #E8E8E8 ;
+	border-color: #E8E8E8;
 	border-width: 1px;
-	background-color:#D7FDD7;
-	font-family: arial,sans-serif;
-	font-size:	12.8px;
+	background-color: #D7FDD7;
+	font-family: arial, sans-serif;
+	font-size: 12.8px;
 }
 
 .conArgTextBox {
 	border-style: solid;
-	border-color: #E8E8E8 ;
+	border-color: #E8E8E8;
 	border-width: 1px;
-	background-color:#FDD7D7;
-	font-family: arial,sans-serif;
-	font-size:	12.8px;
+	background-color: #FDD7D7;
+	font-family: arial, sans-serif;
+	font-size: 12.8px;
 }
 
 .proArg {
@@ -76,7 +99,6 @@
 	border-color: #00f;
 	border-width: 1px;
 	border-style: solid;
-	
 	/*height: 1.5em;
 	width: 1.5em;*/
 }

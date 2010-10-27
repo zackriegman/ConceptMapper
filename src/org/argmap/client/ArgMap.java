@@ -16,10 +16,10 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: test linking/unlinking in both edit and versions mode to see how it interacts with lazy load implementation in editmode
-//TODO: search area should not be in main scroll panel, props and args a little smaller, side panel a little smaller, fix auto resize of prop
 //TODO: new search feature
 //TODO: versionsmode display only opened top level nodes.
+//TODO: batch open icon not visible/clickable on props that reach right screen edge
+//TODO: test in chrome, safari, ie8, opera,
 
 //TODO: figure out CSS inheritance
 //TODO: prevent circular linking from crashing program...
@@ -137,8 +137,8 @@ public class ArgMap implements EntryPoint {
 			HTML htmlTitle = new HTML(
 					"<div class=\"title\">coreason.org</div>"
 							+ "<div class=\"subTitle\">...mass collaborative reasoning about everything...</div>");
-			// htmlTitle.setStylePrimaryName("titleLabel");
-			// messageArea.setStylePrimaryName("messageArea");
+			// htmlTitle.addStyleName("titleLabel");
+			// messageArea.addStyleName("messageArea");
 			mainPanel.addNorth(htmlTitle, 4);
 			mainPanel.addNorth(messageArea, 2);
 			mainPanel.add(modePanel);

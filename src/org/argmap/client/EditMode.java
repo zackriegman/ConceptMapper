@@ -8,21 +8,20 @@ import org.argmap.client.ArgMapService.PropsAndArgs;
 import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -32,8 +31,7 @@ import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
 public class EditMode extends ResizeComposite implements
-		LocalCallback<List<Proposition>>, KeyDownHandler,
-		OpenHandler<TreeItem>, CloseHandler<TreeItem> {
+		LocalCallback<List<Proposition>>, KeyDownHandler, OpenHandler<TreeItem> {
 
 	private static HTML sideMessageArea = new HTML();
 	private final Label sideSearchLabel = new Label(
@@ -41,7 +39,7 @@ public class EditMode extends ResizeComposite implements
 	private final FlexTable sideSearchResults = new FlexTable();
 	private final ScrollPanel sideSearchScroll;
 	private final ScrollPanel sideMessageScroll;
-	public final ScrollPanel mainScrollPanel;
+	public final ScrollPanel treeScrollPanel;
 	private final SplitLayoutPanel sideSplit = new SplitLayoutPanel();
 
 	TextBox searchTextBox = new TextBox();
@@ -50,55 +48,85 @@ public class EditMode extends ResizeComposite implements
 	public EditMode() {
 		super();
 
-		FlowPanel mainPanel = new FlowPanel();
-
-		SplitLayoutPanel mainSplit = new SplitLayoutPanel();
-
+		/******************
+		 * setup side bar *
+		 ******************/
+		
+		sideSearchLabel.setVisible(false);
 		FlowPanel sideSearchArea = new FlowPanel();
 		sideSearchArea.add(sideSearchLabel);
-		sideSearchLabel.setVisible(false);
 		sideSearchArea.add(sideSearchResults);
+
 		sideSearchScroll = new ScrollPanel(sideSearchArea);
-
 		sideMessageScroll = new ScrollPanel(sideMessageArea);
-		sideSplit.add(sideMessageScroll);
 
-		Button addPropButton = new Button("Add a new proposition");
+		sideSplit.add(sideMessageScroll);
+		/* sideSearchScroll is not added here. Instead it is added/removed as
+		 * necessary depending on whether there are search results */
+
+		/*******************
+		 * setup main area *
+		 *******************/
+		
+		/*
+		 * setup the search box
+		 */
+		Button addPropButton = new Button("Add as new proposition");
+		addPropButton.setStylePrimaryName("addPropButton");
 		addPropButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
 				try {
-					ViewPropEdit newPropView = new ViewPropEdit();
-
-					// close the other tree items
-					for (int i = 0; i < tree.getItemCount(); i++) {
-						tree.getItem(i).setState(false);
-					}
-
-					tree.addItem(newPropView);
-					newPropView.haveFocus();
-					ServerComm.addProp(newPropView.getProposition(), null, 0);
+					addRootProp();
 				} catch (Exception e) {
 					ServerComm.handleClientException(e);
 				}
 			}
 		});
 
-		HorizontalPanel searchBoxPanel = new HorizontalPanel();
 		searchTextBox.addKeyDownHandler(this);
-		searchTextBox.setVisibleLength(50);
-		searchBoxPanel.add(new Label("Search:"));
+		searchTextBox.addStyleName("searchTextBox");
+		//searchTextBox.setVisibleLength(60);
+		Label searchLabel = new Label("Search:");
+		searchLabel.addStyleName("searchLabel");
+		FlowPanel searchBoxPanel = new FlowPanel();
+		searchBoxPanel.addStyleName( "searchBoxPanel" );
+		searchBoxPanel.add(searchLabel);
 		searchBoxPanel.add(searchTextBox);
 		searchBoxPanel.add(addPropButton);
-		mainPanel.add(searchBoxPanel);
+		searchTextBox.addStyleName("flowPanel-left");
+		addPropButton.addStyleName("flowPanel-left");
+		searchLabel.addStyleName("flowPanel-left");
 
-		tree = new EditModeTree( this );
-		tree.addCloseHandlerTracked(this);
+		/*
+		 * setup the tree
+		 */
+		tree = new EditModeTree(this);
 		tree.addOpenHandlerTracked(this);
 		tree.searchCallback = this;
+		tree.setAnimationEnabled(false);
+		treeScrollPanel = new ScrollPanel(tree);
+		
+		/*
+		 * add the search box and tree to the main area
+		 */
+		DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.EM);
+		mainPanel.addNorth(searchBoxPanel, 2.7);
+		mainPanel.add(treeScrollPanel);
 
-		mainPanel.add(tree);
+		/*************************
+		 * set up the whole page *
+		 *************************/
+		
+		SplitLayoutPanel mainSplit = new SplitLayoutPanel();
+		mainSplit.addEast(sideSplit, 300);
+		mainSplit.add(mainPanel);
+		initWidget(mainSplit);
 
+		/*****************
+		 * get the props *
+		 *****************/
+		
 		ServerComm.getRootProps(3,
 				new ServerComm.LocalCallback<PropsAndArgs>() {
 
@@ -125,43 +153,19 @@ public class EditMode extends ResizeComposite implements
 						}
 					}
 				});
+	}
+	
+	private void addRootProp(){
+		ViewPropEdit newPropView = new ViewPropEdit();
 
-		if (false)
-			ServerComm.getRootProps(100,
-					new ServerComm.LocalCallback<PropsAndArgs>() {
+		// close the other tree items
+		for (int i = 0; i < tree.getItemCount(); i++) {
+			tree.getItem(i).setState(false);
+		}
 
-						@Override
-						public void call(PropsAndArgs allNodes) {
-							try {
-
-								ArgMap.logStart("em.em.cb");
-								ArgMap.log("em.em.cb", "Prop Tree From Server");
-								for (Long propID : allNodes.rootProps.keySet()) {
-
-									Proposition proposition = allNodes.rootProps
-											.get(propID);
-									ViewProp propView = new ViewPropEdit();
-									propView.recursiveBuildViewNode(
-											proposition, allNodes.nodes);
-
-									tree.addItem(propView);
-									propView.logNodeRecursive(0, "em.em.cb",
-											true);
-								}
-								tree.resetState();
-								ArgMap.logEnd("em.em.cb");
-							} catch (Exception e) {
-								ServerComm.handleClientException(e);
-							}
-						}
-					});
-
-		tree.setAnimationEnabled(false);
-
-		mainSplit.addEast(sideSplit, 400);
-		mainScrollPanel = new ScrollPanel(mainPanel);
-		mainSplit.add( mainScrollPanel );
-		initWidget(mainSplit);
+		tree.addItem(newPropView);
+		newPropView.haveFocus();
+		ServerComm.addProp(newPropView.getProposition(), null, 0);
 	}
 
 	public static void log(String string) {
@@ -262,14 +266,14 @@ public class EditMode extends ResizeComposite implements
 	 */
 	public class EditModeTree extends ArgTree {
 		public LocalCallback<List<Proposition>> searchCallback;
-		
+
 		EditMode editMode;
-		
-		public EditModeTree( EditMode parent ){
+
+		public EditModeTree(EditMode parent) {
 			editMode = parent;
 		}
-		
-		public EditMode getEditMode(){
+
+		public EditMode getEditMode() {
 			return editMode;
 		}
 
@@ -350,50 +354,29 @@ public class EditMode extends ResizeComposite implements
 		}
 	}
 
-	// private void openTree() {
-	// for (int i = 0; i < tree.getItemCount(); i++) {
-	// recursiveOpenTreeItem(tree.getItem(i));
-	// }
-	// }
-
-	// private void recursiveOpenTreeItem(TreeItem item) {
-	// item.setState(true);
-	// for (int i = 0; i < item.getChildCount(); i++) {
-	// recursiveOpenTreeItem(item.getChild(i));
-	// }
-	// }
-
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
 		int charCode = event.getNativeKeyCode();
 		Object source = event.getSource();
 		if (source == searchTextBox) {
 			if (charCode == 32) {
-				// ServerComm.searchProps(searchTextBox.getText(), null, new
-				// LocalCallback<List<Proposition>>() {
-				//
-				// @Override
-				// public void call(List<Proposition> t) {
-				// //TODO add list to main panel with dummy nodes ready for lazy
-				// load!
-				//
-				// }
-				// });
+				 ServerComm.searchProps(searchTextBox.getText(), null, new
+				 LocalCallback<List<Proposition>>() {
+				
+				 @Override
+				 public void call(List<Proposition> t) {
+				 //TODO add list to main panel with dummy nodes ready for lazy
+				 load!
+				
+				 }
+				 });
 			}
 		}
 
 	}
 
-	@Override
-	public void onClose(CloseEvent<TreeItem> event) {
-		if (event.getSource() instanceof ViewNode) {
-			ViewNode source = (ViewNode) event.getSource();
-			//source.setOpen(false);
-		}
-	}
-
 	public void loadFromServer(ViewNode viewNode, int depth) {
-		assert ! viewNode.isLoaded();
+		assert !viewNode.isLoaded();
 
 		List<Long> list = new ArrayList<Long>();
 		list.add(viewNode.getNodeID());
@@ -425,7 +408,7 @@ public class EditMode extends ResizeComposite implements
 		ArgMap.logStart("em.op");
 		if (event.getTarget() instanceof ViewNode) {
 			ViewNode source = (ViewNode) event.getTarget();
-			//source.setOpen(true);
+			// source.setOpen(true);
 			if (!source.isLoaded()) {
 				loadFromServer(source, 1);
 			}

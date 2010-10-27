@@ -2,6 +2,7 @@ package org.argmap.client;
 
 
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.ui.FocusPanel;
@@ -10,8 +11,11 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public abstract class ViewProp extends ViewNode {
+	
+	private static final int PROP_WIDTH_NUMBER = 47;
+	private static final String PROP_WIDTH = "" + PROP_WIDTH_NUMBER + "em";
 
-	protected TextArea textArea = new TextAreaSloppyGrow();
+	protected final TextArea textArea = new TextAreaSloppyGrow();
 	//protected TextArea textArea = new TextArea();
 	protected VerticalPanel mainPanel = new VerticalPanel();
 	protected HorizontalPanel topPanel = new HorizontalPanel();
@@ -34,10 +38,10 @@ public abstract class ViewProp extends ViewNode {
 		proposition = (Proposition)node;
 		setContent(proposition.getContent());
 		if (proposition.linkCount <= 1) {
-			textArea.setStylePrimaryName("propositionTextArea");
+			textArea.addStyleName("propositionTextArea");
 			setNodeLink( false );
 		} else if (proposition.linkCount > 1) {
-			textArea.setStylePrimaryName("linkedPropositionTextArea");
+			textArea.addStyleName("linkedPropositionTextArea");
 			setNodeLink( true );
 		}
 	}
@@ -103,9 +107,6 @@ public abstract class ViewProp extends ViewNode {
 	}
 
 	private static class TextAreaSloppyGrow extends TextArea {
-		public TextAreaSloppyGrow() {
-			this(80);
-		}
 
 		@Override
 		public void setText(String text) {
@@ -114,23 +115,27 @@ public abstract class ViewProp extends ViewNode {
 		}
 
 		private void resize() {
-			int widthInCharacters = getCharacterWidth();
-			int length = getText().length();
+			double widthInCharacters = PROP_WIDTH_NUMBER * 1.7;
+			double length = getText().length();
 
-			int lineEstimate = length / widthInCharacters;
+			int lineEstimate = (int) (length / widthInCharacters);
 			if (lineEstimate < 1) {
 				lineEstimate = 1;
 			}
 			// ArgMap("onKeyPress: line estimate = " + lineEstimate
 			// );
 			setVisibleLines(lineEstimate);
+			GWT.log("line estimate:"+lineEstimate);
+			GWT.log("length:" + length);
+			GWT.log("widthInCharacters:" + widthInCharacters);
+			//setVisibleLines(10);
 		}
 
-		public TextAreaSloppyGrow(int width) {
+		public TextAreaSloppyGrow() {
 			super();
 
 			// this.setCharacterWidth(width);
-			this.setWidth("50em");
+			this.setWidth(PROP_WIDTH);
 			setVisibleLines(1);
 
 			this.addKeyUpHandler(new KeyUpHandler() {
