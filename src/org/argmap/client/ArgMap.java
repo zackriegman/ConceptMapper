@@ -16,7 +16,9 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: new search feature
+//TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
+//TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
+
 //TODO: versionsmode display only opened top level nodes.
 //TODO: batch open icon not visible/clickable on props that reach right screen edge
 //TODO: searched for "use this" even when proposition has children, and throws an error if you click on "use this"
@@ -25,8 +27,8 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: figure out CSS inheritance
 //TODO: prevent circular linking from crashing program...
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
-
 //TODO: provide a way to see deleted top level nodes
+
 //TODO: implement user accounts, email updates of changes, inviting friends
 //TODO: implement proposition strength voting, and scoring algorithm
 //TODO: poll server every few seconds for server side changes (this has to come after versioning I think)
