@@ -23,7 +23,7 @@
 .searchTextBox {
 	margin-left: .5em;
 	margin-right: 1em;
-	width: 40em;
+	/*width: 100%;*/
 }
 
 .searchLabel {

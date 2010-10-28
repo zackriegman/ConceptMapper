@@ -88,9 +88,10 @@ public class EditMode extends ResizeComposite implements
 
 		searchTextBox.addKeyUpHandler(this);
 		searchTextBox.addStyleName("searchTextBox");
-		// searchTextBox.setVisibleLength(60);
+		searchTextBox.setWidth("50%");
 		Label searchLabel = new Label("Search:");
 		searchLabel.addStyleName("searchLabel");
+
 		FlowPanel searchBoxPanel = new FlowPanel();
 		searchBoxPanel.addStyleName("searchBoxPanel");
 		searchBoxPanel.add(searchLabel);
@@ -99,6 +100,8 @@ public class EditMode extends ResizeComposite implements
 		searchTextBox.addStyleName("flowPanel-left");
 		addPropButton.addStyleName("flowPanel-left");
 		searchLabel.addStyleName("flowPanel-left");
+
+		// ScrollPanel searchBoxScrollPanel = new ScrollPanel( searchBoxPanel );
 
 		/*
 		 * setup the tree
@@ -303,9 +306,15 @@ public class EditMode extends ResizeComposite implements
 	public Tree buildTreeCloneOfOpenNodes(Tree cloneTree) {
 		ArgMap.logStart("em.btcoop");
 		for (int i = 0; i < tree.getItemCount(); i++) {
-			ViewNode clonedPropView = recursiveTreeClone((ViewPropEdit) tree
-					.getItem(i));
-			cloneTree.addItem(clonedPropView);
+			ViewNode viewNode = (ViewNode) tree.getItem(i);
+			if (viewNode.getState() || viewNode.isSelected()) {
+				/* notice we use getState() instead of isOpen() becuase
+				 * for the root nodes we only
+				 * want childless nodes if they are currently selected */
+				ViewNode clonedViewNode = recursiveTreeClone((ViewPropEdit) tree
+						.getItem(i));
+				cloneTree.addItem(clonedViewNode);
+			}
 		}
 		ArgMap.logEnd("em.btcoop");
 		return cloneTree;
@@ -329,12 +338,40 @@ public class EditMode extends ResizeComposite implements
 
 	public void getOpenPropsAndArgs(List<Proposition> props, List<Argument> args) {
 		for (int i = 0; i < tree.getItemCount(); i++) {
+			ViewNode viewNode = (ViewNode) tree.getItem(i);
+			/* notice we use getState() instead of isOpen() becuase
+			 * for the root nodes we only we only
+			 * want childless nodes if they are currently selected */
+			if (viewNode.getState() || viewNode.isSelected()) {
+				recursiveGetOpenPropsAndArgs(viewNode, props, args);
+			}
+		}
+	}
+
+	public void recursiveGetOpenPropsAndArgs(ViewNode viewNode,
+			List<Proposition> props, List<Argument> args) {
+		if (viewNode instanceof ViewProp) {
+			props.add((Proposition) viewNode.getNode());
+		} else if (viewNode instanceof ViewArg) {
+			args.add((Argument) viewNode.getNode());
+		}
+		if (viewNode.isOpen()) {
+			for (int i = 0; i < viewNode.getChildCount(); i++) {
+				recursiveGetOpenPropsAndArgs(viewNode.getChildView(i), props,
+						args);
+			}
+		}
+	}
+
+	public void getOpenPropsAndArgs_DELETE_ME(List<Proposition> props,
+			List<Argument> args) {
+		for (int i = 0; i < tree.getItemCount(); i++) {
 			recursiveGetOpenPropsAndArgs(((ViewPropEdit) tree.getItem(i)),
 					props, args);
 		}
 	}
 
-	public void recursiveGetOpenPropsAndArgs(ViewPropEdit propView,
+	public void recursiveGetOpenPropsAndArgs_DELETE_ME(ViewPropEdit propView,
 			List<Proposition> props, List<Argument> args) {
 		props.add(propView.getProposition());
 		if (propView.getState() || propView.getChildCount() == 0) {
@@ -357,10 +394,11 @@ public class EditMode extends ResizeComposite implements
 
 	@Override
 	public void onKeyUp(KeyUpEvent event) {
-		//int charCode = event.getNativeKeyCode();
+		// int charCode = event.getNativeKeyCode();
 		Object source = event.getSource();
 		if (source == searchTextBox) {
-			// if (charCode == 32) { //keeping this around to I remember how to select for space bar...
+			// if (charCode == 32) { //keeping this around to I remember how to
+			// select for space bar...
 			ServerComm.searchProps(searchTextBox.getText(), null, null,
 					new LocalCallback<PropsAndArgs>() {
 

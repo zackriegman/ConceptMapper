@@ -19,21 +19,26 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
 
-//TODO: versionsmode display only opened top level nodes.
+//TODO: reload page, select 1, goto versions mode, click on third revision
+//TODO: if nothing selected when going to versions mode, throw up a dialog helping the user... or maybe grey out panel
+//TODO: grey out addprop button when nothing typed?
+//TODO: ungrey versionsmode
 //TODO: batch open icon not visible/clickable on props that reach right screen edge
 //TODO: searched for "use this" even when proposition has children, and throws an error if you click on "use this"
 //TODO: test in chrome, safari, ie8, opera,
 
-//TODO: figure out CSS inheritance
 //TODO: prevent circular linking from crashing program...
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
+
+//TODO: comment the hell out of versions mode!!!!!!! someday I'll need to change it...
 
 //TODO: implement user accounts, email updates of changes, inviting friends
 //TODO: implement proposition strength voting, and scoring algorithm
 //TODO: poll server every few seconds for server side changes (this has to come after versioning I think)
 //TODO: add helpful message along the side (tips box)
 
+//TODO: figure out CSS inheritance
 /*TODO: if you close a node in versions mode sometimes you can never open it again (in that versions
  * session) because it will 
  * never have children again given the dates available to click on.  For instance if you add a node, 
