@@ -36,8 +36,10 @@ public abstract class ViewProp extends ViewNode {
 	public void setNode( Node node ){
 		proposition = (Proposition)node;
 		setContent(proposition.getContent());
+		textArea.setStylePrimaryName("propositionTextArea");
+		
 		if (proposition.linkCount <= 1) {
-			textArea.addStyleName("propositionTextArea");
+			//textArea.addStyleName("propositionTextArea");
 			setNodeLink( false );
 		} else if (proposition.linkCount > 1) {
 			textArea.addStyleName("linkedPropositionTextArea");

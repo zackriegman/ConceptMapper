@@ -491,7 +491,7 @@ public class VersionsMode extends ResizeComposite implements
 			}
 
 			loadVersionListFromTimeMachine();
-			//viewNodeVer.setOpen(false);
+			// viewNodeVer.setOpen(false);
 			ArgMap.logEnd("vm.oc");
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
@@ -563,9 +563,10 @@ public class VersionsMode extends ResizeComposite implements
 			// showing
 			// how do we know which one to make visible?
 
-			/* must check to make sure a change exists for destinationDate becuase
-			 * destination date may be a placeholder to allow the user to walk
-			 * past the earliest change.
+			/*
+			 * must check to make sure a change exists for destinationDate
+			 * becuase destination date may be a placeholder to allow the user
+			 * to walk past the earliest change.
 			 */
 			if (timeMachineMap.get(destinationDate) != null) {
 				treePanel.ensureVisible((ViewNode) timeMachineMap.get(
@@ -759,10 +760,18 @@ public class VersionsMode extends ResizeComposite implements
 					ViewPropVer propView = (ViewPropVer) vC.viewNode;
 					propView.reviveDeletedView(vC.change.argID,
 							vC.change.argPropIndex);
-					ViewArg viewArgVer = propView
-							.getArgView(vC.change.argPropIndex);
-					viewArgVer.setPro(vC.change.argPro);
-					viewArgVer.setArgTitle(vC.change.content);
+					ViewNode deletedView = propView
+							.getChildView(vC.change.argPropIndex);
+					/*
+					 * need to check before cast because this might be a dummy
+					 * node (in which case we don't need to set the content
+					 * anyway...)
+					 */
+					if (deletedView instanceof ViewArgVer) {
+						ViewArg viewArgVer = (ViewArg) deletedView;
+						viewArgVer.setPro(vC.change.argPro);
+						viewArgVer.setArgTitle(vC.change.content);
+					}
 					break;
 				}
 				case ARG_MODIFICATION: {

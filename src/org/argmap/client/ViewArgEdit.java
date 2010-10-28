@@ -6,6 +6,8 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -16,7 +18,7 @@ import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.user.client.ui.Button;
 
 public class ViewArgEdit extends ViewArg implements ChangeHandler,
-		KeyDownHandler, MouseOverHandler, MouseOutHandler, ClickHandler {
+		KeyDownHandler, MouseOverHandler, MouseOutHandler, ClickHandler, FocusHandler {
 
 	private final Button expandButton = new Button("+");
 
@@ -38,6 +40,7 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 	private final void initialize() {
 		textBox.addChangeHandler(this);
 		textBox.addKeyDownHandler(this);
+		textBox.addFocusHandler(this);
 		focusPanel.addMouseOutHandler(this);
 		focusPanel.addMouseOverHandler(this);
 		expandButton.setStylePrimaryName("expandButton");
@@ -127,5 +130,10 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 		setOpen(true);
 		getEditModeTree().resetState();
 
+	}
+
+	@Override
+	public void onFocus(FocusEvent event) {
+		getEditModeTree().getEditMode().hideSearchBox();		
 	}
 }

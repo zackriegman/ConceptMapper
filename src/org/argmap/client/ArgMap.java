@@ -16,15 +16,26 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
+
 //TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
 
-//TODO: reload page, select 1, goto versions mode, click on third revision
-//TODO: if nothing selected when going to versions mode, throw up a dialog helping the user... or maybe grey out panel
-//TODO: grey out addprop button when nothing typed?
-//TODO: ungrey versionsmode
+//TODO: deleted argument's text is not restored in versions mode...
+/*TODO: if you close a node in versions mode sometimes you can never open it again (in that versions
+ * session) because it will 
+ * never have children again given the dates available to click on.  For instance if you add a node, 
+ * add a child, delete the child, and delete the node, all consecutively, and then go to a time when 
+ * the node has children and close it, the node will never have children again because it doesn't have
+ * children when it is created or when it is destroyed... and there are no visible events in between...
+ * this should be a low priority fix, but it might take some ui creativity... ui creativity should be minimal
+ * just add a placeholder element like "-----" for instance... but need to think about how to detect when
+ * this is necessary and what date to assign the placeholder...
+ * 
+ * Actually this should be somewhat higher priority because if the parent node wasn't visible in the edit tree
+ * (because its parent was close) and you browse to it in a previous version, the deleted branch will
+ * never be visible...
+ */
 //TODO: batch open icon not visible/clickable on props that reach right screen edge
-//TODO: searched for "use this" even when proposition has children, and throws an error if you click on "use this"
 //TODO: test in chrome, safari, ie8, opera,
 
 //TODO: prevent circular linking from crashing program...
@@ -39,16 +50,6 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: add helpful message along the side (tips box)
 
 //TODO: figure out CSS inheritance
-/*TODO: if you close a node in versions mode sometimes you can never open it again (in that versions
- * session) because it will 
- * never have children again given the dates available to click on.  For instance if you add a node, 
- * add a child, delete the child, and delete the node, all consecutively, and then go to a time when 
- * the node has children and close it, the node will never have children again because it doesn't have
- * children when it is created or when it is destroyed... and there are no visible events in between...
- * this should be a low priority fix, but it might take some ui creativity... ui creativity should be minimal
- * just add a placeholder element like "-----" for instance... but need to think about how to detect when
- * this is necessary and what date to assign the placeholder...
- */
 /*TODO: undoing unlinks does not restore the link's yellow color if the link *currently* is not  
  * linked to by more than one argument because the server sends the current proposition which
  * indicates a link count of 1.  This could be addressed by having a proposition's link/unlink
@@ -117,7 +118,7 @@ public class ArgMap implements EntryPoint {
 
 	private static HTML messageArea = new HTML();
 	private static List<String> messageList = new ArrayList<String>();
-	private final EditMode editMode = new EditMode();
+	private final EditMode editMode = new EditMode( this );
 	private VersionsMode versionsMode;
 	private static Map<String, StringBuilder> logs = new HashMap<String, StringBuilder>();
 	private static Map<String, Boolean> logsImmediatePrint = new HashMap<String, Boolean>();
@@ -127,7 +128,6 @@ public class ArgMap implements EntryPoint {
 		try {
 			modePanel.add(editMode, "Find And Collaborate");
 			versionsMode = new VersionsMode(editMode);
-			modePanel.add(versionsMode, "History");
 
 			modePanel.addSelectionHandler(new SelectionHandler<Integer>() {
 
@@ -136,6 +136,7 @@ public class ArgMap implements EntryPoint {
 					try {
 						if (modePanel.getSelectedIndex() == 1) {
 							versionsMode.displayVersions();
+							
 						}
 					} catch (Exception e) {
 						ServerComm.handleClientException(e);
@@ -161,6 +162,27 @@ public class ArgMap implements EntryPoint {
 			message("App Begin", MessageType.INFO);
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
+		}
+	}
+	
+	public void showVersions(){
+		if( ! versionsIsDisplayed() ){
+		modePanel.add(versionsMode, "History");
+		}
+	}
+	
+	public void hideVersions(){
+		if( versionsIsDisplayed() ){
+		modePanel.remove(versionsMode);
+		}
+	}
+	
+	private boolean versionsIsDisplayed(){
+		if( modePanel.getWidgetIndex( versionsMode ) == -1 ){
+			return false;
+		}
+		else{
+			return true;
 		}
 	}
 

@@ -339,18 +339,26 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			Object source = event.getSource();
 			if (source == textArea) {
 				updateButtons();
-				ServerComm.searchProps(textArea.getText(), parentArgument(), proposition,
-						getEditMode());
+				sideBarSearch();
 			}
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
 		}
 	}
 
+	private void sideBarSearch() {
+		if (getChildCount() == 0 && ! deleted ) {
+			ServerComm.searchProps(textArea.getText(), parentArgument(),
+					proposition, getEditMode());
+		} else {
+			getEditMode().hideSearchBox();
+		}
+	}
+
 	private EditMode getEditMode() {
 		return ((EditModeTree) getTree()).getEditMode();
 	}
-	
+
 	private EditModeTree getEditModeTree() {
 		return (EditModeTree) getTree();
 	}
@@ -410,9 +418,8 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	public void onKeyUp(KeyUpEvent event) {
 		try {
 			Object source = event.getSource();
-			if (source == textArea && !deleted) {
-				ServerComm.searchProps(textArea.getText(), parentArgument(), proposition,
-						getEditMode());
+			if (source == textArea) {
+				sideBarSearch();
 			}
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
@@ -429,14 +436,13 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	public void onMouseOut(MouseOutEvent event) {
 		topPanel.remove(expandButton);
 
-		
-//		proButton.setVisible(false);
-//		conButton.setVisible(false);
-//		expandButton.setVisible(false);
-//		if (linkEditButton != null) {
-//			linkEditButton.setVisible(false);
-//			linkRemoveButton.setVisible(false);
-//		}
+		// proButton.setVisible(false);
+		// conButton.setVisible(false);
+		// expandButton.setVisible(false);
+		// if (linkEditButton != null) {
+		// linkEditButton.setVisible(false);
+		// linkRemoveButton.setVisible(false);
+		// }
 	}
 
 	@Override
@@ -446,13 +452,13 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				topPanel.add(expandButton);
 				expandButton.setVisible(true);
 			}
-			
-//			proButton.setVisible(true);
-//			conButton.setVisible(true);
-//			if (linkEditButton != null) {
-//				linkEditButton.setVisible(true);
-//				linkRemoveButton.setVisible(true);
-//			}
+
+			// proButton.setVisible(true);
+			// conButton.setVisible(true);
+			// if (linkEditButton != null) {
+			// linkEditButton.setVisible(true);
+			// linkRemoveButton.setVisible(true);
+			// }
 		} catch (Exception e) {
 			ServerComm.handleClientException(e);
 		}

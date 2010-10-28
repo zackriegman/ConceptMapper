@@ -31,12 +31,12 @@
 	}
 
 .linkedPropositionTextArea {
-	border: 1px dotted #00f;
+	/*border: 1px dotted #00f;
 	padding: .5em;
+	font-family: arial, sans-serif;
+	font-size: 12.8px;*/
 	/*background-color: #FFF1A8;*/ /*background-color: #FFFF8B;*/
 	background-color: #FFFFCC;
-	font-family: arial, sans-serif;
-	font-size: 12.8px;
 }
 
 .proArgTextBox {

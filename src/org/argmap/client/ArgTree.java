@@ -15,10 +15,10 @@ import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
 public class ArgTree extends Tree {
-	List<OpenHandler<TreeItem>> openHandlerList = new ArrayList<OpenHandler<TreeItem>>();
-	List<CloseHandler<TreeItem>> closeHandlerList = new ArrayList<CloseHandler<TreeItem>>();
-	List<HandlerRegistration> openHandlerRegistrationList = new ArrayList<HandlerRegistration>();
-	List<HandlerRegistration> closeHandlerRegistrationList = new ArrayList<HandlerRegistration>();
+	private final List<OpenHandler<TreeItem>> openHandlerList = new ArrayList<OpenHandler<TreeItem>>();
+	private final List<CloseHandler<TreeItem>> closeHandlerList = new ArrayList<CloseHandler<TreeItem>>();
+	private final List<HandlerRegistration> openHandlerRegistrationList = new ArrayList<HandlerRegistration>();
+	private final List<HandlerRegistration> closeHandlerRegistrationList = new ArrayList<HandlerRegistration>();
 
 	public ArgTree() {
 		super();

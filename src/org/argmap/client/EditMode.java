@@ -13,8 +13,12 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Button;
@@ -31,7 +35,8 @@ import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
 public class EditMode extends ResizeComposite implements
-		LocalCallback<PropsAndArgs>, KeyUpHandler, OpenHandler<TreeItem> {
+		LocalCallback<PropsAndArgs>, KeyUpHandler, OpenHandler<TreeItem>,
+		CloseHandler<TreeItem>, SelectionHandler<TreeItem> {
 
 	private static HTML sideMessageArea = new HTML();
 	private final Label sideSearchLabel = new Label(
@@ -44,9 +49,12 @@ public class EditMode extends ResizeComposite implements
 
 	TextBox searchTextBox = new TextBox();
 	private final EditModeTree tree;
+	Button addPropButton;
+	private final ArgMap argMap;
 
-	public EditMode() {
+	public EditMode(ArgMap argMap) {
 		super();
+		this.argMap = argMap;
 
 		/******************
 		 * setup side bar *
@@ -73,8 +81,9 @@ public class EditMode extends ResizeComposite implements
 		/*
 		 * setup the search box
 		 */
-		Button addPropButton = new Button("Add as new proposition");
+		addPropButton = new Button("Add as new proposition");
 		addPropButton.setStylePrimaryName("addPropButton");
+		addPropButton.setEnabled(false);
 		addPropButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
@@ -108,6 +117,8 @@ public class EditMode extends ResizeComposite implements
 		 */
 		tree = new EditModeTree(this);
 		tree.addOpenHandlerTracked(this);
+		tree.addCloseHandler(this);
+		tree.addSelectionHandler(this);
 		tree.setAnimationEnabled(false);
 		treeScrollPanel = new ScrollPanel(tree);
 
@@ -244,15 +255,9 @@ public class EditMode extends ResizeComposite implements
 		}
 		sideSearchResults.removeAllRows();
 		if (propMatches.rootProps.size() > 0) {
-			if (!sideSearchScroll.isAttached()) {
-				sideSplit.remove(sideMessageScroll);
-				sideSplit.addSouth(sideSearchScroll, 400);
-				sideSplit.add(sideMessageScroll);
-			}
-			sideSearchLabel.setVisible(true);
+			displaySearchBox();
 		} else {
-			sideSplit.remove(sideSearchScroll);
-			sideSearchLabel.setVisible(false);
+			hideSearchBox();
 		}
 		int i = 0;
 		for (Proposition prop : propMatches.rootProps) {
@@ -261,6 +266,20 @@ public class EditMode extends ResizeComposite implements
 					propMatches.rootProps));
 			i++;
 		}
+	}
+
+	public void displaySearchBox() {
+		if (!sideSearchScroll.isAttached()) {
+			sideSplit.remove(sideMessageScroll);
+			sideSplit.addSouth(sideSearchScroll, 400);
+			sideSplit.add(sideMessageScroll);
+		}
+		sideSearchLabel.setVisible(true);
+	}
+
+	public void hideSearchBox() {
+		sideSplit.remove(sideSearchScroll);
+		sideSearchLabel.setVisible(false);
 	}
 
 	/**
@@ -308,9 +327,11 @@ public class EditMode extends ResizeComposite implements
 		for (int i = 0; i < tree.getItemCount(); i++) {
 			ViewNode viewNode = (ViewNode) tree.getItem(i);
 			if (viewNode.getState() || viewNode.isSelected()) {
-				/* notice we use getState() instead of isOpen() becuase
-				 * for the root nodes we only
-				 * want childless nodes if they are currently selected */
+				/*
+				 * notice we use getState() instead of isOpen() becuase for the
+				 * root nodes we only want childless nodes if they are currently
+				 * selected
+				 */
 				ViewNode clonedViewNode = recursiveTreeClone((ViewPropEdit) tree
 						.getItem(i));
 				cloneTree.addItem(clonedViewNode);
@@ -339,9 +360,11 @@ public class EditMode extends ResizeComposite implements
 	public void getOpenPropsAndArgs(List<Proposition> props, List<Argument> args) {
 		for (int i = 0; i < tree.getItemCount(); i++) {
 			ViewNode viewNode = (ViewNode) tree.getItem(i);
-			/* notice we use getState() instead of isOpen() becuase
-			 * for the root nodes we only we only
-			 * want childless nodes if they are currently selected */
+			/*
+			 * notice we use getState() instead of isOpen() becuase for the root
+			 * nodes we only we only want childless nodes if they are currently
+			 * selected
+			 */
 			if (viewNode.getState() || viewNode.isSelected()) {
 				recursiveGetOpenPropsAndArgs(viewNode, props, args);
 			}
@@ -397,13 +420,21 @@ public class EditMode extends ResizeComposite implements
 		// int charCode = event.getNativeKeyCode();
 		Object source = event.getSource();
 		if (source == searchTextBox) {
-			// if (charCode == 32) { //keeping this around to I remember how to
-			// select for space bar...
+			String text = searchTextBox.getText().trim();
+			if (text.equals("")) {
+				addPropButton.setEnabled(false);
+			} else {
+				addPropButton.setEnabled(true);
+			}
+
+			// if (charCode == 32) { //keeping this around to I remember how
+			// to select for space bar...
 			ServerComm.searchProps(searchTextBox.getText(), null, null,
 					new LocalCallback<PropsAndArgs>() {
 
 						@Override
 						public void call(PropsAndArgs results) {
+							argMap.hideVersions();
 							tree.clear();
 							for (Proposition proposition : results.rootProps) {
 
@@ -416,9 +447,7 @@ public class EditMode extends ResizeComposite implements
 							tree.resetState();
 						}
 					});
-
 		}
-
 	}
 
 	public void loadFromServer(ViewNode viewNode, int depth) {
@@ -451,6 +480,7 @@ public class EditMode extends ResizeComposite implements
 
 	@Override
 	public void onOpen(OpenEvent<TreeItem> event) {
+		argMap.showVersions();
 		ArgMap.logStart("em.op");
 		if (event.getTarget() instanceof ViewNode) {
 			ViewNode source = (ViewNode) event.getTarget();
@@ -460,5 +490,29 @@ public class EditMode extends ResizeComposite implements
 			}
 		}
 		ArgMap.logEnd("em.op");
+	}
+
+	@Override
+	public void onClose(CloseEvent<TreeItem> event) {
+		if (!somethingForVersions()) {
+			argMap.hideVersions();
+		}
+	}
+
+	private boolean somethingForVersions() {
+		if (tree.getSelectedItem() != null) {
+			return true;
+		}
+		for (int i = 0; i < tree.getItemCount(); i++) {
+			if (tree.getItem(i).getState()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public void onSelection(SelectionEvent<TreeItem> event) {
+		argMap.showVersions();
 	}
 }
