@@ -5,6 +5,7 @@
 
 <web-app>
 
+	<!-- main application configuration -->
 	<servlet>
 		<servlet-name>ArgMapServiceImpl</servlet-name>
 		<servlet-class>org.argmap.server.ArgMapServiceImpl</servlet-class>
@@ -14,6 +15,27 @@
 		<servlet-name>ArgMapServiceImpl</servlet-name>
 		<url-pattern>/argmap/argServ</url-pattern>
 	</servlet-mapping>
+
+	<!-- remote api configuration to allow backup/restore -->
+	<servlet>
+		<servlet-name>RemoteApi</servlet-name>
+		<servlet-class>com.google.apphosting.utils.remoteapi.RemoteApiServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>RemoteApi</servlet-name>
+		<url-pattern>/remote_api</url-pattern>
+	</servlet-mapping>
+
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>RemoteApi</web-resource-name>
+			<url-pattern>/remote_api</url-pattern>
+		</web-resource-collection>
+		<auth-constraint>
+			<role-name>admin</role-name>
+		</auth-constraint>
+	</security-constraint>
 
 	<!-- Default page to serve -->
 	<welcome-file-list>

@@ -18,6 +18,7 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 
 //TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
+//TODO: how to appengine backups work?
 
 //TODO: versionsmode display only opened top level nodes.
 //TODO: batch open icon not visible/clickable on props that reach right screen edge
@@ -80,6 +81,7 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: linking: original linked item should also change color immediately upon first linking
 //TODO: linking: how will client automatically update link changes...
 
+//TODO: redo loggin framework to match server (and maybe put logging statements in assert statements so they are eliminated?
 /*TODO: implement locking when modifying a parent and deleting/adding nodes to make sure that two simultaneous
  * changes (modifying the parent or deleteing/adding two different child nodes) do not clobber each other
  * and result in inconsistent datastore state. */
