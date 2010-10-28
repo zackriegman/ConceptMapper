@@ -26,6 +26,8 @@ public abstract class ViewProp extends ViewNode {
 		setNode( proposition );
 		mainPanel.add(topPanel);
 		topPanel.add(textArea);
+		textArea.setStylePrimaryName("propositionTextArea");
+		textArea.addStyleName("nodeText");
 		focusPanel = new FocusPanel( mainPanel );
 		this.setWidget(focusPanel);
 	}
@@ -36,7 +38,7 @@ public abstract class ViewProp extends ViewNode {
 	public void setNode( Node node ){
 		proposition = (Proposition)node;
 		setContent(proposition.getContent());
-		textArea.setStylePrimaryName("propositionTextArea");
+		
 		
 		if (proposition.linkCount <= 1) {
 			//textArea.addStyleName("propositionTextArea");
@@ -120,8 +122,11 @@ public abstract class ViewProp extends ViewNode {
 			double length = getText().length();
 
 			int lineEstimate = (int) (length / widthInCharacters);
-			if (lineEstimate < 1) {
+			if (lineEstimate <= 1) {
 				lineEstimate = 1;
+				addStyleName("mozOneLineFix");
+			} else {
+				removeStyleName("mozOneLineFix");
 			}
 			// ArgMap("onKeyPress: line estimate = " + lineEstimate
 			// );
@@ -138,6 +143,7 @@ public abstract class ViewProp extends ViewNode {
 			// this.setCharacterWidth(width);
 			this.setWidth(PROP_WIDTH);
 			setVisibleLines(1);
+			addStyleName("mozOneLineFix");
 
 			this.addKeyUpHandler(new KeyUpHandler() {
 				public void onKeyUp(KeyUpEvent event) {

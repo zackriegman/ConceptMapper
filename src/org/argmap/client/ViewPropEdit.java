@@ -54,7 +54,10 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		buttonsPanel.add(conButton);
 
 		proButton.addClickHandler(this);
+		proButton.setStylePrimaryName("button");
 		conButton.addClickHandler(this);
+		conButton.setStylePrimaryName("button");
+		
 		proButton.setVisible(false);
 		conButton.setVisible(false);
 
@@ -62,6 +65,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		expandButton.addClickHandler(this);
 		expandButton.setVisible(false);
 		expandButton.setStylePrimaryName("expandButton");
+		//expandButton.setStylePrimaryName("button");
 
 		if (proposition.linkCount > 1) {
 			setNodeLink(true);

@@ -63,6 +63,8 @@ public abstract class ViewArg extends ViewNode {
 		textBox = new TextBox();
 		textBox.setVisibleLength(Argument.MAX_LENGTH);
 		textBox.setMaxLength(Argument.MAX_LENGTH);
+		textBox.addStyleName("argTextBox");
+		textBox.addStyleName("nodeText");
 		horizontalPanel = new HorizontalPanel();
 		horizontalPanel.setWidth( ARG_WIDTH );
 		horizontalPanel.add(label);
@@ -78,11 +80,11 @@ public abstract class ViewArg extends ViewNode {
 		if (pro) {
 			label.setText("Argument For: ");
 			horizontalPanel.addStyleName("proArg");
-			textBox.addStyleName("proArgTextBox");
+			textBox.addStyleName("proArg");
 		} else {
 			label.setText("Argument Against: ");
 			horizontalPanel.addStyleName("conArg");
-			textBox.addStyleName("conArgTextBox");
+			textBox.addStyleName("conArg");
 		}
 	}
 

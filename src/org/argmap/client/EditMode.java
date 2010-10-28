@@ -82,7 +82,7 @@ public class EditMode extends ResizeComposite implements
 		 * setup the search box
 		 */
 		addPropButton = new Button("Add as new proposition");
-		addPropButton.setStylePrimaryName("addPropButton");
+		addPropButton.setStylePrimaryName("button");
 		addPropButton.setEnabled(false);
 		addPropButton.addClickHandler(new ClickHandler() {
 			@Override

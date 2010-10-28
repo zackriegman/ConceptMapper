@@ -338,6 +338,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			argDeletionChange.propID = parentProp.id;
 			argDeletionChange.argID = argument.id;
 			argDeletionChange.argPro = argument.pro;
+			argDeletionChange.content = argument.content;
 			argDeletionChange.argPropIndex = parentProp.childIDs
 					.indexOf(argument.id);
 			/*

@@ -44,6 +44,7 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 		focusPanel.addMouseOutHandler(this);
 		focusPanel.addMouseOverHandler(this);
 		expandButton.setStylePrimaryName("expandButton");
+		//expandButton.setStylePrimaryName("button");
 		expandButton.addClickHandler(this);
 	}
 
