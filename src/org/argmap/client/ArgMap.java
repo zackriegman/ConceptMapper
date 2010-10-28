@@ -20,7 +20,6 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
 
-//TODO: deleted argument's text is not restored in versions mode...
 /*TODO: if you close a node in versions mode sometimes you can never open it again (in that versions
  * session) because it will 
  * never have children again given the dates available to click on.  For instance if you add a node, 
