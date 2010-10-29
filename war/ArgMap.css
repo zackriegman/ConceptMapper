@@ -1,10 +1,12 @@
 /** Add css rules here for your application. */
-.flowPanel-left {
+.floatLeft {
 	float: left;
 }
 
-.propositionTextArea {
-	border: 1px dotted #00f;
+.propositionTextArea { /*border: 1px dotted #00f;*/
+	border-color: #B2B2FF;
+	border-style: dotted;
+	border-width: 1px;
 	padding: .5em;
 }
 
@@ -15,40 +17,45 @@
 
 .searchTextBox {
 	margin-top: .5em;
-	/*margin-left: .5em;*/
-	/*margin-right: 5em;*/
-	/*margin:1em;*/
-	/*padding:5em;*/
-	/*width: 100%;*/
+	/*margin-left: .5em;*/ /*margin-right: 5em;*/ /*margin:1em;*/
+	/*padding:5em;*/ /*width: 100%;*/
 }
 
 .addPropButton {
 	margin-top: .5em;
 	margin-left: .7em;
-	}
+}
 
 .searchLabel {
 	margin-top: .65em;
 	margin-right: 1em;
 	margin-left: .5em;
-	}
+}
 
-.linkedPropositionTextArea {
-	/*background-color: #FFF1A8;*/ /*background-color: #FFFF8B;*/
+.linkedPropositionTextArea { /*background-color: #FFF1A8;*/
+	/*background-color: #FFFF8B;*/
 	background-color: #FFFFCC;
 }
 
-.argTextBox{
+.argTextBox {
+	border-style: none;
+}
+
+.argLabel {
+	padding-left: .2em;
+	padding-top: .07em;
+}
+
+.argBox {
 	border-style: solid;
-	border-color: #E8E8E8;
+	border-color: #C9C9C9;
 	border-width: 1px;
-	}
-	
-.nodeText{
+}
+
+.nodeText {
 	font-family: arial, sans-serif;
 	font-size: 12.8px;
-	}
-	
+}
 
 .proArg {
 	background-color: #D7FDD7;
@@ -86,9 +93,9 @@
 	text-align: center;
 }
 
-.mozOneLineFix{
+.mozOneLineFix {
 	height: 1.3em;
-	}
+}
 
 .expandButton {
 	background: transparent;
@@ -99,3 +106,17 @@
 	/*height: 1.5em;
 	width: 1.5em;*/
 }
+
+.loginText {
+	font-family: arial, sans-serif;
+	font-size: 12.8px;
+	padding-right: .5em;
+}
+
+.email {
+	font-weight: bolder;
+}
+
+.loginPanel{
+	padding: .4em;
+	}

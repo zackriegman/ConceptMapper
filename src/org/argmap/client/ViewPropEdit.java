@@ -57,7 +57,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		proButton.setStylePrimaryName("button");
 		conButton.addClickHandler(this);
 		conButton.setStylePrimaryName("button");
-		
+
 		proButton.setVisible(false);
 		conButton.setVisible(false);
 
@@ -65,7 +65,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		expandButton.addClickHandler(this);
 		expandButton.setVisible(false);
 		expandButton.setStylePrimaryName("expandButton");
-		//expandButton.setStylePrimaryName("button");
+		// expandButton.setStylePrimaryName("button");
 
 		if (proposition.linkCount > 1) {
 			setNodeLink(true);
@@ -110,29 +110,24 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	@Override
 	public void onClick(ClickEvent event) {
-		try {
-			if (event.getSource() == proButton) {
-				addArgument(true);
-			} else if (event.getSource() == conButton) {
-				addArgument(false);
-			} else if (event.getSource() == linkRemoveButton) {
-				ServerComm.unlinkProp(parentArgument(), proposition);
+		if (event.getSource() == proButton) {
+			addArgument(true);
+		} else if (event.getSource() == conButton) {
+			addArgument(false);
+		} else if (event.getSource() == linkRemoveButton) {
+			ServerComm.unlinkProp(parentArgument(), proposition);
 
-				/*
-				 * note: remove() must come last, otherwise parentArgumet() ==
-				 * null
-				 */
-				remove();
-			} else if (event.getSource() == linkEditButton) {
-				textArea.setReadOnly(false);
-			} else if (event.getSource() == expandButton) {
-				expandButton.setVisible(false);
-				getEditMode().loadFromServer(this, 10);
-				setOpen(true);
-				getEditModeTree().resetState();
-			}
-		} catch (Exception e) {
-			ServerComm.handleClientException(e);
+			/*
+			 * note: remove() must come last, otherwise parentArgumet() == null
+			 */
+			remove();
+		} else if (event.getSource() == linkEditButton) {
+			textArea.setReadOnly(false);
+		} else if (event.getSource() == expandButton) {
+			expandButton.setVisible(false);
+			getEditMode().loadFromServer(this, 10);
+			setOpen(true);
+			getEditModeTree().resetState();
 		}
 	}
 
@@ -151,42 +146,37 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
-		try {
-			int charCode = event.getNativeKeyCode();
-			Object source = event.getSource();
-			if (source == textArea) {
-				if (charCode == KeyCodes.KEY_ENTER && parentArgView() == null) {
-					onChange(null);
-					addArgument(true);
+		int charCode = event.getNativeKeyCode();
+		Object source = event.getSource();
+		if (source == textArea) {
+			if (charCode == KeyCodes.KEY_ENTER && parentArgView() == null) {
+				onChange(null);
+				addArgument(true);
+				event.preventDefault();
+			} else if (charCode == KeyCodes.KEY_ENTER
+					&& parentArgView() != null) {
+				onChange(null);
+				addProposition();
+				event.preventDefault();
+			}
+			/* only do the following key actions if this is not a link */
+			else if (proposition.linkCount <= 1) {
+				if (charCode == KeyCodes.KEY_BACKSPACE
+						&& textArea.getCursorPos() == 0
+						&& textArea.getSelectionLength() == 0) {
+					removePropositionAndMaybeParentArgument();
 					event.preventDefault();
-				} else if (charCode == KeyCodes.KEY_ENTER
-						&& parentArgView() != null) {
-					onChange(null);
-					addProposition();
+				} else if (charCode == KeyCodes.KEY_DELETE
+						&& textArea.getText().equals("")) {
+					removePropositionAndMaybeParentArgument();
 					event.preventDefault();
-				}
-				/* only do the following key actions if this is not a link */
-				else if (proposition.linkCount <= 1) {
-					if (charCode == KeyCodes.KEY_BACKSPACE
-							&& textArea.getCursorPos() == 0
-							&& textArea.getSelectionLength() == 0) {
-						removePropositionAndMaybeParentArgument();
-						event.preventDefault();
-					} else if (charCode == KeyCodes.KEY_DELETE
-							&& textArea.getText().equals("")) {
-						removePropositionAndMaybeParentArgument();
-						event.preventDefault();
-					} else if (charCode == KeyCodes.KEY_DELETE
-							&& textArea.getCursorPos() == textArea.getText()
-									.length()
-							&& textArea.getSelectionLength() == 0) {
-						removeNextProposition();
-						event.preventDefault();
-					}
+				} else if (charCode == KeyCodes.KEY_DELETE
+						&& textArea.getCursorPos() == textArea.getText()
+								.length() && textArea.getSelectionLength() == 0) {
+					removeNextProposition();
+					event.preventDefault();
 				}
 			}
-		} catch (Exception e) {
-			ServerComm.handleClientException(e);
 		}
 	}
 
@@ -339,19 +329,15 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	}
 
 	public void onFocus(FocusEvent event) {
-		try {
-			Object source = event.getSource();
-			if (source == textArea) {
-				updateButtons();
-				sideBarSearch();
-			}
-		} catch (Exception e) {
-			ServerComm.handleClientException(e);
+		Object source = event.getSource();
+		if (source == textArea) {
+			updateButtons();
+			sideBarSearch();
 		}
 	}
 
 	private void sideBarSearch() {
-		if (getChildCount() == 0 && ! deleted ) {
+		if (getChildCount() == 0 && !deleted) {
 			ServerComm.searchProps(textArea.getText(), parentArgument(),
 					proposition, getEditMode());
 		} else {
@@ -397,14 +383,11 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	@Override
 	public void onChange(ChangeEvent event) {
-		try {
-			updatePropOnServerIfChanged();
-			if (proposition.linkCount > 1) {
-				textArea.setReadOnly(true);
-			}
-		} catch (Exception e) {
-			ServerComm.handleClientException(e);
+		updatePropOnServerIfChanged();
+		if (proposition.linkCount > 1) {
+			textArea.setReadOnly(true);
 		}
+
 	}
 
 	private void updatePropOnServerIfChanged() {
@@ -420,15 +403,11 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	@Override
 	public void onKeyUp(KeyUpEvent event) {
-		try {
-			Object source = event.getSource();
-			if (source == textArea) {
-				sideBarSearch();
-			}
-		} catch (Exception e) {
-			ServerComm.handleClientException(e);
-		}
 
+		Object source = event.getSource();
+		if (source == textArea) {
+			sideBarSearch();
+		}
 	}
 
 	@Override
@@ -451,20 +430,19 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	@Override
 	public void onMouseOver(MouseOverEvent event) {
-		try {
-			if (!isLoaded()) {
-				topPanel.add(expandButton);
-				expandButton.setVisible(true);
-			}
 
-			// proButton.setVisible(true);
-			// conButton.setVisible(true);
-			// if (linkEditButton != null) {
-			// linkEditButton.setVisible(true);
-			// linkRemoveButton.setVisible(true);
-			// }
-		} catch (Exception e) {
-			ServerComm.handleClientException(e);
+		if (!isLoaded()) {
+			// topPanel.add(expandButton, 580, 2);
+			topPanel.add(expandButton);
+			expandButton.setVisible(true);
 		}
+
+		// proButton.setVisible(true);
+		// conButton.setVisible(true);
+		// if (linkEditButton != null) {
+		// linkEditButton.setVisible(true);
+		// linkRemoveButton.setVisible(true);
+		// }
+
 	}
 }

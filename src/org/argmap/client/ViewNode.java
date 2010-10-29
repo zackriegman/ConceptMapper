@@ -7,7 +7,7 @@ import com.google.gwt.user.client.ui.TreeItem;
 
 public abstract class ViewNode extends TreeItem {
 	public abstract Long getNodeID();
-	
+
 	public boolean isOpen = true;
 	private boolean isLoaded = true;
 
@@ -70,15 +70,17 @@ public abstract class ViewNode extends TreeItem {
 		}
 	}
 
-	public void logNodeRecursive(int level, String logName,
+	public void logNodeRecursive(int level, Log log,
 			boolean includeChildrenOfClosedNodes) {
-		ArgMap.logln(logName, ArgMap.spaces(level * 2) + toString()
-				+ "; hashCode:" + hashCode());
-		if (includeChildrenOfClosedNodes || getState()) {
-			for (int i = 0; i < getChildCount(); i++) {
-				ViewNode node = getChildView(i);
-				node.logNodeRecursive(level + 1, logName,
-						includeChildrenOfClosedNodes);
+		if (Log.on) {
+			log.logln(Log.spaces(level * 5) + toString() + "; hashCode:"
+					+ hashCode());
+			if (includeChildrenOfClosedNodes || getState()) {
+				for (int i = 0; i < getChildCount(); i++) {
+					ViewNode node = getChildView(i);
+					node.logNodeRecursive(level + 1, log,
+							includeChildrenOfClosedNodes);
+				}
 			}
 		}
 	}
@@ -96,6 +98,7 @@ public abstract class ViewNode extends TreeItem {
 	public abstract Node getChildNodeFromNodeList(Long nodeID, Nodes nodes);
 
 	public abstract void setNode(Node node);
+
 	public abstract Node getNode();
 
 	/*
@@ -109,49 +112,50 @@ public abstract class ViewNode extends TreeItem {
 				ViewNode childView = createChild();
 				addItem(childView);
 				childView.recursiveBuildViewNode(childNode, nodes);
-			}
-			else {
-				addItem( new ViewDummyVer(nodeID) );
+			} else {
+				addItem(new ViewDummyVer(nodeID));
 				isLoaded = false;
 				isOpen = false;
 			}
 		}
 	}
-	
+
 	/*
-	 * isOpen differs from getState() in at least one important way.
-	 * When it is being used it will return true regardless of whether it has children
-	 * if the last time and Open/Close event left it open.  This is important
-	 * in VersionsMode where open nodes frequently have children added/deleted
-	 * and need to remember that they are open or closed.  However, I don't think
-	 * it's needed for EditMode so it should probably be moved to ViewNodeVer implementations.
-	 * But actually it is needed because ArgTree.resetState() method uses the isOpen()
-	 * to decided whether to leave the variable open or closed.  Maybe extracting that functionality
-	 * into ArgTree is silly as it turns out.  VersionsMode and EditMode seem to have different
-	 * needs in regard to managing the open/closed state of nodes.  VersionsMode needs to remember
-	 * whether a node is open or closed even when it has not children, and reset state is what
-	 * syncs up that memory with what is displayed on screen.
+	 * isOpen differs from getState() in at least one important way. When it is
+	 * being used it will return true regardless of whether it has children if
+	 * the last time and Open/Close event left it open. This is important in
+	 * VersionsMode where open nodes frequently have children added/deleted and
+	 * need to remember that they are open or closed. However, I don't think
+	 * it's needed for EditMode so it should probably be moved to ViewNodeVer
+	 * implementations. But actually it is needed because ArgTree.resetState()
+	 * method uses the isOpen() to decided whether to leave the variable open or
+	 * closed. Maybe extracting that functionality into ArgTree is silly as it
+	 * turns out. VersionsMode and EditMode seem to have different needs in
+	 * regard to managing the open/closed state of nodes. VersionsMode needs to
+	 * remember whether a node is open or closed even when it has not children,
+	 * and reset state is what syncs up that memory with what is displayed on
+	 * screen.
 	 * 
-	 * Edit mode on the other hand simply needs to keep unloaded nodes closed, which can be handled
-	 * when they are created and appended to the tree.
+	 * Edit mode on the other hand simply needs to keep unloaded nodes closed,
+	 * which can be handled when they are created and appended to the tree.
 	 * 
-	 * I guess I'll keep this around for now because I feel like the TreeItem state variables are a little
-	 * flaky, for instance they if you set the state before appending a node it doesn't seem to remember
-	 * what you set.
+	 * I guess I'll keep this around for now because I feel like the TreeItem
+	 * state variables are a little flaky, for instance they if you set the
+	 * state before appending a node it doesn't seem to remember what you set.
 	 */
-	public boolean isOpen(){
+	public boolean isOpen() {
 		return isOpen;
 	}
-	
-	public void setOpen( boolean open ){
+
+	public void setOpen(boolean open) {
 		this.isOpen = open;
 	}
 
-	public boolean isLoaded(){
+	public boolean isLoaded() {
 		return isLoaded;
 	}
-	
-	public void setLoaded( boolean isLoaded ){
+
+	public void setLoaded(boolean isLoaded) {
 		this.isLoaded = isLoaded;
 	}
 }

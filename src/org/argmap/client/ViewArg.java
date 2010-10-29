@@ -60,6 +60,7 @@ public abstract class ViewArg extends ViewNode {
 
 	private final void initialize() {
 		label = new Label();
+		label.addStyleName("argLabel");
 		textBox = new TextBox();
 		textBox.setVisibleLength(Argument.MAX_LENGTH);
 		textBox.setMaxLength(Argument.MAX_LENGTH);
@@ -69,6 +70,7 @@ public abstract class ViewArg extends ViewNode {
 		horizontalPanel.setWidth( ARG_WIDTH );
 		horizontalPanel.add(label);
 		horizontalPanel.add(textBox);
+		horizontalPanel.addStyleName("argBox");
 		focusPanel = new FocusPanel( horizontalPanel );
 		setWidget(focusPanel);
 	}

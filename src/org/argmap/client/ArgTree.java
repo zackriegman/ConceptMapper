@@ -57,7 +57,7 @@ public class ArgTree extends Tree {
 		setStateHandlersOff();
 
 		for (int i = 0; i < getItemCount(); i++) {
-			recursiveResetState((ViewNode)getItem(i));
+			recursiveResetState((ViewNode) getItem(i));
 		}
 
 		setStateHandlersOn();
@@ -112,33 +112,36 @@ public class ArgTree extends Tree {
 			}
 		}
 	}
-	
+
 	/*
-	 * solves the annoying problem where the tree scrolls to a previously selected node when opening a new node
-	 * thereby often putting the new node out of view.
+	 * solves the annoying problem where the tree scrolls to a previously
+	 * selected node when opening a new node thereby often putting the new node
+	 * out of view.
 	 */
 	@Override
-	  public void onBrowserEvent(Event event) {
-	    int eventType = DOM.eventGetType(event);
+	public void onBrowserEvent(Event event) {
+		int eventType = DOM.eventGetType(event);
 
-	    switch (eventType) {
-	      case Event.ONCLICK:
-	        Element e = DOM.eventGetTarget(event);
-	        if (e.getTagName().equals("IMG")) {
-	          return;
-	        }
-	    }
+		switch (eventType) {
+		case Event.ONCLICK:
+			Element e = DOM.eventGetTarget(event);
+			if (e.getTagName().equals("IMG")) {
+				return;
+			}
+		}
 
-	    super.onBrowserEvent(event);
-	  } 
-	
-	public ViewNode getViewNode(int index ){
-		return (ViewNode)getItem(index);
+		super.onBrowserEvent(event);
 	}
-	
-	public void logTree( String logName){
-		for(int i = 0; i<getItemCount(); i++){
-			getViewNode( i ).logNodeRecursive(0, logName, true);
+
+	public ViewNode getViewNode(int index) {
+		return (ViewNode) getItem(index);
+	}
+
+	public void logTree(Log log) {
+		if (Log.on) {
+			for (int i = 0; i < getItemCount(); i++) {
+				getViewNode(i).logNodeRecursive(0, log, true);
+			}
 		}
 	}
 

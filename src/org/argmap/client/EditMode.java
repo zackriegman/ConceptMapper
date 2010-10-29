@@ -7,7 +7,6 @@ import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.PropsAndArgs;
 import org.argmap.client.ServerComm.LocalCallback;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -88,11 +87,8 @@ public class EditMode extends ResizeComposite implements
 		addPropButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				try {
-					addRootProp();
-				} catch (Exception e) {
-					ServerComm.handleClientException(e);
-				}
+				addRootProp();
+
 			}
 		});
 
@@ -102,17 +98,17 @@ public class EditMode extends ResizeComposite implements
 		Label searchLabel = new Label("Search:");
 		searchLabel.addStyleName("searchLabel");
 
-		DockLayoutPanel searchBoxPanel = new DockLayoutPanel( Unit.EM );
+		DockLayoutPanel searchBoxPanel = new DockLayoutPanel(Unit.EM);
 		searchBoxPanel.addStyleName("searchBoxPanel");
 		searchBoxPanel.addWest(searchLabel, 4.5);
-		/*this flow panel is here so button doesn't grow to tall... */
+		/* this flow panel is here so button doesn't grow to tall... */
 		FlowPanel addButtonFlowPanel = new FlowPanel();
 		addButtonFlowPanel.add(addPropButton);
 		searchBoxPanel.addEast(addButtonFlowPanel, 14);
 		searchBoxPanel.add(searchTextBox);
-		//searchTextBox.addStyleName("flowPanel-left");
-		//addPropButton.addStyleName("flowPanel-left");
-		//searchLabel.addStyleName("flowPanel-left");
+		// searchTextBox.addStyleName("flowPanel-left");
+		// addPropButton.addStyleName("flowPanel-left");
+		// searchLabel.addStyleName("flowPanel-left");
 
 		// ScrollPanel searchBoxScrollPanel = new ScrollPanel( searchBoxPanel );
 
@@ -151,23 +147,23 @@ public class EditMode extends ResizeComposite implements
 
 					@Override
 					public void call(PropsAndArgs allNodes) {
-						try {
-							ArgMap.logStart("em.em.cb");
-							ArgMap.log("em.em.cb", "Prop Tree From Server");
-							for (Proposition proposition : allNodes.rootProps) {
 
-								ViewProp propView = new ViewPropEdit();
-								propView.recursiveBuildViewNode(proposition,
-										allNodes.nodes);
+						Log log = Log.getLog("em.em.cb");
+						log.log("Prop Tree From Server");
+						for (Proposition proposition : allNodes.rootProps) {
 
-								tree.addItem(propView);
-								//propView.logNodeRecursive(0, "em.em.cb", true);
-							}
-							tree.resetState();
-							ArgMap.logEnd("em.em.cb");
-						} catch (Exception e) {
-							ServerComm.handleClientException(e);
+							ViewProp propView = new ViewPropEdit();
+							propView.recursiveBuildViewNode(proposition,
+									allNodes.nodes);
+
+							tree.addItem(propView);
+							// propView.logNodeRecursive(0, "em.em.cb", true);
 						}
+						tree.resetState();
+						if (Log.on)
+							tree.logTree(log);
+						log.flush();
+
 					}
 				});
 	}
@@ -205,56 +201,54 @@ public class EditMode extends ResizeComposite implements
 			}
 
 			public void onClick(ClickEvent event) {
-				try {
-					ViewPropEdit propViewToRemove = ViewPropEdit
-							.getLastPropositionWithFocus();
-					if (propViewToRemove.getChildCount() == 0) {
-						class ThisCallback implements LocalCallback<Nodes> {
-							ViewArgEdit parentArgView;
-							ViewPropEdit propViewToRemove;
-							int propIndex;
-							Long linkPropID;
 
-							@Override
-							public void call(Nodes nodes) {
-								parentArgView.removeItem(propViewToRemove);
-								Proposition proposition = nodes.props
-										.get(linkPropID);
-								ViewProp newViewProp = new ViewPropEdit();
-								newViewProp.recursiveBuildViewNode(proposition,
-										nodes);
+				ViewPropEdit propViewToRemove = ViewPropEdit
+						.getLastPropositionWithFocus();
+				if (propViewToRemove.getChildCount() == 0) {
+					class ThisCallback implements LocalCallback<Nodes> {
+						ViewArgEdit parentArgView;
+						ViewPropEdit propViewToRemove;
+						int propIndex;
+						Long linkPropID;
 
-								parentArgView.insertChildViewAt(propIndex,
-										newViewProp);
-							}
+						@Override
+						public void call(Nodes nodes) {
+							parentArgView.removeItem(propViewToRemove);
+							Proposition proposition = nodes.props
+									.get(linkPropID);
+							ViewProp newViewProp = new ViewPropEdit();
+							newViewProp.recursiveBuildViewNode(proposition,
+									nodes);
+
+							parentArgView.insertChildViewAt(propIndex,
+									newViewProp);
 						}
-						;
-						ThisCallback callback = new ThisCallback();
-						/*
-						 * TODO handle requests to link to top level nodes more
-						 * gracefully... currently throws an exception, instead
-						 * a message indicating that top level nodes cannot be
-						 * linked would be good...
-						 */
-						ViewArgEdit parentArgView = propViewToRemove
-								.parentArgView();
-						callback.parentArgView = parentArgView;
-						callback.propViewToRemove = propViewToRemove;
-						callback.propIndex = parentArgView
-								.getChildIndex(propViewToRemove);
-						Proposition propToLinkTo = propMatches.get(resultIndex);
-						callback.linkPropID = propToLinkTo.id;
-						ServerComm.replaceWithLinkAndGet(
-								parentArgView.argument, propToLinkTo,
-								propViewToRemove.proposition, callback);
-					} else {
-						ArgMap.message(
-								"Cannot link to existing proposition when proposition currently being edited has children",
-								MessageType.ERROR);
 					}
-				} catch (Exception e) {
-					ServerComm.handleClientException(e);
+					;
+					ThisCallback callback = new ThisCallback();
+					/*
+					 * TODO handle requests to link to top level nodes more
+					 * gracefully... currently throws an exception, instead a
+					 * message indicating that top level nodes cannot be linked
+					 * would be good...
+					 */
+					ViewArgEdit parentArgView = propViewToRemove
+							.parentArgView();
+					callback.parentArgView = parentArgView;
+					callback.propViewToRemove = propViewToRemove;
+					callback.propIndex = parentArgView
+							.getChildIndex(propViewToRemove);
+					Proposition propToLinkTo = propMatches.get(resultIndex);
+					callback.linkPropID = propToLinkTo.id;
+					ServerComm.replaceWithLinkAndGet(parentArgView.argument,
+							propToLinkTo, propViewToRemove.proposition,
+							callback);
+				} else {
+					ArgMap.message(
+							"Cannot link to existing proposition when proposition currently being edited has children",
+							MessageType.ERROR);
 				}
+
 			}
 		}
 		sideSearchResults.removeAllRows();
@@ -327,7 +321,7 @@ public class EditMode extends ResizeComposite implements
 	}
 
 	public Tree buildTreeCloneOfOpenNodes(Tree cloneTree) {
-		ArgMap.logStart("em.btcoop");
+		Log log = Log.getLog("em.btcoop");
 		for (int i = 0; i < tree.getItemCount(); i++) {
 			ViewNode viewNode = (ViewNode) tree.getItem(i);
 			if (viewNode.getState() || viewNode.isSelected()) {
@@ -336,28 +330,28 @@ public class EditMode extends ResizeComposite implements
 				 * root nodes we only want childless nodes if they are currently
 				 * selected
 				 */
-				ViewNode clonedViewNode = recursiveTreeClone((ViewPropEdit) tree
-						.getItem(i));
+				ViewNode clonedViewNode = recursiveTreeClone(
+						(ViewPropEdit) tree.getItem(i), log);
 				cloneTree.addItem(clonedViewNode);
 			}
 		}
-		ArgMap.logEnd("em.btcoop");
+		log.flush();
 		return cloneTree;
 	}
 
-	public ViewNode recursiveTreeClone(ViewNode realViewNode) {
-		ArgMap.logIndent("em.btcoop");
+	public ViewNode recursiveTreeClone(ViewNode realViewNode, Log log) {
+		log.indent();
 		ViewNode cloneViewNode = realViewNode.createViewNodeVerClone();
 
 		for (int i = 0; i < realViewNode.getChildCount(); i++) {
 			ViewNode realChild = realViewNode.getChildView(i);
 			if (realViewNode.getState()) {
-				cloneViewNode.addItem(recursiveTreeClone(realChild));
+				cloneViewNode.addItem(recursiveTreeClone(realChild, log));
 			} else {
 				cloneViewNode.addItem(new ViewDummyVer(realChild.getNodeID()));
 			}
 		}
-		ArgMap.logUnindent("em.btcoop");
+		log.unindent();
 		return cloneViewNode;
 	}
 
@@ -444,7 +438,7 @@ public class EditMode extends ResizeComposite implements
 
 			@Override
 			public void call(Nodes nodes) {
-				GWT.log("Returned nodes: " + nodes.toString());
+				// GWT.log("Returned nodes: " + nodes.toString());
 				while (source.getChildCount() > 0) {
 					source.getChild(0).remove();
 				}
@@ -464,7 +458,7 @@ public class EditMode extends ResizeComposite implements
 	@Override
 	public void onOpen(OpenEvent<TreeItem> event) {
 		argMap.showVersions();
-		ArgMap.logStart("em.op");
+		Log log = Log.getLog("em.op");
 		if (event.getTarget() instanceof ViewNode) {
 			ViewNode source = (ViewNode) event.getTarget();
 			// source.setOpen(true);
@@ -472,7 +466,7 @@ public class EditMode extends ResizeComposite implements
 				loadFromServer(source, 1);
 			}
 		}
-		ArgMap.logEnd("em.op");
+		log.flush();
 	}
 
 	@Override

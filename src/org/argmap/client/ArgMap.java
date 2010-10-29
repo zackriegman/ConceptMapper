@@ -1,28 +1,28 @@
 package org.argmap.client;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.layout.client.Layout.Alignment;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-
 //TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
-
-//TODO: move to GWT's new logging framework
-//TODO: batch open icon not visible/clickable on props that reach right screen edge
-//TODO: test in chrome, safari, ie8, opera,
 
 //TODO: prevent circular linking from crashing program...
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
@@ -35,12 +35,13 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: poll server every few seconds for server side changes (this has to come after versioning I think)
 //TODO: add helpful message along the side (tips box)
 
+//TODO: batch open icon not visible/clickable on props that reach right screen edge
 /*TODO: a proposition tree begins at time A.  At time C a pre-existing node is linked into the proposition tree.
  * The user browses to a time B between times A and C.  At that time the linked node is not present.
  * However the linked node is open in the tree(as a deleted node, so its changes are displayed in the change list).
  * The result is that there are changes that the user can scroll past that have no apparent effect on the tree
  * very confusing... so only a the changes post dating the linked nodes linking should be added to the change list?
-*/
+ */
 /*TODO: undoing unlinks does not restore the link's yellow color if the link *currently* is not  
  * linked to by more than one argument because the server sends the current proposition which
  * indicates a link count of 1.  This could be addressed by having a proposition's link/unlink
@@ -68,14 +69,15 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: highlight last change node after time travel
 //TODO: think about merging of duplicate propositions (both possibly already having arguments)
 //TODO: fine tune UI for arguments... see implementation notes
-//TODO: what is this?:   get rid of irrelevant update operations (e.g. clearing update before delete)
+//TODO: get rid of irrelevant update calls (e.g. clearing update before delete)
 //TODO: still an issue?: what are all the phantom propositions that show up on an empty search?
 //TODO: decide how to get rid of repetative code (for propositions and args), maybe make them both subclasses of a Node class?
 //TODO: if the message queue gets backed up (more than 5?) give user a message that there is trouble saving changes to server, and changes may be lost
 //TODO: maintain order of propositions? waiting to see if order gets screwed up
 //TODO: IE problems: (1) VersionsMode doesn't seem to work (2) can delete root level proposition without first deleting its text
+//TODO: figure out how to have logging code compiled out like the GWT logger framework supposedly does
 
-// TO DO: test in IE, chrome, safari, opera, etc.
+// TO DO: test in IE8, chrome, safari, opera, etc.
 // TO DO: upload to appengine, and add an example argument (for instance my argument about legalizing unauthorized access)
 // TO DO: implement some basic database integrity checks (e.g. every argument belongs to an existing proposition...)
 // TO DO: give people a way to specify logical structure (first order predicate calculus structure of each proposition
@@ -85,21 +87,21 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
-public class ArgMap implements EntryPoint {
+public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 
 	private final DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.EM);
-	private final TabLayoutPanel modePanel = new TabLayoutPanel(1.5, Style.Unit.EM);
+	private final TabLayoutPanel modePanel = new TabLayoutPanel(1.5,
+			Style.Unit.EM);
+	private final HorizontalPanel loginPanel = new HorizontalPanel();
 
 	private static HTML messageArea = new HTML();
 	private static List<String> messageList = new ArrayList<String>();
-	private final EditMode editMode = new EditMode( this );
+	private final EditMode editMode = new EditMode(this);
 	private VersionsMode versionsMode;
-	private static Map<String, StringBuilder> logs = new HashMap<String, StringBuilder>();
-	private static Map<String, Boolean> logsImmediatePrint = new HashMap<String, Boolean>();
-	private static Map<String, Integer> logsCurrentIndent = new HashMap<String, Integer>();
 
 	public void onModuleLoad() {
-		try {
+		
+			GWT.setUncaughtExceptionHandler(this);
 			modePanel.add(editMode, "Find And Collaborate");
 			versionsMode = new VersionsMode(editMode);
 
@@ -107,14 +109,12 @@ public class ArgMap implements EntryPoint {
 
 				@Override
 				public void onSelection(SelectionEvent<Integer> event) {
-					try {
+					
 						if (modePanel.getSelectedIndex() == 1) {
 							versionsMode.displayVersions();
-							
+
 						}
-					} catch (Exception e) {
-						ServerComm.handleClientException(e);
-					}
+					
 
 				}
 			});
@@ -122,9 +122,13 @@ public class ArgMap implements EntryPoint {
 			HTML htmlTitle = new HTML(
 					"<div class=\"title\">coreason.org</div>"
 							+ "<div class=\"subTitle\">...mass collaborative reasoning about everything...</div>");
-			// htmlTitle.addStyleName("titleLabel");
-			// messageArea.addStyleName("messageArea");
-			mainPanel.addNorth(htmlTitle, 4);
+
+			LayoutPanel bannerPanel = new LayoutPanel();
+			bannerPanel.add(htmlTitle);
+			bannerPanel.add(loginPanel);
+			loginPanel.addStyleName("loginPanel");
+			bannerPanel.setWidgetHorizontalPosition(loginPanel, Alignment.END);
+			mainPanel.addNorth(bannerPanel, 4);
 			mainPanel.addNorth(messageArea, 2);
 			mainPanel.add(modePanel);
 
@@ -134,28 +138,62 @@ public class ArgMap implements EntryPoint {
 			// Window.alert( "pops up a window to user with message");
 
 			message("App Begin", MessageType.INFO);
-		} catch (Exception e) {
-			ServerComm.handleClientException(e);
+			ServerComm.getLoginInfo(new ServerComm.LocalCallback<LoginInfo>() {
+
+				@Override
+				public void call(LoginInfo loginInfo) {
+					if (Log.on) {
+						Log log = Log.getLog("am.oml");
+						log.logln(loginInfo.email);
+						log.logln(loginInfo.nickName);
+						log.logln(loginInfo.firstName);
+						log.logln(loginInfo.lastName);
+						log.logln("" + loginInfo.loggedIn);
+						log.logln(loginInfo.logInURL);
+						log.logln(loginInfo.logOutURL);
+						log.logln(GWT.HOSTED_MODE_PERMUTATION_STRONG_NAME);
+						log.logln(GWT.getHostPageBaseURL());
+						log.logln(GWT.getModuleBaseURL());
+						log.logln(GWT.getModuleName());
+						log.logln(GWT.getPermutationStrongName());
+						log.flush();
+					}
+					if (loginInfo.loggedIn) {
+						Anchor signOutLink = new Anchor("Sign out");
+						signOutLink.addStyleName("loginText");
+						signOutLink.setHref(loginInfo.logOutURL);
+						Label nickName = new Label(loginInfo.nickName + " |" );
+						nickName.addStyleName("loginText");
+						nickName.addStyleName("email");
+						loginPanel.add(nickName);
+						loginPanel.add(signOutLink);
+					} else {
+						Anchor signInLink = new Anchor("Sign in");
+						signInLink.addStyleName("loginText");
+						signInLink.setHref(loginInfo.logInURL);
+						loginPanel.add(signInLink);
+					}
+				}
+			});
+		
+	}
+
+	public void showVersions() {
+		if (!versionsIsDisplayed()) {
+			modePanel.add(versionsMode, "History");
 		}
 	}
-	
-	public void showVersions(){
-		if( ! versionsIsDisplayed() ){
-		modePanel.add(versionsMode, "History");
+
+	public void hideVersions() {
+		if (versionsIsDisplayed()) {
+			modePanel.remove(versionsMode);
 		}
 	}
-	
-	public void hideVersions(){
-		if( versionsIsDisplayed() ){
-		modePanel.remove(versionsMode);
-		}
-	}
-	
-	private boolean versionsIsDisplayed(){
-		if( modePanel.getWidgetIndex( versionsMode ) == -1 ){
+
+	private boolean versionsIsDisplayed() {
+		if (modePanel.getWidgetIndex(versionsMode) == -1) {
 			return false;
-		}
-		else{
+		} else {
 			return true;
 		}
 	}
@@ -208,105 +246,19 @@ public class ArgMap implements EntryPoint {
 
 		@Override
 		public void run() {
-			try {
-				messageList.remove(message);
-				refreshMessageList();
-			} catch (Exception e) {
-				ServerComm.handleClientException(e);
-			}
-		}
-
-	}
-
-	public static String spaces(int spaces) {
-		String string = "";
-		for (int i = 0; i < spaces; i++) {
-			string = string + " ";
-		}
-		return string;
-	}
-
-	public static void logNull(String string, Object... vars) {
-		string += ": ";
-		for (int i = 0; i < vars.length; i++) {
-			if (vars[i] == null) {
-				string += i + " ";
-			}
-		}
-		GWT.log(string);
-	}
-
-	public static void logStart(String logName) {
-		logStart(logName, false);
-	}
-
-	/*
-	 * at some point I might want to modify this to accept a boolean indicating
-	 * whether to print the log or not so that I can easily flip the particular
-	 * log on or off depending on whether I need it...
-	 */
-	public static void logStart(String logName, boolean immediatePrint) {
-		if (logName == null)
-			return;
-
-		/*
-		 * asserts that logStart is only called once per logName before calling
-		 * logEnd otherwise log messages could be lost... or mixed with
-		 * irrelevant logs
-		 */
-		assert (logs.get(logName) == null);
-		StringBuilder log = new StringBuilder();
-		log.append(logName + ": ");
-		logs.put(logName, log);
-		logsImmediatePrint.put(logName, immediatePrint);
-		logsCurrentIndent.put(logName, 0);
-
-	}
-
-	public static void logEnd(String logName) {
-		if (logName == null)
-			return;
-		StringBuilder log = logs.remove(logName);
-		if (logsImmediatePrint.remove(logName)) {
-			return;
-		}
-		logsCurrentIndent.remove(logName);
-		GWT.log(log.toString());
-	}
-
-	public static void log(String logName, String string) {
-		if (logName == null)
-			return;
-		if (logsImmediatePrint.get(logName)) {
-			GWT.log(logName + ": " + string);
-			return;
-		}
-		logs.get(logName).append(string);
-	}
-
-	public static void logln(String logName, String string) {
-		if (logName == null)
-			return;
-		String indent = spaces(logsCurrentIndent.get(logName) * 4);
-		
-		if (logsImmediatePrint.get(logName)) {
-			log(logName,  indent + string);
-		} else {
-			log(logName, "\n" + indent + string);
+			messageList.remove(message);
+			refreshMessageList();
 		}
 	}
 
-	public static void logIndent(String logName) {
-		if (logName == null)
-			return;
-		Integer current = logsCurrentIndent.get(logName);
-		logsCurrentIndent.put(logName, current+1);
-	}
-
-	public static void logUnindent(String logName) {
-		if (logName == null)
-			return;
-		Integer current = logsCurrentIndent.get(logName);
-		logsCurrentIndent.put(logName, current-1);
+	@Override
+	public void onUncaughtException(Throwable e) {
+		try {
+			ArgMap.message("EXCEPTION CAUGHT ON CLIENT", MessageType.ERROR, 10);
+			Window.alert("Exception: " + e.toString());
+			ServerComm.logException(e);
+		} catch (Exception handlerException) {
+		}
+		GWT.log("Uncaught Exception", e);
 	}
 }

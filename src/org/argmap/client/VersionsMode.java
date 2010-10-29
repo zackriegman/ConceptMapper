@@ -83,9 +83,10 @@ public class VersionsMode extends ResizeComposite implements
 
 					@Override
 					public void call(NodeChangesMaps changesMaps) {
-						ArgMap.logStart("vm.dv.c");
-						ArgMap.log("vm.dv.c", "Got back these changes:\n"
-								+ changesMaps.toString());
+						Log log = Log.getLog("vm.dv.c");
+						if (Log.on)
+							log.log("Got back these changes:\n"
+									+ changesMaps.toString());
 
 						treeClone = new ArgTree();
 						treeClone.addCloseHandlerTracked(VersionsMode.this);
@@ -103,10 +104,12 @@ public class VersionsMode extends ResizeComposite implements
 
 						timeMachineMap = prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
 								treeClone, changesMaps);
-						
-						ArgMap.logStart("vm.dv.c.tree");
-						treeClone.logTree("vm.dv.c.tree");
-						ArgMap.logEnd("vm.dv.c.tree");
+
+						if (Log.on) {
+							Log treeLog = Log.getLog("vm.dv.tree");
+							treeClone.logTree(log);
+							treeLog.flush();
+						}
 
 						mapPropContent = new HashMap<ViewChange, String>();
 						mapArgTitle = new HashMap<ViewChange, String>();
@@ -122,7 +125,7 @@ public class VersionsMode extends ResizeComposite implements
 						onChange(null);
 						treeClone.resetState();
 						logTreeWithChanges();
-						ArgMap.logEnd("vm.dv.c");
+						log.flush();
 					}
 				});
 
@@ -130,20 +133,20 @@ public class VersionsMode extends ResizeComposite implements
 
 	private SortedMultiMap<Date, ViewChange> prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
 			Tree treeClone, NodeChangesMaps changesMaps) {
-		ArgMap.logStart("vm.ptwdnacab", false);
+		Log log = Log.getLog("vm.ptwdnacab");
 		SortedMultiMap<Date, ViewChange> timeMachineMap = new SortedMultiMap<Date, ViewChange>();
 		for (int i = 0; i < treeClone.getItemCount(); i++) {
 			recursivePrepAndBuild((ViewPropVer) treeClone.getItem(i),
-					timeMachineMap, changesMaps);
+					timeMachineMap, changesMaps, log);
 		}
-		ArgMap.logEnd("vm.ptwdnacab");
+		log.flush();
 		return timeMachineMap;
 	}
 
 	public void recursivePrepAndBuild(ViewNodeVer viewNode,
 			SortedMultiMap<Date, ViewChange> timeMachineMap,
-			NodeChangesMaps changesMaps) {
-		ArgMap.logIndent("vm.ptwdnacab");
+			NodeChangesMaps changesMaps, Log log) {
+		log.indent();
 		NodeChanges nodeChanges = viewNode.chooseNodeChanges(changesMaps);
 		if (viewNode.isOpen()) {
 			for (Long id : nodeChanges.deletedChildIDs) {
@@ -175,12 +178,12 @@ public class VersionsMode extends ResizeComposite implements
 					ViewNodeVer deletedView = viewNode.createChild(id);
 					viewNode.addDeletedItem(deletedView);
 					recursivePrepAndBuild(deletedView, timeMachineMap,
-							changesMaps);
+							changesMaps, log);
 				}
 			}
 			for (int i = 0; i < viewNode.getChildCount(); i++) {
 				ViewNodeVer child = viewNode.getChildViewNode(i);
-				recursivePrepAndBuild(child, timeMachineMap, changesMaps);
+				recursivePrepAndBuild(child, timeMachineMap, changesMaps, log);
 			}
 		} else {
 			for (Long id : nodeChanges.deletedChildIDs) {
@@ -198,7 +201,7 @@ public class VersionsMode extends ResizeComposite implements
 
 		loadChangesIntoNodeAndMap(viewNode, nodeChanges.changes, timeMachineMap);
 
-		ArgMap.logUnindent("vm.ptwdnacab");
+		log.unindent();
 	}
 
 	private void loadChangesIntoNodeAndMap(ViewNodeVer viewNode,
@@ -222,7 +225,7 @@ public class VersionsMode extends ResizeComposite implements
 		listBoxChangeHandlerRegistration.removeHandler();
 		Long currentDate = this.currentDate.getTime();
 		versionList.clear();
-		ArgMap.logStart("vm.lvlftm");
+		Log log = Log.getLog("vm.lvlftm");
 		DateTimeFormat dateFormat = DateTimeFormat
 				.getFormat("yyyy MMM d kk:mm:ss:SSS");
 
@@ -235,12 +238,11 @@ public class VersionsMode extends ResizeComposite implements
 			Long changeTime = change.date.getTime();
 			int comparison = currentDate.compareTo(changeTime);
 			if (comparison == 0) {
-				ArgMap.log("vm.lvlftm", "###########   Selecting Item:" + i
-						+ "; changeTime:" + changeTime + "; currentDate:"
-						+ currentDate);
+				log.log("###########   Selecting Item:" + i + "; changeTime:"
+						+ changeTime + "; currentDate:" + currentDate);
 				newSelectionIndex = i;
 			} else if (comparison > 0 && newSelectionIndex == -1) {
-				ArgMap.log("vm.lvlftm", "###########   Selecting Item:" + i
+				log.log("###########   Selecting Item:" + i
 						+ " - 1; before item with changeTime:" + changeTime
 						+ "; currentDate:" + currentDate);
 				newSelectionIndex = i - 1;
@@ -249,21 +251,23 @@ public class VersionsMode extends ResizeComposite implements
 				versionList.addItem("" + dateFormat.format(change.date) + " ["
 						+ change.changeType + "]", "" + changeTime);
 			} else {
-				versionList.addItem("----------------------------------------", "" + changeTime);
+				versionList.addItem("----------------------------------------",
+						"" + changeTime);
 			}
-			ArgMap.log("vm.lvlftm", "\n" + change);
+			log.log("\n" + change);
 			i++;
 		}
 
 		/* add an item older than all items so that last change can be shown */
 		Date oldest = timeMachineMap.get(timeMachineMap.firstKey()).get(0).change.date;
-		versionList.addItem("----------------------------------------", "" + (oldest.getTime() - 1000));
+		versionList.addItem("----------------------------------------", ""
+				+ (oldest.getTime() - 1000));
 
 		versionList.setSelectedIndex(newSelectionIndex);
 
 		listBoxChangeHandlerRegistration = versionList
 				.addChangeHandler(VersionsMode.this);
-		ArgMap.logEnd("vm.lvlftm");
+		log.flush();
 	}
 
 	public List<ViewChange> getChangeList() {
@@ -317,10 +321,10 @@ public class VersionsMode extends ResizeComposite implements
 	}
 
 	@SuppressWarnings("unused")
-	private void logTree(String logName) {
+	private void logTree(Log log) {
 		for (int i = 0; i < treeClone.getItemCount(); i++) {
 			ViewNode viewNode = (ViewNode) treeClone.getItem(i);
-			viewNode.logNodeRecursive(2, logName, false);
+			viewNode.logNodeRecursive(2, log, false);
 		}
 	}
 
@@ -427,66 +431,60 @@ public class VersionsMode extends ResizeComposite implements
 
 	@Override
 	public void onOpen(OpenEvent<TreeItem> event) {
-		try {
-			ArgMap.logStart("vm.oo");
-			ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
-			if (!viewNodeVer.isLoaded()) {
+		Log log = Log.getLog("vm.oo");
+		ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
+		if (!viewNodeVer.isLoaded()) {
 
-				/*
-				 * make a list of all the child dummy ids, both existing and
-				 * deleted
-				 */
-				List<Long> childIDs = new ArrayList<Long>();
-				for (ViewNodeVer deletedView : viewNodeVer.getDeletedViewList()) {
-					childIDs.add(deletedView.getNodeID());
-				}
-				for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
-					childIDs.add(viewNodeVer.getChildViewNode(i).getNodeID());
-				}
-
-				/* a class to hold the call back method */
-				class Callback implements
-						ServerComm.LocalCallback<Map<Long, NodeWithChanges>> {
-					ViewNodeVer viewNodeVer;
-
-					public Callback(ViewNodeVer viewNodeVer) {
-						this.viewNodeVer = viewNodeVer;
-					}
-
-					@Override
-					public void call(Map<Long, NodeWithChanges> nodesWithChanges) {
-						mergeLoadedNodes(viewNodeVer, nodesWithChanges);
-					}
-				}
-
-				/*
-				 * request the nodes and changes for each of the ids collected
-				 * above from the server. If the node being opened is a
-				 * proposition request a list of child arguments and vice-versa.
-				 */
-				if (viewNodeVer instanceof ViewArgVer) {
-					ServerComm.getPropsWithChanges(childIDs, new Callback(
-							viewNodeVer));
-				} else if (viewNodeVer instanceof ViewPropVer) {
-					ServerComm.getArgsWithChanges(childIDs, new Callback(
-							viewNodeVer));
-				}
-			} else {
-
-				ArgMap.log("vm.oo", "Adding View Changes: ");
-				SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
-				recursiveGetViewChanges(viewNodeVer, subTreeChanges, true,
-						"vm.oo");
-
-				zoomToCurrentDateAndReloadChangeList(viewNodeVer,
-						subTreeChanges, viewNodeVer.getClosedDate());
-
+			/*
+			 * make a list of all the child dummy ids, both existing and deleted
+			 */
+			List<Long> childIDs = new ArrayList<Long>();
+			for (ViewNodeVer deletedView : viewNodeVer.getDeletedViewList()) {
+				childIDs.add(deletedView.getNodeID());
 			}
-			ArgMap.logEnd("vm.oo");
-			logTreeWithChanges();
-		} catch (Exception e) {
-			ServerComm.handleClientException(e);
+			for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
+				childIDs.add(viewNodeVer.getChildViewNode(i).getNodeID());
+			}
+
+			/* a class to hold the call back method */
+			class Callback implements
+					ServerComm.LocalCallback<Map<Long, NodeWithChanges>> {
+				ViewNodeVer viewNodeVer;
+
+				public Callback(ViewNodeVer viewNodeVer) {
+					this.viewNodeVer = viewNodeVer;
+				}
+
+				@Override
+				public void call(Map<Long, NodeWithChanges> nodesWithChanges) {
+					mergeLoadedNodes(viewNodeVer, nodesWithChanges);
+				}
+			}
+
+			/*
+			 * request the nodes and changes for each of the ids collected above
+			 * from the server. If the node being opened is a proposition
+			 * request a list of child arguments and vice-versa.
+			 */
+			if (viewNodeVer instanceof ViewArgVer) {
+				ServerComm.getPropsWithChanges(childIDs, new Callback(
+						viewNodeVer));
+			} else if (viewNodeVer instanceof ViewPropVer) {
+				ServerComm.getArgsWithChanges(childIDs, new Callback(
+						viewNodeVer));
+			}
+		} else {
+
+			log.log("Adding View Changes: ");
+			SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
+			recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, log);
+
+			zoomToCurrentDateAndReloadChangeList(viewNodeVer, subTreeChanges,
+					viewNodeVer.getClosedDate());
+
 		}
+		log.flush();
+		logTreeWithChanges();
 	}
 
 	public void zoomToCurrentDateAndReloadChangeList(ViewNodeVer viewNodeVer,
@@ -514,25 +512,23 @@ public class VersionsMode extends ResizeComposite implements
 
 	@Override
 	public void onClose(CloseEvent<TreeItem> event) {
-		try {
-			ArgMap.logStart("vm.oc");
-			ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
-			viewNodeVer.setClosedDate(currentDate);
-			ArgMap.log("vm.oc", "Removing View Changes: ");
-			SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
-			recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, "vm.oc");
-			timeMachineMap.removeAll(subTreeChanges);
 
-			for (ViewChange viewChange : viewNodeVer.getViewChangeHideList()) {
-				viewChange.hidden = true;
-			}
+		Log log = Log.getLog("vm.oc");
+		ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
+		viewNodeVer.setClosedDate(currentDate);
+		log.log("Removing View Changes: ");
+		SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
+		recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, log);
+		timeMachineMap.removeAll(subTreeChanges);
 
-			loadVersionListFromTimeMachine();
-			// viewNodeVer.setOpen(false);
-			ArgMap.logEnd("vm.oc");
-		} catch (Exception e) {
-			ServerComm.handleClientException(e);
+		for (ViewChange viewChange : viewNodeVer.getViewChangeHideList()) {
+			viewChange.hidden = true;
 		}
+
+		loadVersionListFromTimeMachine();
+		// viewNodeVer.setOpen(false);
+		log.flush();
+
 	}
 
 	/*
@@ -547,17 +543,17 @@ public class VersionsMode extends ResizeComposite implements
 	 */
 	public void recursiveGetViewChanges(ViewNodeVer viewNodeVer,
 			SortedMultiMap<Date, ViewChange> forAddOrRemove, boolean firstNode,
-			String logName) {
+			Log log) {
 		/*
 		 * if it is the first node then we don't want to remove any changes, as
 		 * add/remove changes are merely hidden, and modification changes are
 		 * left entirely intact.
 		 */
 		if (!firstNode) {
-			ArgMap.logln(logName, "nodeID: " + viewNodeVer.getNodeID()
-					+ "; State: " + viewNodeVer.isOpen());
+			log.log("nodeID: " + viewNodeVer.getNodeID() + "; State: "
+					+ viewNodeVer.isOpen());
 			for (ViewChange viewChange : viewNodeVer.getViewChangeList()) {
-				ArgMap.logln(logName, "  viewChange: " + viewChange);
+				log.log("  viewChange: " + viewChange);
 				forAddOrRemove.put(viewChange.change.date, viewChange);
 			}
 		}
@@ -576,13 +572,13 @@ public class VersionsMode extends ResizeComposite implements
 				ViewNodeVer childView = viewNodeVer.getChildViewNode(i);
 				if (!(childView instanceof ViewDummyVer)) {
 					recursiveGetViewChanges(childView, forAddOrRemove, false,
-							logName);
+							log);
 				}
 			}
 			for (ViewNodeVer deletedView : viewNodeVer.getDeletedViewList()) {
 				if (!(deletedView instanceof ViewDummyVer)) {
 					recursiveGetViewChanges(deletedView, forAddOrRemove, false,
-							logName);
+							log);
 				}
 			}
 		}
@@ -590,35 +586,33 @@ public class VersionsMode extends ResizeComposite implements
 
 	@Override
 	public void onChange(ChangeEvent event) {
-		try {
-			String millisecondStr = versionList.getValue(versionList
-					.getSelectedIndex());
-			Date destinationDate = new Date(Long.parseLong(millisecondStr));
-			travelFromDateToDate(currentDate, destinationDate, timeMachineMap);
 
-			// TODO: if multiple copies of the same linked proposition are
-			// showing
-			// how do we know which one to make visible?
+		String millisecondStr = versionList.getValue(versionList
+				.getSelectedIndex());
+		Date destinationDate = new Date(Long.parseLong(millisecondStr));
+		travelFromDateToDate(currentDate, destinationDate, timeMachineMap);
 
-			/*
-			 * must check to make sure a change exists for destinationDate
-			 * becuase destination date may be a placeholder to allow the user
-			 * to walk past the earliest change.
-			 */
-			if (timeMachineMap.get(destinationDate) != null) {
-				treePanel.ensureVisible((ViewNode) timeMachineMap.get(
-						destinationDate).get(0).viewNode);
-			}
-		} catch (Exception e) {
-			ServerComm.handleClientException(e);
+		// TODO: if multiple copies of the same linked proposition are
+		// showing
+		// how do we know which one to make visible?
+
+		/*
+		 * must check to make sure a change exists for destinationDate becuase
+		 * destination date may be a placeholder to allow the user to walk past
+		 * the earliest change.
+		 */
+		if (timeMachineMap.get(destinationDate) != null) {
+			treePanel.ensureVisible((ViewNode) timeMachineMap.get(
+					destinationDate).get(0).viewNode);
 		}
+
 	}
 
 	public void travelFromDateToDate(Date currentDate, Date newDate,
 			SortedMultiMap<Date, ViewChange> changes) {
-		ArgMap.logStart("tm.ttd", false);
+		Log log = Log.getLog("tm.ttd");
 		if (newDate.before(currentDate)) {
-			ArgMap.log("tm.ttd", "traveling back to date:" + newDate);
+			log.log("traveling back to date:" + newDate);
 			/*
 			 * here newDate is the date that the user clicked on, and is
 			 * highlighted. Therefore we do not want to process newDate, because
@@ -644,7 +638,7 @@ public class VersionsMode extends ResizeComposite implements
 			List<List<ViewChange>> reverseList = changes.valuesSublist(newDate,
 					false, currentDate, true);
 			Collections.reverse(reverseList);
-			moveTreeBackwards(reverseList);
+			moveTreeBackwards(reverseList, log);
 		} else if (newDate.after(currentDate)) {
 			/*
 			 * the current tree shows the tree after the change highlighted was
@@ -662,20 +656,22 @@ public class VersionsMode extends ResizeComposite implements
 			 * moveTreeForwards(changes.subMap(currentDate, false, newDate,
 			 * true).values());
 			 */
-			ArgMap.log("tm.ttd", "traveling forward to date:" + newDate);
-			moveTreeForwards(changes.valuesSublist(currentDate, false, newDate,
-					true));
+			log.log("traveling forward to date:" + newDate);
+			moveTreeForwards(
+					changes.valuesSublist(currentDate, false, newDate, true),
+					log);
 		}
 		this.currentDate = newDate;
 		treeClone.resetState();
-		ArgMap.logEnd("tm.ttd");
+		log.flush();
 	}
 
-	private void moveTreeForwards(Collection<List<ViewChange>> changesToProcess) {
-		ArgMap.logln("tm.ttd", "----re-doing changes----");
+	private void moveTreeForwards(
+			Collection<List<ViewChange>> changesToProcess, Log log) {
+		log.log("----re-doing changes----");
 		for (List<ViewChange> changeList : changesToProcess) {
 			for (ViewChange vC : changeList) {
-				ArgMap.logln("tm.ttd", "processing: " + vC.change);
+				log.log("processing: " + vC.change);
 				switch (vC.change.changeType) {
 				case PROP_UNLINK:
 				case PROP_DELETION: {
@@ -736,11 +732,12 @@ public class VersionsMode extends ResizeComposite implements
 	 * record whether the argument is pro or con. This allows the program to
 	 * move back and forth along the change list arbitrarily.
 	 */
-	private void moveTreeBackwards(Collection<List<ViewChange>> changesToProcess) {
-		ArgMap.logln("tm.ttd", "----undoing changes----");
+	private void moveTreeBackwards(
+			Collection<List<ViewChange>> changesToProcess, Log log) {
+		log.logln("----undoing changes----");
 		for (List<ViewChange> changeList : changesToProcess) {
 			for (ViewChange vC : changeList) {
-				ArgMap.logln("tm.ttd", "processing: " + vC.change);
+				log.logln("processing: " + vC.change);
 				switch (vC.change.changeType) {
 				case PROP_UNLINK: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
@@ -824,32 +821,33 @@ public class VersionsMode extends ResizeComposite implements
 	}
 
 	public void logTreeWithChanges() {
-		ArgMap.logStart("vm.ltwc");
+		Log log = Log.getLog("vm.ltwc");
 		for (int i = 0; i < treeClone.getItemCount(); i++) {
-			recursiveLogTreeWithChanges((ViewNodeVer) treeClone.getItem(i));
+			recursiveLogTreeWithChanges((ViewNodeVer) treeClone.getItem(i), log);
 		}
-		ArgMap.logEnd("vm.ltwc");
+		log.flush();
 	}
 
-	public void recursiveLogTreeWithChanges(ViewNodeVer viewNodeVer) {
-		ArgMap.logIndent("vm.ltwc");
-		ArgMap.logln("vm.ltwc", "node:" + viewNodeVer.toString());
+	public void recursiveLogTreeWithChanges(ViewNodeVer viewNodeVer, Log log) {
+		log.indent();
+		log.logln("node:" + viewNodeVer.toString());
 		if (!(viewNodeVer instanceof ViewDummyVer)) {
-			ArgMap.logln("vm.ltwc", "changes:");
-			ArgMap.logIndent("vm.ltwc");
+			log.logln("changes:");
+			log.indent();
 			for (ViewChange change : viewNodeVer.getViewChangeList()) {
-				ArgMap.logln("vm.ltwc", change.toString());
+				log.logln(change.toString());
 			}
-			ArgMap.logUnindent("vm.ltwc");
-			ArgMap.logln("vm.ltwc", "children:");
+			log.unindent();
+			log.logln("children:");
 			for (int i = 0; i < viewNodeVer.getChildCount(); i++) {
-				recursiveLogTreeWithChanges(viewNodeVer.getChildViewNode(i));
+				recursiveLogTreeWithChanges(viewNodeVer.getChildViewNode(i),
+						log);
 			}
-			ArgMap.logln("vm.ltwc", "deleted children:");
+			log.logln("deleted children:");
 			for (ViewNodeVer delChild : viewNodeVer.getDeletedViewList()) {
-				recursiveLogTreeWithChanges(delChild);
+				recursiveLogTreeWithChanges(delChild, log);
 			}
 		}
-		ArgMap.logUnindent("vm.ltwc");
+		log.unindent();
 	}
 }

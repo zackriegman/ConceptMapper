@@ -64,43 +64,40 @@ public class ServerComm {
 
 		@Override
 		public final void onFailure(Throwable caught) {
-			ArgMap.message("Error: " + caught.getMessage(), MessageType.ERROR, 10);
+			ArgMap.message("Error: " + caught.getMessage(), MessageType.ERROR,
+					10);
 			throw new RuntimeException(caught);
 		}
 
 		@Override
 		public final void onSuccess(T result) {
-			try {
-				if (localCallback != null) {
-					localCallback.call(result);
-				}
-				if (successMessage != null) {
-					ArgMap.message(successMessage, MessageType.INFO, 2);
-				}
-			} catch (Exception e) {
-				handleClientException( e );
+
+			if (localCallback != null) {
+				localCallback.call(result);
+			}
+			if (successMessage != null) {
+				ArgMap.message(successMessage, MessageType.INFO, 2);
 			}
 		}
 	}
-	
-	public static void handleClientException( Exception e ){
-		argMapService.logClientException(e.toString(), new AsyncCallback<Void>() {
-			
-			@Override
-			public void onSuccess(Void result) {
-				//Window.alert("Succesfully Logged Bug On Server");
-				
-			}
-			
-			@Override
-			public void onFailure(Throwable caught) {
-				Window.alert("Failed To Log Bug On Server: " + caught.toString());
-				
-			}
-		});
-		ArgMap.message("EXCEPTION CAUGHT ON CLIENT", MessageType.ERROR, 10);
-		Window.alert("Exception: " + e.toString());
-		throw new RuntimeException( e );
+
+	public static void logException(Throwable e) {
+		argMapService.logClientException(e.toString(),
+				new AsyncCallback<Void>() {
+
+					@Override
+					public void onSuccess(Void result) {
+						// Window.alert("Succesfully Logged Bug On Server");
+
+					}
+
+					@Override
+					public void onFailure(Throwable caught) {
+						Window.alert("Failed To Log Bug On Server: "
+								+ caught.toString());
+
+					}
+				});
 	}
 
 	private static abstract class ServerCallbackWithDispatch<T> implements
@@ -114,7 +111,8 @@ public class ServerComm {
 		@Override
 		public final void onFailure(Throwable caught) {
 			dispatchCommand();
-			ArgMap.message("Error: " + caught.getMessage(), MessageType.ERROR, 10);
+			ArgMap.message("Error: " + caught.getMessage(), MessageType.ERROR,
+					10);
 			// GWT.log(caught.getMessage());
 			// caught.printStackTrace();
 			/* trying this to get the exception printed in the GWT.log */
@@ -123,34 +121,42 @@ public class ServerComm {
 
 		@Override
 		public final void onSuccess(T result) {
-			try {
-				/*
-				 * this must come before dispatchCommand() otherwise the client
-				 * might send a request to add a proposition to an argument
-				 * before the argument has been assigned an id by the return
-				 * call from the server...
-				 */
-				doOnSuccess(result);
-				dispatchCommand();
-				if (successMessage != null) {
-					ArgMap.message(successMessage, MessageType.INFO, 2);
-				}
-			} catch (Exception e) {
-				handleClientException( e );
+
+			/*
+			 * this must come before dispatchCommand() otherwise the client
+			 * might send a request to add a proposition to an argument before
+			 * the argument has been assigned an id by the return call from the
+			 * server...
+			 */
+			doOnSuccess(result);
+			dispatchCommand();
+			if (successMessage != null) {
+				ArgMap.message(successMessage, MessageType.INFO, 2);
 			}
+
 		}
 
 		public abstract void doOnSuccess(T result);
 	}
 
-	public static void getRootProps(int depthLimit, LocalCallback<PropsAndArgs> localCallback) {
-		argMapService.getPropsAndArgs(depthLimit, new ServerCallback<PropsAndArgs>(
-				localCallback, "Server Reports Success Fetching Props"));
+	public static void getRootProps(int depthLimit,
+			LocalCallback<PropsAndArgs> localCallback) {
+		argMapService.getPropsAndArgs(depthLimit,
+				new ServerCallback<PropsAndArgs>(localCallback,
+						"Server Reports Success Fetching Props"));
 	}
-	
-	public static void getNodesChildren( List<Long> nodeIDs, int depth, LocalCallback<Nodes> localCallback ){
-		argMapService.getNodesChildren(nodeIDs, depth, new ServerCallback<Nodes>(localCallback, "Server Reports Success" +
-				"Fetching Props"));
+
+	public static void getNodesChildren(List<Long> nodeIDs, int depth,
+			LocalCallback<Nodes> localCallback) {
+		argMapService.getNodesChildren(nodeIDs, depth,
+				new ServerCallback<Nodes>(localCallback,
+						"Server Reports Success" + "Fetching Props"));
+	}
+
+	public static void getLoginInfo(LocalCallback<LoginInfo> localCallback) {
+		argMapService.getLoginInfo(GWT.getHostPageBaseURL(),
+				new ServerCallback<LoginInfo>(localCallback,
+						"Server Reports Success" + "Getting Login Info"));
 	}
 
 	public static void getChanges(List<Proposition> props, List<Argument> args,
@@ -188,8 +194,8 @@ public class ServerComm {
 								"Server Reports Success Fetching Proposition With Changes"));
 	}
 
-	public static void searchProps(String string, Argument filterArg, Proposition filterProp,
-			LocalCallback<PropsAndArgs> localCallback) {
+	public static void searchProps(String string, Argument filterArg,
+			Proposition filterProp, LocalCallback<PropsAndArgs> localCallback) {
 		Long argID = filterArg == null ? null : filterArg.id;
 		Long propID = filterProp == null ? null : filterProp.id;
 
@@ -291,8 +297,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				argMapService.unlinkProp(parentArg.id, unlinkProp.id,
-						this);
+				argMapService.unlinkProp(parentArg.id, unlinkProp.id, this);
 			}
 
 			@Override
@@ -342,8 +347,7 @@ public class ServerComm {
 
 			@Override
 			public void execute() {
-				argMapService.updateProp(prop.id, prop.getContent(),
-						this);
+				argMapService.updateProp(prop.id, prop.getContent(), this);
 			}
 
 			@Override
@@ -375,8 +379,8 @@ public class ServerComm {
 					argMapService.addProp(parentArgument.id, position,
 							newProposition.content, this);
 				else
-					argMapService.addProp(null, 0,
-							newProposition.content, this);
+					argMapService
+							.addProp(null, 0, newProposition.content, this);
 			}
 
 			@Override

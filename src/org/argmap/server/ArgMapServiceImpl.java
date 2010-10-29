@@ -22,11 +22,15 @@ import org.argmap.client.ArgMapService;
 import org.argmap.client.Argument;
 import org.argmap.client.Change;
 import org.argmap.client.Change.ChangeType;
+import org.argmap.client.LoginInfo;
 import org.argmap.client.Node;
 import org.argmap.client.NodeChanges;
 import org.argmap.client.Nodes;
 import org.argmap.client.Proposition;
 
+import com.google.appengine.api.users.User;
+import com.google.appengine.api.users.UserService;
+import com.google.appengine.api.users.UserServiceFactory;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import com.googlecode.objectify.NotFoundException;
 import com.googlecode.objectify.Objectify;
@@ -670,8 +674,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public PropsAndArgs searchProps(String string, Long filterArgID, Long filterPropID)
-			throws Exception {
+	public PropsAndArgs searchProps(String string, Long filterArgID,
+			Long filterPropID) throws Exception {
 		try {
 			Set<String> tokenSet = getTokensForIndexingOrQuery(string, 5);
 			List<String> tokens = new ArrayList<String>(tokenSet);
@@ -708,9 +712,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 						query.filter("tokens", tokens.get(combination[j]));
 					}
 					for (Proposition proposition : query) {
-						if ((filterArg != null
-								&& filterArg.childIDs.contains(proposition.id)) ||
-								proposition.id.equals(filterPropID) ) {
+						if ((filterArg != null && filterArg.childIDs
+								.contains(proposition.id))
+								|| proposition.id.equals(filterPropID)) {
 							continue;
 						}
 						if (duplicateFilter.add(proposition.id)) {
@@ -934,6 +938,23 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			log.log(Level.SEVERE, "Uncaught exception", e);
 			throw e;
 		}
+	}
+
+	public LoginInfo getLoginInfo(String requestUri) {
+		UserService userService = UserServiceFactory.getUserService();
+		User user = userService.getCurrentUser();
+		LoginInfo loginInfo = new LoginInfo();
+
+		if (user != null) {
+			loginInfo.loggedIn = true;
+			loginInfo.email = user.getEmail();
+			loginInfo.nickName = user.getNickname();
+			loginInfo.logOutURL = userService.createLogoutURL(requestUri);
+		} else {
+			loginInfo.loggedIn = false;
+			loginInfo.logInURL = userService.createLoginURL(requestUri);
+		}
+		return loginInfo;
 	}
 
 }

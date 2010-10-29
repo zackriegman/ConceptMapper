@@ -18,7 +18,8 @@ import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.user.client.ui.Button;
 
 public class ViewArgEdit extends ViewArg implements ChangeHandler,
-		KeyDownHandler, MouseOverHandler, MouseOutHandler, ClickHandler, FocusHandler {
+		KeyDownHandler, MouseOverHandler, MouseOutHandler, ClickHandler,
+		FocusHandler {
 
 	private final Button expandButton = new Button("+");
 
@@ -44,24 +45,22 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 		focusPanel.addMouseOutHandler(this);
 		focusPanel.addMouseOverHandler(this);
 		expandButton.setStylePrimaryName("expandButton");
-		//expandButton.setStylePrimaryName("button");
+		// expandButton.setStylePrimaryName("button");
 		expandButton.addClickHandler(this);
 	}
 
 	@Override
 	public void onChange(ChangeEvent event) {
-		try {
-			String trimmedTextBoxContent = textBox.getText() == null ? ""
-					: textBox.getText().trim();
-			String trimmedArgumentTitle = argument.content == null ? ""
-					: argument.content.trim();
-			if (!trimmedArgumentTitle.equals(trimmedTextBoxContent)) {
-				argument.content = trimmedTextBoxContent;
-				ServerComm.updateArg(argument);
-			}
-		} catch (Exception e) {
-			ServerComm.handleClientException(e);
+
+		String trimmedTextBoxContent = textBox.getText() == null ? "" : textBox
+				.getText().trim();
+		String trimmedArgumentTitle = argument.content == null ? ""
+				: argument.content.trim();
+		if (!trimmedArgumentTitle.equals(trimmedTextBoxContent)) {
+			argument.content = trimmedTextBoxContent;
+			ServerComm.updateArg(argument);
 		}
+
 	}
 
 	public void haveFocus() {
@@ -70,37 +69,34 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
-		try {
-			int charCode = event.getNativeKeyCode();
-			Object source = event.getSource();
-			if (source == textBox) {
-				if ((charCode == KeyCodes.KEY_BACKSPACE || charCode == KeyCodes.KEY_DELETE)
-						&& textBox.getText().equals("") && getChildCount() == 0) {
-					int indexOfThis = getParentItem().getChildIndex(this);
-					if (indexOfThis == 0) {
-						((ViewPropEdit) getParentItem()).haveFocus();
-					} else {
-						((ViewArgEdit) getParentItem()
-								.getChild(indexOfThis - 1)).haveFocus();
-					}
-					remove();
-					ServerComm.deleteArg(argument);
 
-					event.preventDefault();
-				} else if (charCode == KeyCodes.KEY_ENTER
-						&& textBox.getCursorPos() == textBox.getText().length()) {
-					ViewPropEdit newPropView = new ViewPropEdit();
-					insertChildViewAt(0, newPropView);
-					newPropView.haveFocus();
-					ServerComm.addProp(newPropView.proposition,
-							argument, 0);
-					event.preventDefault();
-
+		int charCode = event.getNativeKeyCode();
+		Object source = event.getSource();
+		if (source == textBox) {
+			if ((charCode == KeyCodes.KEY_BACKSPACE || charCode == KeyCodes.KEY_DELETE)
+					&& textBox.getText().equals("") && getChildCount() == 0) {
+				int indexOfThis = getParentItem().getChildIndex(this);
+				if (indexOfThis == 0) {
+					((ViewPropEdit) getParentItem()).haveFocus();
+				} else {
+					((ViewArgEdit) getParentItem().getChild(indexOfThis - 1))
+							.haveFocus();
 				}
+				remove();
+				ServerComm.deleteArg(argument);
+
+				event.preventDefault();
+			} else if (charCode == KeyCodes.KEY_ENTER
+					&& textBox.getCursorPos() == textBox.getText().length()) {
+				ViewPropEdit newPropView = new ViewPropEdit();
+				insertChildViewAt(0, newPropView);
+				newPropView.haveFocus();
+				ServerComm.addProp(newPropView.proposition, argument, 0);
+				event.preventDefault();
+
 			}
-		} catch (Exception e) {
-			ServerComm.handleClientException(e);
 		}
+
 	}
 
 	@Override
@@ -135,6 +131,6 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 
 	@Override
 	public void onFocus(FocusEvent event) {
-		getEditModeTree().getEditMode().hideSearchBox();		
+		getEditModeTree().getEditMode().hideSearchBox();
 	}
 }
