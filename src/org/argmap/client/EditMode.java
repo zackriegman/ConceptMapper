@@ -161,7 +161,7 @@ public class EditMode extends ResizeComposite implements
 										allNodes.nodes);
 
 								tree.addItem(propView);
-								propView.logNodeRecursive(0, "em.em.cb", true);
+								//propView.logNodeRecursive(0, "em.em.cb", true);
 							}
 							tree.resetState();
 							ArgMap.logEnd("em.em.cb");
@@ -395,27 +395,6 @@ public class EditMode extends ResizeComposite implements
 		for (int i = 0; i < tree.getItemCount(); i++) {
 			recursiveGetOpenPropsAndArgs(((ViewPropEdit) tree.getItem(i)),
 					props, args);
-		}
-	}
-
-	public void recursiveGetOpenPropsAndArgs_DELETE_ME(ViewPropEdit propView,
-			List<Proposition> props, List<Argument> args) {
-		props.add(propView.getProposition());
-		if (propView.getState() || propView.getChildCount() == 0) {
-			/*
-			 * state seems to return false when item has no children so we also
-			 * need to include childless nodes
-			 */
-			for (int i = 0; i < propView.getChildCount(); i++) {
-				ViewArgEdit argView = ((ViewArgEdit) propView.getChild(i));
-				args.add(argView.argument);
-				if (argView.getState() || propView.getChildCount() == 0) {
-					for (int j = 0; j < argView.getChildCount(); j++) {
-						recursiveGetOpenPropsAndArgs(
-								(ViewPropEdit) argView.getChild(j), props, args);
-					}
-				}
-			}
 		}
 	}
 

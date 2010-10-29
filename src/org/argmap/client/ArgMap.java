@@ -20,20 +20,7 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
 
-/*TODO: if you close a node in versions mode sometimes you can never open it again (in that versions
- * session) because it will 
- * never have children again given the dates available to click on.  For instance if you add a node, 
- * add a child, delete the child, and delete the node, all consecutively, and then go to a time when 
- * the node has children and close it, the node will never have children again because it doesn't have
- * children when it is created or when it is destroyed... and there are no visible events in between...
- * this should be a low priority fix, but it might take some ui creativity... ui creativity should be minimal
- * just add a placeholder element like "-----" for instance... but need to think about how to detect when
- * this is necessary and what date to assign the placeholder...
- * 
- * Actually this should be somewhat higher priority because if the parent node wasn't visible in the edit tree
- * (because its parent was close) and you browse to it in a previous version, the deleted branch will
- * never be visible...
- */
+//TODO: move to GWT's new logging framework
 //TODO: batch open icon not visible/clickable on props that reach right screen edge
 //TODO: test in chrome, safari, ie8, opera,
 
@@ -48,7 +35,12 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: poll server every few seconds for server side changes (this has to come after versioning I think)
 //TODO: add helpful message along the side (tips box)
 
-//TODO: figure out CSS inheritance
+/*TODO: a proposition tree begins at time A.  At time C a pre-existing node is linked into the proposition tree.
+ * The user browses to a time B between times A and C.  At that time the linked node is not present.
+ * However the linked node is open in the tree(as a deleted node, so its changes are displayed in the change list).
+ * The result is that there are changes that the user can scroll past that have no apparent effect on the tree
+ * very confusing... so only a the changes post dating the linked nodes linking should be added to the change list?
+*/
 /*TODO: undoing unlinks does not restore the link's yellow color if the link *currently* is not  
  * linked to by more than one argument because the server sends the current proposition which
  * indicates a link count of 1.  This could be addressed by having a proposition's link/unlink
@@ -66,27 +58,10 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
  * change on the server to return the coloring events for a proposition, and would require changes on the client
  * to insert the coloring events into the timeMachineMap and so forth.
  */
-/*TODO: version mode should only display toplevel propositions that have been interacted with.
- * Displaying open top level propositions is not enough because a toplevel node might
- * have had child nodes that have been deleted and we want to be able to walk through that history.
- * Furthermore, we want to be able to see the modifications of the node.  This isn't exactly ideal.
- * The search feature should return all nodes... not just linked nodes.  What if the node has no
- * children.  How does the user indicated that he wants to view it (since it won't have an
- * open tree icon).  He could click inside it and make it dirty, but that is not intuitive to the
- * user.  This relates to the general question of how to conceive of toplevelness of a node.
- * Rather than toplevelness a node should be tagged with a category, and we would have tagged
- * and untagged nodes.  Tagged ones would show up when browsing, and might have priority when
- * searching, but would otherwise be the same. Hmmm... I don't think this is high priority
- * right now.  Showing open toplevel propositions will get the job done for the time being...
- * [Also note that attempting to version a single empty proposition results in a null pointer
- * exception... so if I decide not to prevent that in the UI (for instance if I decide not to only display
- * toplevel propositions in version mode) then this needs to be fixed.]
- */
 //TODO: linking: original linked item should also change color immediately upon first linking
 //TODO: linking: how will client automatically update link changes...
 
 //TODO: setup backups on home computer
-//TODO: redo loggin framework to match server (and maybe put logging statements in assert statements so they are eliminated?
 /*TODO: implement locking when modifying a parent and deleting/adding nodes to make sure that two simultaneous
  * changes (modifying the parent or deleteing/adding two different child nodes) do not clobber each other
  * and result in inconsistent datastore state. */

@@ -131,5 +131,15 @@ public class ArgTree extends Tree {
 
 	    super.onBrowserEvent(event);
 	  } 
+	
+	public ViewNode getViewNode(int index ){
+		return (ViewNode)getItem(index);
+	}
+	
+	public void logTree( String logName){
+		for(int i = 0; i<getItemCount(); i++){
+			getViewNode( i ).logNodeRecursive(0, logName, true);
+		}
+	}
 
 }

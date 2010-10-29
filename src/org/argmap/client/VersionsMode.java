@@ -103,6 +103,10 @@ public class VersionsMode extends ResizeComposite implements
 
 						timeMachineMap = prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
 								treeClone, changesMaps);
+						
+						ArgMap.logStart("vm.dv.c.tree");
+						treeClone.logTree("vm.dv.c.tree");
+						ArgMap.logEnd("vm.dv.c.tree");
 
 						mapPropContent = new HashMap<ViewChange, String>();
 						mapArgTitle = new HashMap<ViewChange, String>();
@@ -222,11 +226,12 @@ public class VersionsMode extends ResizeComposite implements
 		DateTimeFormat dateFormat = DateTimeFormat
 				.getFormat("yyyy MMM d kk:mm:ss:SSS");
 
-		List<Change> reverseList = getChangeList();
+		List<ViewChange> reverseList = getChangeList();
 		Collections.reverse(reverseList);
 		int i = 0;
 		int newSelectionIndex = -1;
-		for (Change change : reverseList) {
+		for (ViewChange viewChange : reverseList) {
+			Change change = viewChange.change;
 			Long changeTime = change.date.getTime();
 			int comparison = currentDate.compareTo(changeTime);
 			if (comparison == 0) {
@@ -240,15 +245,19 @@ public class VersionsMode extends ResizeComposite implements
 						+ "; currentDate:" + currentDate);
 				newSelectionIndex = i - 1;
 			}
-			versionList.addItem("" + dateFormat.format(change.date) + " ["
-					+ change.changeType + "]", "" + changeTime);
+			if (!viewChange.hidden) {
+				versionList.addItem("" + dateFormat.format(change.date) + " ["
+						+ change.changeType + "]", "" + changeTime);
+			} else {
+				versionList.addItem("----------------------------------------", "" + changeTime);
+			}
 			ArgMap.log("vm.lvlftm", "\n" + change);
 			i++;
 		}
 
 		/* add an item older than all items so that last change can be shown */
 		Date oldest = timeMachineMap.get(timeMachineMap.firstKey()).get(0).change.date;
-		versionList.addItem("-------", "" + (oldest.getTime() - 1000));
+		versionList.addItem("----------------------------------------", "" + (oldest.getTime() - 1000));
 
 		versionList.setSelectedIndex(newSelectionIndex);
 
@@ -257,12 +266,40 @@ public class VersionsMode extends ResizeComposite implements
 		ArgMap.logEnd("vm.lvlftm");
 	}
 
-	public List<Change> getChangeList() {
+	public List<ViewChange> getChangeList() {
 		List<ViewChange> viewChangeList = timeMachineMap.firstValues();
-		List<Change> returnList = new ArrayList<Change>(viewChangeList.size());
+		List<ViewChange> returnList = new ArrayList<ViewChange>(
+				viewChangeList.size());
+
+		/*
+		 * this for loop adds all the non-hidden changes and also adds hidden
+		 * add changes that are contained in the same block of consecutive
+		 * hidden changes as a corresponding delete change (but only one per
+		 * parent so if the parent had a few different add/deletes pairs of
+		 * children within the same block only one is included). This change
+		 * acts as a place holder so that at some point in the change history
+		 * the parent has children, so the open branch icon appears and the user
+		 * can browse through the parent's children and their changes.
+		 */
+		Map<Long, ViewChange> addedInCurrentHideBlock = new HashMap<Long, ViewChange>();
+		List<Long> handledParent = new ArrayList<Long>();
 		for (ViewChange viewChange : viewChangeList) {
-			if (!viewChange.hidden)
-				returnList.add(viewChange.change);
+			Change change = viewChange.change;
+			if (!viewChange.hidden) {
+				returnList.add(viewChange);
+				addedInCurrentHideBlock.clear();
+				handledParent.clear();
+			} else if (change.isAddition()) {
+				addedInCurrentHideBlock.put(change.getAddedID(), viewChange);
+			} else if (change.isDeletion()) {
+				if (addedInCurrentHideBlock.containsKey(change.getDeletedID())) {
+					if (!handledParent.contains(change.getParentID())) {
+						handledParent.add(change.getParentID());
+						returnList.add(addedInCurrentHideBlock.remove(change
+								.getDeletedID()));
+					}
+				}
+			}
 		}
 
 		/*
@@ -270,11 +307,11 @@ public class VersionsMode extends ResizeComposite implements
 		 * otherwise there is no way to replay that change, and potentially no
 		 * way to open up the closed node (because the open/close icon will not
 		 * appear for a node with no children) whose closure resulted in hiding
-		 * the change... and thus to way to unhide the change...
+		 * the change... and thus no way to unhide the change...
 		 */
 		ViewChange oldestChange = viewChangeList.get(viewChangeList.size() - 1);
 		if (oldestChange.hidden) {
-			returnList.add(oldestChange.change);
+			returnList.add(oldestChange);
 		}
 		return returnList;
 	}

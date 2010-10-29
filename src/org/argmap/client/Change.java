@@ -107,6 +107,62 @@ public class Change implements Serializable {
 
 	}
 
+	public Long getParentID() {
+		switch (changeType) {
+		case PROP_DELETION:
+		case PROP_ADDITION:
+		case PROP_UNLINK:
+		case PROP_LINK:
+			return argID;
+		case ARG_ADDITION:
+		case ARG_DELETION:
+			return propID;
+		}
+		throw new RuntimeException( "this change type does not have parent:" + toString() );
+	}
+
+	public Long getDeletedID() {
+		switch (changeType) {
+		case ARG_DELETION:
+			return argID;
+		case PROP_DELETION:
+		case PROP_UNLINK:
+			return propID;
+		}
+		throw new RuntimeException( "this change type does not have deleted ID:" + toString() );
+	}
+	
+	public Long getAddedID() {
+		switch (changeType) {
+		case ARG_ADDITION:
+			return argID;
+		case PROP_ADDITION:
+		case PROP_LINK:
+			return propID;
+		}
+		throw new RuntimeException( "this change type does not have added ID:" + toString() );
+	}
+	
+	public boolean isDeletion(){
+		switch (changeType) {
+		case ARG_DELETION:
+		case PROP_DELETION:
+		case PROP_UNLINK:
+			return true;
+		}
+		return false;
+	}
+	
+	public boolean isAddition(){
+		switch (changeType) {
+		case ARG_ADDITION:
+		case PROP_ADDITION:
+		case PROP_LINK:
+			return true;
+		}
+		return false;
+	}
+
 	public Change(ChangeType changeType) {
 		this.changeType = changeType;
 	}

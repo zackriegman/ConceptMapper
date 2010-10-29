@@ -145,6 +145,11 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 		assert false;
 		return null;
 	}
+	
+	@Override
+	public String toString(){
+		return "[DUMMY - ID: " + nodeID + "]";
+	}
 
 	
 
