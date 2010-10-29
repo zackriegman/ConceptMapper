@@ -9,6 +9,7 @@ import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -82,7 +83,7 @@ public class EditMode extends ResizeComposite implements
 		 * setup the search box
 		 */
 		addPropButton = new Button("Add as new proposition");
-		addPropButton.setStylePrimaryName("button");
+		addPropButton.setStylePrimaryName("addPropButton");
 		addPropButton.setEnabled(false);
 		addPropButton.addClickHandler(new ClickHandler() {
 			@Override
@@ -97,18 +98,21 @@ public class EditMode extends ResizeComposite implements
 
 		searchTextBox.addKeyUpHandler(this);
 		searchTextBox.addStyleName("searchTextBox");
-		searchTextBox.setWidth("50%");
+		searchTextBox.setWidth("100%");
 		Label searchLabel = new Label("Search:");
 		searchLabel.addStyleName("searchLabel");
 
-		FlowPanel searchBoxPanel = new FlowPanel();
+		DockLayoutPanel searchBoxPanel = new DockLayoutPanel( Unit.EM );
 		searchBoxPanel.addStyleName("searchBoxPanel");
-		searchBoxPanel.add(searchLabel);
+		searchBoxPanel.addWest(searchLabel, 4.5);
+		/*this flow panel is here so button doesn't grow to tall... */
+		FlowPanel addButtonFlowPanel = new FlowPanel();
+		addButtonFlowPanel.add(addPropButton);
+		searchBoxPanel.addEast(addButtonFlowPanel, 14);
 		searchBoxPanel.add(searchTextBox);
-		searchBoxPanel.add(addPropButton);
-		searchTextBox.addStyleName("flowPanel-left");
-		addPropButton.addStyleName("flowPanel-left");
-		searchLabel.addStyleName("flowPanel-left");
+		//searchTextBox.addStyleName("flowPanel-left");
+		//addPropButton.addStyleName("flowPanel-left");
+		//searchLabel.addStyleName("flowPanel-left");
 
 		// ScrollPanel searchBoxScrollPanel = new ScrollPanel( searchBoxPanel );
 

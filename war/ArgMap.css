@@ -14,13 +14,23 @@
 }
 
 .searchTextBox {
-	margin-left: .5em;
-	margin-right: 1em;
+	margin-top: .5em;
+	/*margin-left: .5em;*/
+	/*margin-right: 5em;*/
+	/*margin:1em;*/
+	/*padding:5em;*/
 	/*width: 100%;*/
 }
 
+.addPropButton {
+	margin-top: .5em;
+	margin-left: .7em;
+	}
+
 .searchLabel {
-	margin-top: .15em;
+	margin-top: .65em;
+	margin-right: 1em;
+	margin-left: .5em;
 	}
 
 .linkedPropositionTextArea {
