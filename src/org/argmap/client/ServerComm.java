@@ -64,7 +64,7 @@ public class ServerComm {
 
 		@Override
 		public final void onFailure(Throwable caught) {
-			ArgMap.message("Error: " + caught.getMessage(), MessageType.ERROR,
+			ArgMap.message("Server Error: " + caught.getMessage(), MessageType.ERROR,
 					10);
 			throw new RuntimeException(caught);
 		}
@@ -111,7 +111,7 @@ public class ServerComm {
 		@Override
 		public final void onFailure(Throwable caught) {
 			dispatchCommand();
-			ArgMap.message("Error: " + caught.getMessage(), MessageType.ERROR,
+			ArgMap.message("Server Error: " + caught.getMessage(), MessageType.ERROR,
 					10);
 			// GWT.log(caught.getMessage());
 			// caught.printStackTrace();
@@ -154,7 +154,13 @@ public class ServerComm {
 	}
 
 	public static void getLoginInfo(LocalCallback<LoginInfo> localCallback) {
-		argMapService.getLoginInfo(GWT.getHostPageBaseURL(),
+		String requestURI;
+		if( GWT.isProdMode() ){
+			requestURI = GWT.getHostPageBaseURL();
+		} else {
+			requestURI = "http://127.0.0.1:8888/ArgMap.html?gwt.codesvr=127.0.0.1:9997";
+		}
+		argMapService.getLoginInfo(requestURI,
 				new ServerCallback<LoginInfo>(localCallback,
 						"Server Reports Success" + "Getting Login Info"));
 	}

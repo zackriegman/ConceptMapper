@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.StopAnalyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -427,11 +429,14 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	private void saveVersionInfo(Change change) {
+		HttpServletRequest request = getThreadLocalRequest();
+		
 		change.date = new Date();
-		change.remoteAddr = getThreadLocalRequest().getRemoteAddr();
-		change.remoteHost = getThreadLocalRequest().getRemoteHost();
-		change.remotePort = getThreadLocalRequest().getRemotePort();
-		change.remoteUser = getThreadLocalRequest().getRemoteUser();
+		change.remoteAddr = request.getRemoteAddr();
+		change.remoteHost = request.getRemoteHost();
+		change.remotePort = request.getRemotePort();
+		change.remoteUser = request.getRemoteUser();
+		change.sessionID = request.getSession().getId();
 
 		println("Change Logged -- " + change.toString());
 
@@ -950,8 +955,10 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			loginInfo.email = user.getEmail();
 			loginInfo.nickName = user.getNickname();
 			loginInfo.logOutURL = userService.createLogoutURL(requestUri);
+			loginInfo.isAdmin = userService.isUserAdmin();
 		} else {
 			loginInfo.loggedIn = false;
+			loginInfo.isAdmin = false;
 			loginInfo.logInURL = userService.createLoginURL(requestUri);
 		}
 		return loginInfo;

@@ -12,5 +12,6 @@ public class LoginInfo implements Serializable {
 	public String email;
 	public String logOutURL;
 	public String logInURL;
+	public boolean isAdmin;
 }
 

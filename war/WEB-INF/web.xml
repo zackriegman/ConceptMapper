@@ -15,6 +15,27 @@
 		<servlet-name>ArgMapServiceImpl</servlet-name>
 		<url-pattern>/argmap/argServ</url-pattern>
 	</servlet-mapping>
+	
+	<!-- ModeAdmin  configuration -->
+	<servlet>
+		<servlet-name>ArgMapAdminServiceImpl</servlet-name>
+		<servlet-class>org.argmap.server.ArgMapAdminServiceImpl</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>ArgMapAdminServiceImpl</servlet-name>
+		<url-pattern>/argmap/adminServ</url-pattern>
+	</servlet-mapping>
+	
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>ArgMapAdminServiceImpl</web-resource-name>
+			<url-pattern>/argmap/adminServ</url-pattern>
+		</web-resource-collection>
+		<auth-constraint>
+			<role-name>admin</role-name>
+		</auth-constraint>
+	</security-constraint>
 
 	<!-- remote api configuration to allow backup/restore -->
 	<servlet>

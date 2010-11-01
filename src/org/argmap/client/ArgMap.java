@@ -24,7 +24,9 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
 
+//TODO: figure out why logging properties isn't working (or is that only for the admin service)
 //TODO: prevent circular linking from crashing program...
+//TODO: suggests use of proposition for which the argument is for/against!?!
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
 
@@ -96,91 +98,92 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 
 	private static HTML messageArea = new HTML();
 	private static List<String> messageList = new ArrayList<String>();
-	private final EditMode editMode = new EditMode(this);
-	private VersionsMode versionsMode;
+	private final ModeEdit editMode = new ModeEdit(this);
+	private ModeVersions versionsMode;
 
 	public void onModuleLoad() {
-		
-			GWT.setUncaughtExceptionHandler(this);
-			modePanel.add(editMode, "Find And Collaborate");
-			versionsMode = new VersionsMode(editMode);
 
-			modePanel.addSelectionHandler(new SelectionHandler<Integer>() {
+		GWT.setUncaughtExceptionHandler(this);
+		modePanel.add(editMode, "Find And Collaborate");
+		versionsMode = new ModeVersions(editMode);
 
-				@Override
-				public void onSelection(SelectionEvent<Integer> event) {
-					
-						if (modePanel.getSelectedIndex() == 1) {
-							versionsMode.displayVersions();
+		modePanel.addSelectionHandler(new SelectionHandler<Integer>() {
 
-						}
-					
-
+			@Override
+			public void onSelection(SelectionEvent<Integer> event) {
+				if (modePanel.getWidget(modePanel.getSelectedIndex()) == versionsMode) {
+					versionsMode.displayVersions();
 				}
-			});
+			}
+		});
 
-			HTML htmlTitle = new HTML(
-					"<div class=\"title\">coreason.org</div>"
-							+ "<div class=\"subTitle\">...mass collaborative reasoning about everything...</div>");
+		HTML htmlTitle = new HTML(
+				"<div class=\"title\">coreason.org</div>"
+						+ "<div class=\"subTitle\">...mass collaborative reasoning about everything...</div>");
 
-			LayoutPanel bannerPanel = new LayoutPanel();
-			bannerPanel.add(htmlTitle);
-			bannerPanel.add(loginPanel);
-			loginPanel.addStyleName("loginPanel");
-			bannerPanel.setWidgetHorizontalPosition(loginPanel, Alignment.END);
-			mainPanel.addNorth(bannerPanel, 4);
-			mainPanel.addNorth(messageArea, 2);
-			mainPanel.add(modePanel);
+		LayoutPanel bannerPanel = new LayoutPanel();
+		bannerPanel.add(htmlTitle);
+		bannerPanel.add(loginPanel);
+		loginPanel.addStyleName("loginPanel");
+		bannerPanel.setWidgetHorizontalPosition(loginPanel, Alignment.END);
+		mainPanel.addNorth(bannerPanel, 4);
+		mainPanel.addNorth(messageArea, 2);
+		mainPanel.add(modePanel);
 
-			RootLayoutPanel rp = RootLayoutPanel.get();
-			rp.add(mainPanel);
+		RootLayoutPanel rp = RootLayoutPanel.get();
+		rp.add(mainPanel);
 
-			// Window.alert( "pops up a window to user with message");
+		message("App Begin", MessageType.INFO);
+		getLoginInfo();
 
-			message("App Begin", MessageType.INFO);
-			ServerComm.getLoginInfo(new ServerComm.LocalCallback<LoginInfo>() {
+	}
 
-				@Override
-				public void call(LoginInfo loginInfo) {
-					if (Log.on) {
-						Log log = Log.getLog("am.oml");
-						log.logln(loginInfo.email);
-						log.logln(loginInfo.nickName);
-						log.logln(loginInfo.firstName);
-						log.logln(loginInfo.lastName);
-						log.logln("" + loginInfo.loggedIn);
-						log.logln(loginInfo.logInURL);
-						log.logln(loginInfo.logOutURL);
-						log.logln(GWT.HOSTED_MODE_PERMUTATION_STRONG_NAME);
-						log.logln(GWT.getHostPageBaseURL());
-						log.logln(GWT.getModuleBaseURL());
-						log.logln(GWT.getModuleName());
-						log.logln(GWT.getPermutationStrongName());
-						log.finish();
-					}
-					if (loginInfo.loggedIn) {
-						Anchor signOutLink = new Anchor("Sign out");
-						signOutLink.addStyleName("loginText");
-						signOutLink.setHref(loginInfo.logOutURL);
-						Label nickName = new Label(loginInfo.nickName + " |" );
-						nickName.addStyleName("loginText");
-						nickName.addStyleName("email");
-						loginPanel.add(nickName);
-						loginPanel.add(signOutLink);
-					} else {
-						Anchor signInLink = new Anchor("Sign in");
-						signInLink.addStyleName("loginText");
-						signInLink.setHref(loginInfo.logInURL);
-						loginPanel.add(signInLink);
-					}
+	private void getLoginInfo() {
+		ServerComm.getLoginInfo(new ServerComm.LocalCallback<LoginInfo>() {
+
+			@Override
+			public void call(LoginInfo loginInfo) {
+				if (Log.on) {
+					Log log = Log.getLog("am.oml");
+					log.logln(loginInfo.email);
+					log.logln(loginInfo.nickName);
+					log.logln(loginInfo.firstName);
+					log.logln(loginInfo.lastName);
+					log.logln("" + loginInfo.loggedIn);
+					log.logln(loginInfo.logInURL);
+					log.logln(loginInfo.logOutURL);
+					log.logln(GWT.HOSTED_MODE_PERMUTATION_STRONG_NAME);
+					log.logln(GWT.getHostPageBaseURL());
+					log.logln(GWT.getModuleBaseURL());
+					log.logln(GWT.getModuleName());
+					log.logln(GWT.getPermutationStrongName());
+					log.finish();
 				}
-			});
-		
+				if (loginInfo.loggedIn) {
+					Anchor signOutLink = new Anchor("Sign out");
+					signOutLink.addStyleName("loginText");
+					signOutLink.setHref(loginInfo.logOutURL);
+					Label nickName = new Label(loginInfo.nickName + " |");
+					nickName.addStyleName("loginText");
+					nickName.addStyleName("email");
+					loginPanel.add(nickName);
+					loginPanel.add(signOutLink);
+					if (loginInfo.isAdmin ) {
+						modePanel.add(new ModeAdmin(ArgMap.this), "Admin");
+					}
+				} else {
+					Anchor signInLink = new Anchor("Sign in");
+					signInLink.addStyleName("loginText");
+					signInLink.setHref(loginInfo.logInURL);
+					loginPanel.add(signInLink);
+				}
+			}
+		});
 	}
 
 	public void showVersions() {
 		if (!versionsIsDisplayed()) {
-			modePanel.add(versionsMode, "History");
+			modePanel.insert(versionsMode, "History", 1);
 		}
 	}
 
@@ -260,6 +263,6 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 		} catch (Exception handlerException) {
 		}
 		GWT.log("Uncaught Exception", e);
-		Log.finishOpenLogs();
+		if (Log.on) Log.finishOpenLogs();
 	}
 }

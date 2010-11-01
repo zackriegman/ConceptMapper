@@ -60,6 +60,7 @@ public class Change implements Serializable {
 	public String remoteHost;
 	public int remotePort;
 	public String remoteUser;
+	public String sessionID;
 
 	// not yet used ... will be used when I implement users
 	public Long userID;
@@ -171,7 +172,7 @@ public class Change implements Serializable {
 	public String toString() {
 		return "id:" + id + "; changeType:" + changeType + "; argID:" + argID
 				+ "; propID:" + propID + "; content:" + content + "; date:"
-				+ date;
+				+ date + "; sessionID:" + sessionID;
 	}
 
 	public String toStringLong() {

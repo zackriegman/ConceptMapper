@@ -28,11 +28,11 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
-public class VersionsMode extends ResizeComposite implements
+public class ModeVersions extends ResizeComposite implements
 		CloseHandler<TreeItem>, OpenHandler<TreeItem>, ChangeHandler {
 
 	private final ListBox versionList = new ListBox();
-	private final EditMode editMode;
+	private final ModeEdit editMode;
 	private ArgTree treeClone = null;
 	private final ScrollPanel treePanel = new ScrollPanel();
 	private final int LIST_WIDTH = 20;
@@ -51,7 +51,7 @@ public class VersionsMode extends ResizeComposite implements
 	private SortedMultiMap<Date, ViewChange> timeMachineMap;
 	private Date currentDate;
 
-	public VersionsMode(EditMode editModePair) {
+	public ModeVersions(ModeEdit editModePair) {
 		super();
 		this.editMode = editModePair;
 		DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.EM);
@@ -89,8 +89,8 @@ public class VersionsMode extends ResizeComposite implements
 									+ changesMaps.toString());
 
 						treeClone = new ArgTree();
-						treeClone.addCloseHandlerTracked(VersionsMode.this);
-						treeClone.addOpenHandlerTracked(VersionsMode.this);
+						treeClone.addCloseHandlerTracked(ModeVersions.this);
+						treeClone.addOpenHandlerTracked(ModeVersions.this);
 						/*
 						 * TODO this could be done outside of the callback to
 						 * reduce the user's wait time, but would need to ensure
@@ -266,7 +266,7 @@ public class VersionsMode extends ResizeComposite implements
 		versionList.setSelectedIndex(newSelectionIndex);
 
 		listBoxChangeHandlerRegistration = versionList
-				.addChangeHandler(VersionsMode.this);
+				.addChangeHandler(ModeVersions.this);
 		log.finish();
 	}
 

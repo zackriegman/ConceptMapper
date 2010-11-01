@@ -34,7 +34,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
-public class EditMode extends ResizeComposite implements
+public class ModeEdit extends ResizeComposite implements
 		LocalCallback<PropsAndArgs>, KeyUpHandler, OpenHandler<TreeItem>,
 		CloseHandler<TreeItem>, SelectionHandler<TreeItem> {
 
@@ -52,7 +52,7 @@ public class EditMode extends ResizeComposite implements
 	Button addPropButton;
 	private final ArgMap argMap;
 
-	public EditMode(ArgMap argMap) {
+	public ModeEdit(ArgMap argMap) {
 		super();
 		this.argMap = argMap;
 
@@ -288,13 +288,13 @@ public class EditMode extends ResizeComposite implements
 	 */
 	public class EditModeTree extends ArgTree {
 
-		EditMode editMode;
+		ModeEdit editMode;
 
-		public EditModeTree(EditMode parent) {
+		public EditModeTree(ModeEdit parent) {
 			editMode = parent;
 		}
 
-		public EditMode getEditMode() {
+		public ModeEdit getEditMode() {
 			return editMode;
 		}
 
