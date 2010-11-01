@@ -106,9 +106,13 @@ public abstract class ViewNode extends TreeItem {
 	 */
 	public void recursiveBuildViewNode(Node node, Nodes nodes) {
 		setNode(node);
+		boolean circularLink = linkExistsInParentPath(node.id);
+		if(circularLink){
+			addStyleName("circularLink");
+		}
 		for (Long nodeID : node.childIDs) {
 			Node childNode = getChildNodeFromNodeList(nodeID, nodes);
-			if (childNode != null) {
+			if (childNode != null && !circularLink ) {
 				ViewNode childView = createChild();
 				addItem(childView);
 				childView.recursiveBuildViewNode(childNode, nodes);
@@ -119,6 +123,20 @@ public abstract class ViewNode extends TreeItem {
 			}
 		}
 	}
+	
+	public boolean linkExistsInParentPath( Long id ){
+		ViewNode parent = (ViewNode)getParentItem();
+		while( parent != null ){
+			if( id.equals(parent.getNodeID())){
+				return true;
+			}
+			parent = (ViewNode)parent.getParentItem();
+		}
+		return false;
+	}
+
+		
+	
 
 	/*
 	 * isOpen differs from getState() in at least one important way. When it is

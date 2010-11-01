@@ -21,12 +21,12 @@ import org.apache.lucene.analysis.tokenattributes.TermAttribute;
 import org.argmap.client.ArgMapService;
 import org.argmap.client.Argument;
 import org.argmap.client.Change;
-import org.argmap.client.Change.ChangeType;
 import org.argmap.client.LoginInfo;
 import org.argmap.client.Node;
 import org.argmap.client.NodeChanges;
 import org.argmap.client.Nodes;
 import org.argmap.client.Proposition;
+import org.argmap.client.Change.ChangeType;
 
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
@@ -510,78 +510,6 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			throw e;
 		}
 	}
-
-	// @Override
-	// public NodesWithHistory getPropCurrentVersionAndHistory(Long propID)
-	// throws Exception {
-	// try {
-	// return getPropOrArgCurrentVersionAndHistory(propID, null);
-	// } catch (Exception e) {
-	// log.log(Level.SEVERE, "Uncaught exception", e);
-	// throw e;
-	// }
-	// }
-
-	// @Override
-	// public NodesWithHistory getArgCurrentVersionAndHistory(Long argID)
-	// throws Exception {
-	// try {
-	// return getPropOrArgCurrentVersionAndHistory(null, argID);
-	// } catch (Exception e) {
-	// log.log(Level.SEVERE, "Uncaught exception", e);
-	// throw e;
-	// }
-	// }
-
-	/*
-	 * warning: I commented out critical code so this function will not work as
-	 * expected... it's meant to be deleted soon
-	 */
-	// private NodesWithHistory getPropOrArgCurrentVersionAndHistory(Long
-	// propID,
-	// Long argID) throws Exception {
-	// try {
-	// println("start getPropositionCurrentVersionAndHistory()");
-	// NodesWithHistory versions = new NodesWithHistory();
-	// versions.nodes = new Nodes();
-	// try {
-	// if (propID != null && argID == null) {
-	// Proposition proposition = ofy
-	// .get(Proposition.class, propID);
-	// versions.nodes.props.put(proposition.id, proposition);
-	// recursiveGetProps(proposition, versions.nodes);
-	// }
-	// if (argID != null && propID == null) {
-	// Argument argument = ofy.get(Argument.class, argID);
-	// versions.nodes.args.put(argument.id, argument);
-	// recursiveGetArgs(argument, versions.nodes);
-	// } else {
-	// throw new Exception(
-	// "getPropOrArgCurrentVersionAndHistory: Only one non-null value accepted");
-	// }
-	// } catch (EntityNotFoundException e) {
-	// /*
-	// * if the prop is not found that merely means it doesn't exist
-	// * in the current version of the tree... not a problem since it
-	// * might have been deleted. In that case we don't need to look
-	// * for its children either because they have also been deleted.
-	// */
-	// }
-	//
-	// /*
-	// * I deleted the get revisions method so this is throwing an error
-	// * versions.changes = getRevisions(null, new ArrayList<Long>(
-	// * versions.nodes.props.keySet()), new ArrayList<Long>(
-	// * versions.nodes.args.keySet()));
-	// */
-	//
-	// println("end start getPropositionCurrentVersionAndHistory()");
-	// return versions;
-	// } catch (Exception e) {
-	// log.log(Level.SEVERE, "Uncaught exception", e);
-	// throw e;
-	// }
-	// }
 
 	private void recursiveGetPropChanges(Long propID,
 			NodeChangesMaps nodeChangesMaps) throws Exception {
