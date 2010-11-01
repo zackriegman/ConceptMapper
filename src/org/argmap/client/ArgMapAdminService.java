@@ -7,5 +7,6 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 public interface ArgMapAdminService extends RemoteService {
 
 	public void clearDatastore();
+	public void populateDatastore() throws Exception;
 
 }

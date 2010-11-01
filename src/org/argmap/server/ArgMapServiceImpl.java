@@ -23,12 +23,12 @@ import org.apache.lucene.analysis.tokenattributes.TermAttribute;
 import org.argmap.client.ArgMapService;
 import org.argmap.client.Argument;
 import org.argmap.client.Change;
+import org.argmap.client.Change.ChangeType;
 import org.argmap.client.LoginInfo;
 import org.argmap.client.Node;
 import org.argmap.client.NodeChanges;
 import org.argmap.client.Nodes;
 import org.argmap.client.Proposition;
-import org.argmap.client.Change.ChangeType;
 
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
@@ -55,8 +55,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	// warnings...
 	private final Objectify ofy = ObjectifyService.begin();
 
-	private void println(String message) {
-		log.fine(message);
+	private void logln(String message) {
+		log.severe(message);
 	}
 
 	@SuppressWarnings("unused")
@@ -67,11 +67,11 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	@SuppressWarnings("unused")
 	private void printAllPropsAndArgs() {
-		println("Arguments: ");
+		logln("Arguments: ");
 		for (Argument arg : ofy.query(Argument.class)) {
 			printArgument(arg);
 		}
-		println("Propositions: ");
+		logln("Propositions: ");
 		for (Proposition prop : ofy.query(Proposition.class)) {
 			printProposition(prop);
 		}
@@ -79,15 +79,16 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	private void printArgument(Argument arg) {
-		println(arg.toString());
+		logln(arg.toString());
 	}
 
 	private void printProposition(Proposition prop) {
-		println(prop.toString());
+		logln(prop.toString());
 	}
 
 	@Override
 	public PropsAndArgs getPropsAndArgs(int depthLimit) {
+		
 		PropsAndArgs propsAndArgs = new PropsAndArgs();
 		try {
 			/*
@@ -156,7 +157,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			throws Exception {
 		try {
 
-			// println("addProposition(): parentArgID:"+parentArgID+"; position:"+position+"; content:"+content);
+			log.finest("addProp()");
 			Proposition newProposition = new Proposition();
 			newProposition.content = content;
 			newProposition.tokens = getTokensForIndexingOrQuery(content, 30);
@@ -298,7 +299,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public void updateProp(Long propID, String content) throws Exception {
 		try {
-			println("propID:" + propID + "; content:" + content);
+			logln("propID:" + propID + "; content:" + content);
 
 			Change change = new Change(ChangeType.PROP_MODIFICATION);
 			Proposition prop = ofy.get(Proposition.class, propID);
@@ -364,7 +365,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Argument addArg(Long parentPropID, boolean pro) throws Exception {
+	public Long addArg(Long parentPropID, boolean pro) throws Exception {
 		try {
 
 			/*
@@ -391,7 +392,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			change.propID = parentPropID;
 			saveVersionInfo(change);
 
-			return newArg;
+			return newArg.id;
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Uncaught exception", e);
 			throw e;
@@ -429,7 +430,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	private void saveVersionInfo(Change change) {
-		HttpServletRequest request = getThreadLocalRequest();
+		HttpServletRequest request = getHttpServletRequest();
 		
 		change.date = new Date();
 		change.remoteAddr = request.getRemoteAddr();
@@ -438,9 +439,13 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		change.remoteUser = request.getRemoteUser();
 		change.sessionID = request.getSession().getId();
 
-		println("Change Logged -- " + change.toString());
+		//logln("Change Logged -- " + change.toString());
 
 		ofy.put(change);
+	}
+	
+	public HttpServletRequest getHttpServletRequest(){
+		return getThreadLocalRequest();
 	}
 
 	@Override
@@ -601,9 +606,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	@SuppressWarnings("unused")
 	private void printAllChanges() {
-		println("");
+		logln("");
 		for (Change change : ofy.query(Change.class))
-			println("" + change.toString());
+			logln("" + change.toString());
 	}
 
 	@Override
@@ -656,7 +661,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 					}
 				}
 			}
-			log.fine("comboCount: " + comboCount);
+			log.severe("comboCount: " + comboCount);
 
 			PropsAndArgs propsAndArgs = new PropsAndArgs();
 			propsAndArgs.rootProps = results;

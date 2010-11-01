@@ -211,7 +211,7 @@ public class ServerComm {
 
 	public static void addArg(boolean pro, Proposition parentProp,
 			Argument newArg) {
-		class CommandAdd extends ServerCallbackWithDispatch<Argument> implements
+		class CommandAdd extends ServerCallbackWithDispatch<Long> implements
 				Command {
 			boolean pro;
 			Proposition parentProp;
@@ -229,9 +229,9 @@ public class ServerComm {
 			}
 
 			@Override
-			public void doOnSuccess(Argument result) {
+			public void doOnSuccess(Long result) {
 				// newProp.id = result.propIDs.get(0);
-				newArg.id = result.id;
+				newArg.id = result;
 			}
 		}
 		CommandAdd command = new CommandAdd(

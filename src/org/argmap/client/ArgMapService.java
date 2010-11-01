@@ -22,7 +22,7 @@ public interface ArgMapService extends RemoteService {
 
 	public void deleteArg(Long argID) throws Exception;
 
-	public Argument addArg(Long parentPropID, boolean pro) throws Exception;
+	public Long addArg(Long parentPropID, boolean pro) throws Exception;
 
 	public void updateProp(Long propID, String content) throws Exception;
 

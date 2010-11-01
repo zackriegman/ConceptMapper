@@ -7,6 +7,6 @@ public interface ArgMapAdminServiceAsync {
 
 	void clearDatastore(AsyncCallback<Void> callback);
 
-	
+	void populateDatastore(AsyncCallback<Void> callback);
 
 }

@@ -19,7 +19,7 @@ public interface ArgMapServiceAsync {
 	void deleteProp(Long propID, AsyncCallback<Void> callback);
 
 	void addArg(Long parentPropID, boolean pro,
-			AsyncCallback<Argument> callback);
+			AsyncCallback<Long> callback);
 
 	void updateProp(Long propID, String content,
 			AsyncCallback<Void> callback);
