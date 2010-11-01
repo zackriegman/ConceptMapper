@@ -156,7 +156,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 						log.logln(GWT.getModuleBaseURL());
 						log.logln(GWT.getModuleName());
 						log.logln(GWT.getPermutationStrongName());
-						log.flush();
+						log.finish();
 					}
 					if (loginInfo.loggedIn) {
 						Anchor signOutLink = new Anchor("Sign out");
@@ -260,5 +260,6 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 		} catch (Exception handlerException) {
 		}
 		GWT.log("Uncaught Exception", e);
+		Log.finishOpenLogs();
 	}
 }

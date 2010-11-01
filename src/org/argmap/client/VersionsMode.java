@@ -108,7 +108,7 @@ public class VersionsMode extends ResizeComposite implements
 						if (Log.on) {
 							Log treeLog = Log.getLog("vm.dv.tree");
 							treeClone.logTree(log);
-							treeLog.flush();
+							treeLog.finish();
 						}
 
 						mapPropContent = new HashMap<ViewChange, String>();
@@ -125,7 +125,7 @@ public class VersionsMode extends ResizeComposite implements
 						onChange(null);
 						treeClone.resetState();
 						logTreeWithChanges();
-						log.flush();
+						log.finish();
 					}
 				});
 
@@ -139,7 +139,7 @@ public class VersionsMode extends ResizeComposite implements
 			recursivePrepAndBuild((ViewPropVer) treeClone.getItem(i),
 					timeMachineMap, changesMaps, log);
 		}
-		log.flush();
+		log.finish();
 		return timeMachineMap;
 	}
 
@@ -267,7 +267,7 @@ public class VersionsMode extends ResizeComposite implements
 
 		listBoxChangeHandlerRegistration = versionList
 				.addChangeHandler(VersionsMode.this);
-		log.flush();
+		log.finish();
 	}
 
 	public List<ViewChange> getChangeList() {
@@ -483,7 +483,7 @@ public class VersionsMode extends ResizeComposite implements
 					viewNodeVer.getClosedDate());
 
 		}
-		log.flush();
+		log.finish();
 		logTreeWithChanges();
 	}
 
@@ -527,7 +527,7 @@ public class VersionsMode extends ResizeComposite implements
 
 		loadVersionListFromTimeMachine();
 		// viewNodeVer.setOpen(false);
-		log.flush();
+		log.finish();
 
 	}
 
@@ -663,7 +663,7 @@ public class VersionsMode extends ResizeComposite implements
 		}
 		this.currentDate = newDate;
 		treeClone.resetState();
-		log.flush();
+		log.finish();
 	}
 
 	private void moveTreeForwards(
@@ -825,7 +825,7 @@ public class VersionsMode extends ResizeComposite implements
 		for (int i = 0; i < treeClone.getItemCount(); i++) {
 			recursiveLogTreeWithChanges((ViewNodeVer) treeClone.getItem(i), log);
 		}
-		log.flush();
+		log.finish();
 	}
 
 	public void recursiveLogTreeWithChanges(ViewNodeVer viewNodeVer, Log log) {
