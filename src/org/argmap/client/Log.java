@@ -1,23 +1,29 @@
 package org.argmap.client;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import com.google.gwt.core.client.GWT;
 
 public class Log {
 	public static final boolean on = true;
+	private static final List<Log> openLogs = new LinkedList<Log>();
 
 	private boolean immediatePrint;
 	private int indent;
 	private final String logName;
 	StringBuilder content;
 
-	/* for now must return a log regardless
-	 * of whether logging is on because
-	 * the logging code is not being automatically
-	 * removed... eventually perhaps I can figure out
-	 * how the GWT Logger framework has its code
-	 * removed and emulate that */
+	/*
+	 * for now must return a log regardless of whether logging is on because the
+	 * logging code is not being automatically removed... eventually perhaps I
+	 * can figure out how the GWT Logger framework has its code removed and
+	 * emulate that
+	 */
 	public static Log getLog(String logName) {
-		return new Log(logName);
+		Log log = new Log(logName);
+		openLogs.add(log);
+		return log;
 	}
 
 	private Log(String logName) {
@@ -25,16 +31,27 @@ public class Log {
 		content = new StringBuilder();
 	}
 
-	public void flush() {
+	public void finish() {
 		if (on) {
+			assert openLogs.contains(this);
 			if (!immediatePrint) {
 				GWT.log(logName + ": " + content.toString());
+			}
+			openLogs.remove(this);
+		}
+	}
+
+	public static void finishOpenLogs() {
+		if (on) {
+			for (Log log : openLogs) {
+				log.finish();
 			}
 		}
 	}
 
 	public void log(String string) {
 		if (on) {
+			assert openLogs.contains(this);
 			String indentString = spaces(indent * 4);
 			if (immediatePrint) {
 				GWT.log(logName + ": " + indentString + string);
@@ -52,12 +69,14 @@ public class Log {
 
 	public void indent() {
 		if (on) {
+			assert openLogs.contains(this);
 			indent++;
 		}
 	}
 
 	public void unindent() {
 		if (on) {
+			assert openLogs.contains(this);
 			indent--;
 		}
 	}

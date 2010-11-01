@@ -162,7 +162,7 @@ public class EditMode extends ResizeComposite implements
 						tree.resetState();
 						if (Log.on)
 							tree.logTree(log);
-						log.flush();
+						log.finish();
 
 					}
 				});
@@ -335,7 +335,7 @@ public class EditMode extends ResizeComposite implements
 				cloneTree.addItem(clonedViewNode);
 			}
 		}
-		log.flush();
+		log.finish();
 		return cloneTree;
 	}
 
@@ -466,7 +466,7 @@ public class EditMode extends ResizeComposite implements
 				loadFromServer(source, 1);
 			}
 		}
-		log.flush();
+		log.finish();
 	}
 
 	@Override
