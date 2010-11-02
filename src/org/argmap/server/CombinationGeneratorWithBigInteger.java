@@ -42,13 +42,13 @@ import java.math.BigInteger;
 public class CombinationGeneratorWithBigInteger {
 
 	
-	private int[] a;
-	private int n;
-	private int r;
+	private final int[] a;
+	private final int n;
+	private final int r;
 	
 	private BigInteger numLeft;
 	
-	private BigInteger total;
+	private final BigInteger total;
 
 	// ------------
 	// Constructor
@@ -69,10 +69,6 @@ public class CombinationGeneratorWithBigInteger {
 		BigInteger nminusrFact = getFactorial(n - r);
 		total = nFact.divide(rFact.multiply(nminusrFact));
 		reset();
-	}
-	
-	private CombinationGeneratorWithBigInteger(){
-		
 	}
 
 	// ------

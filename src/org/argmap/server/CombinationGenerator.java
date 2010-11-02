@@ -44,7 +44,7 @@ import javax.persistence.Id;
 public class CombinationGenerator implements Serializable {
 
 	/**
-	 * added to supress warnings
+	 * added to suppress warnings
 	 */
 	private static final long serialVersionUID = 1L;
 
@@ -78,6 +78,7 @@ public class CombinationGenerator implements Serializable {
 		reset();
 	}
 	
+	@SuppressWarnings("unused")
 	private CombinationGenerator(){
 		
 	}

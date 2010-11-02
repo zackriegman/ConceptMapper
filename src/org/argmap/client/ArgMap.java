@@ -25,7 +25,8 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
 
 /* TODO: deploy and test speed on actualy deployment*/
-//TODO: add option to continue searching for more matches in both side and main search
+//TODO: couldn't generate full dummy data set on server (because it would timeout for the 30 second maximum?)
+//TODO: make sure that searches are indexed
 //TODO: prevent circular linking from crashing program...
 //TODO: suggests use of proposition for which the argument is for/against!?!
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)

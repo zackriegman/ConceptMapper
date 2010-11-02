@@ -56,6 +56,7 @@ public class Search implements Serializable {
 		this.limit = limit;
 	}
 	
+	@SuppressWarnings("unused")
 	private Search(){
 		
 	}

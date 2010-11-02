@@ -38,7 +38,12 @@ import com.google.gwt.user.client.ui.TreeItem;
 public class ModeEdit extends ResizeComposite implements
 		LocalCallback<PropsAndArgs>, KeyUpHandler, OpenHandler<TreeItem>,
 		CloseHandler<TreeItem>, SelectionHandler<TreeItem>, ClickHandler {
-
+	
+	public static final int MAIN_SEARCH_LIMIT = 15;
+	public static final String MAIN_SEARCH_NAME = "mainSearch";
+	public static final int SIDE_SEARCH_LIMIT = 7;
+	public static final String SIDE_SEARCH_NAME = "sideSearch";
+	
 	private static HTML sideMessageArea = new HTML();
 	private final Label sideSearchLabel = new Label(
 			"Would you like to use one of these already existing propositions?");
@@ -48,12 +53,12 @@ public class ModeEdit extends ResizeComposite implements
 	public final ScrollPanel treeScrollPanel;
 	private final SplitLayoutPanel sideSplit = new SplitLayoutPanel();
 	private final SearchTimer searchTimer = new SearchTimer();
-	
 
 	private final TextBox searchTextBox = new TextBox();
 	private final EditModeTree tree;
 	private final Button addPropButton;
-	private final Button mainLoadMoreButton;
+	private final Button mainSearchContinueButton;
+	private final Button sideSearchContinueButton;
 	private final ArgMap argMap;
 
 	public ModeEdit(ArgMap argMap) {
@@ -64,10 +69,15 @@ public class ModeEdit extends ResizeComposite implements
 		 * setup side bar *
 		 ******************/
 
+		sideSearchContinueButton = new Button("loadMoreResults");
+		sideSearchContinueButton.setStylePrimaryName("addPropButton");
+		sideSearchContinueButton.addClickHandler(this);
+		sideSearchContinueButton.setVisible(false);
 		sideSearchLabel.setVisible(false);
 		FlowPanel sideSearchArea = new FlowPanel();
 		sideSearchArea.add(sideSearchLabel);
 		sideSearchArea.add(sideSearchResults);
+		sideSearchArea.add(sideSearchContinueButton);
 
 		sideSearchScroll = new ScrollPanel(sideSearchArea);
 		sideMessageScroll = new ScrollPanel(sideMessageArea);
@@ -88,7 +98,7 @@ public class ModeEdit extends ResizeComposite implements
 		addPropButton = new Button("Add as new proposition");
 		addPropButton.setStylePrimaryName("addPropButton");
 		addPropButton.setEnabled(false);
-		addPropButton.addClickHandler( this );
+		addPropButton.addClickHandler(this);
 
 		searchTextBox.addKeyUpHandler(this);
 		searchTextBox.addStyleName("searchTextBox");
@@ -113,15 +123,15 @@ public class ModeEdit extends ResizeComposite implements
 		tree.addCloseHandler(this);
 		tree.addSelectionHandler(this);
 		tree.setAnimationEnabled(false);
-		
-		mainLoadMoreButton = new Button("load more results");
-		mainLoadMoreButton.addClickHandler( this );
-		mainLoadMoreButton.setVisible(false);
-		mainLoadMoreButton.setStylePrimaryName("addPropButton");
-		
+
+		mainSearchContinueButton = new Button("load more results");
+		mainSearchContinueButton.addClickHandler(this);
+		mainSearchContinueButton.setVisible(false);
+		mainSearchContinueButton.setStylePrimaryName("addPropButton");
+
 		FlowPanel treeFlowPanel = new FlowPanel();
 		treeFlowPanel.add(tree);
-		treeFlowPanel.add(mainLoadMoreButton);
+		treeFlowPanel.add(mainSearchContinueButton);
 		treeScrollPanel = new ScrollPanel(treeFlowPanel);
 
 		/*
@@ -162,8 +172,7 @@ public class ModeEdit extends ResizeComposite implements
 							// propView.logNodeRecursive(0, "em.em.cb", true);
 						}
 						tree.resetState();
-						if (Log.on)
-							tree.logTree(log);
+						if (Log.on) tree.logTree(log);
 						log.finish();
 
 					}
@@ -189,82 +198,107 @@ public class ModeEdit extends ResizeComposite implements
 		sideMessageArea.setHTML(sideMessageArea.getHTML() + string);
 	}
 
+	/* this type of button is used in the side search box */
+	private class SideSearchButton extends Button implements ClickHandler {
+		int resultIndex;
+		List<Proposition> propMatches;
+
+		SideSearchButton(int resultIndex, List<Proposition> propMatches) {
+			super("use this");
+			this.resultIndex = resultIndex;
+			this.propMatches = propMatches;
+			addClickHandler(this);
+			setStylePrimaryName("addPropButton");
+		}
+
+		public void onClick(ClickEvent event) {
+
+			ViewPropEdit propViewToRemove = ViewPropEdit
+					.getLastPropositionWithFocus();
+			if (propViewToRemove.getChildCount() == 0) {
+				class ThisCallback implements LocalCallback<Nodes> {
+					ViewArgEdit parentArgView;
+					ViewPropEdit propViewToRemove;
+					int propIndex;
+					Long linkPropID;
+
+					@Override
+					public void call(Nodes nodes) {
+						parentArgView.removeItem(propViewToRemove);
+						Proposition proposition = nodes.props.get(linkPropID);
+						ViewProp newViewProp = new ViewPropEdit();
+						newViewProp.recursiveBuildViewNode(proposition, nodes);
+
+						parentArgView.insertChildViewAt(propIndex, newViewProp);
+					}
+				}
+				;
+				ThisCallback callback = new ThisCallback();
+				/*
+				 * TODO handle requests to link to top level nodes more
+				 * gracefully... currently throws an exception, instead a
+				 * message indicating that top level nodes cannot be linked
+				 * would be good...
+				 */
+				ViewArgEdit parentArgView = propViewToRemove.parentArgView();
+				callback.parentArgView = parentArgView;
+				callback.propViewToRemove = propViewToRemove;
+				callback.propIndex = parentArgView
+						.getChildIndex(propViewToRemove);
+				Proposition propToLinkTo = propMatches.get(resultIndex);
+				callback.linkPropID = propToLinkTo.id;
+				ServerComm.replaceWithLinkAndGet(parentArgView.argument,
+						propToLinkTo, propViewToRemove.proposition, callback);
+			} else {
+				ArgMap.message(
+						"Cannot link to existing proposition when proposition currently being edited has children",
+						MessageType.ERROR);
+			}
+
+		}
+	}
+
+	/*
+	 * this method populates the side bar with results from a server search. it
+	 * is called by a ViewPropEdit after a pause in typing or the space bar is
+	 * pressed.
+	 */
 	@Override
 	public void call(PropsAndArgs propMatches) {
-		class SearchButton extends Button implements ClickHandler {
-			int resultIndex;
-			List<Proposition> propMatches;
 
-			SearchButton(int resultIndex, List<Proposition> propMatches) {
-				super("use this");
-				this.resultIndex = resultIndex;
-				this.propMatches = propMatches;
-				addClickHandler(this);
-			}
-
-			public void onClick(ClickEvent event) {
-
-				ViewPropEdit propViewToRemove = ViewPropEdit
-						.getLastPropositionWithFocus();
-				if (propViewToRemove.getChildCount() == 0) {
-					class ThisCallback implements LocalCallback<Nodes> {
-						ViewArgEdit parentArgView;
-						ViewPropEdit propViewToRemove;
-						int propIndex;
-						Long linkPropID;
-
-						@Override
-						public void call(Nodes nodes) {
-							parentArgView.removeItem(propViewToRemove);
-							Proposition proposition = nodes.props
-									.get(linkPropID);
-							ViewProp newViewProp = new ViewPropEdit();
-							newViewProp.recursiveBuildViewNode(proposition,
-									nodes);
-
-							parentArgView.insertChildViewAt(propIndex,
-									newViewProp);
-						}
-					}
-					;
-					ThisCallback callback = new ThisCallback();
-					/*
-					 * TODO handle requests to link to top level nodes more
-					 * gracefully... currently throws an exception, instead a
-					 * message indicating that top level nodes cannot be linked
-					 * would be good...
-					 */
-					ViewArgEdit parentArgView = propViewToRemove
-							.parentArgView();
-					callback.parentArgView = parentArgView;
-					callback.propViewToRemove = propViewToRemove;
-					callback.propIndex = parentArgView
-							.getChildIndex(propViewToRemove);
-					Proposition propToLinkTo = propMatches.get(resultIndex);
-					callback.linkPropID = propToLinkTo.id;
-					ServerComm.replaceWithLinkAndGet(parentArgView.argument,
-							propToLinkTo, propViewToRemove.proposition,
-							callback);
-				} else {
-					ArgMap.message(
-							"Cannot link to existing proposition when proposition currently being edited has children",
-							MessageType.ERROR);
-				}
-
-			}
-		}
 		sideSearchResults.removeAllRows();
 		if (propMatches.rootProps.size() > 0) {
 			displaySearchBox();
 		} else {
 			hideSearchBox();
 		}
-		int i = 0;
+		sideSearchAppendResults(propMatches, 0);
+	}
+
+	public void sideSearchContinue() {
+		ServerComm.continueSearchProps(SIDE_SEARCH_NAME,
+				new LocalCallback<ArgMapService.PropsAndArgs>() {
+
+					@Override
+					public void call(PropsAndArgs results) {
+						sideSearchAppendResults(results,
+								sideSearchResults.getRowCount());
+					}
+				});
+	}
+
+	private void sideSearchAppendResults(PropsAndArgs propMatches, int startRow) {
+		int i = startRow;
 		for (Proposition prop : propMatches.rootProps) {
 			sideSearchResults.setText(i, 0, prop.getContent());
-			sideSearchResults.setWidget(i, 1, new SearchButton(i,
+			sideSearchResults.setWidget(i, 1, new SideSearchButton(i,
 					propMatches.rootProps));
 			i++;
+		}
+		if (propMatches.rootProps.size() == SIDE_SEARCH_LIMIT) {
+			sideSearchContinueButton.setVisible(true);
+		} else {
+			sideSearchContinueButton.setVisible(false);
 		}
 	}
 
@@ -393,14 +427,14 @@ public class ModeEdit extends ResizeComposite implements
 					props, args);
 		}
 	}
-	
+
 	private class SearchTimer extends Timer {
 
 		@Override
 		public void run() {
-			mainSearch();			
+			mainSearch();
 		}
-		
+
 	}
 
 	@Override
@@ -416,65 +450,64 @@ public class ModeEdit extends ResizeComposite implements
 			} else {
 				addPropButton.setEnabled(true);
 			}
-			
+
 			/* if its the space bar search and stop the timer */
 			if (charCode == 32) {
-				log.logln( "canceling timer and doing search");
+				log.logln("canceling timer and doing search");
 				searchTimer.cancel();
 				mainSearch();
-			} 
+			}
 			/* if its any other key set timer for .3 seconds */
 			else {
-				log.logln( "reseting timer for 500 millis");
+				log.logln("reseting timer for 500 millis");
 				searchTimer.schedule(500);
 			}
-			
+
 		}
 		log.finish();
 	}
-	
-	private final int MAIN_SEARCH_LIMIT = 15;
-	
-	public void mainSearch(){
+
+	public void mainSearch() {
 		Log log = Log.getLog("me.ms");
 		log.log("SEARCHING");
-		ServerComm.searchProps(searchTextBox.getText(), "mainSearch", MAIN_SEARCH_LIMIT, null, null,
+		ServerComm.searchProps(searchTextBox.getText(), MAIN_SEARCH_NAME,
+				MAIN_SEARCH_LIMIT, null, null,
 				new LocalCallback<PropsAndArgs>() {
 
 					@Override
 					public void call(PropsAndArgs results) {
 						argMap.hideVersions();
 						tree.clear();
-						appendResultsToTree( results );
+						mainSearchAppendResultsToTree(results);
 					}
 				});
 		log.finish();
 	}
-	
-	public void mainSearchForMore(){
-		ServerComm.continueSearchProps("mainSearch", new LocalCallback<ArgMapService.PropsAndArgs>() {
-			
-			@Override
-			public void call(PropsAndArgs results) {
-				appendResultsToTree( results );
-			}
-		});
+
+	public void mainSearchContinue() {
+		ServerComm.continueSearchProps(MAIN_SEARCH_NAME,
+				new LocalCallback<ArgMapService.PropsAndArgs>() {
+
+					@Override
+					public void call(PropsAndArgs results) {
+						mainSearchAppendResultsToTree(results);
+					}
+				});
 	}
-	
-	public void appendResultsToTree( PropsAndArgs results ){
+
+	public void mainSearchAppendResultsToTree(PropsAndArgs results) {
 		for (Proposition proposition : results.rootProps) {
 
 			ViewProp propView = new ViewPropEdit();
-			propView.recursiveBuildViewNode(proposition,
-					results.nodes);
+			propView.recursiveBuildViewNode(proposition, results.nodes);
 
 			tree.addItem(propView);
 		}
 		tree.resetState();
-		if( results.rootProps.size() == MAIN_SEARCH_LIMIT ){
-			mainLoadMoreButton.setVisible(true);
+		if (results.rootProps.size() == MAIN_SEARCH_LIMIT) {
+			mainSearchContinueButton.setVisible(true);
 		} else {
-			mainLoadMoreButton.setVisible(false);
+			mainSearchContinueButton.setVisible(false);
 		}
 	}
 
@@ -547,11 +580,13 @@ public class ModeEdit extends ResizeComposite implements
 	@Override
 	public void onClick(ClickEvent event) {
 		Object source = event.getSource();
-		if( source == mainLoadMoreButton ){
-			mainSearchForMore();
-		} else if ( source == addPropButton ){
+		if (source == mainSearchContinueButton) {
+			mainSearchContinue();
+		} else if (source == sideSearchContinueButton) {
+			sideSearchContinue();
+		} else if (source == addPropButton) {
 			addRootProp();
 		}
-		
+
 	}
 }

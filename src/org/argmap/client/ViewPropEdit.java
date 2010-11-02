@@ -221,8 +221,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			 * do nothing if textarea is not empty, user must first delete the
 			 * text to delete a proposition when not combining propositions.
 			 */
-			if (!textArea.getText().equals(""))
-				return;
+			if (!textArea.getText().equals("")) return;
 
 			/* if this is the only proposition of the argument */
 			if (parentArgView.getChildCount() == 1) {
@@ -338,8 +337,9 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	private void sideBarSearch() {
 		if (getChildCount() == 0 && !deleted) {
-			ServerComm.searchProps(textArea.getText(), "sideBarSearch", 7, parentArgument(),
-					proposition, getEditMode());
+			ServerComm.searchProps(textArea.getText(), ModeEdit.SIDE_SEARCH_NAME,
+					ModeEdit.SIDE_SEARCH_LIMIT, parentArgument(), proposition,
+					getEditMode());
 		} else {
 			getEditMode().hideSearchBox();
 		}
