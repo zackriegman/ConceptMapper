@@ -28,6 +28,8 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: suggests use of proposition for which the argument is for/against!?!
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
+//TODO: try running speed tracer
+//TODO: fix slow searches (break them up?  use a different approach all together?)
 
 //TODO: comment the hell out of versions mode!!!!!!! someday I'll need to change it...
 
