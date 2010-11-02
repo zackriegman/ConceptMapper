@@ -1,8 +1,6 @@
 package org.argmap.server;
 
-import java.io.Serializable;
-
-import javax.persistence.Id;
+import java.math.BigInteger;
 
 /*
  * Introduction
@@ -41,27 +39,22 @@ import javax.persistence.Id;
 // Systematically generate combinations.
 //--------------------------------------
 
-public class CombinationGenerator implements Serializable {
+public class CombinationGeneratorWithBigInteger {
 
-	/**
-	 * added to supress warnings
-	 */
-	private static final long serialVersionUID = 1L;
-
-	@Id
-	private Long id;
-
-	private  int[] a;
-	private  int n;
-	private  int r;
-	private Integer numLeft;
-	private Integer total;
+	
+	private int[] a;
+	private int n;
+	private int r;
+	
+	private BigInteger numLeft;
+	
+	private BigInteger total;
 
 	// ------------
 	// Constructor
 	// ------------
 
-	public CombinationGenerator(int n, int r) {
+	public CombinationGeneratorWithBigInteger(int n, int r) {
 		if (r > n) {
 			throw new IllegalArgumentException();
 		}
@@ -71,14 +64,14 @@ public class CombinationGenerator implements Serializable {
 		this.n = n;
 		this.r = r;
 		a = new int[r];
-		Integer nFact = getFactorial(n);
-		Integer rFact = getFactorial(r);
-		Integer nminusrFact = getFactorial(n - r);
-		total = nFact / (rFact * nminusrFact);
+		BigInteger nFact = getFactorial(n);
+		BigInteger rFact = getFactorial(r);
+		BigInteger nminusrFact = getFactorial(n - r);
+		total = nFact.divide(rFact.multiply(nminusrFact));
 		reset();
 	}
 	
-	private CombinationGenerator(){
+	private CombinationGeneratorWithBigInteger(){
 		
 	}
 
@@ -90,14 +83,14 @@ public class CombinationGenerator implements Serializable {
 		for (int i = 0; i < a.length; i++) {
 			a[i] = i;
 		}
-		numLeft = new Integer(total.toString());
+		numLeft = new BigInteger(total.toString());
 	}
 
 	// ------------------------------------------------
 	// Return number of combinations not yet generated
 	// ------------------------------------------------
 
-	public Integer getNumLeft() {
+	public BigInteger getNumLeft() {
 		return numLeft;
 	}
 
@@ -106,14 +99,14 @@ public class CombinationGenerator implements Serializable {
 	// -----------------------------
 
 	public boolean hasMore() {
-		return numLeft.compareTo(0) == 1;
+		return numLeft.compareTo(BigInteger.ZERO) == 1;
 	}
 
 	// ------------------------------------
 	// Return total number of combinations
 	// ------------------------------------
 
-	public Integer getTotal() {
+	public BigInteger getTotal() {
 		return total;
 	}
 
@@ -121,10 +114,10 @@ public class CombinationGenerator implements Serializable {
 	// Compute factorial
 	// ------------------
 
-	private static Integer getFactorial(int n) {
-		Integer fact = 1;
+	private static BigInteger getFactorial(int n) {
+		BigInteger fact = BigInteger.ONE;
 		for (int i = n; i > 1; i--) {
-			fact = fact * (new Integer(Integer.toString(i)));
+			fact = fact.multiply(new BigInteger(Integer.toString(i)));
 		}
 		return fact;
 	}
@@ -136,7 +129,7 @@ public class CombinationGenerator implements Serializable {
 	public int[] getNext() {
 
 		if (numLeft.equals(total)) {
-			numLeft = numLeft - 1;
+			numLeft = numLeft.subtract(BigInteger.ONE);
 			return a;
 		}
 
@@ -149,7 +142,7 @@ public class CombinationGenerator implements Serializable {
 			a[j] = a[i] + j - i;
 		}
 
-		numLeft = numLeft - (1);
+		numLeft = numLeft.subtract(BigInteger.ONE);
 		return a;
 
 	}

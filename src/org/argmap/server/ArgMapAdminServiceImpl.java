@@ -140,5 +140,10 @@ public class ArgMapAdminServiceImpl extends RemoteServiceServlet implements
 			return string + ".";
 		}
 	}
+	
+	@Override
+	public void doUnexpectedFailure(java.lang.Throwable e) {
+		log.log(Level.SEVERE, "Uncaught exception", e);
+	}
 
 }
