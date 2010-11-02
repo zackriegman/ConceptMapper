@@ -19,6 +19,6 @@
 		<property name="java.util.logging.config.file" value="WEB-INF/logging.properties" />
 	</system-properties>
 
-	<!-- if I need write access to sessions I can enabled them like this: -->
-	<!-- <sessions-enabled>true</sessions-enabled> -->
+	<!-- this is only needed for write access to session, read access is always available-->
+	<sessions-enabled>true</sessions-enabled>
 </appengine-web-app>

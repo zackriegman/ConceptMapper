@@ -611,8 +611,30 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			logln("" + change.toString());
 	}
 
+
 	@Override
-	public PropsAndArgs searchProps(String string, Long filterArgID,
+	public PropsAndArgs searchProps(String searchString, String searchName, Long filterArgID,
+			Long filterPropID) throws Exception {
+		Set<String> tokenSet = getTokensForIndexingOrQuery(searchString, 6);
+		if (tokenSet.isEmpty()) {
+			return getPropsAndArgs(0);
+		}
+		
+		Search search = new Search(ofy, tokenSet, filterArgID, filterPropID);
+		PropsAndArgs propsAndArgs = search.getBatch(ofy, 10);
+		getHttpServletRequest().getSession().setAttribute(searchName, search);
+		return propsAndArgs;
+	}
+	
+	@Override
+	public PropsAndArgs continueSearchProps( String searchName ){
+		Search search = (Search) getHttpServletRequest().getSession().getAttribute(searchName);
+		PropsAndArgs propsAndArgs = search.getBatch(ofy, 20);
+		getHttpServletRequest().getSession().setAttribute(searchName, search);
+		return propsAndArgs;
+	}
+	
+	public PropsAndArgs searchProps_ALSO_OLD(String string, Long filterArgID,
 			Long filterPropID) throws Exception {
 		try {
 			Set<String> tokenSet = getTokensForIndexingOrQuery(string, 5);

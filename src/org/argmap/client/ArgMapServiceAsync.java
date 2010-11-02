@@ -59,8 +59,11 @@ public interface ArgMapServiceAsync {
 	void getNodesChildren(List<Long> nodeIDs, int depth,
 			AsyncCallback<Nodes> callback);
 
-	void searchProps(String string, Long filerArgID, Long filterPropID,
-			AsyncCallback<PropsAndArgs> callback);
-
 	void getLoginInfo(String requestURI, AsyncCallback<LoginInfo> callback);
+
+	void searchProps(String searchString, String searchName, Long filerArgID,
+			Long filterPropID, AsyncCallback<PropsAndArgs> callback);
+
+	void continueSearchProps(String searchName,
+			AsyncCallback<PropsAndArgs> callback);
 }

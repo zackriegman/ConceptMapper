@@ -1,12 +1,12 @@
 package org.argmap.server;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -44,7 +44,7 @@ public class ArgMapAdminServiceImpl extends RemoteServiceServlet implements
 		ofy.delete(ofy.query(Change.class).fetchKeys());
 	}
 
-	static final int ROOT_NODES = 20;
+	static final int ROOT_NODES = 10;
 	static final int AVERAGE_PROPS_AT_ROOT = 5;
 	static final int AVERAGE_ARGS_AT_ROOT = 3;
 	static final int PROPS_STEP = 2;
@@ -98,6 +98,7 @@ public class ArgMapAdminServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
+	@SuppressWarnings("serial")
 	private final ArgMapServiceImpl argMapService = new ArgMapServiceImpl() {
 		@Override
 		public HttpServletRequest getHttpServletRequest() {
@@ -106,15 +107,17 @@ public class ArgMapAdminServiceImpl extends RemoteServiceServlet implements
 	};
 
 	private class TextGenerator {
+		
 		private Scanner scanner;
-		File file = new File("aristotle.txt");
 
-		public TextGenerator() throws FileNotFoundException {
+		public TextGenerator() throws IOException {
 			init();
 		}
 
-		private void init() throws FileNotFoundException {
-			scanner = new Scanner(file);
+		private void init() throws IOException {
+			FileInputStream fileInputStream = new FileInputStream("sentences.gz");
+			GZIPInputStream gzipStream = new GZIPInputStream(fileInputStream);
+			scanner = new Scanner(gzipStream);
 			scanner.useDelimiter("\\.");
 		}
 
@@ -126,15 +129,15 @@ public class ArgMapAdminServiceImpl extends RemoteServiceServlet implements
 			return string;
 		}
 
-		private String getASingleSentence() throws FileNotFoundException {
+		private String getASingleSentence() throws IOException {
 			if( !scanner.hasNext()){
 				init();
 			}
-			String string = scanner.next();
-			String cleaned = string.replaceAll("\\W", " ");
-			cleaned = cleaned.replaceAll("\\s+", " ");
-			String trimmed = cleaned.trim();
-			return trimmed + ".";
+			String string = scanner.next().trim();
+			//String cleaned = string.replaceAll("\\W", " ");
+			//cleaned = cleaned.replaceAll("\\s+", " ");
+			//String trimmed = cleaned.trim();
+			return string + ".";
 		}
 	}
 

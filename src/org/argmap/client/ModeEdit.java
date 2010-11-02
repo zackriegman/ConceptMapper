@@ -21,6 +21,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -46,6 +47,7 @@ public class ModeEdit extends ResizeComposite implements
 	private final ScrollPanel sideMessageScroll;
 	public final ScrollPanel treeScrollPanel;
 	private final SplitLayoutPanel sideSplit = new SplitLayoutPanel();
+	private final SearchTimer searchTimer = new SearchTimer();
 
 	TextBox searchTextBox = new TextBox();
 	private final EditModeTree tree;
@@ -391,10 +393,21 @@ public class ModeEdit extends ResizeComposite implements
 					props, args);
 		}
 	}
+	
+	private class SearchTimer extends Timer {
+
+		@Override
+		public void run() {
+			mainSearch();			
+		}
+		
+	}
 
 	@Override
 	public void onKeyUp(KeyUpEvent event) {
-		// int charCode = event.getNativeKeyCode();
+		Log log = Log.getLog("me.oku");
+		int charCode = event.getNativeKeyCode();
+		log.log("registered this key:" + charCode);
 		Object source = event.getSource();
 		if (source == searchTextBox) {
 			String text = searchTextBox.getText().trim();
@@ -403,28 +416,45 @@ public class ModeEdit extends ResizeComposite implements
 			} else {
 				addPropButton.setEnabled(true);
 			}
-
-			// if (charCode == 32) { //keeping this around to I remember how
-			// to select for space bar...
-			ServerComm.searchProps(searchTextBox.getText(), null, null,
-					new LocalCallback<PropsAndArgs>() {
-
-						@Override
-						public void call(PropsAndArgs results) {
-							argMap.hideVersions();
-							tree.clear();
-							for (Proposition proposition : results.rootProps) {
-
-								ViewProp propView = new ViewPropEdit();
-								propView.recursiveBuildViewNode(proposition,
-										results.nodes);
-
-								tree.addItem(propView);
-							}
-							tree.resetState();
-						}
-					});
+			
+			/* if its the space bar search and stop the timer */
+			if (charCode == 32) {
+				log.logln( "canceling timer and doing search");
+				searchTimer.cancel();
+				mainSearch();
+			} 
+			/* if its any other key set timer for .3 seconds */
+			else {
+				log.logln( "reseting timer for 500 millis");
+				searchTimer.schedule(500);
+			}
+			
 		}
+		log.finish();
+	}
+	
+	public void mainSearch(){
+		Log log = Log.getLog("me.ms");
+		log.log("SEARCHING");
+		ServerComm.searchProps(searchTextBox.getText(), "mainSearch", null, null,
+				new LocalCallback<PropsAndArgs>() {
+
+					@Override
+					public void call(PropsAndArgs results) {
+						argMap.hideVersions();
+						tree.clear();
+						for (Proposition proposition : results.rootProps) {
+
+							ViewProp propView = new ViewPropEdit();
+							propView.recursiveBuildViewNode(proposition,
+									results.nodes);
+
+							tree.addItem(propView);
+						}
+						tree.resetState();
+					}
+				});
+		log.finish();
 	}
 
 	public void loadFromServer(ViewNode viewNode, int depth) {

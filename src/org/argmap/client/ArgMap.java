@@ -24,6 +24,12 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
 
+/* TODO: deploy and test speed on actualy deployment*/
+/*TODO: when search for "Foundation anyone providing copies of Project Gutenberg" seems to return duplicates
+ * actually I think the problem is that I currently cycle through the source text for sentences which creates
+ * duplicate nodes... so the filtering may be working fine but its finding duplicates...
+ */
+//TODO: add option to continue searching for more matches in both side and main search
 //TODO: prevent circular linking from crashing program...
 //TODO: suggests use of proposition for which the argument is for/against!?!
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
