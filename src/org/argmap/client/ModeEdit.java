@@ -37,7 +37,7 @@ import com.google.gwt.user.client.ui.TreeItem;
 
 public class ModeEdit extends ResizeComposite implements
 		LocalCallback<PropsAndArgs>, KeyUpHandler, OpenHandler<TreeItem>,
-		CloseHandler<TreeItem>, SelectionHandler<TreeItem> {
+		CloseHandler<TreeItem>, SelectionHandler<TreeItem>, ClickHandler {
 
 	private static HTML sideMessageArea = new HTML();
 	private final Label sideSearchLabel = new Label(
@@ -48,10 +48,12 @@ public class ModeEdit extends ResizeComposite implements
 	public final ScrollPanel treeScrollPanel;
 	private final SplitLayoutPanel sideSplit = new SplitLayoutPanel();
 	private final SearchTimer searchTimer = new SearchTimer();
+	
 
-	TextBox searchTextBox = new TextBox();
+	private final TextBox searchTextBox = new TextBox();
 	private final EditModeTree tree;
-	Button addPropButton;
+	private final Button addPropButton;
+	private final Button mainLoadMoreButton;
 	private final ArgMap argMap;
 
 	public ModeEdit(ArgMap argMap) {
@@ -86,13 +88,7 @@ public class ModeEdit extends ResizeComposite implements
 		addPropButton = new Button("Add as new proposition");
 		addPropButton.setStylePrimaryName("addPropButton");
 		addPropButton.setEnabled(false);
-		addPropButton.addClickHandler(new ClickHandler() {
-			@Override
-			public void onClick(ClickEvent event) {
-				addRootProp();
-
-			}
-		});
+		addPropButton.addClickHandler( this );
 
 		searchTextBox.addKeyUpHandler(this);
 		searchTextBox.addStyleName("searchTextBox");
@@ -108,21 +104,25 @@ public class ModeEdit extends ResizeComposite implements
 		addButtonFlowPanel.add(addPropButton);
 		searchBoxPanel.addEast(addButtonFlowPanel, 14);
 		searchBoxPanel.add(searchTextBox);
-		// searchTextBox.addStyleName("flowPanel-left");
-		// addPropButton.addStyleName("flowPanel-left");
-		// searchLabel.addStyleName("flowPanel-left");
-
-		// ScrollPanel searchBoxScrollPanel = new ScrollPanel( searchBoxPanel );
 
 		/*
-		 * setup the tree
+		 * setup the tree area
 		 */
 		tree = new EditModeTree(this);
 		tree.addOpenHandlerTracked(this);
 		tree.addCloseHandler(this);
 		tree.addSelectionHandler(this);
 		tree.setAnimationEnabled(false);
-		treeScrollPanel = new ScrollPanel(tree);
+		
+		mainLoadMoreButton = new Button("load more results");
+		mainLoadMoreButton.addClickHandler( this );
+		mainLoadMoreButton.setVisible(false);
+		mainLoadMoreButton.setStylePrimaryName("addPropButton");
+		
+		FlowPanel treeFlowPanel = new FlowPanel();
+		treeFlowPanel.add(tree);
+		treeFlowPanel.add(mainLoadMoreButton);
+		treeScrollPanel = new ScrollPanel(treeFlowPanel);
 
 		/*
 		 * add the search box and tree to the main area
@@ -433,28 +433,49 @@ public class ModeEdit extends ResizeComposite implements
 		log.finish();
 	}
 	
+	private final int MAIN_SEARCH_LIMIT = 15;
+	
 	public void mainSearch(){
 		Log log = Log.getLog("me.ms");
 		log.log("SEARCHING");
-		ServerComm.searchProps(searchTextBox.getText(), "mainSearch", null, null,
+		ServerComm.searchProps(searchTextBox.getText(), "mainSearch", MAIN_SEARCH_LIMIT, null, null,
 				new LocalCallback<PropsAndArgs>() {
 
 					@Override
 					public void call(PropsAndArgs results) {
 						argMap.hideVersions();
 						tree.clear();
-						for (Proposition proposition : results.rootProps) {
-
-							ViewProp propView = new ViewPropEdit();
-							propView.recursiveBuildViewNode(proposition,
-									results.nodes);
-
-							tree.addItem(propView);
-						}
-						tree.resetState();
+						appendResultsToTree( results );
 					}
 				});
 		log.finish();
+	}
+	
+	public void mainSearchForMore(){
+		ServerComm.continueSearchProps("mainSearch", new LocalCallback<ArgMapService.PropsAndArgs>() {
+			
+			@Override
+			public void call(PropsAndArgs results) {
+				appendResultsToTree( results );
+			}
+		});
+	}
+	
+	public void appendResultsToTree( PropsAndArgs results ){
+		for (Proposition proposition : results.rootProps) {
+
+			ViewProp propView = new ViewPropEdit();
+			propView.recursiveBuildViewNode(proposition,
+					results.nodes);
+
+			tree.addItem(propView);
+		}
+		tree.resetState();
+		if( results.rootProps.size() == MAIN_SEARCH_LIMIT ){
+			mainLoadMoreButton.setVisible(true);
+		} else {
+			mainLoadMoreButton.setVisible(false);
+		}
 	}
 
 	public void loadFromServer(ViewNode viewNode, int depth) {
@@ -521,5 +542,16 @@ public class ModeEdit extends ResizeComposite implements
 	@Override
 	public void onSelection(SelectionEvent<TreeItem> event) {
 		argMap.showVersions();
+	}
+
+	@Override
+	public void onClick(ClickEvent event) {
+		Object source = event.getSource();
+		if( source == mainLoadMoreButton ){
+			mainSearchForMore();
+		} else if ( source == addPropButton ){
+			addRootProp();
+		}
+		
 	}
 }

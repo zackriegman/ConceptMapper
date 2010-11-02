@@ -61,9 +61,10 @@ public interface ArgMapServiceAsync {
 
 	void getLoginInfo(String requestURI, AsyncCallback<LoginInfo> callback);
 
-	void searchProps(String searchString, String searchName, Long filerArgID,
-			Long filterPropID, AsyncCallback<PropsAndArgs> callback);
-
 	void continueSearchProps(String searchName,
+			AsyncCallback<PropsAndArgs> callback);
+
+	void searchProps(String searchString, String searchName, int resultLimit,
+			Long filerArgID, Long filterPropID,
 			AsyncCallback<PropsAndArgs> callback);
 }

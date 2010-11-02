@@ -338,7 +338,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	private void sideBarSearch() {
 		if (getChildCount() == 0 && !deleted) {
-			ServerComm.searchProps(textArea.getText(), "sideBarSearch", parentArgument(),
+			ServerComm.searchProps(textArea.getText(), "sideBarSearch", 7, parentArgument(),
 					proposition, getEditMode());
 		} else {
 			getEditMode().hideSearchBox();

@@ -552,15 +552,15 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public PropsAndArgs searchProps(String searchString, String searchName,
+	public PropsAndArgs searchProps(String searchString, String searchName, int resultLimit,
 			Long filterArgID, Long filterPropID) {
 		Set<String> tokenSet = getTokensForIndexingOrQuery(searchString, 6);
 		if (tokenSet.isEmpty()) {
 			return getPropsAndArgs(0);
 		}
 
-		Search search = new Search(ofy, tokenSet, filterArgID, filterPropID);
-		PropsAndArgs propsAndArgs = search.getBatch(ofy, 10);
+		Search search = new Search(ofy, tokenSet, resultLimit, filterArgID, filterPropID);
+		PropsAndArgs propsAndArgs = search.getBatch(ofy );
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
 		return propsAndArgs;
 	}
@@ -569,7 +569,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	public PropsAndArgs continueSearchProps(String searchName) {
 		Search search = (Search) getHttpServletRequest().getSession()
 				.getAttribute(searchName);
-		PropsAndArgs propsAndArgs = search.getBatch(ofy, 20);
+		PropsAndArgs propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
 		return propsAndArgs;
 	}

@@ -101,7 +101,7 @@ public interface ArgMapService extends RemoteService {
 	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs)
 			throws Exception;
 
-	public PropsAndArgs searchProps(String searchString, String searchName, Long filerArgID,
+	public PropsAndArgs searchProps(String searchString, String searchName, int resultLimit, Long filerArgID,
 			Long filterPropID) throws Exception;
 	
 	public PropsAndArgs continueSearchProps( String searchName ) throws Exception;

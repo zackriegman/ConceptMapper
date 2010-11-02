@@ -42,9 +42,10 @@ public class Search implements Serializable {
 	
 	private String cursorString;
 	private int combinationSetSize;
+	private int limit;
 	private final Set<Long> filterIDs = new HashSet<Long>();
 
-	public Search(Objectify ofy, Set<String> tokenSet, Long filterArgID,
+	public Search(Objectify ofy, Set<String> tokenSet, int limit, Long filterArgID,
 			Long filterPropID) {
 		if (filterArgID != null) {
 			filterIDs.addAll(ofy.get(Argument.class, filterArgID).childIDs);
@@ -52,6 +53,7 @@ public class Search implements Serializable {
 		filterIDs.add(filterPropID);
 		tokens = new ArrayList<String>(tokenSet);
 		combinationSetSize = tokens.size();
+		this.limit = limit;
 	}
 	
 	private Search(){
@@ -67,7 +69,7 @@ public class Search implements Serializable {
 	 * it gets "limit" number of results. Then it saves it state in member
 	 * variables and returns. The next call will pick up where it left off.
 	 */
-	public PropsAndArgs getBatch(Objectify ofy, int limit) {
+	public PropsAndArgs getBatch(Objectify ofy ) {
 
 		/* prepare the return variables */
 		List<Proposition> results = new LinkedList<Proposition>();
