@@ -36,6 +36,28 @@
 			<role-name>admin</role-name>
 		</auth-constraint>
 	</security-constraint>
+	
+	<!-- TaskPopulate configuration -->
+	<servlet>
+		<servlet-name>TaskPopulate</servlet-name>
+		<servlet-class>org.argmap.server.TaskPopulate</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>TaskPopulate</servlet-name>
+		<url-pattern>/tasks/populate</url-pattern>
+	</servlet-mapping>
+	
+	<!-- general security limitation for tasks all urls in /tasks/ -->
+	<security-constraint>
+        <web-resource-collection>
+            <web-resource-name>Tasks</web-resource-name>
+            <url-pattern>/tasks/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>admin</role-name>
+        </auth-constraint>
+    </security-constraint>
 
 	<!-- remote api configuration to allow backup/restore -->
 	<servlet>

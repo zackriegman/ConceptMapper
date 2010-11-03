@@ -9,4 +9,6 @@ public interface ArgMapAdminServiceAsync {
 
 	void populateDatastore(AsyncCallback<Void> callback);
 
+	void getPopulateDatastoreCount(AsyncCallback<Integer> callback);
+
 }

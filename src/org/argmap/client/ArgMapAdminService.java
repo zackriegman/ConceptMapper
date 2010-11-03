@@ -8,5 +8,6 @@ public interface ArgMapAdminService extends RemoteService {
 
 	public void clearDatastore();
 	public void populateDatastore() throws Exception;
+	public int getPopulateDatastoreCount();
 
 }

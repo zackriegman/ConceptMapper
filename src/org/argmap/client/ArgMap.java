@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
 
 /* TODO: deploy and test speed on actualy deployment*/
+/* TODO:for ViewPropEdit:  add timer and only search on typing delay or space bar like ModeEdit
 //TODO: couldn't generate full dummy data set on server (because it would timeout for the 30 second maximum?)
 //TODO: make sure that searches are indexed
 //TODO: prevent circular linking from crashing program...

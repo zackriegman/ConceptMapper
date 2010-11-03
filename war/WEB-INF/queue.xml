@@ -1,0 +1,11 @@
+<queue-entries>
+  <queue>
+    <name>default</name>
+    <rate>5/s</rate>
+  </queue>
+  <queue>
+    <name>populate</name>
+    <rate>2000/s</rate>
+    <bucket-size>10</bucket-size>
+  </queue>
+</queue-entries>

@@ -17,6 +17,7 @@ public class ModeAdmin extends ResizeComposite implements ClickHandler {
 	ArgMap argMap;
 	private final Button clearDatastoreButton = new Button("Wipe Database");
 	private final Button populateDatastoreButton = new Button("Populate Database");
+	private final Button getPopulateDatastoreCountButton = new Button("Get Populate Database Count");
 
 	private static ArgMapAdminServiceAsync argMapAdminService = GWT
 			.create(ArgMapAdminService.class);
@@ -29,11 +30,13 @@ public class ModeAdmin extends ResizeComposite implements ClickHandler {
 		
 		clearDatastoreButton.addClickHandler(this);
 		populateDatastoreButton.addClickHandler(this);
+		getPopulateDatastoreCountButton.addClickHandler(this);
 
 		FlowPanel flowPanel = new FlowPanel();
 		flowPanel.add(label);
 		flowPanel.add(clearDatastoreButton);
 		flowPanel.add(populateDatastoreButton);
+		flowPanel.add(getPopulateDatastoreCountButton);
 
 		DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.EM);
 		mainPanel.add(flowPanel);
@@ -46,6 +49,8 @@ public class ModeAdmin extends ResizeComposite implements ClickHandler {
 			clearDatastore();
 		} else if (event.getSource() == populateDatastoreButton ){
 			populateDatastore();
+		} else if (event.getSource() == getPopulateDatastoreCountButton ){
+			getPopulateDatastoreCount();
 		}
 	}
 	
@@ -55,6 +60,24 @@ public class ModeAdmin extends ResizeComposite implements ClickHandler {
 			@Override
 			public void onSuccess(Void result) {
 				ArgMap.message("Datastore Populated", MessageType.INFO);
+			}
+
+			@Override
+			public void onFailure(Throwable caught) {
+				ArgMap.message(
+						"Failure: populateDatastore():" + caught.toString(),
+						MessageType.ERROR);
+
+			}
+		});
+	}
+	
+	private void getPopulateDatastoreCount(){
+		argMapAdminService.getPopulateDatastoreCount(new AsyncCallback<Integer>() {
+
+			@Override
+			public void onSuccess(Integer count) {
+				ArgMap.message("" + count + " random propositions/arguments created", MessageType.INFO);
 			}
 
 			@Override

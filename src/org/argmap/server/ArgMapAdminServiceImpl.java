@@ -1,20 +1,14 @@
 package org.argmap.server;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Random;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.GZIPInputStream;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.argmap.client.ArgMapAdminService;
 import org.argmap.client.Argument;
 import org.argmap.client.Change;
 import org.argmap.client.Node;
 import org.argmap.client.Proposition;
+import org.argmap.client.ServiceException;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import com.googlecode.objectify.Objectify;
@@ -44,106 +38,24 @@ public class ArgMapAdminServiceImpl extends RemoteServiceServlet implements
 		ofy.delete(ofy.query(Change.class).fetchKeys());
 	}
 
-	static final int ROOT_NODES = 10;
-	static final int AVERAGE_PROPS_AT_ROOT = 5;
-	static final int AVERAGE_ARGS_AT_ROOT = 3;
-	static final int PROPS_STEP = 2;
-	static final int ARGS_STEP = 2;
-	static final int ARGS_STANDARD_DEVIATION = 4;
-	static final int PROPS_STANDARD_DEVIATION = 2;
-	
-	static final Random random = new Random();
-
 	@Override
-	public void populateDatastore() throws Exception {
+	public void populateDatastore() throws ServiceException {
+		System.out.print("ArgMapAdminServiceImpl.populateDatastore()");
 		try {
-			TextGenerator textGenerator = new TextGenerator();
-			Count count = new Count();
-			Count lastPrint = new Count();
-			for (int i = 0; i < ROOT_NODES; i++) {
-				Long propID = argMapService.addProp(null, 0,
-						textGenerator.getSentence());
-				recursiveCreateProp(propID, AVERAGE_PROPS_AT_ROOT, AVERAGE_ARGS_AT_ROOT,
-						textGenerator, count, lastPrint);
-			}
-			log.severe("nodes created:"+ count.num);
+			TaskPopulate.queueRootTaskPopulates(getThreadLocalRequest());
 		} catch (Exception e) {
-			log.log(Level.SEVERE, "Uncaught exception", e);
-			throw e;
+			e.printStackTrace();
 		}
 	}
 	
-	private class Count{
-		public long num = 0;
-	}
-
-	private void recursiveCreateProp(Long propID, double averageProps, double averageArgs,
-			TextGenerator textGenerator, Count count, Count lastPrint) throws Exception {
-		double argCount = random.nextGaussian() * ARGS_STANDARD_DEVIATION + averageArgs;
-		for (int i = 0; i < argCount; i++) {
-			if(count.num++ > lastPrint.num + 100){
-				log.severe("" + count.num);
-				lastPrint.num += 100;
-			}
-			Long argID = argMapService.addArg(propID, random.nextBoolean());
-			argMapService.updateArg(argID, textGenerator.getSentence());
-			double propCount = random.nextGaussian() * PROPS_STANDARD_DEVIATION + averageProps;
-			for (int j = 0; j < propCount; j++) {
-				count.num++;
-				Long childPropID = argMapService.addProp(argID, 0,
-						textGenerator.getSentence());
-				recursiveCreateProp(childPropID, averageProps - PROPS_STEP, averageArgs - ARGS_STEP,
-						textGenerator, count, lastPrint);
-			}
-		}
-	}
-
-	@SuppressWarnings("serial")
-	private final ArgMapServiceImpl argMapService = new ArgMapServiceImpl() {
-		@Override
-		public HttpServletRequest getHttpServletRequest() {
-			return ArgMapAdminServiceImpl.this.getThreadLocalRequest();
-		}
-	};
-
-	private class TextGenerator {
-		
-		private Scanner scanner;
-
-		public TextGenerator() throws IOException {
-			init();
-		}
-
-		private void init() throws IOException {
-			FileInputStream fileInputStream = new FileInputStream("sentences.gz");
-			GZIPInputStream gzipStream = new GZIPInputStream(fileInputStream);
-			scanner = new Scanner(gzipStream);
-			scanner.useDelimiter("\\.");
-		}
-
-		public String getSentence() throws IOException {
-			String string = getASingleSentence();
-			while (string.length() < 20) {
-				string = getASingleSentence();
-			}
-			return string;
-		}
-
-		private String getASingleSentence() throws IOException {
-			if( !scanner.hasNext()){
-				init();
-			}
-			String string = scanner.next().trim();
-			//String cleaned = string.replaceAll("\\W", " ");
-			//cleaned = cleaned.replaceAll("\\s+", " ");
-			//String trimmed = cleaned.trim();
-			return string + ".";
-		}
+	@Override
+	public int getPopulateDatastoreCount(){
+		return TaskPopulate.getRandomSentenceCount();
 	}
 	
+
 	@Override
 	public void doUnexpectedFailure(java.lang.Throwable e) {
 		log.log(Level.SEVERE, "Uncaught exception", e);
 	}
-
 }
