@@ -58,7 +58,7 @@ public class TaskPopulate extends HttpServlet {
 
 	private static final String SENTENCES_FILE = "sentences";
 
-	private static final int ROOT_NODES = 1;
+	private static final int ROOT_NODES = 10;
 	private static final int AVERAGE_PROPS_AT_ROOT = 5;
 	private static final int AVERAGE_ARGS_AT_ROOT = 3;
 	private static final int PROPS_STEP = 2;
