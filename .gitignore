@@ -1,6 +1,14 @@
 *.class
+
 *.gwt.rpc
+
 *.cache.html
+
 *.cache.png
+
 *.odt#
 
+
+extras/*
+war/argmap/*
+war/WEB-INF/appengine-generated/local_db.bin
