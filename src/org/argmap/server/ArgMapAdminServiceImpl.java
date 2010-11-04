@@ -33,9 +33,12 @@ public class ArgMapAdminServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public void clearDatastore() {
-		ofy.delete(ofy.query(Argument.class).fetchKeys());
-		ofy.delete(ofy.query(Proposition.class).fetchKeys());
-		ofy.delete(ofy.query(Change.class).fetchKeys());
+		System.out.print("ArgMapAdminServiceImpl.populateDatastore()");
+		try {
+			TaskWipe.queueTaskWipe();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override

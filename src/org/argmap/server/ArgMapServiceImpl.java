@@ -2,11 +2,9 @@ package org.argmap.server;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -151,10 +149,14 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
+	private Lock getNodeLock(Long nodeID) {
+		return Lock.getLock("NODE_ID:" + nodeID);
+	}
+
 	@Override
 	public Long addProp(Long parentArgID, int position, String content) {
 
-		log.finest("addProp()");
+		//log.finest("addProp()");
 		Proposition newProposition = new Proposition();
 		newProposition.content = content;
 		newProposition.tokens = getTokensForIndexingOrQuery(content, 30);
@@ -162,12 +164,19 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 		if (parentArgID != null) {
 			// exception will be generated if there is a bogus parentArgID
-			parentArg = ofy.get(Argument.class, parentArgID);
-			newProposition.linkCount = 1;
-			ofy.put(newProposition);
-			parentArg.childIDs.add(position, newProposition.id);
 
-			ofy.put(parentArg);
+			Lock lock = getNodeLock(parentArgID);
+			try {
+				lock.lock();
+				parentArg = ofy.get(Argument.class, parentArgID);
+				newProposition.linkCount = 1;
+				ofy.put(newProposition);
+				parentArg.childIDs.add(position, newProposition.id);
+
+				ofy.put(parentArg);
+			} finally {
+				lock.unlock();
+			}
 		} else {
 			newProposition.linkCount = 0;
 			ofy.put(newProposition);
@@ -184,21 +193,37 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public void linkProposition(Long parentArgID, int position,
 			Long propositionID) {
+		Lock parentLock = getNodeLock(parentArgID);
+		Lock childLock = getNodeLock(propositionID);
+		try {
+			parentLock.lock();
+			childLock.lock();
+			Proposition proposition = ofy.get(Proposition.class, propositionID);
+			Argument argument = ofy.get(Argument.class, parentArgID);
 
-		Argument argument = ofy.get(Argument.class, parentArgID);
-		Proposition proposition = ofy.get(Proposition.class, propositionID);
-
-		argument.childIDs.add(position, propositionID);
-		ofy.put(argument);
-		proposition.linkCount++;
-		ofy.put(proposition);
-
-		Change change = new Change(ChangeType.PROP_LINK);
-		change.argID = argument.id;
-		change.propID = proposition.id;
-		saveVersionInfo(change);
+			argument.childIDs.add(position, propositionID);
+			ofy.put(argument);
+			proposition.linkCount++;
+			ofy.put(proposition);
+			Change change = new Change(ChangeType.PROP_LINK);
+			change.argID = parentArgID;
+			change.propID = proposition.id;
+			saveVersionInfo(change);
+		} finally {
+			childLock.unlock();
+			parentLock.unlock();
+		}
 	}
 
+	/*
+	 * TODO in this method I should also lock the proposition that is being
+	 * deleted in case someone gets a copy of the proposition, after I get my
+	 * copy, and then adds an argument to it before I delete my copy therebye
+	 * creating a dangling argument and corrupting the database. The problem is
+	 * that if my strategy for avoiding gridlock is to always lock the parent
+	 * first and then the child, this method needs to be rewritten a little bit,
+	 * and I don't feel like doing that at the moment.
+	 */
 	@Override
 	public void deleteProp(Long propID) throws ServiceException {
 		/* first get the stuff that we'll need for version control */
@@ -224,16 +249,23 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 		/* if the proposition is used in an argument */
 		else if (query.count() == 1) {
-			Argument argument = query.iterator().next();
+			Long argID = query.getKey().getId();
+			Lock lock = getNodeLock(argID);
+			try {
+				lock.lock();
+				Argument argument = query.get();
 
-			/* record the versioning information */
-			change.argID = argument.id;
-			change.argPropIndex = argument.childIDs.indexOf(propID);
-			// change.argPro = argument.pro;
+				/* record the versioning information */
+				change.argID = argument.id;
+				change.argPropIndex = argument.childIDs.indexOf(propID);
+				// change.argPro = argument.pro;
 
-			/* remove the proposition from the argument */
-			argument.childIDs.remove(propID);
-			ofy.put(argument);
+				/* remove the proposition from the argument */
+				argument.childIDs.remove(propID);
+				ofy.put(argument);
+			} finally {
+				lock.unlock();
+			}
 		}
 
 		/* delete the proposition */
@@ -244,35 +276,42 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	}
 
-	/* the below functions are not yet used anywhere... consider deleting them */
-
 	@Override
 	public void unlinkProp(Long parentArgID, Long propositionID)
 			throws ServiceException {
 
-		/* this will throw an exception if the argument doesn't exist */
-		Argument argument = ofy.get(Argument.class, parentArgID);
-		/* this will throw an exception if the prop doesn't exist */
-		Proposition proposition = ofy.get(Proposition.class, propositionID);
+		Lock parentLock = getNodeLock(parentArgID);
+		Lock childLock = getNodeLock(propositionID);
+		try {
+			parentLock.lock();
+			childLock.lock();
+			/* this will throw an exception if the argument doesn't exist */
+			Argument argument = ofy.get(Argument.class, parentArgID);
+			/* this will throw an exception if the prop doesn't exist */
+			Proposition proposition = ofy.get(Proposition.class, propositionID);
 
-		int propIndex = argument.childIDs.indexOf(propositionID);
-		if (propIndex == -1) {
-			throw new ServiceException(
-					"cannot unlink proposition from argument:  proposition not part of argument");
+			int propIndex = argument.childIDs.indexOf(propositionID);
+			if (propIndex == -1) {
+				throw new ServiceException(
+						"cannot unlink proposition from argument:  proposition not part of argument");
+			}
+
+			argument.childIDs.remove(propositionID);
+			ofy.put(argument);
+
+			proposition.linkCount--;
+			ofy.put(proposition);
+
+			Change change = new Change(ChangeType.PROP_UNLINK);
+			change.argID = parentArgID;
+			change.propID = proposition.id;
+			change.argPropIndex = propIndex;
+			change.content = proposition.content;
+			saveVersionInfo(change);
+		} finally {
+			parentLock.unlock();
+			childLock.unlock();
 		}
-
-		argument.childIDs.remove(propositionID);
-		ofy.put(argument);
-
-		proposition.linkCount--;
-		ofy.put(proposition);
-
-		Change change = new Change(ChangeType.PROP_UNLINK);
-		change.argID = parentArgID;
-		change.propID = proposition.id;
-		change.argPropIndex = propIndex;
-		change.content = proposition.content;
-		saveVersionInfo(change);
 	}
 
 	@Override
@@ -280,109 +319,148 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		logln("propID:" + propID + "; content:" + content);
 
 		Change change = new Change(ChangeType.PROP_MODIFICATION);
-		Proposition prop = ofy.get(Proposition.class, propID);
-		if (prop.getContent() != null
-				&& prop.getContent().trim().equals(content.trim())) {
-			throw new ServiceException(
-					"Cannot update proposition content:  content not changed!");
+		Lock lock = getNodeLock(propID);
+		try {
+			lock.lock();
+			Proposition prop = ofy.get(Proposition.class, propID);
+			if (prop.getContent() != null
+					&& prop.getContent().trim().equals(content.trim())) {
+				throw new ServiceException(
+						"Cannot update proposition content:  content not changed!");
+			}
+
+			change.propID = prop.id;
+			change.content = prop.content;
+			// TODO is this line necessary for some reason?
+			// change.propTopLevel = prop.topLevel;
+
+			/*
+			 * have to save the version info before the proposition value is
+			 * changed (or alternatively, create a new Proposition)
+			 */
+			saveVersionInfo(change);
+
+			prop.setContent(content.trim());
+			prop.tokens = getTokensForIndexingOrQuery(content, 30);
+			ofy.put(prop);
+		} finally {
+			lock.unlock();
 		}
-
-		change.propID = prop.id;
-		change.content = prop.content;
-		// TODO is this line necessary for some reason?
-		// change.propTopLevel = prop.topLevel;
-
-		/*
-		 * have to save the version info before the proposition value is changed
-		 * (or alternatively, create a new Proposition)
-		 */
-		saveVersionInfo(change);
-
-		prop.setContent(content.trim());
-		prop.tokens = getTokensForIndexingOrQuery(content, 30);
-		ofy.put(prop);
 	}
 
 	public void deleteArg(Long argID) throws ServiceException {
-		Argument argument = ofy.get(Argument.class, argID);
-		if (!argument.childIDs.isEmpty()) {
-			throw new ServiceException(
-					"Cannot delete an argumet that still has child propositions.  First remove child propositions.");
-		}
+
 		Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
 				"childIDs", argID);
-		Proposition parentProp = propQuery.iterator().next();
+		Lock parentLock = getNodeLock(propQuery.getKey().getId());
+		Lock childLock = getNodeLock(argID);
+		try {
+			parentLock.lock();
+			childLock.lock();
 
-		Change argDeletionChange = new Change(ChangeType.ARG_DELETION);
-		argDeletionChange.propID = parentProp.id;
-		argDeletionChange.argID = argument.id;
-		argDeletionChange.argPro = argument.pro;
-		argDeletionChange.content = argument.content;
-		argDeletionChange.argPropIndex = parentProp.childIDs
-				.indexOf(argument.id);
-		/*
-		 * because we are only deleting arguments when they have no propositions
-		 * left, we don't have to save the argument's proposition list
-		 */
-		parentProp.childIDs.remove(argument.id);
+			Argument argument = ofy.get(Argument.class, argID);
+			if (!argument.childIDs.isEmpty()) {
+				throw new ServiceException(
+						"Cannot delete an argumet that still has child propositions.  First remove child propositions.");
+			}
 
-		ofy.put(parentProp);
-		ofy.delete(argument);
-		saveVersionInfo(argDeletionChange);
+			Proposition parentProp = propQuery.get();
+
+			Change argDeletionChange = new Change(ChangeType.ARG_DELETION);
+			argDeletionChange.propID = parentProp.id;
+			argDeletionChange.argID = argument.id;
+			argDeletionChange.argPro = argument.pro;
+			argDeletionChange.content = argument.content;
+			argDeletionChange.argPropIndex = parentProp.childIDs
+					.indexOf(argument.id);
+			/*
+			 * because we are only deleting arguments when they have no
+			 * propositions left, we don't have to save the argument's
+			 * proposition list
+			 */
+			parentProp.childIDs.remove(argument.id);
+
+			ofy.put(parentProp);
+
+			ofy.delete(argument);
+			saveVersionInfo(argDeletionChange);
+		} finally {
+			parentLock.unlock();
+			childLock.unlock();
+		}
 	}
 
 	@Override
 	public Long addArg(Long parentPropID, boolean pro) {
+		LapTimer timer = new LapTimer();
+		Lock lock = getNodeLock(parentPropID);
+		try {
+			timer.lap("<<<<");
+			lock.lock();
+			timer.lap("????");
+			/*
+			 * trigger an exception if the ID is invalid to prevent inconsistent
+			 * datastore states
+			 */
+			Proposition parentProp = ofy.get(Proposition.class, parentPropID);
+			timer.lap("{{{{");
+			// Proposition newProp = new Proposition();
+			// newProp.linkCount = 1;
+			// ofy.put(newProp);
 
-		/*
-		 * trigger an exception if the ID is invalid to prevent inconsistent
-		 * datastore states
-		 */
-		Proposition parentProp = ofy.get(Proposition.class, parentPropID);
+			Argument newArg = new Argument();
+			timer.lap("----");
+			// newArg.propIDs.add(0, newProp.id);
 
-		// Proposition newProp = new Proposition();
-		// newProp.linkCount = 1;
-		// ofy.put(newProp);
-
-		Argument newArg = new Argument();
-		// newArg.propIDs.add(0, newProp.id);
-
-		newArg.pro = pro;
-		ofy.put(newArg);
-
-		parentProp.childIDs.add(newArg.id);
-		ofy.put(parentProp);
-
-		Change change = new Change(ChangeType.ARG_ADDITION);
-		change.argID = newArg.id;
-		change.propID = parentPropID;
-		saveVersionInfo(change);
-
-		return newArg.id;
+			newArg.pro = pro;
+			timer.lap("====");
+			ofy.put(newArg);
+			timer.lap("]]]]");
+			parentProp.childIDs.add(newArg.id);
+			timer.lap("\\\\");
+			ofy.put(parentProp);
+			timer.lap(";;;;");
+			Change change = new Change(ChangeType.ARG_ADDITION);
+			change.argID = newArg.id;
+			change.propID = parentPropID;
+			saveVersionInfo(change);
+			timer.lap("````");
+			return newArg.id;
+		} finally {
+			lock.unlock();
+			log.fine(timer.getRecord());
+		}
 	}
 
 	@Override
 	public void updateArg(Long argID, String content) throws ServiceException {
-		Change change = new Change(ChangeType.ARG_MODIFICATION);
-		Argument arg = ofy.get(Argument.class, argID);
-		if (arg.content != null && arg.content.trim().equals(content.trim())) {
-			throw new ServiceException(
-					"Cannot update argument title:  title not changed!");
+		Lock lock = getNodeLock(argID);
+		try {
+			lock.lock();
+			Change change = new Change(ChangeType.ARG_MODIFICATION);
+			Argument arg = ofy.get(Argument.class, argID);
+			if (arg.content != null
+					&& arg.content.trim().equals(content.trim())) {
+				throw new ServiceException(
+						"Cannot update argument title:  title not changed!");
+			}
+
+			change.argID = arg.id;
+			change.content = arg.content;
+			// TODO is this line necessary for some reason?
+			// change.propTopLevel = prop.topLevel;
+
+			/*
+			 * have to save the version info before the proposition value is
+			 * changed (or alternatively, create a new Proposition)
+			 */
+			saveVersionInfo(change);
+
+			arg.content = content.trim();
+			ofy.put(arg);
+		} finally {
+			lock.unlock();
 		}
-
-		change.argID = arg.id;
-		change.content = arg.content;
-		// TODO is this line necessary for some reason?
-		// change.propTopLevel = prop.topLevel;
-
-		/*
-		 * have to save the version info before the proposition value is changed
-		 * (or alternatively, create a new Proposition)
-		 */
-		saveVersionInfo(change);
-
-		arg.content = content.trim();
-		ofy.put(arg);
 	}
 
 	private void saveVersionInfo(Change change) {
@@ -552,15 +630,16 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public PropsAndArgs searchProps(String searchString, String searchName, int resultLimit,
-			Long filterArgID, Long filterPropID) {
+	public PropsAndArgs searchProps(String searchString, String searchName,
+			int resultLimit, Long filterArgID, Long filterPropID) {
 		Set<String> tokenSet = getTokensForIndexingOrQuery(searchString, 6);
 		if (tokenSet.isEmpty()) {
 			return getPropsAndArgs(0);
 		}
 
-		Search search = new Search(ofy, tokenSet, resultLimit, filterArgID, filterPropID);
-		PropsAndArgs propsAndArgs = search.getBatch(ofy );
+		Search search = new Search(ofy, tokenSet, resultLimit, filterArgID,
+				filterPropID);
+		PropsAndArgs propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
 		return propsAndArgs;
 	}
@@ -571,99 +650,6 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				.getAttribute(searchName);
 		PropsAndArgs propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
-		return propsAndArgs;
-	}
-
-	public PropsAndArgs searchProps_ALSO_OLD(String string, Long filterArgID,
-			Long filterPropID) {
-		Set<String> tokenSet = getTokensForIndexingOrQuery(string, 5);
-		List<String> tokens = new ArrayList<String>(tokenSet);
-		if (tokens.isEmpty()) {
-			return getPropsAndArgs(0);
-		}
-		Argument filterArg = null;
-		if (filterArgID != null) {
-			filterArg = ofy.get(Argument.class, filterArgID);
-		}
-		List<Proposition> results = new LinkedList<Proposition>();
-		Set<Long> duplicateFilter = new HashSet<Long>();
-
-		/*
-		 * this runs through all the possible combinations of tokens that can be
-		 * searched for (eventually it should stop when it gets a certain number
-		 * or has spent a certain amount of time searching, and let the client
-		 * re-request to continue where it left off if the client wants more
-		 * results...or wants to continue waiting...). It starts by searching
-		 * for all the tokens, and then searches for each combination of one
-		 * fewer than all the tokens, then for two fewer, and so forth until it
-		 * gets to just one term.
-		 */
-		int comboCount = 0;
-		int[] combination;
-		for (int i = tokens.size(); i > 0; i--) {
-			CombinationGenerator x = new CombinationGenerator(tokens.size(), i);
-			while (x.hasMore()) {
-				comboCount++;
-				combination = x.getNext();
-				Query<Proposition> query = ofy.query(Proposition.class);
-				for (int j = 0; j < combination.length; j++) {
-					query.filter("tokens", tokens.get(combination[j]));
-				}
-				for (Proposition proposition : query) {
-					if ((filterArg != null && filterArg.childIDs
-							.contains(proposition.id))
-							|| proposition.id.equals(filterPropID)) {
-						continue;
-					}
-					if (duplicateFilter.add(proposition.id)) {
-						results.add(proposition);
-					}
-				}
-			}
-		}
-		log.severe("comboCount: " + comboCount);
-
-		PropsAndArgs propsAndArgs = new PropsAndArgs();
-		propsAndArgs.rootProps = results;
-		propsAndArgs.nodes = new Nodes();
-
-		return propsAndArgs;
-	}
-
-	public PropsAndArgs searchProps_OLD(String string, Long filterArgID) {
-		// System.out.println("start:  searchPropositions");
-		Set<String> tokens = getTokensForIndexingOrQuery(string, 5);
-		if (tokens.isEmpty()) {
-			return getPropsAndArgs(0);
-		}
-		/*
-		 * String printString = ""; for (String str : tokens) { printString =
-		 * printString + " " + str; } System.out.println("searching for: " +
-		 * printString);
-		 */
-
-		Query<Proposition> query = ofy.query(Proposition.class);
-		for (String token : tokens) {
-			query.filter("tokens", token);
-		}
-
-		Argument filterArg = null;
-		if (filterArgID != null) {
-			filterArg = ofy.get(Argument.class, filterArgID);
-		}
-
-		List<Proposition> results = new LinkedList<Proposition>();
-		for (Proposition proposition : query) {
-			if (filterArg != null
-					&& filterArg.childIDs.contains(proposition.id)) {
-				continue;
-			}
-			results.add(proposition);
-		}
-		PropsAndArgs propsAndArgs = new PropsAndArgs();
-		propsAndArgs.rootProps = results;
-		propsAndArgs.nodes = new Nodes();
-
 		return propsAndArgs;
 	}
 
@@ -708,93 +694,112 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	}
 
+	/*
+	 * TODO consider whether locking three nodes at once could lead to gridlock
+	 * somehow. if so, one possible solution would be to remove this method and
+	 * replace it with a link method, and let the client handle putting together
+	 * the two steps of deleting and linking.
+	 */
 	@Override
 	public Nodes replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
 			Long removePropID) throws ServiceException {
-		Argument parentArg = ofy.get(Argument.class, parentArgID);
+		Lock parentLock = getNodeLock(parentArgID);
+		Lock oldChildLock = getNodeLock(removePropID);
+		Lock newChildLock = getNodeLock(linkPropID);
+		try {
+			parentLock.lock();
+			oldChildLock.lock();
+			newChildLock.lock();
 
-		if (parentArg.childIDs.contains(linkPropID)) {
-			throw new ServiceException(
-					"cannot link to proposition in argument which already links to that proposition");
-		}
-		Proposition removeProp = ofy.get(Proposition.class, removePropID);
-		if (!removeProp.childIDs.isEmpty()) {
-			throw new ServiceException(
-					"cannot replace a proposition with a link to a second proposition when the first has arguments");
-		}
-		Proposition linkProp = ofy.get(Proposition.class, linkPropID);
-		int index = -1;
-		if (parentArg != null) {
-			index = parentArg.childIDs.indexOf(removePropID);
-		}
+			Argument parentArg = ofy.get(Argument.class, parentArgID);
 
-		/* get all the arguments that use this proposition */
-		Query<Argument> query = ofy.query(Argument.class).filter("childIDs",
-				removePropID);
+			if (parentArg.childIDs.contains(linkPropID)) {
+				throw new ServiceException(
+						"cannot link to proposition in argument which already links to that proposition");
+			}
+			Proposition removeProp = ofy.get(Proposition.class, removePropID);
+			if (!removeProp.childIDs.isEmpty()) {
+				throw new ServiceException(
+						"cannot replace a proposition with a link to a second proposition when the first has arguments");
+			}
+			Proposition linkProp = ofy.get(Proposition.class, linkPropID);
+			int index = -1;
+			if (parentArg != null) {
+				index = parentArg.childIDs.indexOf(removePropID);
+			}
 
-		/* only delete a proposition that is used in 1 or fewer arguments. */
-		if (query.count() == 0) {
-			Change change = new Change(ChangeType.PROP_DELETION);
-			change.propID = removeProp.id;
-			change.content = removeProp.content;
-			change.propLinkCount = removeProp.linkCount;
+			/* get all the arguments that use this proposition */
+			Query<Argument> query = ofy.query(Argument.class).filter(
+					"childIDs", removePropID);
 
-			ofy.delete(removeProp);
-			saveVersionInfo(change);
-		}
-		/*
-		 * can't reuse the removeProposition function because don't want to
-		 * delete the argument where it is empty. [just add the link before
-		 * deleting then...]
-		 */
-		else if (query.count() == 1) {
-			Change change = new Change(ChangeType.PROP_DELETION);
-			change.propID = removeProp.id;
-			change.content = removeProp.content;
-			change.propLinkCount = removeProp.linkCount;
+			/* only delete a proposition that is used in 1 or fewer arguments. */
+			if (query.count() == 0) {
+				Change change = new Change(ChangeType.PROP_DELETION);
+				change.propID = removeProp.id;
+				change.content = removeProp.content;
+				change.propLinkCount = removeProp.linkCount;
+
+				ofy.delete(removeProp);
+				saveVersionInfo(change);
+			}
+			/*
+			 * can't reuse the removeProposition function because don't want to
+			 * delete the argument where it is empty. [just add the link before
+			 * deleting then...]
+			 */
+			else if (query.count() == 1) {
+				Change change = new Change(ChangeType.PROP_DELETION);
+				change.propID = removeProp.id;
+				change.content = removeProp.content;
+				change.propLinkCount = removeProp.linkCount;
+				change.argID = parentArgID;
+				change.argPropIndex = index;
+
+				parentArg.childIDs.remove(index);
+
+				ofy.delete(removeProp);
+				ofy.put(parentArg);
+				saveVersionInfo(change);
+			}
+			/*
+			 * if used in more than one argument, unlink instead. can't use the
+			 * unlinkProposition function because don't want to delete the
+			 * argument where it is empty.
+			 */
+			else if (query.count() > 1) {
+				Change change = new Change(ChangeType.PROP_UNLINK);
+				change.argID = parentArgID;
+				change.propID = removePropID;
+				change.argPropIndex = index;
+
+				parentArg.childIDs.remove(index);
+
+				removeProp.linkCount--;
+
+				ofy.put(removeProp);
+				ofy.put(parentArg);
+				saveVersionInfo(change);
+			}
+
+			Change change = new Change(ChangeType.PROP_LINK);
 			change.argID = parentArgID;
-			change.argPropIndex = index;
+			change.propID = linkPropID;
 
-			parentArg.childIDs.remove(index);
-
-			ofy.delete(removeProp);
+			parentArg.childIDs.add(index, linkPropID);
 			ofy.put(parentArg);
+			linkProp.linkCount++;
+			ofy.put(linkProp);
 			saveVersionInfo(change);
+
+			Nodes nodes = new Nodes();
+			nodes.props.put(linkProp.id, linkProp);
+			recursiveGetProps(linkProp, nodes, 100);
+			return nodes;
+		} finally {
+			parentLock.unlock();
+			oldChildLock.unlock();
+			newChildLock.unlock();
 		}
-		/*
-		 * if used in more than one argument, unlink instead. can't use the
-		 * unlinkProposition function because don't want to delete the argument
-		 * where it is empty.
-		 */
-		else if (query.count() > 1) {
-			Change change = new Change(ChangeType.PROP_UNLINK);
-			change.argID = parentArgID;
-			change.propID = removePropID;
-			change.argPropIndex = index;
-
-			parentArg.childIDs.remove(index);
-
-			removeProp.linkCount--;
-
-			ofy.put(removeProp);
-			ofy.put(parentArg);
-			saveVersionInfo(change);
-		}
-
-		Change change = new Change(ChangeType.PROP_LINK);
-		change.argID = parentArgID;
-		change.propID = linkPropID;
-
-		parentArg.childIDs.add(index, linkPropID);
-		ofy.put(parentArg);
-		linkProp.linkCount++;
-		ofy.put(linkProp);
-		saveVersionInfo(change);
-
-		Nodes nodes = new Nodes();
-		nodes.props.put(linkProp.id, linkProp);
-		recursiveGetProps(linkProp, nodes, 100);
-		return nodes;
 	}
 
 	@Override

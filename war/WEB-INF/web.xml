@@ -48,6 +48,17 @@
 		<url-pattern>/tasks/populate</url-pattern>
 	</servlet-mapping>
 	
+	<!-- TaskWipe configuration -->
+	<servlet>
+		<servlet-name>TaskWipe</servlet-name>
+		<servlet-class>org.argmap.server.TaskWipe</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>TaskWipe</servlet-name>
+		<url-pattern>/tasks/wipe</url-pattern>
+	</servlet-mapping>
+	
 	<!-- general security limitation for tasks all urls in /tasks/ -->
 	<security-constraint>
         <web-resource-collection>

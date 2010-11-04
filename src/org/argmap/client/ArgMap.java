@@ -25,12 +25,10 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
 
-/* TODO: deploy and test speed on actualy deployment*/
-/* TODO:for ViewPropEdit:  add timer and only search on typing delay or space bar like ModeEdit
+/* TODO: deploy and test speed on actual deployment*/
 //TODO: couldn't generate full dummy data set on server (because it would timeout for the 30 second maximum?)
 //TODO: make sure that searches are indexed
 //TODO: prevent circular linking from crashing program...
-//TODO: suggests use of proposition for which the argument is for/against!?!
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
 //TODO: try running speed tracer
@@ -72,15 +70,11 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: figure out how to make server log more than warn and severe while in hosted mode...
 
 //TODO: setup backups on home computer
-/*TODO: implement locking when modifying a parent and deleting/adding nodes to make sure that two simultaneous
- * changes (modifying the parent or deleteing/adding two different child nodes) do not clobber each other
- * and result in inconsistent datastore state. */
 //TODO: highlight last change node after time travel
 //TODO: think about merging of duplicate propositions (both possibly already having arguments)
 //TODO: fine tune UI for arguments... see implementation notes
 //TODO: get rid of irrelevant update calls (e.g. clearing update before delete)
 //TODO: still an issue?: what are all the phantom propositions that show up on an empty search?
-//TODO: decide how to get rid of repetative code (for propositions and args), maybe make them both subclasses of a Node class?
 //TODO: if the message queue gets backed up (more than 5?) give user a message that there is trouble saving changes to server, and changes may be lost
 //TODO: maintain order of propositions? waiting to see if order gets screwed up
 //TODO: IE problems: (1) VersionsMode doesn't seem to work (2) can delete root level proposition without first deleting its text

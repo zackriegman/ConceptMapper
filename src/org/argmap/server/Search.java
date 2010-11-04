@@ -183,7 +183,7 @@ public class Search implements Serializable {
 			query.filter("tokens", token);
 			sb.append(token + " ");
 		}
-		log.severe(sb.toString());
+		//log.severe(sb.toString());
 		return query;
 	}
 }

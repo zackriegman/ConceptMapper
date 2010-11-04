@@ -61,11 +61,10 @@ public class TaskPopulate extends HttpServlet {
 	/*
 	 * The sentences file has about 80K sentences if I remember correctly, so to
 	 * avoid exceeding that I should shoot to create fewer than 80K dummy nodes.
-	 * These settings should generate roughly 50K nodes with a nice
-	 * distribution of depth/propositions/arguments: ROOT_NODES = 100;
-	 * AVERAGE_PROPS_AT_ROOT = 3; AVERAGE_ARGS_AT_ROOT = 2; PROPS_STEP = 1;
-	 * ARGS_STEP = .75; ARGS_STANDARD_DEVIATION = 1; PROPS_STANDARD_DEVIATION =
-	 * 3;
+	 * These settings should generate roughly 50K nodes with a nice distribution
+	 * of depth/propositions/arguments: ROOT_NODES = 100; AVERAGE_PROPS_AT_ROOT
+	 * = 3; AVERAGE_ARGS_AT_ROOT = 2; PROPS_STEP = 1; ARGS_STEP = .75;
+	 * ARGS_STANDARD_DEVIATION = 1; PROPS_STANDARD_DEVIATION = 3;
 	 */
 	private static final int ROOT_NODES = 20;
 	private static final int AVERAGE_PROPS_AT_ROOT = 3;
@@ -74,7 +73,6 @@ public class TaskPopulate extends HttpServlet {
 	private static final double ARGS_STEP = .75;
 	private static final int ARGS_STANDARD_DEVIATION = 1;
 	private static final int PROPS_STANDARD_DEVIATION = 3;
-
 
 	private static final String PARAM_PROPID = "PARAM_PROPID";
 	private static final String PARAM_AVERAGEPROPS = "PARAM_AVERAGEPROPS";
@@ -89,35 +87,54 @@ public class TaskPopulate extends HttpServlet {
 		return returnValue;
 	}
 
-	public static String getRandomSentence() {
+	public static String[] getRandomSentences(int numberOfSentences) {
 		initializeMemcache();
-
-		MemcacheLock.lock(RANDOM_SENTENCE_LOCK);
-		Long offset = (Long) cache.get(RANDOM_SENTENCE_FILE_POSITION);
-		if (offset == null) {
-			offset = new Long(0);
-		}
-		Integer count = (Integer) cache.get(RANDOM_SENTENCE_COUNT);
-		if (count == null) {
-			count = new Integer(0);
-		}
-
-		String result = null;
+		LapTimer timer = new LapTimer();
+		Lock lock = Lock.getLock(RANDOM_SENTENCE_LOCK);
 		try {
-			RandomAccessFile file = new RandomAccessFile(SENTENCES_FILE, "r");
-			file.seek(offset);
-			result = file.readLine();
-			offset = file.getFilePointer();
-			file.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			timer.lap("++++");
+			lock.lock();
+			timer.lap("))))");
+			Long offset = (Long) cache.get(RANDOM_SENTENCE_FILE_POSITION);
+			if (offset == null) {
+				offset = new Long(0);
+			}
+			timer.lap("****");
+			Integer count = (Integer) cache.get(RANDOM_SENTENCE_COUNT);
+			if (count == null) {
+				count = new Integer(0);
+			}
+			String[] strings = new String[numberOfSentences];
+			try {
+				timer.lap("&&&&");
+				RandomAccessFile file = new RandomAccessFile(SENTENCES_FILE,
+						"r");
+				timer.lap("^^^^");
+				file.seek(offset);
+				timer.lap("%%%%");
+				for (int i = 0; i < numberOfSentences; i++) {
+					strings[i] = file.readLine();
+				}
+				timer.lap("$$$$");
+				offset = file.getFilePointer();
+				timer.lap("####");
+				file.close();
+				timer.lap("@@@@");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			count = count + 1;
+			timer.lap("TTTT");
+			cache.put(RANDOM_SENTENCE_COUNT, count);
+			timer.lap("YYYY");
+			cache.put(RANDOM_SENTENCE_FILE_POSITION, offset);
+			timer.lap("UUUU");
+			return strings;
+		} finally {
+			log.fine(timer.getRecord());
+			lock.unlock();
 		}
-		count = count + 1;
-		cache.put(RANDOM_SENTENCE_COUNT, count);
-		cache.put(RANDOM_SENTENCE_FILE_POSITION, offset);
-		MemcacheLock.unlock(RANDOM_SENTENCE_LOCK);
-		return result;
 	}
 
 	public static void queueRootTaskPopulates(HttpServletRequest req) {
@@ -128,8 +145,9 @@ public class TaskPopulate extends HttpServlet {
 				return request;
 			}
 		};
+		String[] propSentences = getRandomSentences(ROOT_NODES );
 		for (int i = 0; i < ROOT_NODES; i++) {
-			Long propID = argMapService.addProp(null, 0, getRandomSentence());
+			Long propID = argMapService.addProp(null, 0, propSentences[i]);
 			queueTaskPopulate(propID, AVERAGE_PROPS_AT_ROOT,
 					AVERAGE_ARGS_AT_ROOT);
 		}
@@ -147,17 +165,20 @@ public class TaskPopulate extends HttpServlet {
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
-		final HttpServletRequest request = req;
-		ArgMapServiceImpl argMapService = new ArgMapServiceImpl() {
-			@Override
-			public HttpServletRequest getHttpServletRequest() {
-				return request;
-			}
-		};
-
-		resp.setContentType("text/plain");
-
+		LapTimer timer = new LapTimer();
 		try {
+			timer.lap("AAAAA");
+			final HttpServletRequest request = req;
+			ArgMapServiceImpl argMapService = new ArgMapServiceImpl() {
+				@Override
+				public HttpServletRequest getHttpServletRequest() {
+					return request;
+				}
+			};
+			timer.lap("BBBB");
+
+			resp.setContentType("text/plain");
+
 			Long propID = Long.parseLong(req.getParameter(PARAM_PROPID));
 			double averageProps = Double.parseDouble(req
 					.getParameter(PARAM_AVERAGEPROPS));
@@ -166,24 +187,39 @@ public class TaskPopulate extends HttpServlet {
 
 			double argCount = random.nextGaussian() * ARGS_STANDARD_DEVIATION
 					+ averageArgs;
+			String[] argSentences = getRandomSentences( (int) argCount + 1 );
+			timer.lap("CCCC");
+
 			for (int i = 0; i < argCount; i++) {
-				//create roughly 3/4 arguments pro and 1/4 con
-				boolean pro = random.nextInt( 4 ) <= 2 ? true : false; 
+				timer.lap("DDDD " + i);
+				// create roughly 3/4 arguments pro and 1/4 con
+				boolean pro = random.nextInt(4) <= 2 ? true : false;
+				timer.lap("0000 " + i);
 				Long argID = argMapService.addArg(propID, pro);
-				argMapService.updateArg(argID, getRandomSentence());
+				timer.lap("1111 " + i);
+				argMapService.updateArg(argID, argSentences[i]);
+				timer.lap("3333 " + i);
 				double propCount = random.nextGaussian()
 						* PROPS_STANDARD_DEVIATION + averageProps;
-				propCount = propCount >= 1 ? propCount : 1;
+				timer.lap("4444 " + i);
+				propCount = propCount > 0 ? propCount : .5;
+				String[] propSentences = getRandomSentences( (int) propCount + 1 );
+				timer.lap("5555 " + i);
 				for (int j = 0; j < propCount; j++) {
+					timer.lap("EEEE " + j);
 					Long childPropID = argMapService.addProp(argID, 0,
-							getRandomSentence());
+							propSentences[j]);
 					queueTaskPopulate(childPropID, averageProps - PROPS_STEP,
 							averageArgs - ARGS_STEP);
+					timer.lap("FFFF " + j);
 				}
+				timer.lap("GGGG " + i);
 			}
+			timer.lap("CCCC");
+			log.finest(timer.getRecord());
 		} catch (Exception ex) {
-			String strCallResult = "FAIL: TaskPopulate: "
-					+ ex.getMessage();
+			String strCallResult = "FAIL: TaskPopulate: " + ex.getMessage()
+					+ timer.getRecord();
 			log.severe(strCallResult);
 			resp.getWriter().println(strCallResult);
 		}
