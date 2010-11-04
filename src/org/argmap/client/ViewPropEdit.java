@@ -331,19 +331,11 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		Object source = event.getSource();
 		if (source == textArea) {
 			updateButtons();
-			sideBarSearch();
+			getEditMode().sideSearchTimer.setViewProp(this);
+			getEditMode().sideBarSearch( this );
 		}
 	}
 
-	private void sideBarSearch() {
-		if (getChildCount() == 0 && !deleted) {
-			ServerComm.searchProps(textArea.getText(), ModeEdit.SIDE_SEARCH_NAME,
-					ModeEdit.SIDE_SEARCH_LIMIT, parentArgument(), proposition,
-					getEditMode());
-		} else {
-			getEditMode().hideSearchBox();
-		}
-	}
 
 	private ModeEdit getEditMode() {
 		return ((EditModeTree) getTree()).getEditMode();
@@ -403,10 +395,10 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	@Override
 	public void onKeyUp(KeyUpEvent event) {
-
+		int charCode = event.getNativeKeyCode();
 		Object source = event.getSource();
 		if (source == textArea) {
-			sideBarSearch();
+			getEditMode().sideSearchTimer.keyPress( charCode );
 		}
 	}
 

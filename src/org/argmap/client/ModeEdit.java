@@ -43,20 +43,21 @@ public class ModeEdit extends ResizeComposite implements
 	public static final String MAIN_SEARCH_NAME = "mainSearch";
 	public static final int SIDE_SEARCH_LIMIT = 7;
 	public static final String SIDE_SEARCH_NAME = "sideSearch";
+	public static final int SEARCH_DELAY = 200;
 	
-	private static HTML sideMessageArea = new HTML();
-	private final Label sideSearchLabel = new Label(
-			"Would you like to use one of these already existing propositions?");
-	private final FlexTable sideSearchResults = new FlexTable();
+	private static HTML sideMessageArea;
+	private final Label sideSearchLabel;
+	private final FlexTable sideSearchResults;
 	private final ScrollPanel sideSearchScroll;
 	private final ScrollPanel sideMessageScroll;
 	public final ScrollPanel treeScrollPanel;
-	private final SplitLayoutPanel sideSplit = new SplitLayoutPanel();
-	private final SearchTimer searchTimer = new SearchTimer();
+	private final SplitLayoutPanel sideSplit;
 
-	private final TextBox searchTextBox = new TextBox();
+	private final TextBox searchTextBox;
 	private final EditModeTree tree;
 	private final Button addPropButton;
+	private final MainSearchTimer mainSearchTimer;
+	public final SideSearchTimer sideSearchTimer;
 	private final Button mainSearchContinueButton;
 	private final Button sideSearchContinueButton;
 	private final ArgMap argMap;
@@ -64,11 +65,58 @@ public class ModeEdit extends ResizeComposite implements
 	public ModeEdit(ArgMap argMap) {
 		super();
 		this.argMap = argMap;
+		
+		/***********************************************************
+		 * first setup the tree and start loading the propositions *
+		 * so that they can be loading while everything else is    *
+		 * being setup                                             *
+		 ***********************************************************/
+		/*
+		 * setup the tree area
+		 */
+		tree = new EditModeTree(this);
+		tree.addOpenHandlerTracked(this);
+		tree.addCloseHandler(this);
+		tree.addSelectionHandler(this);
+		tree.setAnimationEnabled(false);
+		
+		/*
+		 * get the props 
+		 */
+		ServerComm.getRootProps(0,
+				new ServerComm.LocalCallback<PropsAndArgs>() {
 
+					@Override
+					public void call(PropsAndArgs allNodes) {
+
+						Log log = Log.getLog("em.em.cb");
+						log.log("Prop Tree From Server");
+						for (Proposition proposition : allNodes.rootProps) {
+
+							ViewProp propView = new ViewPropEdit();
+							propView.recursiveBuildViewNode(proposition,
+									allNodes.nodes);
+
+							tree.addItem(propView);
+							// propView.logNodeRecursive(0, "em.em.cb", true);
+						}
+						tree.resetState();
+						if (Log.on) tree.logTree(log);
+						log.finish();
+
+					}
+				});
+		
 		/******************
 		 * setup side bar *
 		 ******************/
-
+		sideMessageArea = new HTML();
+		sideSearchLabel = new Label(
+		"Would you like to use one of these already existing propositions?");
+		sideSearchResults = new FlexTable();
+		sideSplit = new SplitLayoutPanel();
+		sideSearchTimer = new SideSearchTimer();
+		
 		sideSearchContinueButton = new Button("loadMoreResults");
 		sideSearchContinueButton.setStylePrimaryName("addPropButton");
 		sideSearchContinueButton.addClickHandler(this);
@@ -95,6 +143,9 @@ public class ModeEdit extends ResizeComposite implements
 		/*
 		 * setup the search box
 		 */
+		mainSearchTimer = new MainSearchTimer();
+		searchTextBox = new TextBox();
+		
 		addPropButton = new Button("Add as new proposition");
 		addPropButton.setStylePrimaryName("addPropButton");
 		addPropButton.setEnabled(false);
@@ -116,19 +167,17 @@ public class ModeEdit extends ResizeComposite implements
 		searchBoxPanel.add(searchTextBox);
 
 		/*
-		 * setup the tree area
+		 * setup the search continue button
 		 */
-		tree = new EditModeTree(this);
-		tree.addOpenHandlerTracked(this);
-		tree.addCloseHandler(this);
-		tree.addSelectionHandler(this);
-		tree.setAnimationEnabled(false);
-
 		mainSearchContinueButton = new Button("load more results");
 		mainSearchContinueButton.addClickHandler(this);
 		mainSearchContinueButton.setVisible(false);
 		mainSearchContinueButton.setStylePrimaryName("addPropButton");
 
+		/*
+		 * add the tree and the search continue button to a scroll
+		 * panel
+		 */
 		FlowPanel treeFlowPanel = new FlowPanel();
 		treeFlowPanel.add(tree);
 		treeFlowPanel.add(mainSearchContinueButton);
@@ -149,34 +198,6 @@ public class ModeEdit extends ResizeComposite implements
 		mainSplit.addEast(sideSplit, 300);
 		mainSplit.add(mainPanel);
 		initWidget(mainSplit);
-
-		/*****************
-		 * get the props *
-		 *****************/
-
-		ServerComm.getRootProps(0,
-				new ServerComm.LocalCallback<PropsAndArgs>() {
-
-					@Override
-					public void call(PropsAndArgs allNodes) {
-
-						Log log = Log.getLog("em.em.cb");
-						log.log("Prop Tree From Server");
-						for (Proposition proposition : allNodes.rootProps) {
-
-							ViewProp propView = new ViewPropEdit();
-							propView.recursiveBuildViewNode(proposition,
-									allNodes.nodes);
-
-							tree.addItem(propView);
-							// propView.logNodeRecursive(0, "em.em.cb", true);
-						}
-						tree.resetState();
-						if (Log.on) tree.logTree(log);
-						log.finish();
-
-					}
-				});
 	}
 
 	private void addRootProp() {
@@ -428,13 +449,49 @@ public class ModeEdit extends ResizeComposite implements
 		}
 	}
 
-	private class SearchTimer extends Timer {
-
+	private abstract class SearchTimer extends Timer {
+		public void keyPress(int charCode){
+			/* if its the space bar search and stop the timer */
+			if (charCode == 32) {
+				cancel();
+				run();
+			}
+			/* if its any other key set timer for .3 seconds */
+			else {
+				schedule(SEARCH_DELAY);
+			}
+		}
+	}
+	
+	private class MainSearchTimer extends SearchTimer {
 		@Override
 		public void run() {
 			mainSearch();
 		}
+	}
+	
+	public class SideSearchTimer extends SearchTimer {
+		private ViewPropEdit viewProp;
+		
+		public void setViewProp(ViewPropEdit viewProp ){
+			this.viewProp = viewProp;
+		}
 
+		@Override
+		public void run() {
+			sideBarSearch( viewProp );
+		}
+	}
+	
+	public void sideBarSearch(ViewPropEdit viewProp ) {
+		String searchText = viewProp.getContent().trim();
+		if (!searchText.equals("") && viewProp.getChildCount() == 0 && !viewProp.deleted) {
+			ServerComm.searchProps(searchText, ModeEdit.SIDE_SEARCH_NAME,
+					ModeEdit.SIDE_SEARCH_LIMIT, viewProp.parentArgument(), viewProp.getNode(),
+					this);
+		} else {
+			hideSearchBox();
+		}
 	}
 
 	@Override
@@ -450,19 +507,8 @@ public class ModeEdit extends ResizeComposite implements
 			} else {
 				addPropButton.setEnabled(true);
 			}
-
-			/* if its the space bar search and stop the timer */
-			if (charCode == 32) {
-				log.logln("canceling timer and doing search");
-				searchTimer.cancel();
-				mainSearch();
-			}
-			/* if its any other key set timer for .3 seconds */
-			else {
-				log.logln("reseting timer for 500 millis");
-				searchTimer.schedule(500);
-			}
-
+			
+			mainSearchTimer.keyPress(charCode);
 		}
 		log.finish();
 	}

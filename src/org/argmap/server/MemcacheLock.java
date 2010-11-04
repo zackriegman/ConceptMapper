@@ -18,7 +18,7 @@ public class MemcacheLock {
 
 	public static void lock(String lockName) {
 		// milliseconds to wait until next attempt to get the lock
-		int delay = 10;
+		int delay = 1;
 		while (!memcacheService.put(LOCK_PREFIX + lockName, "",
 				Expiration.byDeltaSeconds(3000),
 				MemcacheService.SetPolicy.ADD_ONLY_IF_NOT_PRESENT)) {

@@ -45,10 +45,19 @@ public class Search implements Serializable {
 	private int limit;
 	private final Set<Long> filterIDs = new HashSet<Long>();
 
+	/*
+	 * setup a search that filters for three types of unwanted matches.  Based
+	 * on filterArgID excludes other propositions already in the argument
+	 * and excludes the proposition which the argument is for.  However, toplevel
+	 * propositions do not have an argument parent, so filterPropID is necessary
+	 * so the search knows to filter out the proposition currently being examined
+	 * when the search is being performed for a proposition edit. 
+	 */
 	public Search(Objectify ofy, Set<String> tokenSet, int limit, Long filterArgID,
 			Long filterPropID) {
 		if (filterArgID != null) {
 			filterIDs.addAll(ofy.get(Argument.class, filterArgID).childIDs);
+			filterIDs.add(ofy.query(Proposition.class).filter("childIDs", filterArgID).get().id);
 		}
 		filterIDs.add(filterPropID);
 		tokens = new ArrayList<String>(tokenSet);

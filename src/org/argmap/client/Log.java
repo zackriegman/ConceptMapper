@@ -6,7 +6,7 @@ import java.util.List;
 import com.google.gwt.core.client.GWT;
 
 public class Log {
-	public static final boolean on = true;
+	public static final boolean on = false;
 	private static final List<Log> openLogs = new LinkedList<Log>();
 
 	private boolean immediatePrint;
@@ -46,6 +46,12 @@ public class Log {
 			for (Log log : openLogs) {
 				log.finish();
 			}
+		}
+	}
+	
+	public static void log(String logName, String logMessage){
+		if( on ){
+			GWT.log(logName + ": " + logMessage);
 		}
 	}
 

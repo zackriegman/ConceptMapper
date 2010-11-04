@@ -13,26 +13,26 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 @RemoteServiceRelativePath("argServ")
 public interface ArgMapService extends RemoteService {
 
-	public void logClientException(String exceptionStr);
+	public void logClientException(String ExceptionStr);
 
 	public Long addProp(Long parentArgID, int position, String content)
-			throws Exception;
+			throws ServiceException;
 
-	public void deleteProp(Long propID) throws Exception;
+	public void deleteProp(Long propID) throws ServiceException;
 
-	public void deleteArg(Long argID) throws Exception;
+	public void deleteArg(Long argID) throws ServiceException;
 
-	public Long addArg(Long parentPropID, boolean pro) throws Exception;
+	public Long addArg(Long parentPropID, boolean pro) throws ServiceException;
 
-	public void updateProp(Long propID, String content) throws Exception;
+	public void updateProp(Long propID, String content) throws ServiceException;
 
-	public void updateArg(Long argID, String content) throws Exception;
+	public void updateArg(Long argID, String content) throws ServiceException;
 
 	public void linkProposition(Long parentArgID, int position,
-			Long propositionID) throws Exception;
+			Long propositionID) throws ServiceException;
 
 	public void unlinkProp(Long parentArgID, Long propositionID)
-			throws Exception;
+			throws ServiceException;
 
 	public class PropsAndArgs implements Serializable {
 		/* added to suppress warnings */
@@ -44,7 +44,7 @@ public interface ArgMapService extends RemoteService {
 	public PropsAndArgs getPropsAndArgs(int depthLimit);
 
 	public Nodes replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
-			Long removePropID) throws Exception;
+			Long removePropID) throws ServiceException;
 
 	public class NodesWithHistory implements Serializable {
 		/* added to suppress warnings */
@@ -61,13 +61,13 @@ public interface ArgMapService extends RemoteService {
 	}
 
 	public Nodes getNodesChildren(List<Long> nodeIDs, int depth)
-			throws Exception;
+			throws ServiceException;
 
 	public Map<Long, NodeWithChanges> getPropsWithChanges(List<Long> propIDs)
-			throws Exception;
+			throws ServiceException;
 
 	public Map<Long, NodeWithChanges> getArgsWithChanges(List<Long> argIDs)
-			throws Exception;
+			throws ServiceException;
 
 	public class NodeChangesMaps implements Serializable {
 		private static final long serialVersionUID = 1L;
@@ -99,13 +99,13 @@ public interface ArgMapService extends RemoteService {
 	}
 
 	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs)
-			throws Exception;
+			throws ServiceException;
 
 	public PropsAndArgs searchProps(String searchString, String searchName, int resultLimit, Long filerArgID,
-			Long filterPropID) throws Exception;
+			Long filterPropID) throws ServiceException;
 	
-	public PropsAndArgs continueSearchProps( String searchName ) throws Exception;
+	public PropsAndArgs continueSearchProps( String searchName ) throws ServiceException;
 	
-	public LoginInfo getLoginInfo( String requestURI ) throws Exception;
+	public LoginInfo getLoginInfo( String requestURI ) throws ServiceException;
 
 }

@@ -58,13 +58,23 @@ public class TaskPopulate extends HttpServlet {
 
 	private static final String SENTENCES_FILE = "sentences";
 
-	private static final int ROOT_NODES = 10;
-	private static final int AVERAGE_PROPS_AT_ROOT = 5;
-	private static final int AVERAGE_ARGS_AT_ROOT = 3;
-	private static final int PROPS_STEP = 2;
-	private static final int ARGS_STEP = 2;
-	private static final int ARGS_STANDARD_DEVIATION = 4;
-	private static final int PROPS_STANDARD_DEVIATION = 2;
+	/*
+	 * The sentences file has about 80K sentences if I remember correctly, so to
+	 * avoid exceeding that I should shoot to create fewer than 80K dummy nodes.
+	 * These settings should generate roughly 50K nodes with a nice
+	 * distribution of depth/propositions/arguments: ROOT_NODES = 100;
+	 * AVERAGE_PROPS_AT_ROOT = 3; AVERAGE_ARGS_AT_ROOT = 2; PROPS_STEP = 1;
+	 * ARGS_STEP = .75; ARGS_STANDARD_DEVIATION = 1; PROPS_STANDARD_DEVIATION =
+	 * 3;
+	 */
+	private static final int ROOT_NODES = 20;
+	private static final int AVERAGE_PROPS_AT_ROOT = 3;
+	private static final int AVERAGE_ARGS_AT_ROOT = 2;
+	private static final int PROPS_STEP = 1;
+	private static final double ARGS_STEP = .75;
+	private static final int ARGS_STANDARD_DEVIATION = 1;
+	private static final int PROPS_STANDARD_DEVIATION = 3;
+
 
 	private static final String PARAM_PROPID = "PARAM_PROPID";
 	private static final String PARAM_AVERAGEPROPS = "PARAM_AVERAGEPROPS";
@@ -72,8 +82,11 @@ public class TaskPopulate extends HttpServlet {
 
 	public static int getRandomSentenceCount() {
 		initializeMemcache();
-		
-		return (Integer) cache.get(RANDOM_SENTENCE_COUNT);
+		Integer returnValue = (Integer) cache.get(RANDOM_SENTENCE_COUNT);
+		if (returnValue == null) {
+			returnValue = new Integer(0);
+		}
+		return returnValue;
 	}
 
 	public static String getRandomSentence() {
@@ -85,10 +98,10 @@ public class TaskPopulate extends HttpServlet {
 			offset = new Long(0);
 		}
 		Integer count = (Integer) cache.get(RANDOM_SENTENCE_COUNT);
-		if( count == null ){
+		if (count == null) {
 			count = new Integer(0);
 		}
-		
+
 		String result = null;
 		try {
 			RandomAccessFile file = new RandomAccessFile(SENTENCES_FILE, "r");
@@ -154,10 +167,13 @@ public class TaskPopulate extends HttpServlet {
 			double argCount = random.nextGaussian() * ARGS_STANDARD_DEVIATION
 					+ averageArgs;
 			for (int i = 0; i < argCount; i++) {
-				Long argID = argMapService.addArg(propID, random.nextBoolean());
+				//create roughly 3/4 arguments pro and 1/4 con
+				boolean pro = random.nextInt( 4 ) <= 2 ? true : false; 
+				Long argID = argMapService.addArg(propID, pro);
 				argMapService.updateArg(argID, getRandomSentence());
 				double propCount = random.nextGaussian()
 						* PROPS_STANDARD_DEVIATION + averageProps;
+				propCount = propCount >= 1 ? propCount : 1;
 				for (int j = 0; j < propCount; j++) {
 					Long childPropID = argMapService.addProp(argID, 0,
 							getRandomSentence());
@@ -166,7 +182,7 @@ public class TaskPopulate extends HttpServlet {
 				}
 			}
 		} catch (Exception ex) {
-			String strCallResult = "FAIL: Subscriber Signup : "
+			String strCallResult = "FAIL: TaskPopulate: "
 					+ ex.getMessage();
 			log.severe(strCallResult);
 			resp.getWriter().println(strCallResult);

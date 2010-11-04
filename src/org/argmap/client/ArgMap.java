@@ -6,6 +6,7 @@ import java.util.List;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -97,21 +98,26 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
  */
 public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 
-	private final DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.EM);
-	private final TabLayoutPanel modePanel = new TabLayoutPanel(1.5,
-			Style.Unit.EM);
-	private final HorizontalPanel loginPanel = new HorizontalPanel();
-
-	private static HTML messageArea = new HTML();
-	private static List<String> messageList = new ArrayList<String>();
 	private final ModeEdit editMode = new ModeEdit(this);
+	
+	private DockLayoutPanel mainPanel;
+	private TabLayoutPanel modePanel;
+	private HorizontalPanel loginPanel;
+
+	private static HTML messageArea;
+	private static List<String> messageList;
 	private ModeVersions versionsMode;
 
 	public void onModuleLoad() {
-
+		mainPanel = new DockLayoutPanel(Style.Unit.EM);
+		modePanel = new TabLayoutPanel(1.5,
+				Style.Unit.EM);
+		loginPanel = new HorizontalPanel();
+		messageArea = new HTML();
+		messageList = new ArrayList<String>();
+		
 		GWT.setUncaughtExceptionHandler(this);
 		modePanel.add(editMode, "Find And Collaborate");
-		versionsMode = new ModeVersions(editMode);
 
 		modePanel.addSelectionHandler(new SelectionHandler<Integer>() {
 
@@ -175,7 +181,19 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 					loginPanel.add(nickName);
 					loginPanel.add(signOutLink);
 					if (loginInfo.isAdmin ) {
-						modePanel.add(new ModeAdmin(ArgMap.this), "Admin");
+						GWT.runAsync(new RunAsyncCallback() {
+							
+							@Override
+							public void onSuccess() {
+								modePanel.add(new ModeAdmin(ArgMap.this), "Admin");
+							}
+							
+							@Override
+							public void onFailure(Throwable reason) {
+								ArgMap.message("Code download failed", MessageType.ERROR);
+								Log.log("am.sv.a.of", "Code download failed" + reason.toString());
+							}
+						});
 					}
 				} else {
 					Anchor signInLink = new Anchor("Sign in");
@@ -189,7 +207,22 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 
 	public void showVersions() {
 		if (!versionsIsDisplayed()) {
-			modePanel.insert(versionsMode, "History", 1);
+			GWT.runAsync(new RunAsyncCallback() {
+				
+				@Override
+				public void onSuccess() {
+					if( versionsMode == null  ){
+						versionsMode = new ModeVersions(editMode);
+					}
+					modePanel.insert(versionsMode, "History", 1);
+				}
+				
+				@Override
+				public void onFailure(Throwable reason) {
+					ArgMap.message("Code download failed", MessageType.ERROR);
+					Log.log("am.sv.a.of", "Code download failed" + reason.toString());
+				}
+			});
 		}
 	}
 
