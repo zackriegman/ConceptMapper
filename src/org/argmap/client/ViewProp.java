@@ -157,4 +157,9 @@ public abstract class ViewProp extends ViewNode {
 	public Node getChildNodeFromNodeList( Long nodeID, Nodes nodes ){
 		return nodes.args.get( nodeID );
 	}
+	
+	@Override
+	public void setAsCircularLink(){
+		textArea.addStyleName("circularLink");
+	}
 }

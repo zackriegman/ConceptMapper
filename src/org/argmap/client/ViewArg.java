@@ -118,5 +118,11 @@ public abstract class ViewArg extends ViewNode {
 	public Node getChildNodeFromNodeList( Long nodeID, Nodes nodes ){
 		return nodes.props.get( nodeID );
 	}
+	
+	@Override
+	public void setAsCircularLink(){
+		horizontalPanel.removeStyleName("argBox");
+		horizontalPanel.addStyleName("circularLink");
+	}
 
 }

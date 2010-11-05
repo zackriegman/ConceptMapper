@@ -42,8 +42,16 @@ public abstract class ViewNode extends TreeItem {
 	public ViewNode getChildView(int index) {
 		return (ViewNode) getChild(index);
 	}
+	
+	public ViewNode getParentView(){
+		return (ViewNode) getParentItem();
+	}
 
 	public void insertChildViewAt(int index, ViewNode viewNode) {
+		insertItem(index, viewNode);
+	}
+	
+	public void insertChildViewAt_DELETE_ME(int index, ViewNode viewNode) {
 		/*
 		 * can't figure out how to insert an item at a specific point (instead
 		 * items just get inserted as the last of the current TreeItem's
@@ -100,22 +108,29 @@ public abstract class ViewNode extends TreeItem {
 	public abstract void setNode(Node node);
 
 	public abstract Node getNode();
+	
+	public abstract void setAsCircularLink();
 
 	/*
 	 * As far as I can tell this is currently only used in EditMode.
 	 */
-	public void recursiveBuildViewNode(Node node, Nodes nodes) {
+	public void recursiveBuildViewNode(Node node, Nodes nodes, int openDepth) {
 		setNode(node);
 		boolean circularLink = linkExistsInParentPath(node.id);
 		if(circularLink){
-			addStyleName("circularLink");
+			getParentView().setAsCircularLink();
 		}
 		for (Long nodeID : node.childIDs) {
 			Node childNode = getChildNodeFromNodeList(nodeID, nodes);
 			if (childNode != null && !circularLink ) {
 				ViewNode childView = createChild();
+				if(openDepth <= 1){
+					childView.setOpen(false);
+				}
 				addItem(childView);
-				childView.recursiveBuildViewNode(childNode, nodes);
+				childView.recursiveBuildViewNode(childNode, nodes, openDepth -1);
+			} else if( circularLink ){
+				setAsCircularLink();
 			} else {
 				addItem(new ViewDummyVer(nodeID));
 				isLoaded = false;

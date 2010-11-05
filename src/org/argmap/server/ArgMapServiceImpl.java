@@ -97,7 +97,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		 * args and return them all.
 		 */
 		Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
-				"linkCount =", 0);
+				"linkCount =", 0).order("-creationDate").limit(30);
 
 		List<Proposition> rootProps = propQuery.list();
 		Nodes nodes = new Nodes();
@@ -158,6 +158,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 		//log.finest("addProp()");
 		Proposition newProposition = new Proposition();
+		newProposition.creationDate = new Date();
 		newProposition.content = content;
 		newProposition.tokens = getTokensForIndexingOrQuery(content, 30);
 		Argument parentArg = null;
@@ -409,6 +410,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			// ofy.put(newProp);
 
 			Argument newArg = new Argument();
+			newArg.creationDate = new Date();
 			timer.lap("----");
 			// newArg.propIDs.add(0, newProp.id);
 

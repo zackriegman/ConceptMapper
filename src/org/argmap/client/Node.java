@@ -1,6 +1,7 @@
 package org.argmap.client;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,4 +22,6 @@ public class Node implements Serializable {
 	public Long id;
 	public String content;
 	public List<Long> childIDs = new LinkedList<Long>();
+	
+	transient public Date creationDate;
 }

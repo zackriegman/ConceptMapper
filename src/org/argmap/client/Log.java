@@ -6,7 +6,7 @@ import java.util.List;
 import com.google.gwt.core.client.GWT;
 
 public class Log {
-	public static final boolean on = false;
+	public static final boolean on = true;
 	private static final List<Log> openLogs = new LinkedList<Log>();
 
 	private boolean immediatePrint;

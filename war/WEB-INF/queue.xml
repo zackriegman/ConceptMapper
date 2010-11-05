@@ -5,7 +5,7 @@
   </queue>
   <queue>
     <name>populate</name>
-    <rate>50/s</rate>
+    <rate>10/s</rate>
     <bucket-size>10</bucket-size>
   </queue>
 </queue-entries>

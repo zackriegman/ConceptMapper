@@ -3,7 +3,6 @@ package org.argmap.client;
 import java.io.Serializable;
 import java.util.Set;
 
-
 import com.googlecode.objectify.annotation.Cached;
 
 @Cached
@@ -24,7 +23,6 @@ public class Proposition extends Node implements Serializable {
 	 */
 	/* not sent to client, but saved */
 	transient public Set<String> tokens;
-	
 
 
 	
@@ -37,6 +35,7 @@ public class Proposition extends Node implements Serializable {
 		this.id = id;
 	}
 	
+	@Override
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
 		buffer.append("id:");

@@ -91,6 +91,9 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 				ViewPropEdit newPropView = new ViewPropEdit();
 				insertChildViewAt(0, newPropView);
 				newPropView.haveFocus();
+				setOpen(true);
+				newPropView.setOpen(true);
+				getEditModeTree().resetState();
 				ServerComm.addProp(newPropView.proposition, argument, 0);
 				event.preventDefault();
 
@@ -123,7 +126,7 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 	@Override
 	public void onClick(ClickEvent event) {
 		expandButton.setVisible(false);
-		getEditModeTree().getEditMode().loadFromServer(this, 10);
+		getEditModeTree().getEditMode().loadFromServer(this, 10, 10);
 		setOpen(true);
 		getEditModeTree().resetState();
 

@@ -151,6 +151,11 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 		return "[DUMMY - ID: " + nodeID + "]";
 	}
 
+	@Override
+	public void setAsCircularLink() {
+		assert false;		
+	}
+
 	
 
 }

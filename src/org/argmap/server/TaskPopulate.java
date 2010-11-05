@@ -2,7 +2,9 @@ package org.argmap.server;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -55,6 +57,8 @@ public class TaskPopulate extends HttpServlet {
 	private static final String RANDOM_SENTENCE_FILE_POSITION = "RANDOM_SENTENCE_FILE_POSITION";
 	private static final String RANDOM_SENTENCE_LOCK = "RANDOM_SENTENCE_LOCK";
 	private static final String RANDOM_SENTENCE_COUNT = "RANDOM_SENTENCE_COUNT";
+	private static final String RANDOM_SENTENCE_LIST = "RANDOM_SENTENCE_LIST";
+	private static int RANDOM_SENTENCE_BUFFER_SIZE = 100;
 
 	private static final String SENTENCES_FILE = "sentences";
 
@@ -87,50 +91,66 @@ public class TaskPopulate extends HttpServlet {
 		return returnValue;
 	}
 
-	public static String[] getRandomSentences(int numberOfSentences) {
+	public static String getRandomSentence() {
 		initializeMemcache();
+
 		LapTimer timer = new LapTimer();
 		Lock lock = Lock.getLock(RANDOM_SENTENCE_LOCK);
 		try {
 			timer.lap("++++");
 			lock.lock();
-			timer.lap("))))");
-			Long offset = (Long) cache.get(RANDOM_SENTENCE_FILE_POSITION);
-			if (offset == null) {
-				offset = new Long(0);
-			}
-			timer.lap("****");
-			Integer count = (Integer) cache.get(RANDOM_SENTENCE_COUNT);
-			if (count == null) {
-				count = new Integer(0);
-			}
-			String[] strings = new String[numberOfSentences];
-			try {
-				timer.lap("&&&&");
-				RandomAccessFile file = new RandomAccessFile(SENTENCES_FILE,
-						"r");
-				timer.lap("^^^^");
-				file.seek(offset);
-				timer.lap("%%%%");
-				for (int i = 0; i < numberOfSentences; i++) {
-					strings[i] = file.readLine();
+
+			List<String> sentenceList = (List<String>) cache
+					.get(RANDOM_SENTENCE_LIST);
+			if (sentenceList != null && sentenceList.size() > 0) {
+				String returnSentence = sentenceList
+						.remove(sentenceList.size() - 1);
+				cache.put(RANDOM_SENTENCE_LIST, sentenceList);
+				return returnSentence;
+			} else {
+				sentenceList = new ArrayList<String>(
+						RANDOM_SENTENCE_BUFFER_SIZE);
+				timer.lap("))))");
+				Long offset = (Long) cache.get(RANDOM_SENTENCE_FILE_POSITION);
+				if (offset == null) {
+					offset = new Long(0);
 				}
-				timer.lap("$$$$");
-				offset = file.getFilePointer();
-				timer.lap("####");
-				file.close();
-				timer.lap("@@@@");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				timer.lap("****");
+				Integer count = (Integer) cache.get(RANDOM_SENTENCE_COUNT);
+				if (count == null) {
+					count = new Integer(0);
+				}
+
+				String result = null;
+				try {
+					timer.lap("&&&&");
+					RandomAccessFile file = new RandomAccessFile(
+							SENTENCES_FILE, "r");
+					timer.lap("^^^^");
+					file.seek(offset);
+					timer.lap("%%%%");
+					for (int i = 0; i < RANDOM_SENTENCE_BUFFER_SIZE; i++) {
+						sentenceList.add(file.readLine());
+					}
+					result = file.readLine();
+					timer.lap("$$$$");
+					offset = file.getFilePointer();
+					timer.lap("####");
+					file.close();
+					timer.lap("@@@@");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				count = count + 1;
+				timer.lap("TTTT");
+				cache.put(RANDOM_SENTENCE_COUNT, count);
+				timer.lap("YYYY");
+				cache.put(RANDOM_SENTENCE_FILE_POSITION, offset);
+				cache.put(RANDOM_SENTENCE_LIST, sentenceList);
+				timer.lap("UUUU");
+				return result;
 			}
-			count = count + 1;
-			timer.lap("TTTT");
-			cache.put(RANDOM_SENTENCE_COUNT, count);
-			timer.lap("YYYY");
-			cache.put(RANDOM_SENTENCE_FILE_POSITION, offset);
-			timer.lap("UUUU");
-			return strings;
 		} finally {
 			log.fine(timer.getRecord());
 			lock.unlock();
@@ -145,9 +165,8 @@ public class TaskPopulate extends HttpServlet {
 				return request;
 			}
 		};
-		String[] propSentences = getRandomSentences(ROOT_NODES );
 		for (int i = 0; i < ROOT_NODES; i++) {
-			Long propID = argMapService.addProp(null, 0, propSentences[i]);
+			Long propID = argMapService.addProp(null, 0, getRandomSentence());
 			queueTaskPopulate(propID, AVERAGE_PROPS_AT_ROOT,
 					AVERAGE_ARGS_AT_ROOT);
 		}
@@ -187,7 +206,6 @@ public class TaskPopulate extends HttpServlet {
 
 			double argCount = random.nextGaussian() * ARGS_STANDARD_DEVIATION
 					+ averageArgs;
-			String[] argSentences = getRandomSentences( (int) argCount + 1 );
 			timer.lap("CCCC");
 
 			for (int i = 0; i < argCount; i++) {
@@ -197,18 +215,19 @@ public class TaskPopulate extends HttpServlet {
 				timer.lap("0000 " + i);
 				Long argID = argMapService.addArg(propID, pro);
 				timer.lap("1111 " + i);
-				argMapService.updateArg(argID, argSentences[i]);
+				String randomSentence = getRandomSentence();
+				timer.lap("2222 " + i);
+				argMapService.updateArg(argID, randomSentence);
 				timer.lap("3333 " + i);
 				double propCount = random.nextGaussian()
 						* PROPS_STANDARD_DEVIATION + averageProps;
 				timer.lap("4444 " + i);
-				propCount = propCount > 0 ? propCount : .5;
-				String[] propSentences = getRandomSentences( (int) propCount + 1 );
+				propCount = propCount >= 1 ? propCount : 1;
 				timer.lap("5555 " + i);
 				for (int j = 0; j < propCount; j++) {
 					timer.lap("EEEE " + j);
 					Long childPropID = argMapService.addProp(argID, 0,
-							propSentences[j]);
+							getRandomSentence());
 					queueTaskPopulate(childPropID, averageProps - PROPS_STEP,
 							averageArgs - ARGS_STEP);
 					timer.lap("FFFF " + j);
@@ -218,6 +237,7 @@ public class TaskPopulate extends HttpServlet {
 			timer.lap("CCCC");
 			log.finest(timer.getRecord());
 		} catch (Exception ex) {
+			timer.lap("ZZZZ");
 			String strCallResult = "FAIL: TaskPopulate: " + ex.getMessage()
 					+ timer.getRecord();
 			log.severe(strCallResult);

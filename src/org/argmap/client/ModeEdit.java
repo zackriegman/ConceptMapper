@@ -11,6 +11,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -38,13 +39,13 @@ import com.google.gwt.user.client.ui.TreeItem;
 public class ModeEdit extends ResizeComposite implements
 		LocalCallback<PropsAndArgs>, KeyUpHandler, OpenHandler<TreeItem>,
 		CloseHandler<TreeItem>, SelectionHandler<TreeItem>, ClickHandler {
-	
+
 	public static final int MAIN_SEARCH_LIMIT = 15;
 	public static final String MAIN_SEARCH_NAME = "mainSearch";
 	public static final int SIDE_SEARCH_LIMIT = 7;
 	public static final String SIDE_SEARCH_NAME = "sideSearch";
 	public static final int SEARCH_DELAY = 200;
-	
+
 	private static HTML sideMessageArea;
 	private final Label sideSearchLabel;
 	private final FlexTable sideSearchResults;
@@ -65,11 +66,10 @@ public class ModeEdit extends ResizeComposite implements
 	public ModeEdit(ArgMap argMap) {
 		super();
 		this.argMap = argMap;
-		
+
 		/***********************************************************
-		 * first setup the tree and start loading the propositions *
-		 * so that they can be loading while everything else is    *
-		 * being setup                                             *
+		 * first setup the tree and start loading the propositions * so that
+		 * they can be loading while everything else is * being setup *
 		 ***********************************************************/
 		/*
 		 * setup the tree area
@@ -79,9 +79,9 @@ public class ModeEdit extends ResizeComposite implements
 		tree.addCloseHandler(this);
 		tree.addSelectionHandler(this);
 		tree.setAnimationEnabled(false);
-		
+
 		/*
-		 * get the props 
+		 * get the props
 		 */
 		ServerComm.getRootProps(0,
 				new ServerComm.LocalCallback<PropsAndArgs>() {
@@ -95,7 +95,7 @@ public class ModeEdit extends ResizeComposite implements
 
 							ViewProp propView = new ViewPropEdit();
 							propView.recursiveBuildViewNode(proposition,
-									allNodes.nodes);
+									allNodes.nodes, 5);
 
 							tree.addItem(propView);
 							// propView.logNodeRecursive(0, "em.em.cb", true);
@@ -106,17 +106,17 @@ public class ModeEdit extends ResizeComposite implements
 
 					}
 				});
-		
+
 		/******************
 		 * setup side bar *
 		 ******************/
 		sideMessageArea = new HTML();
 		sideSearchLabel = new Label(
-		"Would you like to use one of these already existing propositions?");
+				"Would you like to use one of these already existing propositions?");
 		sideSearchResults = new FlexTable();
 		sideSplit = new SplitLayoutPanel();
 		sideSearchTimer = new SideSearchTimer();
-		
+
 		sideSearchContinueButton = new Button("loadMoreResults");
 		sideSearchContinueButton.setStylePrimaryName("addPropButton");
 		sideSearchContinueButton.addClickHandler(this);
@@ -145,7 +145,7 @@ public class ModeEdit extends ResizeComposite implements
 		 */
 		mainSearchTimer = new MainSearchTimer();
 		searchTextBox = new TextBox();
-		
+
 		addPropButton = new Button("Add as new proposition");
 		addPropButton.setStylePrimaryName("addPropButton");
 		addPropButton.setEnabled(false);
@@ -175,8 +175,7 @@ public class ModeEdit extends ResizeComposite implements
 		mainSearchContinueButton.setStylePrimaryName("addPropButton");
 
 		/*
-		 * add the tree and the search continue button to a scroll
-		 * panel
+		 * add the tree and the search continue button to a scroll panel
 		 */
 		FlowPanel treeFlowPanel = new FlowPanel();
 		treeFlowPanel.add(tree);
@@ -203,14 +202,16 @@ public class ModeEdit extends ResizeComposite implements
 	private void addRootProp() {
 		ViewPropEdit newPropView = new ViewPropEdit();
 
-		// close the other tree items
+		/* close the other tree items
 		for (int i = 0; i < tree.getItemCount(); i++) {
 			tree.getItem(i).setState(false);
 		}
+		*/
 
 		newPropView.setContent(searchTextBox.getText());
 		newPropView.getProposition().setContent(searchTextBox.getText());
-		tree.addItem(newPropView);
+		//tree.addItem(newPropView);
+		tree.insertItem(0, newPropView);
 		newPropView.haveFocus();
 		ServerComm.addProp(newPropView.getProposition(), null, 0);
 	}
@@ -248,7 +249,8 @@ public class ModeEdit extends ResizeComposite implements
 						parentArgView.removeItem(propViewToRemove);
 						Proposition proposition = nodes.props.get(linkPropID);
 						ViewProp newViewProp = new ViewPropEdit();
-						newViewProp.recursiveBuildViewNode(proposition, nodes);
+						newViewProp.recursiveBuildViewNode(proposition, nodes,
+								5);
 
 						parentArgView.insertChildViewAt(propIndex, newViewProp);
 					}
@@ -450,45 +452,52 @@ public class ModeEdit extends ResizeComposite implements
 	}
 
 	private abstract class SearchTimer extends Timer {
-		public void keyPress(int charCode){
+		public void keyPress(int charCode) {
 			/* if its the space bar search and stop the timer */
-			if (charCode == 32) {
+			if (charCode == 32 || charCode == KeyCodes.KEY_ENTER) {
 				cancel();
 				run();
 			}
 			/* if its any other key set timer for .3 seconds */
 			else {
+				/*
+				 * not sure if this is necessary but just in case... (I don't
+				 * want to add additional timer to fire rather I want to replace
+				 * the previous.)
+				 */
+				cancel();
 				schedule(SEARCH_DELAY);
 			}
 		}
 	}
-	
+
 	private class MainSearchTimer extends SearchTimer {
 		@Override
 		public void run() {
 			mainSearch();
 		}
 	}
-	
+
 	public class SideSearchTimer extends SearchTimer {
 		private ViewPropEdit viewProp;
-		
-		public void setViewProp(ViewPropEdit viewProp ){
+
+		public void setViewProp(ViewPropEdit viewProp) {
 			this.viewProp = viewProp;
 		}
 
 		@Override
 		public void run() {
-			sideBarSearch( viewProp );
+			sideBarSearch(viewProp);
 		}
 	}
-	
-	public void sideBarSearch(ViewPropEdit viewProp ) {
+
+	public void sideBarSearch(ViewPropEdit viewProp) {
 		String searchText = viewProp.getContent().trim();
-		if (!searchText.equals("") && viewProp.getChildCount() == 0 && !viewProp.deleted) {
+		if (!searchText.equals("") && viewProp.getChildCount() == 0
+				&& !viewProp.deleted) {
 			ServerComm.searchProps(searchText, ModeEdit.SIDE_SEARCH_NAME,
-					ModeEdit.SIDE_SEARCH_LIMIT, viewProp.parentArgument(), viewProp.getNode(),
-					this);
+					ModeEdit.SIDE_SEARCH_LIMIT, viewProp.parentArgument(),
+					viewProp.getNode(), this);
 		} else {
 			hideSearchBox();
 		}
@@ -507,7 +516,7 @@ public class ModeEdit extends ResizeComposite implements
 			} else {
 				addPropButton.setEnabled(true);
 			}
-			
+
 			mainSearchTimer.keyPress(charCode);
 		}
 		log.finish();
@@ -545,7 +554,7 @@ public class ModeEdit extends ResizeComposite implements
 		for (Proposition proposition : results.rootProps) {
 
 			ViewProp propView = new ViewPropEdit();
-			propView.recursiveBuildViewNode(proposition, results.nodes);
+			propView.recursiveBuildViewNode(proposition, results.nodes, 1);
 
 			tree.addItem(propView);
 		}
@@ -557,43 +566,70 @@ public class ModeEdit extends ResizeComposite implements
 		}
 	}
 
-	public void loadFromServer(ViewNode viewNode, int depth) {
-		assert !viewNode.isLoaded();
+	public void loadFromServer(ViewNode viewNode, int loadDepth, int openDepth) {
+		List<ViewNode> list = new ArrayList<ViewNode>();
+		list.add(viewNode);
+		loadFromServer(list, loadDepth, openDepth);
+	}
 
-		List<Long> list = new ArrayList<Long>();
-		list.add(viewNode.getNodeID());
-
-		class Callback implements LocalCallback<Nodes> {
-			ViewNode source;
-
-			@Override
-			public void call(Nodes nodes) {
-				// GWT.log("Returned nodes: " + nodes.toString());
-				while (source.getChildCount() > 0) {
-					source.getChild(0).remove();
-				}
-				source.recursiveBuildViewNode(source.getNode(), nodes);
-				source.setLoaded(true);
-				tree.resetState();
-			}
+	public void loadFromServer(List<ViewNode> viewNodes, int loadDepth,
+			int openDepth) {
+		List<Long> viewNodeIDs = new ArrayList<Long>(viewNodes.size());
+		for (ViewNode viewNode : viewNodes) {
+			assert !viewNode.isLoaded();
+			viewNodeIDs.add(viewNode.getNodeID());
 		}
 
-		Callback callback = new Callback();
-		callback.source = viewNode;
-
-		ServerComm.getNodesChildren(list, depth, callback);
-
+		final int openDepthCB = openDepth;
+		final List<ViewNode> viewNodesCB = viewNodes;
+		ServerComm.getNodesChildren(viewNodeIDs, loadDepth,
+				new LocalCallback<Nodes>() {
+					@Override
+					public void call(Nodes nodes) {
+						for (ViewNode source : viewNodesCB) {
+							while (source.getChildCount() > 0) {
+								source.getChild(0).remove();
+							}
+							source.recursiveBuildViewNode(source.getNode(),
+									nodes, openDepthCB);
+							source.setLoaded(true);
+						}
+						tree.resetState();
+					}
+				});
 	}
 
 	@Override
 	public void onOpen(OpenEvent<TreeItem> event) {
+		if (event.getTarget() instanceof ViewNode) {
+			argMap.showVersions();
+			ViewNode source = (ViewNode) event.getTarget();
+			if (!source.isLoaded()) {
+				loadFromServer(source, 2, 1);
+			} else {
+				List<ViewNode> list = new ArrayList<ViewNode>(
+						source.getChildCount());
+				for (int i = 0; i < source.getChildCount(); i++) {
+					if (!source.getChildView(i).isLoaded()) {
+						list.add(source.getChildView(i));
+					}
+				}
+				if (list.size() > 0) {
+					loadFromServer(list, 1, 0);
+				}
+			}
+		}
+	}
+
+	public void onOpen_OLD(OpenEvent<TreeItem> event) {
 		argMap.showVersions();
 		Log log = Log.getLog("em.op");
 		if (event.getTarget() instanceof ViewNode) {
 			ViewNode source = (ViewNode) event.getTarget();
-			// source.setOpen(true);
+			log.log("AAAA");
 			if (!source.isLoaded()) {
-				loadFromServer(source, 1);
+				log.log("BBBB");
+				loadFromServer(source, 1, 1);
 			}
 		}
 		log.finish();

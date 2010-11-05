@@ -92,6 +92,8 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			buttonsPanel.add(linkEditButton);
 			linkRemoveButton.addClickHandler(this);
 			linkEditButton.addClickHandler(this);
+			linkRemoveButton.setStylePrimaryName("button");
+			linkEditButton.setStylePrimaryName("button");
 			linkRemoveButton.setVisible(false);
 			linkEditButton.setVisible(false);
 			textArea.setReadOnly(true);
@@ -125,7 +127,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			textArea.setReadOnly(false);
 		} else if (event.getSource() == expandButton) {
 			expandButton.setVisible(false);
-			getEditMode().loadFromServer(this, 10);
+			getEditMode().loadFromServer(this, 10, 10);
 			setOpen(true);
 			getEditModeTree().resetState();
 		}
@@ -138,8 +140,8 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		this.addItem(newArgView);
 		newArgView.setOpen(true);
 		this.setOpen(true);
-		((EditModeTree) getTree()).resetState();
-		newPropView.textArea.setFocus(true);
+		getEditModeTree().resetState();
+		newPropView.haveFocus();
 		ServerComm.addArg(pro, this.proposition, newArgView.argument);
 		ServerComm.addProp(newPropView.proposition, newArgView.argument, 0);
 	}
