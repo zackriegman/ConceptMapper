@@ -633,14 +633,13 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public PropsAndArgs searchProps(String searchString, String searchName,
-			int resultLimit, Long filterArgID, Long filterPropID) {
+			int resultLimit, List<Long> filterNodeIDs) {
 		Set<String> tokenSet = getTokensForIndexingOrQuery(searchString, 6);
 		if (tokenSet.isEmpty()) {
 			return getPropsAndArgs(0);
 		}
 
-		Search search = new Search(ofy, tokenSet, resultLimit, filterArgID,
-				filterPropID);
+		Search search = new Search(ofy, tokenSet, resultLimit, filterNodeIDs);
 		PropsAndArgs propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
 		return propsAndArgs;

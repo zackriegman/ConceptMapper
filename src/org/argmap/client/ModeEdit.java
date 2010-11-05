@@ -495,9 +495,12 @@ public class ModeEdit extends ResizeComposite implements
 		String searchText = viewProp.getContent().trim();
 		if (!searchText.equals("") && viewProp.getChildCount() == 0
 				&& !viewProp.deleted) {
+			List<Long> filterIDs = viewProp.getAncestorIDs();
+			if( viewProp.getParentView() != null ){
+			filterIDs.addAll(viewProp.getParentView().getChildIDs());
+			}
 			ServerComm.searchProps(searchText, ModeEdit.SIDE_SEARCH_NAME,
-					ModeEdit.SIDE_SEARCH_LIMIT, viewProp.parentArgument(),
-					viewProp.getNode(), this);
+					ModeEdit.SIDE_SEARCH_LIMIT, filterIDs, this);
 		} else {
 			hideSearchBox();
 		}
@@ -526,7 +529,7 @@ public class ModeEdit extends ResizeComposite implements
 		Log log = Log.getLog("me.ms");
 		log.log("SEARCHING");
 		ServerComm.searchProps(searchTextBox.getText(), MAIN_SEARCH_NAME,
-				MAIN_SEARCH_LIMIT, null, null,
+				MAIN_SEARCH_LIMIT, null, 
 				new LocalCallback<PropsAndArgs>() {
 
 					@Override

@@ -1,6 +1,8 @@
 package org.argmap.client;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 import com.google.gwt.user.client.ui.TreeItem;
@@ -42,15 +44,15 @@ public abstract class ViewNode extends TreeItem {
 	public ViewNode getChildView(int index) {
 		return (ViewNode) getChild(index);
 	}
-	
-	public ViewNode getParentView(){
+
+	public ViewNode getParentView() {
 		return (ViewNode) getParentItem();
 	}
 
 	public void insertChildViewAt(int index, ViewNode viewNode) {
 		insertItem(index, viewNode);
 	}
-	
+
 	public void insertChildViewAt_DELETE_ME(int index, ViewNode viewNode) {
 		/*
 		 * can't figure out how to insert an item at a specific point (instead
@@ -108,7 +110,7 @@ public abstract class ViewNode extends TreeItem {
 	public abstract void setNode(Node node);
 
 	public abstract Node getNode();
-	
+
 	public abstract void setAsCircularLink();
 
 	/*
@@ -116,20 +118,21 @@ public abstract class ViewNode extends TreeItem {
 	 */
 	public void recursiveBuildViewNode(Node node, Nodes nodes, int openDepth) {
 		setNode(node);
-		boolean circularLink = linkExistsInParentPath(node.id);
-		if(circularLink){
+		boolean circularLink = linkExistsInAncestorPath(node.id);
+		if (circularLink) {
 			getParentView().setAsCircularLink();
 		}
 		for (Long nodeID : node.childIDs) {
 			Node childNode = getChildNodeFromNodeList(nodeID, nodes);
-			if (childNode != null && !circularLink ) {
+			if (childNode != null && !circularLink) {
 				ViewNode childView = createChild();
-				if(openDepth <= 1){
+				if (openDepth <= 1) {
 					childView.setOpen(false);
 				}
 				addItem(childView);
-				childView.recursiveBuildViewNode(childNode, nodes, openDepth -1);
-			} else if( circularLink ){
+				childView.recursiveBuildViewNode(childNode, nodes,
+						openDepth - 1);
+			} else if (circularLink) {
 				setAsCircularLink();
 			} else {
 				addItem(new ViewDummyVer(nodeID));
@@ -138,20 +141,35 @@ public abstract class ViewNode extends TreeItem {
 			}
 		}
 	}
-	
-	public boolean linkExistsInParentPath( Long id ){
-		ViewNode parent = (ViewNode)getParentItem();
-		while( parent != null ){
-			if( id.equals(parent.getNodeID())){
+
+	public boolean linkExistsInAncestorPath(Long id) {
+		ViewNode parent = (ViewNode) getParentItem();
+		while (parent != null) {
+			if (id.equals(parent.getNodeID())) {
 				return true;
 			}
-			parent = (ViewNode)parent.getParentItem();
+			parent = (ViewNode) parent.getParentItem();
 		}
 		return false;
 	}
 
-		
-	
+	public List<Long> getAncestorIDs() {
+		List<Long> ancestorIDs = new ArrayList<Long>();
+		ViewNode parent = this;
+		while (parent != null) {
+			ancestorIDs.add(parent.getNodeID());
+			parent = (ViewNode) parent.getParentItem();
+		}
+		return ancestorIDs;
+	}
+
+	public List<Long> getChildIDs() {
+		List<Long> childIDs = new ArrayList<Long>(getChildCount());
+		for (int i = 0; i < getChildCount(); i++) {
+			childIDs.add(getChildView(i).getNodeID());
+		}
+		return childIDs;
+	}
 
 	/*
 	 * isOpen differs from getState() in at least one important way. When it is

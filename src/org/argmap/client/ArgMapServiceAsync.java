@@ -65,6 +65,5 @@ public interface ArgMapServiceAsync {
 			AsyncCallback<PropsAndArgs> callback);
 
 	void searchProps(String searchString, String searchName, int resultLimit,
-			Long filerArgID, Long filterPropID,
-			AsyncCallback<PropsAndArgs> callback);
+			List<Long> filerNodeIDs, AsyncCallback<PropsAndArgs> callback);
 }

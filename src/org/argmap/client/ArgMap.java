@@ -25,16 +25,12 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
 
-/* TODO: test version mode's handling of circular linking */
-/* TODO: prevent circular linking to any prop in ancestor path */
+/* TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking
 /* TODO: deploy and test speed on actual deployment*/
-//TODO: couldn't generate full dummy data set on server (because it would timeout for the 30 second maximum?)
 //TODO: make sure that searches are indexed
-//TODO: prevent circular linking from crashing program...
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
 //TODO: try running speed tracer
-//TODO: fix slow searches (break them up?  use a different approach all together?)
 
 //TODO: comment the hell out of versions mode!!!!!!! someday I'll need to change it...
 

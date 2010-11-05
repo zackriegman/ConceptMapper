@@ -12,7 +12,6 @@ import javax.persistence.Embedded;
 import javax.persistence.Id;
 
 import org.argmap.client.ArgMapService.PropsAndArgs;
-import org.argmap.client.Argument;
 import org.argmap.client.Nodes;
 import org.argmap.client.Proposition;
 
@@ -53,13 +52,10 @@ public class Search implements Serializable {
 	 * so the search knows to filter out the proposition currently being examined
 	 * when the search is being performed for a proposition edit. 
 	 */
-	public Search(Objectify ofy, Set<String> tokenSet, int limit, Long filterArgID,
-			Long filterPropID) {
-		if (filterArgID != null) {
-			filterIDs.addAll(ofy.get(Argument.class, filterArgID).childIDs);
-			filterIDs.add(ofy.query(Proposition.class).filter("childIDs", filterArgID).get().id);
+	public Search(Objectify ofy, Set<String> tokenSet, int limit, List<Long> filterNodeIDs ) {
+		if (filterNodeIDs != null) {
+			filterIDs.addAll(filterNodeIDs);
 		}
-		filterIDs.add(filterPropID);
 		tokens = new ArrayList<String>(tokenSet);
 		combinationSetSize = tokens.size();
 		this.limit = limit;

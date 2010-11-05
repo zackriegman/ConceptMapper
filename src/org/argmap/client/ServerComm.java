@@ -54,19 +54,17 @@ public class ServerComm {
 
 	private static class ServerCallback<T> implements AsyncCallback<T> {
 		LocalCallback<T> localCallback;
-		String successMessage;
+		String message;
 
 		public ServerCallback(LocalCallback<T> localCallback,
 				String successMessage) {
 			this.localCallback = localCallback;
-			this.successMessage = successMessage;
+			this.message = successMessage;
 		}
 
 		@Override
 		public final void onFailure(Throwable caught) {
-			ArgMap.message("Server Error: " + caught.getMessage(), MessageType.ERROR,
-					10);
-			throw new RuntimeException(caught);
+			handleFailure( message, caught );
 		}
 
 		@Override
@@ -75,10 +73,20 @@ public class ServerComm {
 			if (localCallback != null) {
 				localCallback.call(result);
 			}
-			if (successMessage != null) {
-				ArgMap.message(successMessage, MessageType.INFO, 2);
+			if (message != null) {
+				handleSuccess( message );
 			}
 		}
+	}
+	
+	private static void handleFailure(String message, Throwable caught){
+		ArgMap.message("Server Error while " + message + ": " + caught.getMessage(), MessageType.ERROR,
+				10);
+		Window.alert("Exception: " + caught.toString());
+	}
+	
+	private static void handleSuccess(String message){
+		ArgMap.message("Server Reports Success " + message, MessageType.INFO, 2);
 	}
 
 	public static void logException(Throwable e) {
@@ -95,28 +103,22 @@ public class ServerComm {
 					public void onFailure(Throwable caught) {
 						Window.alert("Failed To Log Bug On Server: "
 								+ caught.toString());
-
 					}
 				});
 	}
 
 	private static abstract class ServerCallbackWithDispatch<T> implements
-			AsyncCallback<T> {
-		String successMessage;
+			AsyncCallback<T>, Command {
+		String message;
 
 		public ServerCallbackWithDispatch(String successMessage) {
-			this.successMessage = successMessage;
+			this.message = successMessage;
 		}
 
 		@Override
 		public final void onFailure(Throwable caught) {
 			dispatchCommand();
-			ArgMap.message("Server Error: " + caught.getMessage(), MessageType.ERROR,
-					10);
-			// GWT.log(caught.getMessage());
-			// caught.printStackTrace();
-			/* trying this to get the exception printed in the GWT.log */
-			throw new RuntimeException(caught);
+			handleFailure( message, caught );
 		}
 
 		@Override
@@ -130,27 +132,27 @@ public class ServerComm {
 			 */
 			doOnSuccess(result);
 			dispatchCommand();
-			if (successMessage != null) {
-				ArgMap.message(successMessage, MessageType.INFO, 2);
+			if (message != null) {
+				handleSuccess(message);
 			}
 
 		}
 
-		public abstract void doOnSuccess(T result);
+		public void doOnSuccess(T result){};
 	}
 
 	public static void getRootProps(int depthLimit,
 			LocalCallback<PropsAndArgs> localCallback) {
 		argMapService.getPropsAndArgs(depthLimit,
 				new ServerCallback<PropsAndArgs>(localCallback,
-						"Server Reports Success Fetching Props"));
+						"Fetching Propositions"));
 	}
 
 	public static void getNodesChildren(List<Long> nodeIDs, int depth,
 			LocalCallback<Nodes> localCallback) {
 		argMapService.getNodesChildren(nodeIDs, depth,
 				new ServerCallback<Nodes>(localCallback,
-						"Server Reports Success" + "Fetching Props"));
+						"Fetching Propositions"));
 	}
 
 	public static void getLoginInfo(LocalCallback<LoginInfo> localCallback) {
@@ -162,7 +164,7 @@ public class ServerComm {
 		}
 		argMapService.getLoginInfo(requestURI,
 				new ServerCallback<LoginInfo>(localCallback,
-						"Server Reports Success" + "Getting Login Info"));
+						"Getting Login Info"));
 	}
 
 	public static void getChanges(List<Proposition> props, List<Argument> args,
@@ -177,7 +179,7 @@ public class ServerComm {
 		}
 		argMapService.getChanges(propIDs, argIDs,
 				new ServerCallback<NodeChangesMaps>(localCallback,
-						"Server Reports Success Getting Changes"));
+						"Getting Changes"));
 	}
 
 	public static void getPropsWithChanges(List<Long> propIDs,
@@ -187,7 +189,7 @@ public class ServerComm {
 						propIDs,
 						new ServerCallback<Map<Long, NodeWithChanges>>(
 								localCallback,
-								"Server Reports Success Fetching Proposition With Changes"));
+								"Fetching Propositions With Changes"));
 	}
 
 	public static void getArgsWithChanges(List<Long> argIDs,
@@ -197,15 +199,12 @@ public class ServerComm {
 						argIDs,
 						new ServerCallback<Map<Long, NodeWithChanges>>(
 								localCallback,
-								"Server Reports Success Fetching Proposition With Changes"));
+								"Fetching Arguments With Changes"));
 	}
 
-	public static void searchProps(String searchString, String searchName, int resultLimit, Argument filterArg,
-			Proposition filterProp, LocalCallback<PropsAndArgs> localCallback) {
-		Long argID = filterArg == null ? null : filterArg.id;
-		Long propID = filterProp == null ? null : filterProp.id;
-
-		argMapService.searchProps(searchString, searchName, resultLimit, argID, propID,
+	public static void searchProps(String searchString, String searchName, int resultLimit, 
+			List<Long> filterNodeIDs, LocalCallback<PropsAndArgs> localCallback) {
+		argMapService.searchProps(searchString, searchName, resultLimit, filterNodeIDs,
 				new ServerCallback<PropsAndArgs>(localCallback, null));
 	}
 	
@@ -213,20 +212,9 @@ public class ServerComm {
 		argMapService.continueSearchProps(searchName, new ServerCallback<PropsAndArgs>(localCallback, null));
 	}
 
-	public static void addArg(boolean pro, Proposition parentProp,
-			Argument newArg) {
-		class CommandAdd extends ServerCallbackWithDispatch<Long> implements
-				Command {
-			boolean pro;
-			Proposition parentProp;
-			Argument newArg;
-
-			// Proposition newProp;
-
-			CommandAdd(String message) {
-				super(message);
-			}
-
+	public static void addArg(final boolean pro, final Proposition parentProp,
+			final Argument newArg) {
+		queueCommand(new ServerCallbackWithDispatch<Long>("Adding Argument") {
 			@Override
 			public void execute() {
 				argMapService.addArg(parentProp.id, pro, this);
@@ -234,155 +222,59 @@ public class ServerComm {
 
 			@Override
 			public void doOnSuccess(Long result) {
-				// newProp.id = result.propIDs.get(0);
 				newArg.id = result;
 			}
-		}
-		CommandAdd command = new CommandAdd(
-				"Server Reports Successful Argument Add");
-		command.pro = pro;
-		command.parentProp = parentProp;
-		command.newArg = newArg;
-		// command.newProp = newProp;
-		queueCommand(command);
+		});
 	}
 
-	public static void deleteProp(Proposition prop) {
-		class CommandRemove extends ServerCallbackWithDispatch<Void> implements
-				Command {
-			Proposition prop;
-
-			public CommandRemove(String message) {
-				super(message);
-			}
-
+	public static void deleteProp(final Proposition prop) {
+		queueCommand(new ServerCallbackWithDispatch<Void>("Deleting Proposition") {
 			@Override
 			public void execute() {
 				argMapService.deleteProp(prop.id, this);
 			}
-
-			@Override
-			public void doOnSuccess(Void result) {
-			}
-		}
-		CommandRemove command = new CommandRemove(
-				"Server Reports Successful Proposition Delete");
-		command.prop = prop;
-		queueCommand(command);
+		});
 	}
 
-	public static void deleteArg(Argument arg) {
-		class CommandRemove extends ServerCallbackWithDispatch<Void> implements
-				Command {
-			Argument arg;
-
-			public CommandRemove(String message) {
-				super(message);
-			}
-
+	public static void deleteArg(final Argument arg) {
+		queueCommand(new ServerCallbackWithDispatch<Void>("Deleting Argument") {
 			@Override
 			public void execute() {
 				argMapService.deleteArg(arg.id, this);
 			}
-
-			@Override
-			public void doOnSuccess(Void result) {
-			}
-		}
-		CommandRemove command = new CommandRemove(
-				"Server Reports Successful Argument Delete");
-		command.arg = arg;
-		queueCommand(command);
+		});
 	}
 
-	public static void unlinkProp(Argument parentArg, Proposition unlinkProp) {
-		class CommandUnlink extends ServerCallbackWithDispatch<Void> implements
-				Command {
-			Proposition unlinkProp;
-			Argument parentArg;
-
-			public CommandUnlink(String message) {
-				super(message);
-			}
-
+	public static void unlinkProp(final Argument parentArg, final Proposition unlinkProp) {
+		queueCommand(new ServerCallbackWithDispatch<Void>("Unlinking Proposition") {
 			@Override
 			public void execute() {
 				argMapService.unlinkProp(parentArg.id, unlinkProp.id, this);
 			}
-
-			@Override
-			public void doOnSuccess(Void result) {
-			}
-		}
-		CommandUnlink command = new CommandUnlink(
-				"Server Reports Successful Proposition Unlink");
-		command.unlinkProp = unlinkProp;
-		command.parentArg = parentArg;
-		queueCommand(command);
+		});
 	}
 
-	public static void updateArg(Argument arg) {
-		class CommandUpdate extends ServerCallbackWithDispatch<Void> implements
-				Command {
-			Argument arg;
-
-			public CommandUpdate(String message) {
-				super(message);
-			}
-
+	public static void updateArg(final Argument arg) {
+		queueCommand(new ServerCallbackWithDispatch<Void>("Updating Argument") {
 			@Override
 			public void execute() {
 				argMapService.updateArg(arg.id, arg.content, this);
 			}
-
-			@Override
-			public void doOnSuccess(Void result) {
-			}
-		}
-		CommandUpdate command = new CommandUpdate(
-				"Server Reports Successful Argument Update");
-		command.arg = arg;
-
-		queueCommand(command);
+		});
 	}
 
-	public static void updateProp(Proposition prop) {
-		class CommandUpdate extends ServerCallbackWithDispatch<Void> implements
-				Command {
-			Proposition prop;
-
-			public CommandUpdate(String message) {
-				super(message);
-			}
-
+	public static void updateProp(final Proposition prop) {
+		queueCommand(new ServerCallbackWithDispatch<Void>("Updating Proposition") {
 			@Override
 			public void execute() {
 				argMapService.updateProp(prop.id, prop.getContent(), this);
 			}
-
-			@Override
-			public void doOnSuccess(Void result) {
-			}
-		}
-		CommandUpdate command = new CommandUpdate(
-				"Server Reports Successful Proposition Update");
-		command.prop = prop;
-
-		queueCommand(command);
+		});
 	}
 
-	public static void addProp(Proposition newProposition,
-			Argument parentArgument, int position) {
-		class CommandAdd extends ServerCallbackWithDispatch<Long> implements
-				Command {
-			Proposition newProposition;
-			Argument parentArgument;
-			int position;
-
-			public CommandAdd(String message) {
-				super(message);
-			}
-
+	public static void addProp(final Proposition newProposition,
+			final Argument parentArgument, final int position) {
+		queueCommand(new ServerCallbackWithDispatch<Long>("Adding Proposition") {
 			@Override
 			public void execute() {
 				if (parentArgument != null)
@@ -397,50 +289,23 @@ public class ServerComm {
 			public void doOnSuccess(Long result) {
 				newProposition.id = result;
 			}
-		}
-
-		CommandAdd command = new CommandAdd(
-				"Server Reports Successful Proposition Add");
-		command.newProposition = newProposition;
-		command.parentArgument = parentArgument;
-		command.position = position;
-
-		queueCommand(command);
+		});
 	}
 
-	public static void replaceWithLinkAndGet(Argument parentArg,
-			Proposition linkProp, Proposition removeProp,
-			LocalCallback<Nodes> localCallback) {
-		class CommandLink extends ServerCallbackWithDispatch<Nodes> implements
-				Command {
-			Long parentArgID;
-			Long linkPropID;
-			Long removePropID;
-			LocalCallback<Nodes> localCallback;
-
-			public CommandLink(String message) {
-				super(message);
-			}
-
+	public static void replaceWithLinkAndGet(final Argument parentArg,
+			final Proposition linkProp, final Proposition removeProp,
+			final LocalCallback<Nodes> localCallback) {
+		queueCommand(new ServerCallbackWithDispatch<Nodes>("Getting Proposition Tree") {
 			@Override
 			public void execute() {
-				argMapService.replaceWithLinkAndGet(parentArgID, linkPropID,
-						removePropID, this);
+				argMapService.replaceWithLinkAndGet(parentArg.id, linkProp.id,
+						removeProp.id, this);
 			}
 
 			@Override
 			public void doOnSuccess(Nodes result) {
 				localCallback.call(result);
 			}
-		}
-
-		CommandLink command = new CommandLink(
-				"Server Reports Success Getting Prop Tree");
-		command.parentArgID = parentArg.id;
-		command.linkPropID = linkProp.id;
-		command.removePropID = removeProp.id;
-		command.localCallback = localCallback;
-
-		queueCommand(command);
+		});
 	}
 }

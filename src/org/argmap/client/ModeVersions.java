@@ -432,7 +432,7 @@ public class ModeVersions extends ResizeComposite implements
 	@Override
 	public void onOpen(OpenEvent<TreeItem> event) {
 		Log log = Log.getLog("vm.oo");
-		ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
+		final ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
 		if (!viewNodeVer.isLoaded()) {
 
 			/*
@@ -449,12 +449,6 @@ public class ModeVersions extends ResizeComposite implements
 			/* a class to hold the call back method */
 			class Callback implements
 					ServerComm.LocalCallback<Map<Long, NodeWithChanges>> {
-				ViewNodeVer viewNodeVer;
-
-				public Callback(ViewNodeVer viewNodeVer) {
-					this.viewNodeVer = viewNodeVer;
-				}
-
 				@Override
 				public void call(Map<Long, NodeWithChanges> nodesWithChanges) {
 					mergeLoadedNodes(viewNodeVer, nodesWithChanges);
@@ -467,11 +461,9 @@ public class ModeVersions extends ResizeComposite implements
 			 * request a list of child arguments and vice-versa.
 			 */
 			if (viewNodeVer instanceof ViewArgVer) {
-				ServerComm.getPropsWithChanges(childIDs, new Callback(
-						viewNodeVer));
+				ServerComm.getPropsWithChanges(childIDs, new Callback());
 			} else if (viewNodeVer instanceof ViewPropVer) {
-				ServerComm.getArgsWithChanges(childIDs, new Callback(
-						viewNodeVer));
+				ServerComm.getArgsWithChanges(childIDs, new Callback());
 			}
 		} else {
 
