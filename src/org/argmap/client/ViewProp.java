@@ -4,6 +4,9 @@ package org.argmap.client;
 
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextArea;
@@ -14,7 +17,7 @@ public abstract class ViewProp extends ViewNode {
 	private static final int PROP_WIDTH_NUMBER = 47;
 	private static final String PROP_WIDTH = "" + PROP_WIDTH_NUMBER + "em";
 
-	protected final TextArea textArea = new TextAreaSloppyGrow();
+	protected final TextArea textArea = new TextAreaGrow();
 	//protected TextArea textArea = new TextArea();
 	protected VerticalPanel mainPanel = new VerticalPanel();
 	protected HorizontalPanel topPanel = new HorizontalPanel();
@@ -108,8 +111,43 @@ public abstract class ViewProp extends ViewNode {
 	public ViewArg getArgView(int index) {
 		return (ViewArg) getChild(index);
 	}
+	
+	private static class TextAreaGrow extends TextArea {
+		private final Element element;
+		
+		@Override
+		public void setText(String text){
+			super.setText(text);
+			resize();
+		}
+		
+		private void resize(){
+			DOM.setStyleAttribute(element, "height", "1em");
+			DOM.setStyleAttribute(element, "height", ""+element.getScrollHeight()+"px");
+		}
+		
+		public TextAreaGrow(){
+			element = getElement();
+			setWidth(PROP_WIDTH);
+			addKeyUpHandler(new KeyUpHandler() {
+				
+				@Override
+				public void onKeyUp(KeyUpEvent event) {
+					resize();
+					}
+			});
+			
+			addAttachHandler(new AttachEvent.Handler() {
+				
+				@Override
+				public void onAttachOrDetach(AttachEvent event) {
+					resize();
+				}
+			});
+		}
+	}
 
-	private static class TextAreaSloppyGrow extends TextArea {
+	private static class TextAreaSloppyGrow_DELETE_ME extends TextArea {
 
 		@Override
 		public void setText(String text) {
@@ -137,7 +175,7 @@ public abstract class ViewProp extends ViewNode {
 			//setVisibleLines(10);
 		}
 
-		public TextAreaSloppyGrow() {
+		public TextAreaSloppyGrow_DELETE_ME() {
 			super();
 
 			// this.setCharacterWidth(width);
