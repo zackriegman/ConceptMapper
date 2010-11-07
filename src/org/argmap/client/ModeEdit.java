@@ -495,7 +495,8 @@ public class ModeEdit extends ResizeComposite implements
 		String searchText = viewProp.getContent().trim();
 		if (!searchText.equals("") && viewProp.getChildCount() == 0
 				&& !viewProp.deleted) {
-			List<Long> filterIDs = viewProp.getAncestorIDs();
+			List<Long> filterIDs = new ArrayList<Long>();
+			filterIDs.addAll(viewProp.getAncestorIDs());
 			if( viewProp.getParentView() != null ){
 			filterIDs.addAll(viewProp.getParentView().getChildIDs());
 			}

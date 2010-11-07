@@ -12,6 +12,7 @@ public abstract class ViewNode extends TreeItem {
 
 	public boolean isOpen = true;
 	private boolean isLoaded = true;
+	private List<Long> ancestorIDs;
 
 	public abstract ViewNode createViewNodeVerClone();
 
@@ -154,7 +155,10 @@ public abstract class ViewNode extends TreeItem {
 	}
 
 	public List<Long> getAncestorIDs() {
-		List<Long> ancestorIDs = new ArrayList<Long>();
+		if(ancestorIDs != null){
+			return ancestorIDs;
+		}
+		ancestorIDs = new ArrayList<Long>();
 		ViewNode parent = this;
 		while (parent != null) {
 			ancestorIDs.add(parent.getNodeID());

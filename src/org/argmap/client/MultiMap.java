@@ -1,6 +1,7 @@
 package org.argmap.client;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,7 +9,7 @@ import java.util.Set;
 
 
 public class MultiMap<K, V> {
-	private Map<K, List<V>> map = new HashMap<K, List<V>>();
+	private final Map<K, List<V>> map = new HashMap<K, List<V>>();
 	
 	public List<V> get(K key){
 		return map.get( key );
@@ -39,7 +40,23 @@ public class MultiMap<K, V> {
 		list.addAll( values );
 	}
 	
-	public List<V> remove(K key){
+	public List<V> removeList(K key){
 		return map.remove(key);
+	}
+	
+	public List<V> removeAllWithKey(K key){
+		return map.remove(key);
+	}
+	
+	public void remove( K key, V value ){
+		List<V> list = map.get(key);
+		list.remove(value);
+		if(list.isEmpty()){
+			map.remove(key);
+		}
+	}
+	
+	public Collection<List<V>> values() {
+		return map.values();
 	}
 }
