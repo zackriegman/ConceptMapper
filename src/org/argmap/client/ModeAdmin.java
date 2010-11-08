@@ -59,12 +59,12 @@ public class ModeAdmin extends ResizeComposite implements ClickHandler {
 
 			@Override
 			public void onSuccess(Void result) {
-				ArgMap.message("Datastore Populated", MessageType.INFO);
+				ArgMap.messageTimed("Datastore Populated", MessageType.INFO);
 			}
 
 			@Override
 			public void onFailure(Throwable caught) {
-				ArgMap.message(
+				ArgMap.messageTimed(
 						"Failure: populateDatastore():" + caught.toString(),
 						MessageType.ERROR);
 
@@ -77,12 +77,12 @@ public class ModeAdmin extends ResizeComposite implements ClickHandler {
 
 			@Override
 			public void onSuccess(Integer count) {
-				ArgMap.message("" + count + " random propositions/arguments created", MessageType.INFO);
+				ArgMap.messageTimed("" + count + " random propositions/arguments created", MessageType.INFO);
 			}
 
 			@Override
 			public void onFailure(Throwable caught) {
-				ArgMap.message(
+				ArgMap.messageTimed(
 						"Failure: populateDatastore():" + caught.toString(),
 						MessageType.ERROR);
 
@@ -95,12 +95,12 @@ public class ModeAdmin extends ResizeComposite implements ClickHandler {
 
 			@Override
 			public void onSuccess(Void result) {
-				ArgMap.message("Datastore Cleared", MessageType.INFO);
+				ArgMap.messageTimed("Datastore Cleared", MessageType.INFO);
 			}
 
 			@Override
 			public void onFailure(Throwable caught) {
-				ArgMap.message(
+				ArgMap.messageTimed(
 						"Failure: clearDatastore():" + caught.toString(),
 						MessageType.ERROR);
 

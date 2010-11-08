@@ -80,13 +80,13 @@ public class ServerComm {
 	}
 	
 	private static void handleFailure(String message, Throwable caught){
-		ArgMap.message("Server Error while " + message + ": " + caught.getMessage(), MessageType.ERROR,
+		ArgMap.messageTimed("Server Error while " + message + ": " + caught.getMessage(), MessageType.ERROR,
 				10);
 		Window.alert("Exception: " + caught.toString());
 	}
 	
 	private static void handleSuccess(String message){
-		ArgMap.message("Server Reports Success " + message, MessageType.INFO, 2);
+		ArgMap.messageTimed("Server Reports Success " + message, MessageType.INFO, 2);
 	}
 
 	public static void logException(Throwable e) {

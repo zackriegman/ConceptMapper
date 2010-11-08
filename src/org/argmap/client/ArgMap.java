@@ -1,18 +1,18 @@
 package org.argmap.client;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.layout.client.Layout.Alignment;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.StatusCodeException;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
@@ -25,8 +25,11 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
 
-/* TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking
-/* TODO: deploy and test speed on actual deployment*/
+/* TODO: finish implementing new searchTimer functions
+ * TODO: convert sideSearch to new search framework
+ */
+ /* TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking
+ /* TODO: deploy and test speed on actual deployment*/
 //TODO: make sure that searches are indexed
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
@@ -91,23 +94,24 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 
 	private final ModeEdit editMode = new ModeEdit(this);
-	
+
 	private DockLayoutPanel mainPanel;
 	private TabLayoutPanel modePanel;
 	private HorizontalPanel loginPanel;
 
-	private static HTML messageArea;
-	private static List<String> messageList;
+	private HTML messageArea;
+	private MultiMap<String, Message> messageMap;
 	private ModeVersions versionsMode;
+	private static ArgMap argMap;
 
 	public void onModuleLoad() {
+		argMap = this;
 		mainPanel = new DockLayoutPanel(Style.Unit.EM);
-		modePanel = new TabLayoutPanel(1.5,
-				Style.Unit.EM);
+		modePanel = new TabLayoutPanel(1.5, Style.Unit.EM);
 		loginPanel = new HorizontalPanel();
 		messageArea = new HTML();
-		messageList = new ArrayList<String>();
-		
+		messageMap = new MultiMap<String, Message>();
+
 		GWT.setUncaughtExceptionHandler(this);
 		modePanel.add(editMode, "Find And Collaborate");
 
@@ -137,7 +141,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 		RootLayoutPanel rp = RootLayoutPanel.get();
 		rp.add(mainPanel);
 
-		message("App Begin", MessageType.INFO);
+		messageTimed("App Begin", MessageType.INFO);
 		getLoginInfo();
 
 	}
@@ -172,18 +176,21 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 					nickName.addStyleName("email");
 					loginPanel.add(nickName);
 					loginPanel.add(signOutLink);
-					if (loginInfo.isAdmin ) {
+					if (loginInfo.isAdmin) {
 						GWT.runAsync(new RunAsyncCallback() {
-							
+
 							@Override
 							public void onSuccess() {
-								modePanel.add(new ModeAdmin(ArgMap.this), "Admin");
+								modePanel.add(new ModeAdmin(ArgMap.this),
+										"Admin");
 							}
-							
+
 							@Override
 							public void onFailure(Throwable reason) {
-								ArgMap.message("Code download failed", MessageType.ERROR);
-								Log.log("am.sv.a.of", "Code download failed" + reason.toString());
+								ArgMap.messageTimed("Code download failed",
+										MessageType.ERROR);
+								Log.log("am.sv.a.of", "Code download failed"
+										+ reason.toString());
 							}
 						});
 					}
@@ -200,19 +207,21 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 	public void showVersions() {
 		if (!versionsIsDisplayed()) {
 			GWT.runAsync(new RunAsyncCallback() {
-				
+
 				@Override
 				public void onSuccess() {
-					if( versionsMode == null  ){
+					if (versionsMode == null) {
 						versionsMode = new ModeVersions(editMode);
 					}
 					modePanel.insert(versionsMode, "History", 1);
 				}
-				
+
 				@Override
 				public void onFailure(Throwable reason) {
-					ArgMap.message("Code download failed", MessageType.ERROR);
-					Log.log("am.sv.a.of", "Code download failed" + reason.toString());
+					ArgMap.messageTimed("Code download failed",
+							MessageType.ERROR);
+					Log.log("am.sv.a.of", "Code download failed"
+							+ reason.toString());
 				}
 			});
 		}
@@ -232,55 +241,106 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 		}
 	}
 
+	public class Message {
+		private MessageType type;
+		private String content;
+		private String displayString;
+		private boolean displayed = false;
+		private MessageTimer timer;
+
+		public void setMessage(String content, MessageType type) {
+			if (displayed) {
+				messageMap.remove(this.content + this.type, this);
+				messageMap.put(content + type, this);
+				refreshMessageList();
+			}
+
+			this.type = type;
+			this.content = content;
+		}
+
+		public void setMessage(String newContent) {
+			assert type != null;
+			setMessage(newContent, type);
+		}
+
+		public void display() {
+			if (!displayed) {
+				messageMap.put(content + type, this);
+				refreshMessageList();
+				displayed = true;
+			}
+		}
+
+		public void hide() {
+			if (displayed) {
+				messageMap.remove(content + type, this);
+				refreshMessageList();
+				displayed = false;
+			}
+		}
+
+		public void hideAfter(int millis) {
+			if (timer == null) {
+				timer = new MessageTimer();
+				timer.message = this;
+			}
+			timer.schedule(millis);
+		}
+	}
+
 	public enum MessageType {
 		ERROR, INFO;
 	}
 
-	public static void message(String string, MessageType type) {
-		message(string, type, 5);
+	public static Message messageTimed(String string, MessageType type) {
+		return messageTimed(string, type, 5);
 	}
 
-	public static void message(String string, MessageType type,
+	public static Message messageTimed(String string, MessageType type,
 			int displaySeconds) {
+		Message message = message(string, type);
+		message.hideAfter(displaySeconds * 1000);
+		return message;
+	}
 
-		String cssLabel;
-		if (type == MessageType.ERROR) {
-			cssLabel = "errorMessage";
-		} else {
-			cssLabel = "infoMessage";
-		}
-		String message = "<span class=\"" + cssLabel
-				+ "\">&nbsp;&nbsp;&nbsp;&nbsp;" + string
-				+ "&nbsp;&nbsp;&nbsp;&nbsp;</span>";
-		messageList.add(message);
-
-		refreshMessageList();
-
-		MessageTimer messageTimer = new MessageTimer();
-		messageTimer.message = message;
-		messageTimer.schedule(displaySeconds * 1000);
+	public static Message message(String string, MessageType type) {
+		Message message = argMap.new Message();
+		message.setMessage(string, type);
+		message.display();
+		return message;
 	}
 
 	public static void refreshMessageList() {
+		String sp = "&nbsp;";
 		StringBuilder sb = new StringBuilder();
 		sb.append("<div class=\"messageArea\">");
-		for (int i = 0; i < messageList.size(); i++) {
-			sb.append(messageList.get(i));
-			if (i < messageList.size() - 1) {
-				sb.append("&nbsp;&nbsp;-&nbsp;&nbsp;");
+		for (List<Message> messageList : argMap.messageMap.values()) {
+			sb.append("<span class=\"");
+			if (messageList.get(0).type == MessageType.ERROR) {
+				sb.append("errorMessage");
+			} else {
+				sb.append("infoMessage");
 			}
+			sb.append("\">" + sp + sp + sp + sp);
+
+			sb.append(messageList.get(0).content);
+			if (messageList.size() > 1) {
+				sb.append(sp + "(" + messageList.size() + ")");
+			}
+			sb.append(sp + sp + sp + sp + "</span>" + sp + sp + sp + sp);
 		}
 		sb.append("</div>");
 
-		messageArea.setHTML(sb.toString());
+		argMap.messageArea.setHTML(sb.toString());
 	}
 
 	private static class MessageTimer extends Timer {
-		String message;
+		Message message;
 
 		@Override
 		public void run() {
-			messageList.remove(message);
+			message.hide();
 			refreshMessageList();
 		}
 	}
@@ -288,12 +348,16 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 	@Override
 	public void onUncaughtException(Throwable e) {
 		try {
-			ArgMap.message("EXCEPTION CAUGHT ON CLIENT", MessageType.ERROR, 10);
-			Window.alert("Exception: " + e.toString());
-			ServerComm.logException(e);
+			ArgMap.messageTimed("EXCEPTION CAUGHT ON CLIENT",
+					MessageType.ERROR, 10);
+			if (!(e instanceof StatusCodeException)) {
+				Window.alert("Exception: " + e.toString());
+				ServerComm.logException(e);
+			}
 		} catch (Exception handlerException) {
 		}
 		GWT.log("Uncaught Exception", e);
-		if (Log.on) Log.finishOpenLogs();
+		if (Log.on)
+			Log.finishOpenLogs();
 	}
 }
