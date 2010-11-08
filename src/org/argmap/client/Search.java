@@ -12,10 +12,10 @@ public class Search implements ServerComm.LocalCallback<PropsAndArgs> {
 	private final int resultLimit;
 	private final List<Long> filterNodeIDs;
 	private final String searchName;
-	private boolean active = true;
+	private boolean cancelled = false;
 	private int resultCount;
 	private ArgMap.Message userMessage;
-	
+
 	public interface SearchResultsHandler {
 		public void processSearchResults(PropsAndArgs propsAndArgs);
 
@@ -26,7 +26,7 @@ public class Search implements ServerComm.LocalCallback<PropsAndArgs> {
 
 	public Search(String searchString, int resultLimit,
 			List<Long> filterNodeIDs, SearchResultsHandler handler) {
-		this.searchString = searchString;
+		this.searchString = searchString.trim();
 		this.handler = handler;
 		this.resultLimit = resultLimit;
 		this.filterNodeIDs = filterNodeIDs;
@@ -35,10 +35,12 @@ public class Search implements ServerComm.LocalCallback<PropsAndArgs> {
 	}
 
 	public void startSearch() {
-		resultCount = 0;
-		ServerComm.searchProps(searchString, searchName, resultLimit,
-				filterNodeIDs, this);
-		userMessage = ArgMap.message("searching...", MessageType.INFO);
+		if (!searchString.equals("")) {
+			resultCount = 0;
+			ServerComm.searchProps(searchString, searchName, resultLimit,
+					filterNodeIDs, this);
+			userMessage = ArgMap.message("searching...", MessageType.INFO);
+		}
 	}
 
 	public void continueSearch() {
@@ -49,17 +51,17 @@ public class Search implements ServerComm.LocalCallback<PropsAndArgs> {
 	}
 
 	public void cancelSearch() {
-		active = false;
+		cancelled = true;
 		userMessage.hide();
 	}
-	
-	public boolean sameAs( String newSearchString ){
-		return searchString.trim().equals(newSearchString.trim());
+
+	public String getSearchString() {
+		return searchString;
 	}
 
 	@Override
 	public void call(PropsAndArgs propsAndArgs) {
-		if (active) {
+		if (!cancelled) {
 			if (propsAndArgs.rootProps != null) {
 				resultCount += propsAndArgs.rootProps.size();
 
@@ -71,7 +73,7 @@ public class Search implements ServerComm.LocalCallback<PropsAndArgs> {
 					userMessage.hideAfter(3000);
 					handler.searchCompleted();
 				}
-				
+
 				if (propsAndArgs.rootProps.size() > 0) {
 					handler.processSearchResults(propsAndArgs);
 				}

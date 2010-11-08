@@ -66,8 +66,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 	private Search mainSearch;
 	private Search sideSearch;
-	private final List<ArgMap.Message> sideSearchMessages_DELETE_ME;
-	private final List<ArgMap.Message> mainSearchMessages_DELETE_ME;
 
 	public ModeEdit(ArgMap argMap) {
 		super();
@@ -89,36 +87,12 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		/*
 		 * get the props
 		 */
-		ServerComm.getRootProps(0,
-				new ServerComm.LocalCallback<PropsAndArgs>() {
-
-					@Override
-					public void call(PropsAndArgs allNodes) {
-
-						Log log = Log.getLog("em.em.cb");
-						log.log("Prop Tree From Server");
-						for (Proposition proposition : allNodes.rootProps) {
-
-							ViewProp propView = new ViewPropEdit();
-							propView.recursiveBuildViewNode(proposition,
-									allNodes.nodes, 5);
-
-							tree.addItem(propView);
-							// propView.logNodeRecursive(0, "em.em.cb", true);
-						}
-						tree.resetState();
-						if (Log.on)
-							tree.logTree(log);
-						log.finish();
-
-					}
-				});
+		getRootProps();
 
 		/******************
 		 * setup side bar *
 		 ******************/
 		sideMessageArea = new HTML();
-		sideSearchMessages_DELETE_ME = new ArrayList<ArgMap.Message>();
 		sideSearchLabel = new Label(
 				"Would you like to use one of these already existing propositions?");
 		sideSearchResults = new FlexTable();
@@ -152,7 +126,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		 * setup the search box
 		 */
 		mainSearchTimer = new MainSearchTimer();
-		mainSearchMessages_DELETE_ME = new ArrayList<ArgMap.Message>();
 		searchTextBox = new TextBox();
 
 		addPropButton = new Button("Add as new proposition");
@@ -206,6 +179,32 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		mainSplit.addEast(sideSplit, 300);
 		mainSplit.add(mainPanel);
 		initWidget(mainSplit);
+	}
+
+	private void getRootProps() {
+		ServerComm.getRootProps(0,
+				new ServerComm.LocalCallback<PropsAndArgs>() {
+
+					@Override
+					public void call(PropsAndArgs allNodes) {
+
+						Log log = Log.getLog("em.em.cb");
+						log.log("Prop Tree From Server");
+						for (Proposition proposition : allNodes.rootProps) {
+
+							ViewProp propView = new ViewPropEdit();
+							propView.recursiveBuildViewNode(proposition,
+									allNodes.nodes, 5);
+
+							tree.addItem(propView);
+							// propView.logNodeRecursive(0, "em.em.cb", true);
+						}
+						tree.resetState();
+						if (Log.on) tree.logTree(log);
+						log.finish();
+
+					}
+				});
 	}
 
 	private void addRootProp() {
@@ -265,12 +264,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				}
 				;
 				ThisCallback callback = new ThisCallback();
-				/*
-				 * TODO handle requests to link to top level nodes more
-				 * gracefully... currently throws an exception, instead a
-				 * message indicating that top level nodes cannot be linked
-				 * would be good...
-				 */
 				ViewArgEdit parentArgView = propViewToRemove.parentArgView();
 				callback.parentArgView = parentArgView;
 				callback.propViewToRemove = propViewToRemove;
@@ -281,61 +274,69 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				ServerComm.replaceWithLinkAndGet(parentArgView.argument,
 						propToLinkTo, propViewToRemove.proposition, callback);
 			} else {
-				ArgMap
-						.messageTimed(
-								"Cannot link to existing proposition when proposition currently being edited has children",
-								MessageType.ERROR);
+				ArgMap.messageTimed(
+						"Cannot link to existing proposition when proposition currently being edited has children",
+						MessageType.ERROR);
 			}
 
 		}
 	}
 
-	/*
-	 * this method populates the side bar with results from a server search. it
-	 * is called by a ViewPropEdit after a pause in typing or the space bar is
-	 * pressed.
-	 */
-	public void sideSearchCallback(PropsAndArgs propMatches) {
+	public void sideSearch(ViewPropEdit viewProp) {;
+		if (sideSearch != null) {
+			sideSearch.cancelSearch();
+			sideSearch = null;
+		}
 
 		sideSearchResults.removeAllRows();
-		if (propMatches.rootProps.size() > 0) {
-			displaySearchBox();
+		sideSearchContinueButton.setVisible(false);
+
+		String searchString = viewProp.getContent().trim();
+		if (!searchString.equals("") && viewProp.getChildCount() == 0
+				&& !viewProp.deleted) {
+			List<Long> filterIDs = new ArrayList<Long>();
+			filterIDs.addAll(viewProp.getAncestorIDs());
+			if (viewProp.getParentView() != null) {
+				filterIDs.addAll(viewProp.getParentView().getChildIDs());
+			}
+			sideSearch = new Search(searchString, ModeEdit.SIDE_SEARCH_LIMIT,
+					filterIDs, new SearchResultsHandler() {
+
+						@Override
+						public void searchExhausted() {
+							sideSearchContinueButton.setVisible(false);
+						}
+
+						@Override
+						public void searchCompleted() {
+							sideSearchContinueButton.setVisible(true);
+						}
+
+						@Override
+						public void processSearchResults(
+								PropsAndArgs propMatches) {
+							sideSearchAppendResults(propMatches);
+							if (sideSearchResults.getRowCount() > 0) {
+								displaySearchBox();
+							} else {
+								hideSearchBox();
+							}
+						}
+					});
+			sideSearch.startSearch();
 		} else {
 			hideSearchBox();
 		}
-		sideSearchAppendResults(propMatches, 0);
 	}
 
-	public void sideSearchContinue() {
-		sideSearchMessages_DELETE_ME.add(ArgMap.message("searching...",
-				MessageType.INFO));
-		ServerComm.continueSearchProps(SIDE_SEARCH_NAME,
-				new LocalCallback<ArgMapService.PropsAndArgs>() {
-
-					@Override
-					public void call(PropsAndArgs results) {
-						sideSearchAppendResults(results, sideSearchResults
-								.getRowCount());
-					}
-				});
-	}
-
-	private void sideSearchAppendResults(PropsAndArgs propMatches, int startRow) {
-		int i = startRow;
+	private void sideSearchAppendResults(PropsAndArgs propMatches) {
+		int i = sideSearchResults.getRowCount();
 		for (Proposition prop : propMatches.rootProps) {
 			sideSearchResults.setText(i, 0, prop.getContent());
 			sideSearchResults.setWidget(i, 1, new SideSearchButton(i,
 					propMatches.rootProps));
 			i++;
 		}
-		if (propMatches.rootProps.size() == SIDE_SEARCH_LIMIT) {
-			sideSearchContinueButton.setVisible(true);
-		} else {
-			sideSearchContinueButton.setVisible(false);
-		}
-		ArgMap.Message message = sideSearchMessages_DELETE_ME.remove(0);
-		message.setMessage("finished search");
-		message.hideAfter(3000);
 	}
 
 	public void displaySearchBox() {
@@ -456,25 +457,22 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 	}
 
-	public void getOpenPropsAndArgs_DELETE_ME(List<Proposition> props,
-			List<Argument> args) {
-		for (int i = 0; i < tree.getItemCount(); i++) {
-			recursiveGetOpenPropsAndArgs(((ViewPropEdit) tree.getItem(i)),
-					props, args);
-		}
-	}
-
 	private abstract class SearchTimer extends Timer {
 		public void keyPress(int charCode) {
+			Log log = Log.getLog("me.st.kp");
+			log.log("AAAA");
 			if (!getPreviousSearchString().trim().equals(
 					getNewSearchString().trim())) {
+				log.log("bbbb");
 				/* if its the space bar search and stop the timer */
 				if (charCode == 32 || charCode == KeyCodes.KEY_ENTER) {
+					log.log("cccc");
 					cancel();
 					run();
 				}
 				/* if its any other key set timer for .3 seconds */
 				else {
+					log.log("dddd");
 					/*
 					 * not sure if this is necessary but just in case... (I
 					 * don't want to add additional timer to fire rather I want
@@ -484,6 +482,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					schedule(SEARCH_DELAY);
 				}
 			}
+			log.log("eeee");
+			log.finish();
 		}
 
 		public abstract String getPreviousSearchString();
@@ -499,12 +499,16 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 		@Override
 		public String getNewSearchString() {
-			// TODO Auto-generated method stub
+			return searchTextBox.getText();
 		}
 
 		@Override
 		public String getPreviousSearchString() {
-			// TODO Auto-generated method stub
+			if (mainSearch != null) {
+				return mainSearch.getSearchString();
+			} else {
+				return "";
+			}
 		}
 	}
 
@@ -517,43 +521,22 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 		@Override
 		public void run() {
-			sideBarSearch(viewProp);
+			sideSearch(viewProp);
 		}
 
 		@Override
 		public String getNewSearchString() {
-			// TODO Auto-generated method stub
+			return viewProp.getContent();
 
 		}
 
 		@Override
 		public String getPreviousSearchString() {
-			// TODO Auto-generated method stub
-
-		}
-	}
-
-	public void sideBarSearch(ViewPropEdit viewProp) {
-		String searchText = viewProp.getContent().trim();
-		if (!searchText.equals("") && viewProp.getChildCount() == 0
-				&& !viewProp.deleted) {
-			sideSearchMessages_DELETE_ME.add(ArgMap.message("searching...",
-					MessageType.INFO));
-			List<Long> filterIDs = new ArrayList<Long>();
-			filterIDs.addAll(viewProp.getAncestorIDs());
-			if (viewProp.getParentView() != null) {
-				filterIDs.addAll(viewProp.getParentView().getChildIDs());
+			if (sideSearch != null) {
+				return sideSearch.getSearchString();
+			} else {
+				return "";
 			}
-			ServerComm.searchProps(searchText, ModeEdit.SIDE_SEARCH_NAME,
-					ModeEdit.SIDE_SEARCH_LIMIT, filterIDs,
-					new LocalCallback<PropsAndArgs>() {
-						@Override
-						public void call(PropsAndArgs propMatches) {
-							sideSearchCallback(propMatches);
-						}
-					});
-		} else {
-			hideSearchBox();
 		}
 	}
 
@@ -579,28 +562,38 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	public void mainSearch() {
 		if (mainSearch != null) {
 			mainSearch.cancelSearch();
+			mainSearch = null;
 		}
-		mainSearch = new Search(searchTextBox.getText(), MAIN_SEARCH_LIMIT,
-				null, new SearchResultsHandler() {
-					@Override
-					public void processSearchResults(PropsAndArgs propsAndArgs) {
-						mainSearchAppendResultsToTree(propsAndArgs);
-					}
 
-					@Override
-					public void searchCompleted() {
-						mainSearchContinueButton.setVisible(true);
-					}
-
-					@Override
-					public void searchExhausted() {
-						mainSearchContinueButton.setVisible(false);
-					}
-				});
 		argMap.hideVersions();
 		tree.clear();
 		mainSearchContinueButton.setVisible(false);
-		mainSearch.startSearch();
+
+		String searchString = searchTextBox.getText().trim();
+
+		if (!searchString.equals("")) {
+			mainSearch = new Search(searchString, MAIN_SEARCH_LIMIT, null,
+					new SearchResultsHandler() {
+						@Override
+						public void processSearchResults(
+								PropsAndArgs propsAndArgs) {
+							mainSearchAppendResultsToTree(propsAndArgs);
+						}
+
+						@Override
+						public void searchCompleted() {
+							mainSearchContinueButton.setVisible(true);
+						}
+
+						@Override
+						public void searchExhausted() {
+							mainSearchContinueButton.setVisible(false);
+						}
+					});
+			mainSearch.startSearch();
+		} else {
+			getRootProps();
+		}
 	}
 
 	public void mainSearchAppendResultsToTree(PropsAndArgs results) {
@@ -655,8 +648,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			if (!source.isLoaded()) {
 				loadFromServer(source, 2, 1);
 			} else {
-				List<ViewNode> list = new ArrayList<ViewNode>(source
-						.getChildCount());
+				List<ViewNode> list = new ArrayList<ViewNode>(
+						source.getChildCount());
 				for (int i = 0; i < source.getChildCount(); i++) {
 					if (!source.getChildView(i).isLoaded()) {
 						list.add(source.getChildView(i));
@@ -713,7 +706,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		if (source == mainSearchContinueButton) {
 			mainSearch.continueSearch();
 		} else if (source == sideSearchContinueButton) {
-			sideSearchContinue();
+			sideSearch.continueSearch();
 		} else if (source == addPropButton) {
 			addRootProp();
 		}
