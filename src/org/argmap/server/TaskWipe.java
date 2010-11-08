@@ -63,13 +63,13 @@ public class TaskWipe extends HttpServlet {
 			int i = 0;
 			while( timeLeft() && i < classesForDelete.size() ){
 				timer.lap("5 " + i);
-				List<Key> keys = ofy.query( classesForDelete.get(i) ).limit(100).listKeys();
+				List<Key> keys = ofy.query( classesForDelete.get(i) ).limit(50).listKeys();
 				timer.lap("5.1 " + i);
 				while( timeLeft() && keys.size() > 0 ){
 					timer.lap("6");
 					ofy.delete(keys);
 					timer.lap("6.1");
-					keys = ofy.query( classesForDelete.get(i) ).limit(100).listKeys();
+					keys = ofy.query( classesForDelete.get(i) ).limit(50).listKeys();
 				}
 				i++;
 			}
@@ -94,6 +94,6 @@ public class TaskWipe extends HttpServlet {
 	
 	public static void queueTaskWipe() {
 		TaskOptions taskOptions = TaskOptions.Builder.url("/tasks/wipe");
-		QueueFactory.getDefaultQueue().add( taskOptions );
+		QueueFactory.getQueue("wipe").add( taskOptions );
 	}
 }

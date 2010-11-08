@@ -59,7 +59,7 @@ public class ModeAdmin extends ResizeComposite implements ClickHandler {
 
 			@Override
 			public void onSuccess(Void result) {
-				ArgMap.messageTimed("Datastore Populated", MessageType.INFO);
+				ArgMap.messageTimed("Datastore Populating", MessageType.INFO);
 			}
 
 			@Override
@@ -95,7 +95,7 @@ public class ModeAdmin extends ResizeComposite implements ClickHandler {
 
 			@Override
 			public void onSuccess(Void result) {
-				ArgMap.messageTimed("Datastore Cleared", MessageType.INFO);
+				ArgMap.messageTimed("Datastore Clearing", MessageType.INFO);
 			}
 
 			@Override

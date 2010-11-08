@@ -1,7 +1,6 @@
 package org.argmap.client;
 
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -134,7 +133,7 @@ public abstract class ViewProp extends ViewNode {
 			Element shadow = DOM.createDiv();
 			Element areaElement = getElement();
 
-			Style style = areaElement.getStyle();
+			//Style style = areaElement.getStyle();
 			// GWT.log( style.getWidth() + " ||| " +
 			// areaElement.getAttribute("width") + "]]" );
 			int areaWidth = Integer.parseInt(areaElement.getAttribute("width"));

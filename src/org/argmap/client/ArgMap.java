@@ -106,7 +106,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 		messageMap = new MultiMap<String, Message>();
 		editMode = new ModeEdit(this);
 		mainPanel = new DockLayoutPanel(Style.Unit.EM);
-		modePanel = new TabLayoutPanel(1.5, Style.Unit.EM);
+		modePanel = new TabLayoutPanel(1.8, Style.Unit.EM);
 		loginPanel = new HorizontalPanel();
 
 		GWT.setUncaughtExceptionHandler(this);
@@ -240,7 +240,6 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 	public class Message {
 		private MessageType type;
 		private String content;
-		private String displayString;
 		private boolean displayed = false;
 		private MessageTimer timer;
 

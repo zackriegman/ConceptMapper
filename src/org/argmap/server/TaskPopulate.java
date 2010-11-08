@@ -58,7 +58,7 @@ public class TaskPopulate extends HttpServlet {
 	private static final String RANDOM_SENTENCE_LOCK = "RANDOM_SENTENCE_LOCK";
 	private static final String RANDOM_SENTENCE_COUNT = "RANDOM_SENTENCE_COUNT";
 	private static final String RANDOM_SENTENCE_LIST = "RANDOM_SENTENCE_LIST";
-	private static int RANDOM_SENTENCE_BUFFER_SIZE = 100;
+	private static int RANDOM_SENTENCE_BUFFER_SIZE = 500;
 
 	private static final String SENTENCES_FILE = "sentences";
 
@@ -70,7 +70,7 @@ public class TaskPopulate extends HttpServlet {
 	 * = 3; AVERAGE_ARGS_AT_ROOT = 2; PROPS_STEP = 1; ARGS_STEP = .75;
 	 * ARGS_STANDARD_DEVIATION = 1; PROPS_STANDARD_DEVIATION = 3;
 	 */
-	private static final int ROOT_NODES = 20;
+	private static final int ROOT_NODES = 100;
 	private static final int AVERAGE_PROPS_AT_ROOT = 3;
 	private static final int AVERAGE_ARGS_AT_ROOT = 2;
 	private static final int PROPS_STEP = 1;
@@ -100,6 +100,7 @@ public class TaskPopulate extends HttpServlet {
 			timer.lap("++++");
 			lock.lock();
 
+			@SuppressWarnings("unchecked")
 			List<String> sentenceList = (List<String>) cache
 					.get(RANDOM_SENTENCE_LIST);
 			if (sentenceList != null && sentenceList.size() > 0) {

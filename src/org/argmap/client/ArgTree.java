@@ -131,9 +131,14 @@ public class ArgTree extends Tree {
 				&& !(item.getChild(0) instanceof ViewDummyVer)) {
 			if (item.getState() != item.isOpen()) {
 				item.setState(item.isOpen());
+				
 			}
 			for (int i = 0; i < item.getChildCount(); i++) {
-				recursiveResetState(item.getChildView(i));
+				ViewNode child = item.getChildView(i);
+				recursiveResetState( child );
+				if( child instanceof ViewProp ){
+					((ViewProp) child).resize();
+				}
 			}
 		}
 	}

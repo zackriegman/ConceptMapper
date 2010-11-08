@@ -111,18 +111,6 @@ public class ServerComm {
 		}
 	}
 
-	private static void handleFailure(String message, Throwable caught) {
-		ArgMap.messageTimed(
-				"Server Error while " + message + ": " + caught.getMessage(),
-				MessageType.ERROR, 10);
-		Window.alert("Exception: " + caught.toString());
-	}
-
-	private static void handleSuccess(String message) {
-		ArgMap.messageTimed("Server Reports Success " + message,
-				MessageType.INFO, 2);
-	}
-
 	public static void logException(Throwable e) {
 		argMapService.logClientException(e.toString(),
 				new AsyncCallback<Void>() {
