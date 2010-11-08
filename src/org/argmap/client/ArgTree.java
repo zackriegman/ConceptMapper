@@ -27,6 +27,7 @@ public class ArgTree extends Tree {
 			@Override
 			public void onOpen(OpenEvent<TreeItem> event) {
 				updateStateOpen(event);
+				recursiveResizeNode(event.getTarget());
 			}
 		});
 
@@ -37,6 +38,21 @@ public class ArgTree extends Tree {
 				updateStateClose(event);
 			}
 		});
+	}
+
+	private final void recursiveResizeNode(Object object) {
+		if (object instanceof ViewNode && ! (object instanceof ViewDummyVer)) {
+			if (object instanceof ViewProp) {
+				((ViewProp) object).resize();
+			}
+			ViewNode viewNode = (ViewNode) object;
+			if (viewNode.isOpen()) {
+				for (int i = 0; i < viewNode.getChildCount(); i++) {
+					recursiveResizeNode(viewNode.getChildView(i));
+				}
+			}
+		}
+
 	}
 
 	private final void updateStateClose(CloseEvent<TreeItem> event) {
@@ -97,6 +113,15 @@ public class ArgTree extends Tree {
 		return registration;
 	}
 
+	/*
+	 * for some reason the attach handler of ViewProps.TextAreaGrow is being
+	 * called before the text area has a scroll height reflecting its actual
+	 * height when the TreeItem has no children. When the tree item does have
+	 * children the scroll height reflects the actual height upon attachment and
+	 * the size is determined appropriately.  I've tried putting the resize
+	 * even in a deferred command but that doesn't make any difference.  Now
+	 * I'm trying manually resizing upon an open event.
+	 */
 	public void recursiveResetState(ViewNode item) {
 		/*
 		 * if this item has children, and the first child is not a dummy node
@@ -104,7 +129,7 @@ public class ArgTree extends Tree {
 		 */
 		if (item.getChildCount() > 0
 				&& !(item.getChild(0) instanceof ViewDummyVer)) {
-			if (item.getState() != item.isOpen) {
+			if (item.getState() != item.isOpen()) {
 				item.setState(item.isOpen());
 			}
 			for (int i = 0; i < item.getChildCount(); i++) {

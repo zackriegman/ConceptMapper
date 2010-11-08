@@ -29,6 +29,7 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HTMLTable;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -95,6 +96,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		sideMessageArea = new HTML();
 		sideSearchLabel = new Label(
 				"Would you like to use one of these already existing propositions?");
+		sideSearchLabel.addStyleName("sideSearchLabel");
 		sideSearchResults = new FlexTable();
 		sideSplit = new SplitLayoutPanel();
 		sideSearchTimer = new SideSearchTimer();
@@ -282,7 +284,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 	}
 
-	public void sideSearch(ViewPropEdit viewProp) {;
+	public void sideSearch(ViewPropEdit viewProp) {
+		;
 		if (sideSearch != null) {
 			sideSearch.cancelSearch();
 			sideSearch = null;
@@ -331,10 +334,13 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 	private void sideSearchAppendResults(PropsAndArgs propMatches) {
 		int i = sideSearchResults.getRowCount();
+		HTMLTable.RowFormatter rowFormatter = sideSearchResults.getRowFormatter();
 		for (Proposition prop : propMatches.rootProps) {
 			sideSearchResults.setText(i, 0, prop.getContent());
 			sideSearchResults.setWidget(i, 1, new SideSearchButton(i,
 					propMatches.rootProps));
+			//rowFormatter.addStyle(i, "sideSearchRow");
+			rowFormatter.setStylePrimaryName(i, "sideSearchRow");
 			i++;
 		}
 	}
@@ -459,20 +465,14 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 	private abstract class SearchTimer extends Timer {
 		public void keyPress(int charCode) {
-			Log log = Log.getLog("me.st.kp");
-			log.log("AAAA");
-			if (!getPreviousSearchString().trim().equals(
-					getNewSearchString().trim())) {
-				log.log("bbbb");
+			if (stringsDifferent()) {
 				/* if its the space bar search and stop the timer */
 				if (charCode == 32 || charCode == KeyCodes.KEY_ENTER) {
-					log.log("cccc");
 					cancel();
 					run();
 				}
 				/* if its any other key set timer for .3 seconds */
 				else {
-					log.log("dddd");
 					/*
 					 * not sure if this is necessary but just in case... (I
 					 * don't want to add additional timer to fire rather I want
@@ -482,8 +482,11 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					schedule(SEARCH_DELAY);
 				}
 			}
-			log.log("eeee");
-			log.finish();
+		}
+		
+		protected boolean stringsDifferent(){
+			return Search.stringsEffectivelyDifferent(getPreviousSearchString(),
+					getNewSearchString());
 		}
 
 		public abstract String getPreviousSearchString();
@@ -517,6 +520,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 		public void setViewProp(ViewPropEdit viewProp) {
 			this.viewProp = viewProp;
+			if (stringsDifferent()) {
+				run();
+			}
 		}
 
 		@Override

@@ -84,4 +84,22 @@ public class Search implements ServerComm.LocalCallback<PropsAndArgs> {
 			}
 		}
 	}
+
+	/*
+	 * returns true if the first 150 characters of the trimmed strings are
+	 * different, ignoring case. Since the server is only searching on the first
+	 * 5 or 6 non-stop-word tokens, this should be enough, since the first 5 or
+	 * 6 non-stop-words are likely to occur within the first 150 characters.
+	 * This saves the client and server from doing unnecessary searches when
+	 * someone is typing a long ass proposition.
+	 */
+	public static boolean stringsEffectivelyDifferent(String oldString,
+			String newString) {
+		oldString = oldString.trim();
+		newString = newString.trim();
+		int length = oldString.length() > newString.length() ? oldString
+				.length() : newString.length();
+		length = length > 150 ? 150 : length;
+		return !oldString.regionMatches(true, 0, newString, 0, length);
+	}
 }

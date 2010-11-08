@@ -10,7 +10,7 @@ import com.google.gwt.user.client.ui.TreeItem;
 public abstract class ViewNode extends TreeItem {
 	public abstract Long getNodeID();
 
-	public boolean isOpen = true;
+	private boolean isOpen = true;
 	private boolean isLoaded = true;
 	private List<Long> ancestorIDs;
 

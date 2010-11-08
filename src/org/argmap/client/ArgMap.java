@@ -4,15 +4,14 @@ import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.layout.client.Layout.Alignment;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.rpc.StatusCodeException;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
@@ -25,10 +24,7 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 //TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
 
-/* TODO: finish implementing new searchTimer functions
- * TODO: convert sideSearch to new search framework
- */
- /* TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking
+/* TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking
  /* TODO: deploy and test speed on actual deployment*/
 //TODO: make sure that searches are indexed
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
@@ -93,7 +89,7 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
  */
 public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 
-	private final ModeEdit editMode = new ModeEdit(this);
+	private ModeEdit editMode;
 
 	private DockLayoutPanel mainPanel;
 	private TabLayoutPanel modePanel;
@@ -106,11 +102,12 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 
 	public void onModuleLoad() {
 		argMap = this;
+		messageArea = new HTML();
+		messageMap = new MultiMap<String, Message>();
+		editMode = new ModeEdit(this);
 		mainPanel = new DockLayoutPanel(Style.Unit.EM);
 		modePanel = new TabLayoutPanel(1.5, Style.Unit.EM);
 		loginPanel = new HorizontalPanel();
-		messageArea = new HTML();
-		messageMap = new MultiMap<String, Message>();
 
 		GWT.setUncaughtExceptionHandler(this);
 		modePanel.add(editMode, "Find And Collaborate");
@@ -141,7 +138,6 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 		RootLayoutPanel rp = RootLayoutPanel.get();
 		rp.add(mainPanel);
 
-		messageTimed("App Begin", MessageType.INFO);
 		getLoginInfo();
 
 	}
@@ -220,8 +216,8 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 				public void onFailure(Throwable reason) {
 					ArgMap.messageTimed("Code download failed",
 							MessageType.ERROR);
-					Log.log("am.sv.a.of", "Code download failed"
-							+ reason.toString());
+					Log.log("am.sv.a.of",
+							"Code download failed" + reason.toString());
 				}
 			});
 		}
@@ -252,11 +248,13 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 			if (displayed) {
 				messageMap.remove(this.content + this.type, this);
 				messageMap.put(content + type, this);
+				this.type = type;
+				this.content = content;
 				refreshMessageList();
+			} else {
+				this.type = type;
+				this.content = content;
 			}
-
-			this.type = type;
-			this.content = content;
 		}
 
 		public void setMessage(String newContent) {
@@ -302,6 +300,10 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 		Message message = message(string, type);
 		message.hideAfter(displaySeconds * 1000);
 		return message;
+	}
+
+	public static Message getMessage() {
+		return argMap.new Message();
 	}
 
 	public static Message message(String string, MessageType type) {
@@ -350,14 +352,11 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 		try {
 			ArgMap.messageTimed("EXCEPTION CAUGHT ON CLIENT",
 					MessageType.ERROR, 10);
-			if (!(e instanceof StatusCodeException)) {
-				Window.alert("Exception: " + e.toString());
-				ServerComm.logException(e);
-			}
+			Window.alert("Exception: " + e.toString());
+			ServerComm.logException(e);
 		} catch (Exception handlerException) {
 		}
 		GWT.log("Uncaught Exception", e);
-		if (Log.on)
-			Log.finishOpenLogs();
+		if (Log.on) Log.finishOpenLogs();
 	}
 }

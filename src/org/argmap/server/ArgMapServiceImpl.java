@@ -636,7 +636,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			int resultLimit, List<Long> filterNodeIDs) {
 		Set<String> tokenSet = getTokensForIndexingOrQuery(searchString, 6);
 		if (tokenSet.isEmpty()) {
-			return null;
+			return new PropsAndArgs();
 		}
 
 		Search search = new Search(ofy, tokenSet, resultLimit, filterNodeIDs);

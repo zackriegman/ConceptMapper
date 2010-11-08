@@ -52,19 +52,62 @@ public class ServerComm {
 		public void call(T t);
 	}
 
-	private static class ServerCallback<T> implements AsyncCallback<T> {
-		LocalCallback<T> localCallback;
-		String message;
+//	private static class ServerCallback<T> implements AsyncCallback<T> {
+//		LocalCallback<T> localCallback;
+//		String message;
+//
+//		public ServerCallback(LocalCallback<T> localCallback,
+//				String successMessage) {
+//			this.localCallback = localCallback;
+//			this.message = successMessage;
+//		}
+//
+//		@Override
+//		public final void onFailure(Throwable caught) {
+//			handleFailure(message, caught);
+//		}
+//
+//		@Override
+//		public final void onSuccess(T result) {
+//
+//			if (localCallback != null) {
+//				localCallback.call(result);
+//			}
+//			if (message != null) {
+//				handleSuccess(message);
+//			}
+//		}
+//	}
 
-		public ServerCallback(LocalCallback<T> localCallback,
-				String successMessage) {
+	private static class ServerCallbackWithMessage<T> implements
+			AsyncCallback<T> {
+		LocalCallback<T> localCallback;
+		ArgMap.Message message;
+		String successMessage;
+		String startMessage;
+
+		public ServerCallbackWithMessage(LocalCallback<T> localCallback,
+				String startMessage, String successMessage) {
 			this.localCallback = localCallback;
-			this.message = successMessage;
+			this.successMessage = successMessage;
+			this.startMessage = startMessage;
+			message = ArgMap.getMessage();
+			if (startMessage != null) {
+				message.setMessage(startMessage, MessageType.INFO);
+				message.display();
+			}
 		}
 
 		@Override
 		public final void onFailure(Throwable caught) {
-			handleFailure( message, caught );
+			if (startMessage != null) {
+				message.setMessage("Server error while " + startMessage,
+						MessageType.ERROR);
+			} else {
+				message.setMessage("Server error", MessageType.ERROR);
+			}
+			message.display();
+			message.hideAfter(15000);
 		}
 
 		@Override
@@ -73,20 +116,26 @@ public class ServerComm {
 			if (localCallback != null) {
 				localCallback.call(result);
 			}
-			if (message != null) {
-				handleSuccess( message );
+			if (successMessage != null) {
+				message.setMessage(successMessage);
+				message.display();
+				message.hideAfter(1000);
+			} else {
+				message.hide();
 			}
 		}
 	}
-	
-	private static void handleFailure(String message, Throwable caught){
-		ArgMap.messageTimed("Server Error while " + message + ": " + caught.getMessage(), MessageType.ERROR,
-				10);
+
+	private static void handleFailure(String message, Throwable caught) {
+		ArgMap.messageTimed(
+				"Server Error while " + message + ": " + caught.getMessage(),
+				MessageType.ERROR, 10);
 		Window.alert("Exception: " + caught.toString());
 	}
-	
-	private static void handleSuccess(String message){
-		ArgMap.messageTimed("Server Reports Success " + message, MessageType.INFO, 2);
+
+	private static void handleSuccess(String message) {
+		ArgMap.messageTimed("Server Reports Success " + message,
+				MessageType.INFO, 2);
 	}
 
 	public static void logException(Throwable e) {
@@ -118,7 +167,7 @@ public class ServerComm {
 		@Override
 		public final void onFailure(Throwable caught) {
 			dispatchCommand();
-			handleFailure( message, caught );
+			handleFailure(message, caught);
 		}
 
 		@Override
@@ -138,33 +187,34 @@ public class ServerComm {
 
 		}
 
-		public void doOnSuccess(T result){};
+		public void doOnSuccess(T result) {
+		};
 	}
 
 	public static void getRootProps(int depthLimit,
 			LocalCallback<PropsAndArgs> localCallback) {
 		argMapService.getPropsAndArgs(depthLimit,
-				new ServerCallback<PropsAndArgs>(localCallback,
-						"Fetching Propositions"));
+				new ServerCallbackWithMessage<PropsAndArgs>(localCallback,
+						"loading...", "finished loading"));
 	}
 
 	public static void getNodesChildren(List<Long> nodeIDs, int depth,
 			LocalCallback<Nodes> localCallback) {
 		argMapService.getNodesChildren(nodeIDs, depth,
-				new ServerCallback<Nodes>(localCallback,
-						"Fetching Propositions"));
+				new ServerCallbackWithMessage<Nodes>(localCallback,
+						"pre-loading...", "finished pre-loading"));
 	}
 
 	public static void getLoginInfo(LocalCallback<LoginInfo> localCallback) {
 		String requestURI;
-		if( GWT.isProdMode() ){
+		if (GWT.isProdMode()) {
 			requestURI = GWT.getHostPageBaseURL();
 		} else {
 			requestURI = "http://127.0.0.1:8888/ArgMap.html?gwt.codesvr=127.0.0.1:9997";
 		}
 		argMapService.getLoginInfo(requestURI,
-				new ServerCallback<LoginInfo>(localCallback,
-						"Getting Login Info"));
+				new ServerCallbackWithMessage<LoginInfo>(localCallback,
+						"authenticating...", null));
 	}
 
 	public static void getChanges(List<Proposition> props, List<Argument> args,
@@ -178,38 +228,36 @@ public class ServerComm {
 			argIDs.add(arg.id);
 		}
 		argMapService.getChanges(propIDs, argIDs,
-				new ServerCallback<NodeChangesMaps>(localCallback,
-						"Getting Changes"));
+				new ServerCallbackWithMessage<NodeChangesMaps>(localCallback,
+						"loading history...", "history loaded"));
 	}
 
 	public static void getPropsWithChanges(List<Long> propIDs,
 			LocalCallback<Map<Long, NodeWithChanges>> localCallback) {
-		argMapService
-				.getPropsWithChanges(
-						propIDs,
-						new ServerCallback<Map<Long, NodeWithChanges>>(
-								localCallback,
-								"Fetching Propositions With Changes"));
+		argMapService.getPropsWithChanges(propIDs,
+				new ServerCallbackWithMessage<Map<Long, NodeWithChanges>>(
+						localCallback, "loading history...", "history loaded"));
 	}
 
 	public static void getArgsWithChanges(List<Long> argIDs,
 			LocalCallback<Map<Long, NodeWithChanges>> localCallback) {
-		argMapService
-				.getArgsWithChanges(
-						argIDs,
-						new ServerCallback<Map<Long, NodeWithChanges>>(
-								localCallback,
-								"Fetching Arguments With Changes"));
+		argMapService.getArgsWithChanges(argIDs,
+				new ServerCallbackWithMessage<Map<Long, NodeWithChanges>>(
+						localCallback, "loading history...", "history loaded"));
 	}
 
-	public static void searchProps(String searchString, String searchName, int resultLimit, 
-			List<Long> filterNodeIDs, LocalCallback<PropsAndArgs> localCallback) {
-		argMapService.searchProps(searchString, searchName, resultLimit, filterNodeIDs,
-				new ServerCallback<PropsAndArgs>(localCallback, null));
+	public static void searchProps(String searchString, String searchName,
+			int resultLimit, List<Long> filterNodeIDs,
+			LocalCallback<PropsAndArgs> localCallback) {
+		argMapService.searchProps(searchString, searchName, resultLimit,
+				filterNodeIDs, new ServerCallbackWithMessage<PropsAndArgs>(
+						localCallback, null, null));
 	}
-	
-	public static void continueSearchProps(String searchName, LocalCallback<PropsAndArgs> localCallback){
-		argMapService.continueSearchProps(searchName, new ServerCallback<PropsAndArgs>(localCallback, null));
+
+	public static void continueSearchProps(String searchName,
+			LocalCallback<PropsAndArgs> localCallback) {
+		argMapService.continueSearchProps(searchName,
+				new ServerCallbackWithMessage<PropsAndArgs>(localCallback, null, null));
 	}
 
 	public static void addArg(final boolean pro, final Proposition parentProp,
@@ -228,7 +276,8 @@ public class ServerComm {
 	}
 
 	public static void deleteProp(final Proposition prop) {
-		queueCommand(new ServerCallbackWithDispatch<Void>("Deleting Proposition") {
+		queueCommand(new ServerCallbackWithDispatch<Void>(
+				"Deleting Proposition") {
 			@Override
 			public void execute() {
 				argMapService.deleteProp(prop.id, this);
@@ -245,8 +294,10 @@ public class ServerComm {
 		});
 	}
 
-	public static void unlinkProp(final Argument parentArg, final Proposition unlinkProp) {
-		queueCommand(new ServerCallbackWithDispatch<Void>("Unlinking Proposition") {
+	public static void unlinkProp(final Argument parentArg,
+			final Proposition unlinkProp) {
+		queueCommand(new ServerCallbackWithDispatch<Void>(
+				"Unlinking Proposition") {
 			@Override
 			public void execute() {
 				argMapService.unlinkProp(parentArg.id, unlinkProp.id, this);
@@ -264,7 +315,8 @@ public class ServerComm {
 	}
 
 	public static void updateProp(final Proposition prop) {
-		queueCommand(new ServerCallbackWithDispatch<Void>("Updating Proposition") {
+		queueCommand(new ServerCallbackWithDispatch<Void>(
+				"Updating Proposition") {
 			@Override
 			public void execute() {
 				argMapService.updateProp(prop.id, prop.getContent(), this);
@@ -295,7 +347,8 @@ public class ServerComm {
 	public static void replaceWithLinkAndGet(final Argument parentArg,
 			final Proposition linkProp, final Proposition removeProp,
 			final LocalCallback<Nodes> localCallback) {
-		queueCommand(new ServerCallbackWithDispatch<Nodes>("Getting Proposition Tree") {
+		queueCommand(new ServerCallbackWithDispatch<Nodes>(
+				"Getting Proposition Tree") {
 			@Override
 			public void execute() {
 				argMapService.replaceWithLinkAndGet(parentArg.id, linkProp.id,

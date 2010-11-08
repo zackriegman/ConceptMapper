@@ -334,7 +334,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		if (source == textArea) {
 			updateButtons();
 			getEditMode().sideSearchTimer.setViewProp(this);
-			getEditMode().sideSearch( this );
 		}
 	}
 

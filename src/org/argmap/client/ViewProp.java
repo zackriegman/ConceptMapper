@@ -1,7 +1,5 @@
 package org.argmap.client;
 
-
-
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -13,12 +11,12 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public abstract class ViewProp extends ViewNode {
-	
+
 	private static final int PROP_WIDTH_NUMBER = 47;
 	private static final String PROP_WIDTH = "" + PROP_WIDTH_NUMBER + "em";
 
-	protected final TextArea textArea = new TextAreaGrow();
-	//protected TextArea textArea = new TextArea();
+	protected final TextAreaGrow textArea = new TextAreaGrow();
+	// protected TextArea textArea = new TextArea();
 	protected VerticalPanel mainPanel = new VerticalPanel();
 	protected HorizontalPanel topPanel = new HorizontalPanel();
 	protected FocusPanel focusPanel;
@@ -26,34 +24,34 @@ public abstract class ViewProp extends ViewNode {
 
 	public ViewProp(Proposition proposition) {
 		super();
-		setNode( proposition );
+		setNode(proposition);
 		mainPanel.add(topPanel);
 		topPanel.add(textArea);
 		textArea.setStylePrimaryName("propositionTextArea");
 		textArea.addStyleName("nodeText");
-		focusPanel = new FocusPanel( mainPanel );
+		focusPanel = new FocusPanel(mainPanel);
 		this.setWidget(focusPanel);
 	}
-	
-	public void setNodeLink( boolean link ){};
-	
+
+	public void setNodeLink(boolean link) {
+	};
+
 	@Override
-	public void setNode( Node node ){
-		proposition = (Proposition)node;
+	public void setNode(Node node) {
+		proposition = (Proposition) node;
 		setContent(proposition.getContent());
-		
-		
+
 		if (proposition.linkCount <= 1) {
-			//textArea.addStyleName("propositionTextArea");
-			setNodeLink( false );
+			// textArea.addStyleName("propositionTextArea");
+			setNodeLink(false);
 		} else if (proposition.linkCount > 1) {
 			textArea.addStyleName("linkedPropositionTextArea");
-			setNodeLink( true );
+			setNodeLink(true);
 		}
 	}
-	
+
 	@Override
-	public Proposition getNode(){
+	public Proposition getNode() {
 		return proposition;
 	}
 
@@ -81,7 +79,7 @@ public abstract class ViewProp extends ViewNode {
 		else
 			return null;
 	}
-	
+
 	@Override
 	public ViewNode createViewNodeVerClone() {
 		ViewPropVer cloneView = new ViewPropVer(proposition);
@@ -112,36 +110,46 @@ public abstract class ViewProp extends ViewNode {
 		return (ViewArg) getChild(index);
 	}
 	
-	private static class TextAreaGrow extends TextArea {
+	public void resize(){
+		textArea.resize();
+	}
+
+	protected static class TextAreaGrow extends TextArea {
 		private final Element element;
-		
+
 		@Override
-		public void setText(String text){
+		public void setText(String text) {
 			super.setText(text);
-			resize();
+			if (isAttached()) {
+				resize();
+			}
 		}
-		
-		private void resize(){
+
+		private void resize() {
 			DOM.setStyleAttribute(element, "height", "1em");
-			DOM.setStyleAttribute(element, "height", ""+element.getScrollHeight()+"px");
+			DOM.setStyleAttribute(element, "height",
+					"" + element.getScrollHeight() + "px");
 		}
-		
-		public TextAreaGrow(){
+
+		public TextAreaGrow() {
 			element = getElement();
 			setWidth(PROP_WIDTH);
+			DOM.setStyleAttribute(element, "overflow", "hidden");
 			addKeyUpHandler(new KeyUpHandler() {
-				
+
 				@Override
 				public void onKeyUp(KeyUpEvent event) {
 					resize();
-					}
+				}
 			});
-			
+
 			addAttachHandler(new AttachEvent.Handler() {
-				
+
 				@Override
 				public void onAttachOrDetach(AttachEvent event) {
-					resize();
+					if (isAttached()) {
+						resize();
+					}
 				}
 			});
 		}
@@ -169,10 +177,10 @@ public abstract class ViewProp extends ViewNode {
 			// ArgMap("onKeyPress: line estimate = " + lineEstimate
 			// );
 			setVisibleLines(lineEstimate);
-//			GWT.log("line estimate:"+lineEstimate);
-//			GWT.log("length:" + length);
-//			GWT.log("widthInCharacters:" + widthInCharacters);
-			//setVisibleLines(10);
+			// GWT.log("line estimate:"+lineEstimate);
+			// GWT.log("length:" + length);
+			// GWT.log("widthInCharacters:" + widthInCharacters);
+			// setVisibleLines(10);
 		}
 
 		public TextAreaSloppyGrow_DELETE_ME() {
@@ -190,14 +198,14 @@ public abstract class ViewProp extends ViewNode {
 			});
 		}
 	}
-	
+
 	@Override
-	public Node getChildNodeFromNodeList( Long nodeID, Nodes nodes ){
-		return nodes.args.get( nodeID );
+	public Node getChildNodeFromNodeList(Long nodeID, Nodes nodes) {
+		return nodes.args.get(nodeID);
 	}
-	
+
 	@Override
-	public void setAsCircularLink(){
+	public void setAsCircularLink() {
 		textArea.addStyleName("circularLink");
 	}
 }

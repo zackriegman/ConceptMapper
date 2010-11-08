@@ -27,6 +27,17 @@
 	/*padding:5em;*/ /*width: 100%;*/
 }
 
+.searchTextBox:FOCUS {
+	sel
+}
+
+.sideSearchRow {
+	border-bottom-width: thin;
+	border-bottom-color: gray;
+	border-bottom-style: solid;
+	padding: .5em;
+	}
+
 .addPropButton {
 	margin-top: .5em;
 	margin-left: .7em;
@@ -37,6 +48,11 @@
 	margin-right: 1em;
 	margin-left: .5em;
 }
+
+.sideSearchLabel {
+	background-color: #92C1F0;
+	padding: .5em;
+	}
 
 .linkedPropositionTextArea { /*background-color: #FFF1A8;*/
 	/*background-color: #FFFF8B;*/
