@@ -1,5 +1,7 @@
 package org.argmap.client;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -109,9 +111,82 @@ public abstract class ViewProp extends ViewNode {
 	public ViewArg getArgView(int index) {
 		return (ViewArg) getChild(index);
 	}
-	
-	public void resize(){
+
+	public void resize() {
 		textArea.resize();
+	}
+
+	protected static class TextAreaAutoResize extends TextArea {
+		private final Element element;
+
+		@Override
+		public void setText(String text) {
+			super.setText(text);
+			if (isAttached()) {
+				resize();
+			}
+		}
+
+		// tried to copy this link but ran into problem that I can't get padding as
+		// pixels and I can't do math with pixel results in EM
+		// https://github.com/jaz303/jquery-grab-bag/blob/f1a3cc1e86cbb248bcb41391d6eff115b1be6d89/javascripts/jquery.autogrow-textarea.js
+		private void resize() {
+			Element shadow = DOM.createDiv();
+			Element areaElement = getElement();
+
+			Style style = areaElement.getStyle();
+			// GWT.log( style.getWidth() + " ||| " +
+			// areaElement.getAttribute("width") + "]]" );
+			int areaWidth = Integer.parseInt(areaElement.getAttribute("width"));
+			// int areaWidth = areaElement.getClientWidth();
+
+			int areaPaddingLeft = Integer.parseInt(areaElement
+					.getAttribute("paddingLeft"));
+			int areaPaddingRight = Integer.parseInt(areaElement
+					.getAttribute("paddingRight"));
+			int ghostWidth = areaWidth - areaPaddingLeft - areaPaddingRight;
+
+			DOM.setStyleAttribute(shadow, "position", "absolute");
+			DOM.setStyleAttribute(shadow, "top", "-1000");
+			DOM.setStyleAttribute(shadow, "left", "-1000");
+			DOM.setStyleAttribute(shadow, "width", "" + ghostWidth);
+			DOM.setStyleAttribute(shadow, "fontSize",
+					areaElement.getAttribute("fontSize"));
+			DOM.setStyleAttribute(shadow, "fontFamily",
+					areaElement.getAttribute("fontFamily"));
+			DOM.setStyleAttribute(shadow, "lineHeight",
+					areaElement.getAttribute("lineHeight"));
+			DOM.setStyleAttribute(shadow, "resize",
+					areaElement.getAttribute("none"));
+
+			shadow.setInnerText(getText());
+			com.google.gwt.dom.client.Element body = Document.get().getBody();
+			body.appendChild(shadow);
+			areaElement.setAttribute("height", shadow.getAttribute("height"));
+		}
+
+		public TextAreaAutoResize() {
+			element = getElement();
+			setWidth(PROP_WIDTH);
+			DOM.setStyleAttribute(element, "overflow", "hidden");
+			addKeyUpHandler(new KeyUpHandler() {
+
+				@Override
+				public void onKeyUp(KeyUpEvent event) {
+					resize();
+				}
+			});
+
+			addAttachHandler(new AttachEvent.Handler() {
+
+				@Override
+				public void onAttachOrDetach(AttachEvent event) {
+					if (event.isAttached()) {
+						resize();
+					}
+				}
+			});
+		}
 	}
 
 	protected static class TextAreaGrow extends TextArea {
@@ -150,50 +225,6 @@ public abstract class ViewProp extends ViewNode {
 					if (isAttached()) {
 						resize();
 					}
-				}
-			});
-		}
-	}
-
-	private static class TextAreaSloppyGrow_DELETE_ME extends TextArea {
-
-		@Override
-		public void setText(String text) {
-			super.setText(text);
-			resize();
-		}
-
-		private void resize() {
-			double widthInCharacters = PROP_WIDTH_NUMBER * 1.7;
-			double length = getText().length();
-
-			int lineEstimate = (int) (length / widthInCharacters);
-			if (lineEstimate <= 1) {
-				lineEstimate = 1;
-				addStyleName("mozOneLineFix");
-			} else {
-				removeStyleName("mozOneLineFix");
-			}
-			// ArgMap("onKeyPress: line estimate = " + lineEstimate
-			// );
-			setVisibleLines(lineEstimate);
-			// GWT.log("line estimate:"+lineEstimate);
-			// GWT.log("length:" + length);
-			// GWT.log("widthInCharacters:" + widthInCharacters);
-			// setVisibleLines(10);
-		}
-
-		public TextAreaSloppyGrow_DELETE_ME() {
-			super();
-
-			// this.setCharacterWidth(width);
-			this.setWidth(PROP_WIDTH);
-			setVisibleLines(1);
-			addStyleName("mozOneLineFix");
-
-			this.addKeyUpHandler(new KeyUpHandler() {
-				public void onKeyUp(KeyUpEvent event) {
-					resize();
 				}
 			});
 		}

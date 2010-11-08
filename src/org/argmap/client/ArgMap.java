@@ -324,13 +324,13 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 			} else {
 				sb.append("infoMessage");
 			}
-			sb.append("\">" + sp + sp + sp + sp);
+			sb.append("\">" + sp + sp );
 
 			sb.append(messageList.get(0).content);
 			if (messageList.size() > 1) {
 				sb.append(sp + "(" + messageList.size() + ")");
 			}
-			sb.append(sp + sp + sp + sp + "</span>" + sp + sp + sp + sp);
+			sb.append(sp + sp  + "</span>" + sp + sp);
 		}
 		sb.append("</div>");
 

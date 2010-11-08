@@ -8,13 +8,17 @@
 	border-style: dotted;
 	border-width: 1px;
 	padding: .5em;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	-khtml-border-radius: 5px;
+	border-radius: 5px;
 }
 
 .circularLink {
 	border-color: #FF0000;
 	border-style: dotted;
 	border-width: 2px;
-	}
+}
 
 .searchBoxPanel {
 	background-color: #D0E4F6; /*#92C1F0;*/
@@ -23,12 +27,9 @@
 
 .searchTextBox {
 	margin-top: .5em;
+	height: 1.2em;
 	/*margin-left: .5em;*/ /*margin-right: 5em;*/ /*margin:1em;*/
 	/*padding:5em;*/ /*width: 100%;*/
-}
-
-.searchTextBox:FOCUS {
-	sel
 }
 
 .sideSearchRow {
@@ -36,7 +37,7 @@
 	border-bottom-color: gray;
 	border-bottom-style: solid;
 	padding: .5em;
-	}
+}
 
 .addPropButton {
 	margin-top: .5em;
@@ -52,7 +53,7 @@
 .sideSearchLabel {
 	background-color: #92C1F0;
 	padding: .5em;
-	}
+}
 
 .linkedPropositionTextArea { /*background-color: #FFF1A8;*/
 	/*background-color: #FFFF8B;*/
@@ -72,6 +73,10 @@
 	border-style: solid;
 	border-color: #C9C9C9;
 	border-width: 1px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	-khtml-border-radius: 5px;
+	border-radius: 5px;
 }
 
 .nodeText {
@@ -104,11 +109,19 @@
 .infoMessage {
 	text-align: center;
 	background-color: #FFF1A8;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	-khtml-border-radius: 10px;
+	border-radius: 10px;
 }
 
 .errorMessage {
 	text-align: center;
 	background-color: #FF5151;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	-khtml-border-radius: 10px;
+	border-radius: 10px;
 }
 
 .messageArea {
@@ -139,6 +152,6 @@
 	font-weight: bolder;
 }
 
-.loginPanel{
+.loginPanel {
 	padding: .4em;
-	}
+}
