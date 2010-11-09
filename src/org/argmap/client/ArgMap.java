@@ -21,30 +21,30 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
-//TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
-//TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
-
-/* TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking
- /* TODO: deploy and test speed on actual deployment*/
-//TODO: make sure that searches are indexed
+/*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
-//TODO: try running speed tracer
 
-//TODO: comment the hell out of versions mode!!!!!!! someday I'll need to change it...
-
-//TODO: implement user accounts, email updates of changes, inviting friends
 //TODO: implement proposition strength voting, and scoring algorithm
-//TODO: poll server every few seconds for server side changes (this has to come after versioning I think)
 //TODO: add helpful message along the side (tips box)
+//TODO: implement user accounts, email updates of changes, inviting friends
+//TODO: poll server every few seconds for server side changes (this has to come after versioning I think)
 
-//TODO: batch open icon not visible/clickable on props that reach right screen edge
 /*TODO: a proposition tree begins at time A.  At time C a pre-existing node is linked into the proposition tree.
  * The user browses to a time B between times A and C.  At that time the linked node is not present.
  * However the linked node is open in the tree(as a deleted node, so its changes are displayed in the change list).
  * The result is that there are changes that the user can scroll past that have no apparent effect on the tree
  * very confusing... so only a the changes post dating the linked nodes linking should be added to the change list?
  */
+//TODO: comment the hell out of versions mode!!!!!!! someday I'll need to change it...
+//TODO: try running speed tracer
+
+/* TODO: deploy with big database (~40 nodes) and test speed of search */
+//TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
+//TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
+
+//TODO: batch open icon not visible/clickable on props that reach right screen edge
+
 /*TODO: undoing unlinks does not restore the link's yellow color if the link *currently* is not  
  * linked to by more than one argument because the server sends the current proposition which
  * indicates a link count of 1.  This could be addressed by having a proposition's link/unlink
