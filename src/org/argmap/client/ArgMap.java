@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -105,41 +105,56 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 		messageArea = new HTML();
 		messageMap = new MultiMap<String, Message>();
 		editMode = new ModeEdit(this);
-		mainPanel = new DockLayoutPanel(Style.Unit.EM);
-		modePanel = new TabLayoutPanel(1.8, Style.Unit.EM);
-		loginPanel = new HorizontalPanel();
-
-		GWT.setUncaughtExceptionHandler(this);
-		modePanel.add(editMode, "Find And Collaborate");
-
-		modePanel.addSelectionHandler(new SelectionHandler<Integer>() {
-
+		
+		GWT.runAsync(new RunAsyncCallback() {
+			
 			@Override
-			public void onSelection(SelectionEvent<Integer> event) {
-				if (modePanel.getWidget(modePanel.getSelectedIndex()) == versionsMode) {
-					versionsMode.displayVersions();
-				}
+			public void onSuccess() {
+				mainPanel = new DockLayoutPanel(Style.Unit.EM);
+				modePanel = new TabLayoutPanel(1.8, Style.Unit.EM);
+				loginPanel = new HorizontalPanel();
+
+				GWT.setUncaughtExceptionHandler(ArgMap.this);
+				modePanel.add(editMode, "Find And Collaborate");
+
+				modePanel.addSelectionHandler(new SelectionHandler<Integer>() {
+
+					@Override
+					public void onSelection(SelectionEvent<Integer> event) {
+						if (modePanel.getWidget(modePanel.getSelectedIndex()) == versionsMode) {
+							versionsMode.displayVersions();
+						}
+					}
+				});
+
+				HTML htmlTitle = new HTML(
+						"<div class=\"title\">coreason.org</div>"
+								+ "<div class=\"subTitle\">...mass collaborative reasoning about everything...</div>");
+
+				LayoutPanel bannerPanel = new LayoutPanel();
+				bannerPanel.add(htmlTitle);
+				bannerPanel.add(loginPanel);
+				loginPanel.addStyleName("loginPanel");
+				bannerPanel.setWidgetHorizontalPosition(loginPanel, Alignment.END);
+				mainPanel.addNorth(bannerPanel, 4);
+				mainPanel.addNorth(messageArea, 2);
+				mainPanel.add(modePanel);
+
+				RootLayoutPanel rp = RootLayoutPanel.get();
+				rp.add(mainPanel);
+
+				getLoginInfo();
+
+				
+			}
+			
+			@Override
+			public void onFailure(Throwable reason) {
+				ArgMap.messageTimed("Code download failed", MessageType.ERROR);
+				Log.log("am.oml", "Code download failed" + reason.toString());
+				
 			}
 		});
-
-		HTML htmlTitle = new HTML(
-				"<div class=\"title\">coreason.org</div>"
-						+ "<div class=\"subTitle\">...mass collaborative reasoning about everything...</div>");
-
-		LayoutPanel bannerPanel = new LayoutPanel();
-		bannerPanel.add(htmlTitle);
-		bannerPanel.add(loginPanel);
-		loginPanel.addStyleName("loginPanel");
-		bannerPanel.setWidgetHorizontalPosition(loginPanel, Alignment.END);
-		mainPanel.addNorth(bannerPanel, 4);
-		mainPanel.addNorth(messageArea, 2);
-		mainPanel.add(modePanel);
-
-		RootLayoutPanel rp = RootLayoutPanel.get();
-		rp.add(mainPanel);
-
-		getLoginInfo();
-
 	}
 
 	private void getLoginInfo() {

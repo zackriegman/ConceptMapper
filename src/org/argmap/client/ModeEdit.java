@@ -8,6 +8,8 @@ import org.argmap.client.ArgMapService.PropsAndArgs;
 import org.argmap.client.Search.SearchResultsHandler;
 import org.argmap.client.ServerComm.LocalCallback;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -49,20 +51,20 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	public static final int SEARCH_DELAY = 200;
 
 	private static HTML sideMessageArea;
-	private final Label sideSearchLabel;
-	private final FlexTable sideSearchResults;
-	private final ScrollPanel sideSearchScroll;
-	private final ScrollPanel sideMessageScroll;
-	public final ScrollPanel treeScrollPanel;
-	private final SplitLayoutPanel sideSplit;
+	private Label sideSearchLabel;
+	private FlexTable sideSearchResults;
+	private ScrollPanel sideSearchScroll;
+	private ScrollPanel sideMessageScroll;
+	public ScrollPanel treeScrollPanel;
+	private SplitLayoutPanel sideSplit;
 
-	private final TextBox searchTextBox;
+	private TextBox searchTextBox;
 	private final EditModeTree tree;
-	private final Button addPropButton;
-	private final MainSearchTimer mainSearchTimer;
-	public final SideSearchTimer sideSearchTimer;
-	private final Button mainSearchContinueButton;
-	private final Button sideSearchContinueButton;
+	private Button addPropButton;
+	private MainSearchTimer mainSearchTimer;
+	public SideSearchTimer sideSearchTimer;
+	private Button mainSearchContinueButton;
+	private Button sideSearchContinueButton;
 	private final ArgMap argMap;
 
 	private Search mainSearch;
@@ -90,97 +92,110 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		 */
 		getRootProps();
 
-		/******************
-		 * setup side bar *
-		 ******************/
-		sideMessageArea = new HTML();
-		sideSearchLabel = new Label(
-				"Would you like to use one of these already existing propositions?");
-		sideSearchLabel.addStyleName("sideSearchLabel");
-		sideSearchResults = new FlexTable();
-		sideSplit = new SplitLayoutPanel();
-		sideSearchTimer = new SideSearchTimer();
+		GWT.runAsync(new RunAsyncCallback() {
 
-		sideSearchContinueButton = new Button("loadMoreResults");
-		sideSearchContinueButton.setStylePrimaryName("addPropButton");
-		sideSearchContinueButton.addClickHandler(this);
-		sideSearchContinueButton.setVisible(false);
-		sideSearchLabel.setVisible(false);
-		FlowPanel sideSearchArea = new FlowPanel();
-		sideSearchArea.add(sideSearchLabel);
-		sideSearchArea.add(sideSearchResults);
-		sideSearchArea.add(sideSearchContinueButton);
+			@Override
+			public void onSuccess() {
+				/******************
+				 * setup side bar *
+				 ******************/
+				sideMessageArea = new HTML();
+				sideSearchLabel = new Label(
+						"Would you like to use one of these already existing propositions?");
+				sideSearchLabel.addStyleName("sideSearchLabel");
+				sideSearchResults = new FlexTable();
+				sideSplit = new SplitLayoutPanel();
+				sideSearchTimer = new SideSearchTimer();
 
-		sideSearchScroll = new ScrollPanel(sideSearchArea);
-		sideMessageScroll = new ScrollPanel(sideMessageArea);
+				sideSearchContinueButton = new Button("loadMoreResults");
+				sideSearchContinueButton.setStylePrimaryName("addPropButton");
+				sideSearchContinueButton.addClickHandler(ModeEdit.this);
+				sideSearchContinueButton.setVisible(false);
+				sideSearchLabel.setVisible(false);
+				FlowPanel sideSearchArea = new FlowPanel();
+				sideSearchArea.add(sideSearchLabel);
+				sideSearchArea.add(sideSearchResults);
+				sideSearchArea.add(sideSearchContinueButton);
 
-		sideSplit.add(sideMessageScroll);
-		/*
-		 * sideSearchScroll is not added here. Instead it is added/removed as
-		 * necessary depending on whether there are search results
-		 */
+				sideSearchScroll = new ScrollPanel(sideSearchArea);
+				sideMessageScroll = new ScrollPanel(sideMessageArea);
 
-		/*******************
-		 * setup main area *
-		 *******************/
+				sideSplit.add(sideMessageScroll);
+				/*
+				 * sideSearchScroll is not added here. Instead it is
+				 * added/removed as necessary depending on whether there are
+				 * search results
+				 */
 
-		/*
-		 * setup the search box
-		 */
-		mainSearchTimer = new MainSearchTimer();
-		searchTextBox = new TextBox();
+				/*******************
+				 * setup main area *
+				 *******************/
 
-		addPropButton = new Button("Add as new proposition");
-		addPropButton.setStylePrimaryName("addPropButton");
-		addPropButton.setEnabled(false);
-		addPropButton.addClickHandler(this);
+				/*
+				 * setup the search box
+				 */
+				mainSearchTimer = new MainSearchTimer();
+				searchTextBox = new TextBox();
 
-		searchTextBox.addKeyUpHandler(this);
-		searchTextBox.addStyleName("searchTextBox");
-		searchTextBox.setWidth("95%");
-		Label searchLabel = new Label("Search:");
-		searchLabel.addStyleName("searchLabel");
+				addPropButton = new Button("Add as new proposition");
+				addPropButton.setStylePrimaryName("addPropButton");
+				addPropButton.setEnabled(false);
+				addPropButton.addClickHandler(ModeEdit.this);
 
-		DockLayoutPanel searchBoxPanel = new DockLayoutPanel(Unit.EM);
-		searchBoxPanel.addStyleName("searchBoxPanel");
-		searchBoxPanel.addWest(searchLabel, 4.5);
-		/* this flow panel is here so button doesn't grow to tall... */
-		FlowPanel addButtonFlowPanel = new FlowPanel();
-		addButtonFlowPanel.add(addPropButton);
-		searchBoxPanel.addEast(addButtonFlowPanel, 16);
-		searchBoxPanel.add(searchTextBox);
+				searchTextBox.addKeyUpHandler(ModeEdit.this);
+				searchTextBox.addStyleName("searchTextBox");
+				searchTextBox.setWidth("95%");
+				Label searchLabel = new Label("Search:");
+				searchLabel.addStyleName("searchLabel");
 
-		/*
-		 * setup the search continue button
-		 */
-		mainSearchContinueButton = new Button("load more results");
-		mainSearchContinueButton.addClickHandler(this);
-		mainSearchContinueButton.setVisible(false);
-		mainSearchContinueButton.setStylePrimaryName("addPropButton");
+				DockLayoutPanel searchBoxPanel = new DockLayoutPanel(Unit.EM);
+				searchBoxPanel.addStyleName("searchBoxPanel");
+				searchBoxPanel.addWest(searchLabel, 4.5);
+				/* this flow panel is here so button doesn't grow to tall... */
+				FlowPanel addButtonFlowPanel = new FlowPanel();
+				addButtonFlowPanel.add(addPropButton);
+				searchBoxPanel.addEast(addButtonFlowPanel, 16);
+				searchBoxPanel.add(searchTextBox);
 
-		/*
-		 * add the tree and the search continue button to a scroll panel
-		 */
-		FlowPanel treeFlowPanel = new FlowPanel();
-		treeFlowPanel.add(tree);
-		treeFlowPanel.add(mainSearchContinueButton);
-		treeScrollPanel = new ScrollPanel(treeFlowPanel);
+				/*
+				 * setup the search continue button
+				 */
+				mainSearchContinueButton = new Button("load more results");
+				mainSearchContinueButton.addClickHandler(ModeEdit.this);
+				mainSearchContinueButton.setVisible(false);
+				mainSearchContinueButton.setStylePrimaryName("addPropButton");
 
-		/*
-		 * add the search box and tree to the main area
-		 */
-		DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.EM);
-		mainPanel.addNorth(searchBoxPanel, 2.7);
-		mainPanel.add(treeScrollPanel);
+				/*
+				 * add the tree and the search continue button to a scroll panel
+				 */
+				FlowPanel treeFlowPanel = new FlowPanel();
+				treeFlowPanel.add(tree);
+				treeFlowPanel.add(mainSearchContinueButton);
+				treeScrollPanel = new ScrollPanel(treeFlowPanel);
 
-		/*************************
-		 * set up the whole page *
-		 *************************/
+				/*
+				 * add the search box and tree to the main area
+				 */
+				DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.EM);
+				mainPanel.addNorth(searchBoxPanel, 2.7);
+				mainPanel.add(treeScrollPanel);
 
-		SplitLayoutPanel mainSplit = new SplitLayoutPanel();
-		mainSplit.addEast(sideSplit, 300);
-		mainSplit.add(mainPanel);
-		initWidget(mainSplit);
+				/*************************
+				 * set up the whole page *
+				 *************************/
+
+				SplitLayoutPanel mainSplit = new SplitLayoutPanel();
+				mainSplit.addEast(sideSplit, 300);
+				mainSplit.add(mainPanel);
+				initWidget(mainSplit);
+			}
+
+			@Override
+			public void onFailure(Throwable reason) {
+				ArgMap.messageTimed("Code download failed", MessageType.ERROR);
+				Log.log("me.me", "Code download failed" + reason.toString());
+			}
+		});
 	}
 
 	private void getRootProps() {
@@ -202,7 +217,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 							// propView.logNodeRecursive(0, "em.em.cb", true);
 						}
 						tree.resetState();
-						if (Log.on) tree.logTree(log);
+						if (Log.on)
+							tree.logTree(log);
 						log.finish();
 
 					}
@@ -276,9 +292,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				ServerComm.replaceWithLinkAndGet(parentArgView.argument,
 						propToLinkTo, propViewToRemove.proposition, callback);
 			} else {
-				ArgMap.messageTimed(
-						"Cannot link to existing proposition when proposition currently being edited has children",
-						MessageType.ERROR);
+				ArgMap
+						.messageTimed(
+								"Cannot link to existing proposition when proposition currently being edited has children",
+								MessageType.ERROR);
 			}
 
 		}
@@ -334,12 +351,13 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 	private void sideSearchAppendResults(PropsAndArgs propMatches) {
 		int i = sideSearchResults.getRowCount();
-		HTMLTable.RowFormatter rowFormatter = sideSearchResults.getRowFormatter();
+		HTMLTable.RowFormatter rowFormatter = sideSearchResults
+				.getRowFormatter();
 		for (Proposition prop : propMatches.rootProps) {
 			sideSearchResults.setText(i, 0, prop.getContent());
 			sideSearchResults.setWidget(i, 1, new SideSearchButton(i,
 					propMatches.rootProps));
-			//rowFormatter.addStyle(i, "sideSearchRow");
+			// rowFormatter.addStyle(i, "sideSearchRow");
 			rowFormatter.setStylePrimaryName(i, "sideSearchRow");
 			i++;
 		}
@@ -483,10 +501,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				}
 			}
 		}
-		
-		protected boolean stringsDifferent(){
-			return Search.stringsEffectivelyDifferent(getPreviousSearchString(),
-					getNewSearchString());
+
+		protected boolean stringsDifferent() {
+			return Search.stringsEffectivelyDifferent(
+					getPreviousSearchString(), getNewSearchString());
 		}
 
 		public abstract String getPreviousSearchString();
@@ -654,8 +672,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			if (!source.isLoaded()) {
 				loadFromServer(source, 2, 1);
 			} else {
-				List<ViewNode> list = new ArrayList<ViewNode>(
-						source.getChildCount());
+				List<ViewNode> list = new ArrayList<ViewNode>(source
+						.getChildCount());
 				for (int i = 0; i < source.getChildCount(); i++) {
 					if (!source.getChildView(i).isLoaded()) {
 						list.add(source.getChildView(i));
