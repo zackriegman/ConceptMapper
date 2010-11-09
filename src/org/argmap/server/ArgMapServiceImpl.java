@@ -2,12 +2,15 @@ package org.argmap.server;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -96,8 +99,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		 * reason to do this. Instead we can just query for all props and all
 		 * args and return them all.
 		 */
-		Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
-				"linkCount =", 0).order("-creationDate").limit(30);
+		Query<Proposition> propQuery = ofy.query(Proposition.class)
+				.filter("linkCount =", 0).order("-creationDate").limit(30);
 
 		List<Proposition> rootProps = propQuery.list();
 		Nodes nodes = new Nodes();
@@ -155,8 +158,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public Long addProp(Long parentArgID, int position, String content) {
+		content = content.trim();
 
-		//log.finest("addProp()");
+		// log.finest("addProp()");
 		Proposition newProposition = new Proposition();
 		newProposition.creationDate = new Date();
 		newProposition.content = content;
@@ -186,6 +190,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		Change change = new Change(ChangeType.PROP_ADDITION);
 		change.propID = newProposition.id;
 		change.argID = parentArgID;
+		change.newContent = content;
+		change.argPropIndex = position;
 		saveVersionInfo(change);
 
 		return newProposition.id;
@@ -209,6 +215,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			Change change = new Change(ChangeType.PROP_LINK);
 			change.argID = parentArgID;
 			change.propID = proposition.id;
+			change.argPropIndex = position;
+			change.link = proposition;
 			saveVersionInfo(change);
 		} finally {
 			childLock.unlock();
@@ -235,7 +243,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 					"cannot delete proposition with arguments; delete arguments first");
 		}
 		change.propID = prop.id;
-		change.content = prop.content;
+		change.oldContent = prop.content;
 		change.propLinkCount = prop.linkCount;
 
 		/* get all the arguments that use this proposition */
@@ -307,7 +315,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			change.argID = parentArgID;
 			change.propID = proposition.id;
 			change.argPropIndex = propIndex;
-			change.content = proposition.content;
+			change.oldContent = proposition.content;
+			change.link = proposition;
 			saveVersionInfo(change);
 		} finally {
 			parentLock.unlock();
@@ -317,6 +326,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public void updateProp(Long propID, String content) throws ServiceException {
+		content = content.trim();
 		logln("propID:" + propID + "; content:" + content);
 
 		Change change = new Change(ChangeType.PROP_MODIFICATION);
@@ -325,13 +335,14 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			lock.lock();
 			Proposition prop = ofy.get(Proposition.class, propID);
 			if (prop.getContent() != null
-					&& prop.getContent().trim().equals(content.trim())) {
+					&& prop.getContent().trim().equals(content)) {
 				throw new ServiceException(
 						"Cannot update proposition content:  content not changed!");
 			}
 
 			change.propID = prop.id;
-			change.content = prop.content;
+			change.oldContent = prop.content;
+			change.newContent = content;
 			// TODO is this line necessary for some reason?
 			// change.propTopLevel = prop.topLevel;
 
@@ -341,7 +352,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			 */
 			saveVersionInfo(change);
 
-			prop.setContent(content.trim());
+			prop.setContent(content);
 			prop.tokens = getTokensForIndexingOrQuery(content, 30);
 			ofy.put(prop);
 		} finally {
@@ -371,7 +382,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			argDeletionChange.propID = parentProp.id;
 			argDeletionChange.argID = argument.id;
 			argDeletionChange.argPro = argument.pro;
-			argDeletionChange.content = argument.content;
+			argDeletionChange.oldContent = argument.content;
 			argDeletionChange.argPropIndex = parentProp.childIDs
 					.indexOf(argument.id);
 			/*
@@ -419,12 +430,14 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			ofy.put(newArg);
 			timer.lap("]]]]");
 			parentProp.childIDs.add(newArg.id);
+
 			timer.lap("\\\\");
 			ofy.put(parentProp);
 			timer.lap(";;;;");
 			Change change = new Change(ChangeType.ARG_ADDITION);
 			change.argID = newArg.id;
 			change.propID = parentPropID;
+			change.argPropIndex = parentProp.childIDs.indexOf(newArg.id);
 			saveVersionInfo(change);
 			timer.lap("````");
 			return newArg.id;
@@ -436,19 +449,20 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public void updateArg(Long argID, String content) throws ServiceException {
+		content = content.trim();
 		Lock lock = getNodeLock(argID);
 		try {
 			lock.lock();
 			Change change = new Change(ChangeType.ARG_MODIFICATION);
 			Argument arg = ofy.get(Argument.class, argID);
-			if (arg.content != null
-					&& arg.content.trim().equals(content.trim())) {
+			if (arg.content != null && arg.content.trim().equals(content)) {
 				throw new ServiceException(
 						"Cannot update argument title:  title not changed!");
 			}
 
 			change.argID = arg.id;
-			change.content = arg.content;
+			change.oldContent = arg.content;
+			change.newContent = content;
 			// TODO is this line necessary for some reason?
 			// change.propTopLevel = prop.topLevel;
 
@@ -458,7 +472,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			 */
 			saveVersionInfo(change);
 
-			arg.content = content.trim();
+			arg.content = content;
 			ofy.put(arg);
 		} finally {
 			lock.unlock();
@@ -497,6 +511,101 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 
 		return nodesChanges;
+	}
+
+	@Override
+	public ForwardChanges getNewChanges(Date startDate, Set<Long> propIDs,
+			Set<Long> argIDs) throws ServiceException {
+
+		/*
+		 * hmmm it's going to be more complicated than this, I will need to
+		 * recursively get added nodes, just like I need to recursively get
+		 * deleted nodes when getting history. Well... not necessarily... added
+		 * nodes can just be shown as closed, and the user can open them if they
+		 * want to fetch them, just like all other lazy loading in edit mode.
+		 * However, that means I will at least need to get one more layer. I
+		 * need to get the changes to added nodes. So opened nodes in edit view
+		 * will automatically have new nodes pop up and those nodes will
+		 * automatically have their content updated, and their open icon updated
+		 * ( according to whether they have any children). I don't need
+		 * recursion, but I do need to fetch one layer deeper... Well, if I want
+		 * the nodes to be prefetched (which is important for recognizing
+		 * circular links) then I need to fetch two layers deeper. I will need
+		 * the new node and the new nodes children. Does it make any sense to
+		 * send the changes for the new node instead of just sending the node
+		 * itself? Well, before I send the node I'll want to make sure that it
+		 * isn't deleted... but I'll know that when I try to fetch the node. But
+		 * its possible that it will be deleted after I fetch it in which case
+		 * the client will be in an inconsistent state from the server. If it's
+		 * done completely based on changes, I think we can avoid this
+		 * inconsistency problem. So I don't need to send any nodes along with
+		 * the changes, I just need to send the changes themselves (two layers
+		 * deep) and let the client create the nodes itself.
+		 */
+
+		ForwardChanges forwardChanges = new ForwardChanges();
+		forwardChanges.date = new Date();
+
+		NavigableMap<Date, Change> changes = new TreeMap<Date, Change>();
+
+		for (int i = 0; i < 3; i++) {
+			Set<Long> newPropIDs = new HashSet<Long>();
+			Set<Long> newArgIDs = new HashSet<Long>();
+
+			Query<Change> query = ofy.query(Change.class)
+					.filter("propID in", propIDs).filter("date >", startDate)
+					.filter("date <", forwardChanges.date);
+			for (Change change : query) {
+				switch (change.changeType) {
+				case ARG_ADDITION:
+					newArgIDs.add(change.argID);
+				case ARG_DELETION:
+				case PROP_MODIFICATION:
+					changes.put(change.date, change);
+					break;
+				case ARG_MODIFICATION:
+					// this case should never happen
+					assert false;
+				case PROP_DELETION:
+				case PROP_ADDITION:
+				case PROP_LINK:
+				case PROP_UNLINK:
+					// do nothing
+					break;
+				}
+			}
+
+			query = ofy.query(Change.class).filter("argID in", argIDs)
+					.filter("date >", startDate)
+					.filter("date <", forwardChanges.date);
+			for (Change change : query) {
+				switch (change.changeType) {
+				case PROP_LINK:
+				case PROP_ADDITION:
+					newPropIDs.add(change.propID);
+				case PROP_UNLINK:
+				case PROP_DELETION:
+				case ARG_MODIFICATION:
+					changes.put(change.date, change);
+					break;
+				case PROP_MODIFICATION:
+					// this case should never happen
+					assert false;
+				case ARG_DELETION:
+				case ARG_ADDITION:
+					// do nothing
+					break;
+				}
+			}
+
+			propIDs = newPropIDs;
+			argIDs = newArgIDs;
+		}
+
+		// TODO make sure these are sorted on DATE!!!!
+		forwardChanges.changes = new ArrayList<Change>(changes.values());
+
+		return forwardChanges;
 	}
 
 	@Override
@@ -737,7 +846,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			if (query.count() == 0) {
 				Change change = new Change(ChangeType.PROP_DELETION);
 				change.propID = removeProp.id;
-				change.content = removeProp.content;
+				change.oldContent = removeProp.content;
 				change.propLinkCount = removeProp.linkCount;
 
 				ofy.delete(removeProp);
@@ -751,7 +860,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			else if (query.count() == 1) {
 				Change change = new Change(ChangeType.PROP_DELETION);
 				change.propID = removeProp.id;
-				change.content = removeProp.content;
+				change.oldContent = removeProp.content;
 				change.propLinkCount = removeProp.linkCount;
 				change.argID = parentArgID;
 				change.argPropIndex = index;
@@ -772,6 +881,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				change.argID = parentArgID;
 				change.propID = removePropID;
 				change.argPropIndex = index;
+				change.link = removeProp;
 
 				parentArg.childIDs.remove(index);
 
@@ -785,6 +895,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			Change change = new Change(ChangeType.PROP_LINK);
 			change.argID = parentArgID;
 			change.propID = linkPropID;
+			change.link = linkProp;
 
 			parentArg.childIDs.add(index, linkPropID);
 			ofy.put(parentArg);
@@ -847,5 +958,4 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	public void doUnexpectedFailure(java.lang.Throwable e) {
 		log.log(Level.SEVERE, "Uncaught exception", e);
 	}
-
 }

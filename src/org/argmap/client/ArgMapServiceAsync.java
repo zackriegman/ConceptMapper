@@ -1,9 +1,12 @@
 package org.argmap.client;
 
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.argmap.client.ArgMapService.ForwardChanges;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
 import org.argmap.client.ArgMapService.PropsAndArgs;
@@ -66,4 +69,9 @@ public interface ArgMapServiceAsync {
 
 	void searchProps(String searchString, String searchName, int resultLimit,
 			List<Long> filerNodeIDs, AsyncCallback<PropsAndArgs> callback);
+
+	void getNewChanges(Date date, Set<Long> propIDs, Set<Long> argIDs,
+			AsyncCallback<ForwardChanges> callback);
+
+
 }

@@ -1,9 +1,11 @@
 package org.argmap.client;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.argmap.client.ArgMap.MessageType;
+import org.argmap.client.ArgMapService.ForwardChanges;
 import org.argmap.client.ArgMapService.PropsAndArgs;
 import org.argmap.client.Search.SearchResultsHandler;
 import org.argmap.client.ServerComm.LocalCallback;
@@ -67,6 +69,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	private Button sideSearchContinueButton;
 	private final ArgMap argMap;
 
+	private final Timer updateTimer;
 	private Search mainSearch;
 	private Search sideSearch;
 
@@ -91,6 +94,17 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		 * get the props
 		 */
 		getRootProps();
+
+		/*
+		 * setup the update timer
+		 */
+		updateTimer = new Timer() {
+
+			@Override
+			public void run() {
+				getNewChangesAndUpdateTree();
+			}
+		};
 
 		GWT.runAsync(new RunAsyncCallback() {
 
@@ -217,10 +231,50 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 							// propView.logNodeRecursive(0, "em.em.cb", true);
 						}
 						tree.resetState();
-						if (Log.on)
-							tree.logTree(log);
+						if (Log.on) tree.logTree(log);
+
+						updateTimer.scheduleRepeating(10000);
 						log.finish();
 
+					}
+				});
+	}
+
+	/*TODO make sure lastUpdate is updated on every search and also on initial getRootProps
+	 *TODO make sure that the loadedProp/Args maps are updated
+	 *TODO also might make sense to think more about how to make sure that a
+	 *search doesn't step on an update.  So the flow that I'm concerned about
+	 *in that case would be, update starts before search (search can clear
+	 *lastUpdate when it begins and set it to a new date when it returns) and
+	 *search starts and returns while update is still working, and then clears the
+	 *tree while update is still working... might not be a problem actually...
+	 *because the nodes that update was working on will still be in memory, update
+	 *can finish updating the pointless nodes, even after search has cleared the tree...hmmm...
+	 *TODO might want to have a way to remove deleted search results so that the user
+	 *doesn't start editing a deleted item.  This should be easy, just supply the server
+	 *with a list of root items, and return add/remove changes for them...
+	 */
+	private Date lastUpdate;
+	private final MultiMap<Long, ViewProp> loadedProps = new MultiMap<Long, ViewProp>();
+	private final MultiMap<Long, ViewArg> loadedArgs = new MultiMap<Long, ViewArg>();
+
+	private void getNewChangesAndUpdateTree(final Date startDate) {
+
+		ServerComm.getNewChanges(lastUpdate, loadedProps.keySet(),
+				loadedArgs.keySet(),
+				new LocalCallback<ArgMapService.ForwardChanges>() {
+
+					@Override
+					public void call(ForwardChanges changes) {
+						/* check to make sure that a search subsequent to this update
+						 * being called hasn't changed the tree and the lastUpdate date.
+						 * If it has, then these changes do not apply to the existing tree
+						 * and they should be discarded.
+						 */
+						if( startDate != lastUpdate ){
+							return;
+						}
+						//TODO process changes, making sure to update the loadedProps/Args maps as I go
 					}
 				});
 	}
@@ -292,10 +346,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				ServerComm.replaceWithLinkAndGet(parentArgView.argument,
 						propToLinkTo, propViewToRemove.proposition, callback);
 			} else {
-				ArgMap
-						.messageTimed(
-								"Cannot link to existing proposition when proposition currently being edited has children",
-								MessageType.ERROR);
+				ArgMap.messageTimed(
+						"Cannot link to existing proposition when proposition currently being edited has children",
+						MessageType.ERROR);
 			}
 
 		}
@@ -672,8 +725,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			if (!source.isLoaded()) {
 				loadFromServer(source, 2, 1);
 			} else {
-				List<ViewNode> list = new ArrayList<ViewNode>(source
-						.getChildCount());
+				List<ViewNode> list = new ArrayList<ViewNode>(
+						source.getChildCount());
 				for (int i = 0; i < source.getChildCount(); i++) {
 					if (!source.getChildView(i).isLoaded()) {
 						list.add(source.getChildView(i));

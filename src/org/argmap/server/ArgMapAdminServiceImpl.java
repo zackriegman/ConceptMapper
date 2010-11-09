@@ -11,7 +11,6 @@ import org.argmap.client.Proposition;
 import org.argmap.client.ServiceException;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
-import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
 
 public class ArgMapAdminServiceImpl extends RemoteServiceServlet implements
@@ -26,7 +25,7 @@ public class ArgMapAdminServiceImpl extends RemoteServiceServlet implements
 		ObjectifyService.register(Change.class);
 	}
 
-	private final Objectify ofy = ObjectifyService.begin();
+	//private final Objectify ofy = ObjectifyService.begin();
 
 	/** add to suppress warnings... */
 	private static final long serialVersionUID = 1L;

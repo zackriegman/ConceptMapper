@@ -1,11 +1,14 @@
 package org.argmap.client;
 
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 import org.argmap.client.ArgMap.MessageType;
+import org.argmap.client.ArgMapService.ForwardChanges;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
 import org.argmap.client.ArgMapService.PropsAndArgs;
@@ -64,12 +67,12 @@ public class ServerComm {
 			this.successMessage = successMessage;
 			this.startMessage = startMessage;
 			message = ArgMap.getMessage();
-			messageForStart( startMessage, message );
+			messageForStart(startMessage, message);
 		}
 
 		@Override
 		public final void onFailure(Throwable caught) {
-			messageForFailure( startMessage, message );
+			messageForFailure(startMessage, message);
 		}
 
 		@Override
@@ -78,18 +81,20 @@ public class ServerComm {
 			if (localCallback != null) {
 				localCallback.call(result);
 			}
-			messageForSuccess( successMessage, message );
+			messageForSuccess(successMessage, message);
 		}
 	}
-	
-	private static void messageForStart( String startMessage, ArgMap.Message message ){
+
+	private static void messageForStart(String startMessage,
+			ArgMap.Message message) {
 		if (startMessage != null) {
 			message.setMessage(startMessage, MessageType.INFO);
 			message.display();
 		}
 	}
-	
-	private static void messageForFailure( String startMessage, ArgMap.Message message ){
+
+	private static void messageForFailure(String startMessage,
+			ArgMap.Message message) {
 		if (startMessage != null) {
 			message.setMessage("Server error while " + startMessage,
 					MessageType.ERROR);
@@ -98,10 +103,11 @@ public class ServerComm {
 		}
 		message.display();
 		message.hideAfter(15000);
-		//Window.alert("Exception: " + caught.toString());
+		// Window.alert("Exception: " + caught.toString());
 	}
-	
-	private static void messageForSuccess( String successMessage, ArgMap.Message message ){
+
+	private static void messageForSuccess(String successMessage,
+			ArgMap.Message message) {
 		if (successMessage != null) {
 			message.setMessage(successMessage);
 			message.display();
@@ -129,23 +135,24 @@ public class ServerComm {
 				});
 	}
 
-	private static abstract class ServerCallbackWithDispatch<T>
-			implements AsyncCallback<T>, Command {
+	private static abstract class ServerCallbackWithDispatch<T> implements
+			AsyncCallback<T>, Command {
 		ArgMap.Message message;
 		String successMessage;
 		String startMessage;
 
-		public ServerCallbackWithDispatch(String startMessage, String successMessage) {
+		public ServerCallbackWithDispatch(String startMessage,
+				String successMessage) {
 			this.startMessage = startMessage;
 			this.successMessage = successMessage;
 			message = ArgMap.getMessage();
-			messageForStart( startMessage, message );
+			messageForStart(startMessage, message);
 		}
 
 		@Override
 		public final void onFailure(Throwable caught) {
 			dispatchCommand();
-			messageForFailure( startMessage, message );
+			messageForFailure(startMessage, message);
 		}
 
 		@Override
@@ -159,47 +166,47 @@ public class ServerComm {
 			 */
 			doOnSuccess(result);
 			dispatchCommand();
-			messageForSuccess( successMessage, message );
+			messageForSuccess(successMessage, message);
 		}
 
 		public void doOnSuccess(T result) {
 		};
 	}
 
-//	private static abstract class ServerCallbackWithDispatch<T> implements
-//			AsyncCallback<T>, Command {
-//		String message;
-//
-//		public ServerCallbackWithDispatch(String successMessage) {
-//			this.message = successMessage;
-//		}
-//
-//		@Override
-//		public final void onFailure(Throwable caught) {
-//			dispatchCommand();
-//			handleFailure(message, caught);
-//		}
-//
-//		@Override
-//		public final void onSuccess(T result) {
-//
-//			/*
-//			 * this must come before dispatchCommand() otherwise the client
-//			 * might send a request to add a proposition to an argument before
-//			 * the argument has been assigned an id by the return call from the
-//			 * server...
-//			 */
-//			doOnSuccess(result);
-//			dispatchCommand();
-//			if (message != null) {
-//				handleSuccess(message);
-//			}
-//
-//		}
-//
-//		public void doOnSuccess(T result) {
-//		};
-//	}
+	// private static abstract class ServerCallbackWithDispatch<T> implements
+	// AsyncCallback<T>, Command {
+	// String message;
+	//
+	// public ServerCallbackWithDispatch(String successMessage) {
+	// this.message = successMessage;
+	// }
+	//
+	// @Override
+	// public final void onFailure(Throwable caught) {
+	// dispatchCommand();
+	// handleFailure(message, caught);
+	// }
+	//
+	// @Override
+	// public final void onSuccess(T result) {
+	//
+	// /*
+	// * this must come before dispatchCommand() otherwise the client
+	// * might send a request to add a proposition to an argument before
+	// * the argument has been assigned an id by the return call from the
+	// * server...
+	// */
+	// doOnSuccess(result);
+	// dispatchCommand();
+	// if (message != null) {
+	// handleSuccess(message);
+	// }
+	//
+	// }
+	//
+	// public void doOnSuccess(T result) {
+	// };
+	// }
 
 	public static void getRootProps(int depthLimit,
 			LocalCallback<PropsAndArgs> localCallback) {
@@ -285,8 +292,7 @@ public class ServerComm {
 	}
 
 	public static void deleteProp(final Proposition prop) {
-		queueCommand(new ServerCallbackWithDispatch<Void>(
-				"saving...", "saved") {
+		queueCommand(new ServerCallbackWithDispatch<Void>("saving...", "saved") {
 			@Override
 			public void execute() {
 				argMapService.deleteProp(prop.id, this);
@@ -305,8 +311,7 @@ public class ServerComm {
 
 	public static void unlinkProp(final Argument parentArg,
 			final Proposition unlinkProp) {
-		queueCommand(new ServerCallbackWithDispatch<Void>(
-				"saving...", "saved") {
+		queueCommand(new ServerCallbackWithDispatch<Void>("saving...", "saved") {
 			@Override
 			public void execute() {
 				argMapService.unlinkProp(parentArg.id, unlinkProp.id, this);
@@ -324,8 +329,7 @@ public class ServerComm {
 	}
 
 	public static void updateProp(final Proposition prop) {
-		queueCommand(new ServerCallbackWithDispatch<Void>(
-				"saving...", "saved") {
+		queueCommand(new ServerCallbackWithDispatch<Void>("saving...", "saved") {
 			@Override
 			public void execute() {
 				argMapService.updateProp(prop.id, prop.getContent(), this);
@@ -356,8 +360,7 @@ public class ServerComm {
 	public static void replaceWithLinkAndGet(final Argument parentArg,
 			final Proposition linkProp, final Proposition removeProp,
 			final LocalCallback<Nodes> localCallback) {
-		queueCommand(new ServerCallbackWithDispatch<Nodes>(
-				"saving...", "saved") {
+		queueCommand(new ServerCallbackWithDispatch<Nodes>("saving...", "saved") {
 			@Override
 			public void execute() {
 				argMapService.replaceWithLinkAndGet(parentArg.id, linkProp.id,
@@ -369,5 +372,11 @@ public class ServerComm {
 				localCallback.call(result);
 			}
 		});
+	}
+
+	public static void getNewChanges(Date date, Set<Long> propIDs,
+			Set<Long> argIDs, LocalCallback<ForwardChanges> localCallback) {
+		argMapService.getNewChanges(date, propIDs, argIDs,
+				new ServerCallback<ArgMapService.ForwardChanges>(localCallback, "refreshing...", "refreshed") );
 	}
 }

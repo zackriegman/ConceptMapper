@@ -59,4 +59,8 @@ public class MultiMap<K, V> {
 	public Collection<List<V>> values() {
 		return map.values();
 	}
+	
+	public Set<K> keySet(){
+		return map.keySet();
+	}
 }

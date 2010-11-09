@@ -749,7 +749,7 @@ public class ModeVersions extends ResizeComposite implements
 					 * anyway...)
 					 */
 					if (viewNode instanceof ViewPropVer) {
-						((ViewPropVer) viewNode).proposition.content = vC.change.content;
+						((ViewPropVer) viewNode).proposition.content = vC.change.oldContent;
 					}
 					break;
 				}
@@ -772,7 +772,7 @@ public class ModeVersions extends ResizeComposite implements
 					 * a different change...
 					 */
 					mapPropContent.put(vC, propView.getContent());
-					propView.setContent(vC.change.content);
+					propView.setContent(vC.change.oldContent);
 					break;
 				}
 				case ARG_ADDITION: {
@@ -796,7 +796,7 @@ public class ModeVersions extends ResizeComposite implements
 					if (deletedView instanceof ViewArgVer) {
 						ViewArg viewArgVer = (ViewArg) deletedView;
 						viewArgVer.setPro(vC.change.argPro);
-						viewArgVer.setArgTitle(vC.change.content);
+						viewArgVer.setArgTitle(vC.change.oldContent);
 					}
 					break;
 				}
@@ -804,7 +804,7 @@ public class ModeVersions extends ResizeComposite implements
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
 					/* NOTE: see not regarding arg modification */
 					mapArgTitle.put(vC, argView.getArgTitle());
-					argView.setArgTitle(vC.change.content);
+					argView.setArgTitle(vC.change.oldContent);
 					break;
 				}
 				}

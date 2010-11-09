@@ -3,6 +3,7 @@ package org.argmap.client;
 import java.io.Serializable;
 import java.util.Date;
 
+import javax.persistence.Embedded;
 import javax.persistence.Id;
 
 import com.googlecode.objectify.annotation.Cached;
@@ -89,7 +90,9 @@ public class Change implements Serializable {
 	 * 
 	 * For change type: ARG_MODIFICATION content refers to the argument title
 	 */
-	public String content;
+	public String oldContent;
+	
+	public String newContent;
 
 	/*
 	 * For change types: PROP_DELETION, PROP_ADDITION, PROP_UNLINK, PROP_LINK
@@ -103,6 +106,9 @@ public class Change implements Serializable {
 	public Long argID;
 	public int argPropIndex = -1;
 	public boolean argPro;
+	
+	@Embedded
+	public Proposition link;
 
 	public Change() {
 
@@ -171,7 +177,7 @@ public class Change implements Serializable {
 	@Override
 	public String toString() {
 		return "id:" + id + "; changeType:" + changeType + "; argID:" + argID
-				+ "; propID:" + propID + "; content:" + content + "; date:"
+				+ "; propID:" + propID + "; content:" + oldContent + "; date:"
 				+ date + "; sessionID:" + sessionID;
 	}
 

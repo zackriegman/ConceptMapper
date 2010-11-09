@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -24,6 +24,14 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
+/*TODO: move changes from propID/argID to parentID/childID (this will make querying more efficient:  want
+ * all the changes having to do with a particular node?  Just query on parentID with that node's ID.
+ * Hmmm... what about prop adds where the proposition has content?  Anyway, the idea being, that when
+ * a node is updated we store its id in the parentID.  So when we query on parentID we get all the additions to,
+ * deletions from, and content modifications of, the node and nothing else.  Right now querying on propID
+ * gives not only additions to, deletions from, and content modifications of, the prop, it also gives additions of,
+ * links of, and deletions of the prop, which in my current paradigm for handling changes, I don't need.
+ */
 
 //TODO: implement proposition strength voting, and scoring algorithm
 //TODO: add helpful message along the side (tips box)

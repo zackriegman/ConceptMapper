@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 
 import com.google.gwt.user.client.rpc.RemoteService;
@@ -97,6 +98,14 @@ public interface ArgMapService extends RemoteService {
 		}
 
 	}
+	
+	public class ForwardChanges implements Serializable {
+		private static final long serialVersionUID = 1L;
+		public List<Change> changes;
+		public Date date;
+	}
+	
+	public ForwardChanges getNewChanges(Date date, Set<Long> propIDs, Set<Long> argIDs ) throws ServiceException;
 
 	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs)
 			throws ServiceException;
