@@ -302,11 +302,11 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		int treePosition = parentArgView().getChildIndex(this);
 		ViewPropEdit newPropView = new ViewPropEdit();
 		if (cursorPosition == 0) {
-			parentArgView().insertChildViewAt(treePosition, newPropView);
+			parentArgView().insertItem(treePosition, newPropView);
 			ServerComm.addProp(newPropView.proposition,
 					parentArgView().argument, treePosition);
 		} else {
-			parentArgView().insertChildViewAt(treePosition + 1, newPropView);
+			parentArgView().insertItem(treePosition + 1, newPropView);
 
 			// then split the text between the current and new proposition
 			content = textArea.getText();
@@ -424,7 +424,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	@Override
 	public void onMouseOver(MouseOverEvent event) {
 
-		if (!isLoaded()) {
+		if (!isLoaded() && hasID() ) {
 			// topPanel.add(expandButton, 580, 2);
 			topPanel.add(expandButton);
 			expandButton.setVisible(true);

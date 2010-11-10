@@ -63,7 +63,10 @@ public abstract class ViewProp extends ViewNode {
 
 	@Override
 	public Long getNodeID() {
-		return proposition.id;
+		if( proposition != null ){
+			return proposition.id;
+		}
+		else return null;
 	}
 
 	public Argument parentArgument() {

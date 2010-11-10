@@ -63,4 +63,8 @@ public class MultiMap<K, V> {
 	public Set<K> keySet(){
 		return map.keySet();
 	}
+	
+	public void clear(){
+		map.clear();
+	}
 }

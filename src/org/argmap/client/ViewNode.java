@@ -1,10 +1,8 @@
 package org.argmap.client;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 
 import com.google.gwt.user.client.ui.TreeItem;
 
@@ -12,30 +10,87 @@ public abstract class ViewNode extends TreeItem {
 	public abstract Long getNodeID();
 
 	private boolean isOpen = true;
-	private boolean isLoaded = true;
+
+	/*
+	 * a ViewNode is defined to be loaded when it's children are attached, and
+	 * are real nodes with actual content, rather than dummy nodes (with a
+	 * "loading from server" message
+	 */
+	private boolean isLoaded = false;
 	private List<Long> ancestorIDs;
 
 	public abstract ViewNode createViewNodeVerClone();
 
-	public ViewNode removeChildView(Long id) {
+	public ViewNode removeChildWithID(Long id) {
 		int index = indexOfChildWithID(id);
 		if (index >= 0) {
-			return removeChildViewAt(index);
+			return removeChildAt(index);
 		} else {
 			throw new RuntimeException("cannot remove node with id " + id
 					+ " because it is not a child node");
 		}
 	}
 
-	public ViewNode removeChildViewAt(int index) {
-		ViewNode child = (ViewNode) getChild(index);
+	public ViewNode removeChildAt(int index) {
+		ViewNode child = getChild(index);
+		recursiveCallOnRemoveLoadedNode(child);
 		child.remove();
 		return child;
 	}
 
+	private void recursiveCallOnRemoveLoadedNode(ViewNode viewNode) {
+		if (viewNode.isLoaded() && getArgTree() != null) {
+			getArgTree().onRemovedLoadedNode(viewNode);
+			for (int i = 0; i < viewNode.getChildCount(); i++) {
+				recursiveCallOnRemoveLoadedNode(viewNode.getChild(i));
+			}
+		}
+	}
+
+	@Override
+	public void insertItem(int beforeIndex, TreeItem item) {
+		super.insertItem(beforeIndex, item);
+		recursiveCallOnAddLoadedNode((ViewNode) item);
+	}
+
+	@Override
+	public void addItem(TreeItem item) {
+		super.addItem(item);
+		recursiveCallOnAddLoadedNode((ViewNode) item);
+	}
+
+	private void recursiveCallOnAddLoadedNode(ViewNode viewNode) {
+		if (viewNode.isLoaded() && getArgTree() != null) {
+			getArgTree().onAddLoadedNode(viewNode);
+			for (int i = 0; i < viewNode.getChildCount(); i++) {
+				recursiveCallOnAddLoadedNode(viewNode.getChild(i));
+			}
+		}
+	}
+
+	@Override
+	public void remove() {
+		recursiveCallOnRemoveLoadedNode(this);
+		super.remove();
+	}
+
+	@Override
+	public void removeItems() {
+		for (int i = 0; i < getChildCount(); i++) {
+			recursiveCallOnRemoveLoadedNode(getChild(i));
+		}
+		super.removeItems();
+	}
+
+	@Override
+	public void removeItem(TreeItem item) {
+		recursiveCallOnRemoveLoadedNode((ViewNode) item);
+		super.removeItem(item);
+	}
+
 	public int indexOfChildWithID(Long id) {
 		for (int i = 0; i < getChildCount(); i++) {
-			ViewNode child = (ViewNode) getChild(i);
+			ViewNode child = getChild(i);
 			if (id.equals(child.getNodeID())) {
 				return i;
 			}
@@ -43,43 +98,13 @@ public abstract class ViewNode extends TreeItem {
 		return -1;
 	}
 
-	public ViewNode getChildView(int index) {
-		return (ViewNode) getChild(index);
+	@Override
+	public ViewNode getChild(int index) {
+		return (ViewNode) super.getChild(index);
 	}
 
-	public ViewNode getParentView() {
+	public ViewNode getParent() {
 		return (ViewNode) getParentItem();
-	}
-
-	public void insertChildViewAt(int index, ViewNode viewNode) {
-		insertItem(index, viewNode);
-	}
-
-	public void insertChildViewAt_DELETE_ME(int index, ViewNode viewNode) {
-		/*
-		 * can't figure out how to insert an item at a specific point (instead
-		 * items just get inserted as the last of the current TreeItem's
-		 * children). So, instead, I'm removing all subsequent TreeItem
-		 * children, then adding the new TreeItem (the new proposition) and then
-		 * adding back all the subsequent tree items!
-		 */
-
-		// first remove all subsequent children
-		Queue<TreeItem> removeQueue = new LinkedList<TreeItem>();
-		TreeItem currentItem;
-		while ((currentItem = getChild(index)) != null) {
-			removeQueue.add(currentItem);
-			removeItem(currentItem);
-		}
-
-		// then add the new one
-		addItem(viewNode);
-
-		// then add back the rest
-		while (!removeQueue.isEmpty()) {
-			TreeItem toRemove = removeQueue.poll();
-			addItem(toRemove);
-		}
 	}
 
 	public void logNodeRecursive(int level, Log log,
@@ -89,7 +114,7 @@ public abstract class ViewNode extends TreeItem {
 					+ hashCode());
 			if (includeChildrenOfClosedNodes || getState()) {
 				for (int i = 0; i < getChildCount(); i++) {
-					ViewNode node = getChildView(i);
+					ViewNode node = getChild(i);
 					node.logNodeRecursive(level + 1, log,
 							includeChildrenOfClosedNodes);
 				}
@@ -116,11 +141,12 @@ public abstract class ViewNode extends TreeItem {
 	/*
 	 * As far as I can tell this is currently only used in EditMode.
 	 */
-	public void recursiveBuildViewNode(Node node, Map<Long, Node> nodes, int openDepth) {
+	public void recursiveBuildViewNode(Node node, Map<Long, Node> nodes,
+			int openDepth) {
 		setNode(node);
 		boolean circularLink = linkExistsInAncestorPath(node.id);
 		if (circularLink) {
-			getParentView().setAsCircularLink();
+			getParent().setAsCircularLink();
 		}
 		for (Long nodeID : node.childIDs) {
 			Node childNode = nodes.get(nodeID);
@@ -132,11 +158,11 @@ public abstract class ViewNode extends TreeItem {
 				addItem(childView);
 				childView.recursiveBuildViewNode(childNode, nodes,
 						openDepth - 1);
+				setLoaded(true);
 			} else if (circularLink) {
 				setAsCircularLink();
 			} else {
 				addItem(new ViewDummyVer(nodeID));
-				isLoaded = false;
 				isOpen = false;
 			}
 		}
@@ -154,7 +180,7 @@ public abstract class ViewNode extends TreeItem {
 	}
 
 	public List<Long> getAncestorIDs() {
-		if(ancestorIDs != null){
+		if (ancestorIDs != null) {
 			return ancestorIDs;
 		}
 		ancestorIDs = new ArrayList<Long>();
@@ -169,7 +195,7 @@ public abstract class ViewNode extends TreeItem {
 	public List<Long> getChildIDs() {
 		List<Long> childIDs = new ArrayList<Long>(getChildCount());
 		for (int i = 0; i < getChildCount(); i++) {
-			childIDs.add(getChildView(i).getNodeID());
+			childIDs.add(getChild(i).getNodeID());
 		}
 		return childIDs;
 	}
@@ -210,6 +236,21 @@ public abstract class ViewNode extends TreeItem {
 	}
 
 	public void setLoaded(boolean isLoaded) {
+		if (isLoaded == true && this.isLoaded == false && getArgTree() != null) {
+			getArgTree().onNodeIsLoaded(this);
+		}
 		this.isLoaded = isLoaded;
+	}
+
+	public boolean hasID() {
+		if (getNodeID() != null) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public ArgTree getArgTree() {
+		return (ArgTree) super.getTree();
 	}
 }

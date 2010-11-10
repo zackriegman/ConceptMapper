@@ -39,14 +39,14 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	}
 
 	public void removeAndSaveChildView(Long id) {
-		ViewNodeVer viewNode = (ViewNodeVer) removeChildView(id);
+		ViewNodeVer viewNode = (ViewNodeVer) removeChildWithID(id);
 		deletedViews.put(id, viewNode);
 	}
 
 	public void reviveDeletedView(Long id, int index) {
 		ViewNode viewNode = (ViewNode) deletedViews.remove(id);
 		assert viewNode != null ;
-		insertChildViewAt(index, viewNode);
+		insertItem(index, viewNode);
 	}
 
 //	public ViewPropVer createDeletedView(Long id) {

@@ -742,7 +742,7 @@ public class ModeVersions extends ResizeComposite implements
 					argView.reviveDeletedView(vC.change.propID,
 							vC.change.argPropIndex);
 					ViewNode viewNode = argView
-							.getChildView(vC.change.argPropIndex);
+							.getChild(vC.change.argPropIndex);
 					/*
 					 * need to check before cast because this might be a dummy
 					 * node (in which case we don't need to set the content
@@ -787,7 +787,7 @@ public class ModeVersions extends ResizeComposite implements
 					propView.reviveDeletedView(vC.change.argID,
 							vC.change.argPropIndex);
 					ViewNode deletedView = propView
-							.getChildView(vC.change.argPropIndex);
+							.getChild(vC.change.argPropIndex);
 					/*
 					 * need to check before cast because this might be a dummy
 					 * node (in which case we don't need to set the content

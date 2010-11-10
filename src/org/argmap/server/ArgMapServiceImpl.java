@@ -44,12 +44,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		ArgMapService {
 
 	static {
-		ObjectifyService.register(Node.class);
-		ObjectifyService.register(Proposition.class);
-		ObjectifyService.register(Argument.class);
-		ObjectifyService.register(Change.class);
-		ObjectifyService.register(Search.class);
-		ObjectifyService.register(CombinationGenerator.class);
+		ObjectifyRegistrator.register();
 	}
 	private static final Logger log = Logger.getLogger(ArgMapServiceImpl.class
 			.getName());
@@ -212,7 +207,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			change.propID = proposition.id;
 			//TODO this line not needed any longer as we aren't doing forward updates with changes
 			change.argPropIndex = position;
-			change.link = proposition;
+			change.link_DELETE_ME = proposition;
 			saveVersionInfo(change);
 		} finally {
 			childLock.unlock();
@@ -312,7 +307,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			change.propID = proposition.id;
 			change.argPropIndex = propIndex;
 			change.oldContent = proposition.content;
-			change.link = proposition;
+			change.link_DELETE_ME = proposition;
 			saveVersionInfo(change);
 		} finally {
 			parentLock.unlock();
@@ -484,7 +479,12 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		change.remoteHost = request.getRemoteHost();
 		change.remotePort = request.getRemotePort();
 		change.remoteUser = request.getRemoteUser();
+		try{
 		change.sessionID = request.getSession().getId();
+		}
+		catch(java.lang.IllegalStateException e){
+			log.fine("no session information logged because there was no session found");
+		}
 
 		// logln("Change Logged -- " + change.toString());
 
@@ -916,7 +916,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				change.argID = parentArgID;
 				change.propID = removePropID;
 				change.argPropIndex = index;
-				change.link = removeProp;
+				change.link_DELETE_ME = removeProp;
 
 				parentArg.childIDs.remove(index);
 
@@ -930,7 +930,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			Change change = new Change(ChangeType.PROP_LINK);
 			change.argID = parentArgID;
 			change.propID = linkPropID;
-			change.link = linkProp;
+			change.link_DELETE_ME = linkProp;
 
 			parentArg.childIDs.add(index, linkPropID);
 			ofy.put(parentArg);

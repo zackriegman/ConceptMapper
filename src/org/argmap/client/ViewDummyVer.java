@@ -82,7 +82,6 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 
 	@Override
 	public boolean isLoaded() {
-		assert false;
 		return false;
 	}
 

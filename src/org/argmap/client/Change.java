@@ -108,7 +108,7 @@ public class Change implements Serializable {
 	public boolean argPro;
 	
 	@Embedded
-	public Proposition link;
+	public Proposition link_DELETE_ME;
 
 	public Change() {
 

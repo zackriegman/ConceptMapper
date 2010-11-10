@@ -1,7 +1,5 @@
 package org.argmap.client;
 
-
-
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -18,7 +16,7 @@ public abstract class ViewArg extends ViewNode {
 	public ViewArg(Argument arg) {
 		super();
 		initialize();
-		setNode( arg );
+		setNode(arg);
 	}
 
 	public ViewArg(boolean pro) {
@@ -26,29 +24,29 @@ public abstract class ViewArg extends ViewNode {
 		initialize();
 		Argument argument = new Argument();
 		argument.pro = pro;
-		setNode( argument );
+		setNode(argument);
 	}
 
 	public ViewArg() {
 		super();
 		initialize();
 	}
-	
+
 	@Override
-	public void setNode( Node node ){
+	public void setNode(Node node) {
 		argument = (Argument) node;
 		textBox.setText(argument.content);
-		setPro (argument.pro);
+		setPro(argument.pro);
 	}
-	
+
 	@Override
-	public Argument getNode(){
+	public Argument getNode() {
 		return argument;
 	}
-	
+
 	/*
-	 * TODO: move this method from ViewArg and the equivalent from ViewProp
-	 * into ViewArgVer and ViewPropVer.
+	 * TODO: move this method from ViewArg and the equivalent from ViewProp into
+	 * ViewArgVer and ViewPropVer.
 	 */
 	@Override
 	public ViewNode createViewNodeVerClone() {
@@ -67,16 +65,16 @@ public abstract class ViewArg extends ViewNode {
 		textBox.addStyleName("argTextBox");
 		textBox.addStyleName("nodeText");
 		horizontalPanel = new HorizontalPanel();
-		horizontalPanel.setWidth( ARG_WIDTH );
+		horizontalPanel.setWidth(ARG_WIDTH);
 		horizontalPanel.add(label);
 		horizontalPanel.add(textBox);
 		horizontalPanel.addStyleName("argBox");
-		focusPanel = new FocusPanel( horizontalPanel );
+		focusPanel = new FocusPanel(horizontalPanel);
 		setWidget(focusPanel);
 	}
-	
-	public void setPro( boolean pro ){
-		if( argument != null ){
+
+	public void setPro(boolean pro) {
+		if (argument != null) {
 			argument.pro = pro;
 		}
 		if (pro) {
@@ -92,7 +90,10 @@ public abstract class ViewArg extends ViewNode {
 
 	@Override
 	public Long getNodeID() {
-		return argument.id;
+		if (argument != null) {
+			return argument.id;
+		} else
+			return null;
 	}
 
 	public void setArgTitle(String title) {
@@ -107,9 +108,9 @@ public abstract class ViewArg extends ViewNode {
 	public String toString() {
 		return "text:" + getText() + "; arg:" + argument;
 	}
-	
+
 	@Override
-	public void setAsCircularLink(){
+	public void setAsCircularLink() {
 		horizontalPanel.removeStyleName("argBox");
 		horizontalPanel.addStyleName("circularLink");
 	}

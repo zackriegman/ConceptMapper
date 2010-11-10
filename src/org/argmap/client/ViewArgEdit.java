@@ -89,7 +89,7 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 			} else if (charCode == KeyCodes.KEY_ENTER
 					&& textBox.getCursorPos() == textBox.getText().length()) {
 				ViewPropEdit newPropView = new ViewPropEdit();
-				insertChildViewAt(0, newPropView);
+				insertItem(0, newPropView);
 				newPropView.haveFocus();
 				setOpen(true);
 				newPropView.setOpen(true);
@@ -114,7 +114,7 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 
 	@Override
 	public void onMouseOver(MouseOverEvent event) {
-		if (!isLoaded()) {
+		if (!isLoaded() && hasID() ) {
 			horizontalPanel.add(expandButton);
 		}
 	}

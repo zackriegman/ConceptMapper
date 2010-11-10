@@ -41,14 +41,14 @@ public class ArgTree extends Tree {
 	}
 
 	private final void recursiveResizeNode(Object object) {
-		if (object instanceof ViewNode && ! (object instanceof ViewDummyVer)) {
+		if (object instanceof ViewNode && !(object instanceof ViewDummyVer)) {
 			if (object instanceof ViewProp) {
 				((ViewProp) object).resize();
 			}
 			ViewNode viewNode = (ViewNode) object;
 			if (viewNode.isOpen()) {
 				for (int i = 0; i < viewNode.getChildCount(); i++) {
-					recursiveResizeNode(viewNode.getChildView(i));
+					recursiveResizeNode(viewNode.getChild(i));
 				}
 			}
 		}
@@ -118,9 +118,9 @@ public class ArgTree extends Tree {
 	 * called before the text area has a scroll height reflecting its actual
 	 * height when the TreeItem has no children. When the tree item does have
 	 * children the scroll height reflects the actual height upon attachment and
-	 * the size is determined appropriately.  I've tried putting the resize
-	 * even in a deferred command but that doesn't make any difference.  Now
-	 * I'm trying manually resizing upon an open event.
+	 * the size is determined appropriately. I've tried putting the resize even
+	 * in a deferred command but that doesn't make any difference. Now I'm
+	 * trying manually resizing upon an open event.
 	 */
 	public void recursiveResetState(ViewNode item) {
 		/*
@@ -131,12 +131,12 @@ public class ArgTree extends Tree {
 				&& !(item.getChild(0) instanceof ViewDummyVer)) {
 			if (item.getState() != item.isOpen()) {
 				item.setState(item.isOpen());
-				
+
 			}
 			for (int i = 0; i < item.getChildCount(); i++) {
-				ViewNode child = item.getChildView(i);
-				recursiveResetState( child );
-				if( child instanceof ViewProp ){
+				ViewNode child = item.getChild(i);
+				recursiveResetState(child);
+				if (child instanceof ViewProp) {
 					((ViewProp) child).resize();
 				}
 			}
@@ -175,4 +175,50 @@ public class ArgTree extends Tree {
 		}
 	}
 
+	@Override
+	public void clear() {
+		onRemoveAllLoadedNodes();
+		super.clear();
+	}
+
+	@Override
+	public void removeItems() {
+		onRemoveAllLoadedNodes();
+		super.removeItems();
+	}
+
+	@Override
+	public void addItem(TreeItem item) {
+		super.addItem(item);
+		onAddLoadedNode((ViewNode) item);
+	}
+
+	@Override
+	public void insertItem(int index, TreeItem item) {
+		super.insertItem(index, item);
+		onAddLoadedNode((ViewNode) item);
+	}
+
+	@Override
+	public void removeItem(TreeItem item) {
+		onRemoveAllLoadedNodes();
+		super.removeItem(item);
+	}
+
+	/*
+	 * these methods are called by a ViewNode whenever a loaded Node is attached
+	 * or removed from the ArgTree or whenever an attached Node becomes loaded.
+	 * Edit modes uses them to keep track of loaded nodes.
+	 */
+	public void onRemovedLoadedNode(ViewNode node) {
+	}
+
+	public void onAddLoadedNode(ViewNode node) {
+	}
+
+	public void onNodeIsLoaded(ViewNode node) {
+	}
+
+	public void onRemoveAllLoadedNodes() {
+	}
 }

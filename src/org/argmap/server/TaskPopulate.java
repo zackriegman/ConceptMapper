@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
@@ -52,13 +53,32 @@ public class TaskPopulate extends HttpServlet {
 	private static final Queue populateQueue = QueueFactory
 			.getQueue("populate");
 
+	private static ArgMapServiceForTask argMapService = new ArgMapServiceForTask();
+
+	static {
+		ObjectifyRegistrator.register();
+	}
+
+	private static class ArgMapServiceForTask extends ArgMapServiceImpl {
+		private HttpServletRequest thisRequest;
+
+		private void setCurrentRequest(HttpServletRequest request) {
+			this.thisRequest = request;
+		}
+
+		@Override
+		public HttpServletRequest getHttpServletRequest() {
+			return thisRequest;
+		}
+	};
+
 	private static final Random random = new Random();
 
 	private static final String RANDOM_SENTENCE_FILE_POSITION = "RANDOM_SENTENCE_FILE_POSITION";
 	private static final String RANDOM_SENTENCE_LOCK = "RANDOM_SENTENCE_LOCK";
 	private static final String RANDOM_SENTENCE_COUNT = "RANDOM_SENTENCE_COUNT";
 	private static final String RANDOM_SENTENCE_LIST = "RANDOM_SENTENCE_LIST";
-	private static int RANDOM_SENTENCE_BUFFER_SIZE = 500;
+	private static int RANDOM_SENTENCE_BUFFER_SIZE = 200;
 
 	private static final String SENTENCES_FILE = "sentences";
 
@@ -112,7 +132,10 @@ public class TaskPopulate extends HttpServlet {
 				sentenceList = new ArrayList<String>(
 						RANDOM_SENTENCE_BUFFER_SIZE);
 				timer.lap("))))");
-				Long offset = (Long) cache.get(RANDOM_SENTENCE_FILE_POSITION);
+
+				// Long offset = (Long)
+				// cache.get(RANDOM_SENTENCE_FILE_POSITION);
+				Long offset = Property.getLong(RANDOM_SENTENCE_FILE_POSITION);
 				if (offset == null) {
 					offset = new Long(0);
 				}
@@ -143,11 +166,12 @@ public class TaskPopulate extends HttpServlet {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				count = count + 1;
+				count = count + RANDOM_SENTENCE_BUFFER_SIZE;
 				timer.lap("TTTT");
 				cache.put(RANDOM_SENTENCE_COUNT, count);
 				timer.lap("YYYY");
-				cache.put(RANDOM_SENTENCE_FILE_POSITION, offset);
+				//cache.put(RANDOM_SENTENCE_FILE_POSITION, offset);
+				Property.put(RANDOM_SENTENCE_FILE_POSITION, offset);
 				cache.put(RANDOM_SENTENCE_LIST, sentenceList);
 				timer.lap("UUUU");
 				return result;
@@ -159,15 +183,10 @@ public class TaskPopulate extends HttpServlet {
 	}
 
 	public static void queueRootTaskPopulates(HttpServletRequest req) {
-		final HttpServletRequest request = req;
-		ArgMapServiceImpl argMapService = new ArgMapServiceImpl() {
-			@Override
-			public HttpServletRequest getHttpServletRequest() {
-				return request;
-			}
-		};
+		argMapService.setCurrentRequest(req);
 		for (int i = 0; i < ROOT_NODES; i++) {
-			Long propID = argMapService.addProp(null, 0, getRandomSentence());
+			Long propID = argMapService.addProp(null, 0,
+					getRandomSentence());
 			queueTaskPopulate(propID, AVERAGE_PROPS_AT_ROOT,
 					AVERAGE_ARGS_AT_ROOT);
 		}
@@ -187,14 +206,9 @@ public class TaskPopulate extends HttpServlet {
 			throws IOException {
 		LapTimer timer = new LapTimer();
 		try {
+			log.severe("AAAA");
 			timer.lap("AAAAA");
-			final HttpServletRequest request = req;
-			ArgMapServiceImpl argMapService = new ArgMapServiceImpl() {
-				@Override
-				public HttpServletRequest getHttpServletRequest() {
-					return request;
-				}
-			};
+			argMapService.setCurrentRequest(req);
 			timer.lap("BBBB");
 
 			resp.setContentType("text/plain");
@@ -241,7 +255,7 @@ public class TaskPopulate extends HttpServlet {
 			timer.lap("ZZZZ");
 			String strCallResult = "FAIL: TaskPopulate: " + ex.getMessage()
 					+ timer.getRecord();
-			log.severe(strCallResult);
+			log.log( Level.SEVERE, "FAIL: TaskPopulate: ", ex);
 			resp.getWriter().println(strCallResult);
 		}
 	}

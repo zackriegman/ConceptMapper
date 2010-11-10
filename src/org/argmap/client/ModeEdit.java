@@ -88,7 +88,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		/*
 		 * setup the tree area
 		 */
-		tree = new EditModeTree(this);
+		tree = new EditModeTree();
 		tree.addOpenHandlerTracked(this);
 		tree.addCloseHandler(this);
 		tree.addSelectionHandler(this);
@@ -218,6 +218,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	}
 
 	private void getRootProps() {
+		lastUpdate = new Date();
 		ServerComm.getRootProps(0,
 				new ServerComm.LocalCallback<PartialTrees>() {
 
@@ -238,7 +239,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 						tree.resetState();
 						if (Log.on) tree.logTree(log);
 
-						//updateTimer.scheduleRepeating(10000);
+						// updateTimer.scheduleRepeating(10000);
 						log.finish();
 
 					}
@@ -256,7 +257,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	 * memory, updatecan finish updating the pointless nodes, even after search
 	 * has cleared the tree...hmmm...
 	 */
-
 	/*
 	 * TODO whether or not a proposition is shown in yellow to designate that it
 	 * is linked depends on how many links it has... that is something I'm not
@@ -312,8 +312,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 	private void getNewChangesAndUpdateTree_DELETE_ME(final Date startDate) {
 
-		ServerComm.getNewChanges_DELETE_ME(lastUpdate,
-				loadedProps.keySet(), loadedArgs.keySet(),
+		ServerComm.getNewChanges_DELETE_ME(lastUpdate, loadedProps.keySet(),
+				loadedArgs.keySet(),
 				new LocalCallback<ArgMapService.ForwardChanges>() {
 
 					@Override
@@ -369,8 +369,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 										 * necessary for going back in time).
 										 */
 										ViewPropEdit linkView = new ViewPropEdit(
-												change.link);
-										for (Long id : change.link.childIDs) {
+												change.link_DELETE_ME);
+										for (Long id : change.link_DELETE_ME.childIDs) {
 											linkView.addItem(new ViewDummyVer(
 													id));
 										}
@@ -415,10 +415,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 										// linkView);
 										break;
 									case PROP_UNLINK:
-										viewArg.removeChildView(change.propID);
+										viewArg.removeChildWithID(change.propID);
 										break;
 									case PROP_DELETION:
-										viewArg.removeChildView(change.propID);
+										viewArg.removeChildWithID(change.propID);
 										break;
 									case ARG_MODIFICATION:
 										viewArg.setArgTitle(change.newContent_DELETE_ME);
@@ -436,7 +436,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 										viewProp.setContent(change.newContent_DELETE_ME);
 										break;
 									case ARG_DELETION:
-										viewProp.removeChildView(change.argID);
+										viewProp.removeChildWithID(change.argID);
 										break;
 									case ARG_ADDITION:
 										Argument arg = new Argument();
@@ -463,6 +463,23 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	}
 
 	/*
+	 * TODO after I get the basics working, I'll want to think about what
+	 * happens when a Node is updated... for instance lets say we add a
+	 * proposition to an argument. The argument is being updated. Presumably we
+	 * want to set the argument's last update time to the time that we added the
+	 * proposition... but actually maybe we don't need to do that. If we just
+	 * leave the last update time as it is then on the next update the server
+	 * will send back a notice that the proposition was updated, and the client
+	 * will update to the new content... hmmm... actually that could be bad, if
+	 * the client is in the middle of ongoing edits to a proposition the edits
+	 * could cause the server to thing the client needs to be updated, and then
+	 * the process of updating might overwrite new edist the user is making.
+	 * Anyway... I need to think about this after I get the basics working. One
+	 * solution is just to send back a copy of the node with every
+	 * update/add/delete operation, and update the updated field on the client
+	 * so it has the latest updates and doesn't need to get them...
+	 */
+	/*
 	 * TODO might want to have a way to remove deleted search results so that
 	 * the userdoesn't start editing a deleted item. This should be easy, just
 	 * supply the serverwith a list of root items, and return add/remove changes
@@ -487,55 +504,88 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	 * maps entirely (instead of clearing them) so that the update is working
 	 * with the old list and the search can go ahead and create a new list...?
 	 */
+	
+	/* rather than keep these lists of loadedProps and loadedArgs it really might just make
+	 * a lot more sense to walk through the tree to generate a list of loaded nodes to send
+	 * to the server, and then walk through the tree to decide whether each node needs to be
+	 * updated.  [I initially started keeping these lists when when updates were implemented
+	 * throw Change lists, but now that we aren't using Changes, these lists probably aren't
+	 * necessary anymore]  On the other hand if they save even a fraction of a second while
+	 * performing an update they might be worth it because updates are running every few
+	 * seconds to even a small delay could be jarring
+	 */
 	private final MultiMap<Long, ViewProp> loadedProps = new MultiMap<Long, ViewProp>();
 	private final MultiMap<Long, ViewArg> loadedArgs = new MultiMap<Long, ViewArg>();
 	private Date lastUpdate;
-	/*
-	 * TODO make sure lastUpdate is updated on every search and also on initial
-	 * getRootProps
-	 */
-	/* TODO TODO make sure that the loadedProp/Args maps are updated */
+
 	/*
 	 * TODO make sure that the node.childIDs are updated on every ModeEdit
 	 * change...
 	 */
+	/*
+	 * TODO trying to sort out the isLoaded mess.  The question is whether or not a new ViewNode
+	 * is loaded before it gets its id.  We can't keep track of it in loadedProps/Args until it
+	 * has an id so in that sense it is not loaded.  On the otherhand it cannot be loaded from the
+	 * server without an id, so if someone is checking to see if it should be loaded (which was
+	 * the previous and ongoing purpose of isLoaded() they would want to see a yes on a brand new
+	 * ViewNode.  So I think I decided to go with isLoaded is only true for Views with ids set,
+	 * and other uses have to check hasID() to find out if an unloaded View can be loaded from the server.
+	 * This means that all the servercomm add methods have to be updated to accept a ViewNode, and to
+	 * updated that ViewNode to loaded upon receiving the ID back from the server.  In my extremely
+	 * tired state right now I don't see any problem with this approach, so I just need to change
+	 * servercomm, and also make sure that flipping the default isLoaded state from true to false didn't
+	 * fuck anything else up... which it probably did...)
+	 */
 	private void getUpdatesAndApply() {
 		lastUpdate = new Date();
 		final Date startTime = lastUpdate;
-		
+
 		Map<Long, DateAndChildIDs> propsInfo = new HashMap<Long, DateAndChildIDs>();
 		loadNodeInfo(loadedProps, propsInfo);
 		Map<Long, DateAndChildIDs> argsInfo = new HashMap<Long, DateAndChildIDs>();
 		loadNodeInfo(loadedArgs, argsInfo);
 
-		ServerComm.getUpdates(propsInfo, argsInfo, new LocalCallback<Map<Long,Node>>() {
-			
-			@Override
-			public void call(Map<Long, Node> t) {
-				/*
-				 * makes sure that there hasn't been an update since this update started...
-				 * for instance if a search has replaced all the nodes, we just throw this
-				 * batch of updates out since they are no longer relevant.
-				 */
-				if(!lastUpdate.equals(startTime)){
-					return;
-				}
-				
-				Map<Long, Node> results = new HashMap<Long, Node>();
-				for (Node node : results.values()) {
-					if (node instanceof Proposition) {
-						for (ViewProp viewProp : loadedProps.get(node.id)) {
-							updateNode(viewProp, node, results);
+		ServerComm.getUpdates(propsInfo, argsInfo,
+				new LocalCallback<Map<Long, Node>>() {
+
+					@Override
+					public void call(Map<Long, Node> t) {
+						/*
+						 * makes sure that there hasn't been an update since
+						 * this update started... for instance if a search has
+						 * replaced all the nodes, we just throw this batch of
+						 * updates out since they are no longer relevant.
+						 */
+						if (!lastUpdate.equals(startTime)) {
+							return;
 						}
-					} else if (node instanceof Argument) {
-						for (ViewArg viewArg : loadedArgs.get(node.id)) {
-							updateNode(viewArg, node, results);
+
+						Map<Long, Node> results = new HashMap<Long, Node>();
+						for (Node node : results.values()) {
+							if (node instanceof Proposition) {
+								/*
+								 * need to create a new list here because in the
+								 * process of updateNode() loadedProps will
+								 * potentially be updated with new nodes which
+								 * are already up-to-date and which therefore
+								 * should not be processed.
+								 */
+								List<ViewProp> viewProps = new ArrayList<ViewProp>(
+										loadedProps.get(node.id));
+								for (ViewProp viewProp : viewProps) {
+									updateNode(viewProp, node, results);
+								}
+							} else if (node instanceof Argument) {
+								List<ViewArg> viewArgs = new ArrayList<ViewArg>(
+										loadedArgs.get(node.id));
+								for (ViewArg viewArg : viewArgs) {
+									updateNode(viewArg, node, results);
+								}
+							} else
+								assert false;
 						}
-					} else
-						assert false;
-				}
-			}
-		});
+					}
+				});
 	}
 
 	private void updateNode(ViewNode viewNode, Node node,
@@ -547,7 +597,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		if (!node.childIDs.equals(viewNode.getNode().childIDs)) {
 			Map<Long, ViewNode> removed = new HashMap<Long, ViewNode>();
 			while (viewNode.getChildCount() != 0) {
-				ViewNode child = viewNode.getChildView(0);
+				ViewNode child = viewNode.getChild(0);
 				removed.put(child.getNodeID(), child);
 				child.remove();
 			}
@@ -624,12 +674,13 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					@Override
 					public void call(Map<Long, Node> nodes) {
 						parentArgView.removeItem(propViewToRemove);
-						Proposition proposition = (Proposition) nodes.get(linkPropID);
+						Proposition proposition = (Proposition) nodes
+								.get(linkPropID);
 						ViewProp newViewProp = new ViewPropEdit();
 						newViewProp.recursiveBuildViewNode(proposition, nodes,
 								5);
 
-						parentArgView.insertChildViewAt(propIndex, newViewProp);
+						parentArgView.insertItem(propIndex, newViewProp);
 					}
 				}
 				;
@@ -667,8 +718,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				&& !viewProp.deleted) {
 			List<Long> filterIDs = new ArrayList<Long>();
 			filterIDs.addAll(viewProp.getAncestorIDs());
-			if (viewProp.getParentView() != null) {
-				filterIDs.addAll(viewProp.getParentView().getChildIDs());
+			if (viewProp.getParent() != null) {
+				filterIDs.addAll(viewProp.getParent().getChildIDs());
 			}
 			sideSearch = new Search(searchString, ModeEdit.SIDE_SEARCH_LIMIT,
 					filterIDs, new SearchResultsHandler() {
@@ -736,14 +787,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	 */
 	public class EditModeTree extends ArgTree {
 
-		ModeEdit editMode;
-
-		public EditModeTree(ModeEdit parent) {
-			editMode = parent;
-		}
-
 		public ModeEdit getEditMode() {
-			return editMode;
+			return ModeEdit.this;
 		}
 
 		@Override
@@ -765,6 +810,39 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			}
 
 			super.onBrowserEvent(event);
+		}
+
+		@Override
+		public void onRemovedLoadedNode(ViewNode node) {
+			if (node instanceof ViewProp) {
+				loadedProps.remove(node.getNodeID(), (ViewProp) node);
+			} else if (node instanceof ViewArg) {
+				loadedArgs.remove(node.getNodeID(), (ViewArg) node);
+			}
+		}
+
+		@Override
+		public void onAddLoadedNode(ViewNode node) {
+			if (node instanceof ViewProp) {
+				loadedProps.put(node.getNodeID(), (ViewProp) node);
+			} else if (node instanceof ViewArg) {
+				loadedArgs.put(node.getNodeID(), (ViewArg) node);
+			}
+		}
+
+		@Override
+		public void onNodeIsLoaded(ViewNode node) {
+			if (node instanceof ViewProp) {
+				loadedProps.put(node.getNodeID(), (ViewProp) node);
+			} else if (node instanceof ViewArg) {
+				loadedArgs.put(node.getNodeID(), (ViewArg) node);
+			}
+		}
+
+		@Override
+		public void onRemoveAllLoadedNodes() {
+			loadedProps.clear();
+			loadedArgs.clear();
 		}
 	}
 
@@ -792,7 +870,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		ViewNode cloneViewNode = realViewNode.createViewNodeVerClone();
 
 		for (int i = 0; i < realViewNode.getChildCount(); i++) {
-			ViewNode realChild = realViewNode.getChildView(i);
+			ViewNode realChild = realViewNode.getChild(i);
 			if (realViewNode.getState()) {
 				cloneViewNode.addItem(recursiveTreeClone(realChild, log));
 			} else {
@@ -826,8 +904,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 		if (viewNode.isOpen()) {
 			for (int i = 0; i < viewNode.getChildCount(); i++) {
-				recursiveGetOpenPropsAndArgs(viewNode.getChildView(i), props,
-						args);
+				recursiveGetOpenPropsAndArgs(viewNode.getChild(i), props, args);
 			}
 		}
 	}
@@ -947,6 +1024,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		String searchString = searchTextBox.getText().trim();
 
 		if (!searchString.equals("")) {
+			lastUpdate = new Date();
 			mainSearch = new Search(searchString, MAIN_SEARCH_LIMIT, null,
 					new SearchResultsHandler() {
 						@Override
@@ -1026,8 +1104,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				List<ViewNode> list = new ArrayList<ViewNode>(
 						source.getChildCount());
 				for (int i = 0; i < source.getChildCount(); i++) {
-					if (!source.getChildView(i).isLoaded()) {
-						list.add(source.getChildView(i));
+					if (!source.getChild(i).isLoaded()) {
+						list.add(source.getChild(i));
 					}
 				}
 				if (list.size() > 0) {
@@ -1035,20 +1113,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				}
 			}
 		}
-	}
-
-	public void onOpen_OLD(OpenEvent<TreeItem> event) {
-		argMap.showVersions();
-		Log log = Log.getLog("em.op");
-		if (event.getTarget() instanceof ViewNode) {
-			ViewNode source = (ViewNode) event.getTarget();
-			log.log("AAAA");
-			if (!source.isLoaded()) {
-				log.log("BBBB");
-				loadFromServer(source, 1, 1);
-			}
-		}
-		log.finish();
 	}
 
 	@Override

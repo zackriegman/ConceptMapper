@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
+/*TODO: track down exceptions in ModeVersion (unrelated to circular linking)
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
 /*TODO: move changes from propID/argID to parentID/childID (this will make querying more efficient:  want

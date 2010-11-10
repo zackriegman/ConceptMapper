@@ -47,7 +47,7 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 	}
 
 	public void removeAndSaveChildView(Long id) {
-		ViewNodeVer viewNode = (ViewNodeVer) removeChildView(id);
+		ViewNodeVer viewNode = (ViewNodeVer) removeChildWithID(id);
 		deletedViews.put(id, viewNode);
 	}
 
@@ -55,7 +55,7 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 		//GWT.log("reviveDeletedView( " + id + ", " + index + " );" );
 		ViewNode viewNode = (ViewNode) deletedViews.remove(id);
 		assert viewNode != null ;
-		insertChildViewAt(index, viewNode);
+		insertItem(index, viewNode);
 	}
 	
 
