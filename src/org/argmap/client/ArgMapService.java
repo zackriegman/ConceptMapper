@@ -113,6 +113,8 @@ public interface ArgMapService extends RemoteService {
 	
 	public ForwardChanges getNewChanges_DELETE_ME(Date date, Set<Long> propIDs, Set<Long> argIDs ) throws ServiceException;
 
+	public Map<Long, Node> getUpToDateNodes( Map<Long, DateAndChildIDs> propInfo, Map<Long, DateAndChildIDs> argInfo );
+	
 	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs)
 			throws ServiceException;
 

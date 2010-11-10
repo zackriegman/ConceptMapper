@@ -309,11 +309,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	 * node gracefully. OK, I think for now it makes sense to leave linked props
 	 * as properties of changes to avoid having to figure this all out...
 	 */
-	private Date lastUpdate_DELETE_ME;
 
 	private void getNewChangesAndUpdateTree_DELETE_ME(final Date startDate) {
 
-		ServerComm.getNewChanges_DELETE_ME(lastUpdate_DELETE_ME,
+		ServerComm.getNewChanges_DELETE_ME(lastUpdate,
 				loadedProps.keySet(), loadedArgs.keySet(),
 				new LocalCallback<ArgMapService.ForwardChanges>() {
 
@@ -326,7 +325,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 						 * apply to the existing tree and they should be
 						 * discarded.
 						 */
-						if (startDate != lastUpdate_DELETE_ME) {
+						if (startDate != lastUpdate) {
 							return;
 						}
 						for (Change change : changes.changes) {
@@ -490,7 +489,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	 */
 	private final MultiMap<Long, ViewProp> loadedProps = new MultiMap<Long, ViewProp>();
 	private final MultiMap<Long, ViewArg> loadedArgs = new MultiMap<Long, ViewArg>();
-
+	private Date lastUpdate;
 	/*
 	 * TODO make sure lastUpdate is updated on every search and also on initial
 	 * getRootProps
@@ -501,30 +500,42 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	 * change...
 	 */
 	private void getUpdatesAndApply() {
+		lastUpdate = new Date();
+		final Date startTime = lastUpdate;
+		
 		Map<Long, DateAndChildIDs> propsInfo = new HashMap<Long, DateAndChildIDs>();
 		loadNodeInfo(loadedProps, propsInfo);
 		Map<Long, DateAndChildIDs> argsInfo = new HashMap<Long, DateAndChildIDs>();
 		loadNodeInfo(loadedArgs, argsInfo);
 
-		/*
-		 * public Map<Long, Node> getUpToDateNodes( Map<Long, DateAndChildIDs>
-		 * propInfo, Map<Long, DateAndChildIDs> argInfo )
-		 */
-		// TODO maybe just return a valuesSet instead of a map...
-		// TODO put this in a callback
-		Map<Long, Node> results = new HashMap<Long, Node>();
-		for (Node node : results.values()) {
-			if (node instanceof Proposition) {
-				for (ViewProp viewProp : loadedProps.get(node.id)) {
-					updateNode(viewProp, node, results);
+		ServerComm.getUpdates(propsInfo, argsInfo, new LocalCallback<Map<Long,Node>>() {
+			
+			@Override
+			public void call(Map<Long, Node> t) {
+				/*
+				 * makes sure that there hasn't been an update since this update started...
+				 * for instance if a search has replaced all the nodes, we just throw this
+				 * batch of updates out since they are no longer relevant.
+				 */
+				if(!lastUpdate.equals(startTime)){
+					return;
 				}
-			} else if (node instanceof Argument) {
-				for (ViewArg viewArg : loadedArgs.get(node.id)) {
-					updateNode(viewArg, node, results);
+				
+				Map<Long, Node> results = new HashMap<Long, Node>();
+				for (Node node : results.values()) {
+					if (node instanceof Proposition) {
+						for (ViewProp viewProp : loadedProps.get(node.id)) {
+							updateNode(viewProp, node, results);
+						}
+					} else if (node instanceof Argument) {
+						for (ViewArg viewArg : loadedArgs.get(node.id)) {
+							updateNode(viewArg, node, results);
+						}
+					} else
+						assert false;
 				}
-			} else
-				assert false;
-		}
+			}
+		});
 	}
 
 	private void updateNode(ViewNode viewNode, Node node,
@@ -532,7 +543,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		viewNode.setNode(node);
 
 		// TODO note: this list comparison also depends on the viewNode's Node
-		// have an uptodate childID list...make sure that it does...
+		// having an up-to-date childID list...make sure that it does...
 		if (!node.childIDs.equals(viewNode.getNode().childIDs)) {
 			Map<Long, ViewNode> removed = new HashMap<Long, ViewNode>();
 			while (viewNode.getChildCount() != 0) {
@@ -547,7 +558,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				} else if (results.containsKey(id)) {
 					ViewNode child = viewNode.createChild();
 					viewNode.addItem(child);
-					//child.recursiveBuildViewNode(node, results, 0);
+					child.recursiveBuildViewNode(node, results, 0);
 				} else {
 					viewNode.addItem(new ViewDummyVer(id));
 				}

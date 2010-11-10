@@ -513,6 +513,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	/*
 	 * TODO make sure lastUpdate is saved whenever a node is changed
 	 */
+	@Override
 	public Map<Long, Node> getUpToDateNodes( Map<Long, DateAndChildIDs> propInfo, Map<Long, DateAndChildIDs> argInfo ){
 		Map<Long, Node> results = new HashMap<Long, Node>();
 		Map<Long, Proposition> props = ofy.get(Proposition.class, propInfo.keySet());

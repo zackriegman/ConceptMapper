@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.argmap.client.ArgMapService.DateAndChildIDs;
 import org.argmap.client.ArgMapService.ForwardChanges;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
@@ -72,6 +73,10 @@ public interface ArgMapServiceAsync {
 			AsyncCallback<ForwardChanges> callback);
 
 	void getRootProps(int depthLimit, AsyncCallback<PartialTrees> callback);
+
+	void getUpToDateNodes(Map<Long, DateAndChildIDs> propInfo,
+			Map<Long, DateAndChildIDs> argInfo,
+			AsyncCallback<Map<Long, Node>> callback);
 
 
 }

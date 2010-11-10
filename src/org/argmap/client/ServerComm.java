@@ -8,6 +8,7 @@ import java.util.Queue;
 import java.util.Set;
 
 import org.argmap.client.ArgMap.MessageType;
+import org.argmap.client.ArgMapService.DateAndChildIDs;
 import org.argmap.client.ArgMapService.ForwardChanges;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
@@ -218,8 +219,8 @@ public class ServerComm {
 	public static void getNodesChildren(List<Long> nodeIDs, int depth,
 			LocalCallback<Map<Long, Node>> localCallback) {
 		argMapService.getNodesChildren(nodeIDs, depth,
-				new ServerCallback<Map<Long, Node>>(localCallback, "pre-loading...",
-						"finished pre-loading"));
+				new ServerCallback<Map<Long, Node>>(localCallback,
+						"pre-loading...", "finished pre-loading"));
 	}
 
 	public static void getLoginInfo(LocalCallback<LoginInfo> localCallback) {
@@ -360,7 +361,8 @@ public class ServerComm {
 	public static void replaceWithLinkAndGet(final Argument parentArg,
 			final Proposition linkProp, final Proposition removeProp,
 			final LocalCallback<Map<Long, Node>> localCallback) {
-		queueCommand(new ServerCallbackWithDispatch<Map<Long, Node>>("saving...", "saved") {
+		queueCommand(new ServerCallbackWithDispatch<Map<Long, Node>>(
+				"saving...", "saved") {
 			@Override
 			public void execute() {
 				argMapService.replaceWithLinkAndGet(parentArg.id, linkProp.id,
@@ -377,6 +379,15 @@ public class ServerComm {
 	public static void getNewChanges_DELETE_ME(Date date, Set<Long> propIDs,
 			Set<Long> argIDs, LocalCallback<ForwardChanges> localCallback) {
 		argMapService.getNewChanges_DELETE_ME(date, propIDs, argIDs,
-				new ServerCallback<ArgMapService.ForwardChanges>(localCallback, "refreshing...", "refreshed") );
+				new ServerCallback<ArgMapService.ForwardChanges>(localCallback,
+						"refreshing...", "refreshed"));
+	}
+
+	public static void getUpdates(Map<Long, DateAndChildIDs> propsInfo,
+			Map<Long, DateAndChildIDs> argsInfo,
+			LocalCallback<Map<Long, Node>> localCallback) {
+		argMapService.getUpToDateNodes(propsInfo, argsInfo,
+				new ServerCallback<Map<Long, Node>>(localCallback,
+						"refreshing...", "refreshed"));
 	}
 }
