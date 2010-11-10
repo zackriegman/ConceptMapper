@@ -106,12 +106,6 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	}
 
 	@Override
-	public Node getChildNodeFromNodeList(Long nodeID, Nodes nodes) {
-		assert false;
-		return null;
-	}
-
-	@Override
 	public void setNode(Node node) {
 		assert false;
 		

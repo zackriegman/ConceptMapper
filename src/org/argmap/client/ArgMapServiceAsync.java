@@ -9,7 +9,7 @@ import java.util.Set;
 import org.argmap.client.ArgMapService.ForwardChanges;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
-import org.argmap.client.ArgMapService.PropsAndArgs;
+import org.argmap.client.ArgMapService.PartialTrees;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -36,7 +36,7 @@ public interface ArgMapServiceAsync {
 			AsyncCallback<Void> callback);
 
 	void replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
-			Long removePropID, AsyncCallback<Nodes> callback);
+			Long removePropID, AsyncCallback<Map<Long, Node>> callback);
 
 
 	void addProp(Long parentArgID, int position, String content,
@@ -57,21 +57,21 @@ public interface ArgMapServiceAsync {
 	void getArgsWithChanges(List<Long> argIDs,
 			AsyncCallback<Map<Long, NodeWithChanges>> callback);
 
-	void getPropsAndArgs(int depthLimit, AsyncCallback<PropsAndArgs> callback);
-
 	void getNodesChildren(List<Long> nodeIDs, int depth,
-			AsyncCallback<Nodes> callback);
+			AsyncCallback<Map<Long, Node>> callback);
 
 	void getLoginInfo(String requestURI, AsyncCallback<LoginInfo> callback);
 
 	void continueSearchProps(String searchName,
-			AsyncCallback<PropsAndArgs> callback);
+			AsyncCallback<PartialTrees> callback);
 
 	void searchProps(String searchString, String searchName, int resultLimit,
-			List<Long> filerNodeIDs, AsyncCallback<PropsAndArgs> callback);
+			List<Long> filerNodeIDs, AsyncCallback<PartialTrees> callback);
 
 	void getNewChanges_DELETE_ME(Date date, Set<Long> propIDs, Set<Long> argIDs,
 			AsyncCallback<ForwardChanges> callback);
+
+	void getRootProps(int depthLimit, AsyncCallback<PartialTrees> callback);
 
 
 }

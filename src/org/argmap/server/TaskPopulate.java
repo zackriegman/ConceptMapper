@@ -70,7 +70,7 @@ public class TaskPopulate extends HttpServlet {
 	 * = 3; AVERAGE_ARGS_AT_ROOT = 2; PROPS_STEP = 1; ARGS_STEP = .75;
 	 * ARGS_STANDARD_DEVIATION = 1; PROPS_STANDARD_DEVIATION = 3;
 	 */
-	private static final int ROOT_NODES = 30;
+	private static final int ROOT_NODES = 1;
 	private static final int AVERAGE_PROPS_AT_ROOT = 3;
 	private static final int AVERAGE_ARGS_AT_ROOT = 2;
 	private static final int PROPS_STEP = 1;

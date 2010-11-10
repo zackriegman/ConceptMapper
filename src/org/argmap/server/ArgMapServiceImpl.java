@@ -28,7 +28,6 @@ import org.argmap.client.Change.ChangeType;
 import org.argmap.client.LoginInfo;
 import org.argmap.client.Node;
 import org.argmap.client.NodeChanges;
-import org.argmap.client.Nodes;
 import org.argmap.client.Proposition;
 import org.argmap.client.ServiceException;
 
@@ -91,19 +90,14 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public PropsAndArgs getPropsAndArgs(int depthLimit) {
+	public PartialTrees getRootProps(int depthLimit) {
 
-		PropsAndArgs propsAndArgs = new PropsAndArgs();
-		/*
-		 * TODO: now that we aren't building a prop tree any longer there is no
-		 * reason to do this. Instead we can just query for all props and all
-		 * args and return them all.
-		 */
+		PartialTrees propsAndArgs = new PartialTrees();
 		Query<Proposition> propQuery = ofy.query(Proposition.class)
 				.filter("linkCount =", 0).order("-created").limit(30);
 
 		List<Proposition> rootProps = propQuery.list();
-		Nodes nodes = new Nodes();
+		Map<Long, Node> nodes = new HashMap<Long, Node>();
 
 		for (Proposition prop : rootProps) {
 			recursiveGetProps(prop, nodes, depthLimit);
@@ -114,7 +108,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		return propsAndArgs;
 	}
 
-	private void recursiveGetProps(Proposition prop, Nodes nodes, int depthLimit) {
+	private void recursiveGetProps(Proposition prop, Map<Long, Node> nodes, int depthLimit) {
 		if (depthLimit == 0) {
 			return;
 		}
@@ -133,7 +127,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
-	private void recursiveGetArgs(Argument arg, Nodes nodes, int depthLimit) {
+	private void recursiveGetArgs(Argument arg, Map<Long, Node> nodes, int depthLimit) {
 		if (depthLimit == 0) {
 			return;
 		}
@@ -781,24 +775,24 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public PropsAndArgs searchProps(String searchString, String searchName,
+	public PartialTrees searchProps(String searchString, String searchName,
 			int resultLimit, List<Long> filterNodeIDs) {
 		Set<String> tokenSet = getTokensForIndexingOrQuery(searchString, 6);
 		if (tokenSet.isEmpty()) {
-			return new PropsAndArgs();
+			return new PartialTrees();
 		}
 
 		Search search = new Search(ofy, tokenSet, resultLimit, filterNodeIDs);
-		PropsAndArgs propsAndArgs = search.getBatch(ofy);
+		PartialTrees propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
 		return propsAndArgs;
 	}
 
 	@Override
-	public PropsAndArgs continueSearchProps(String searchName) {
+	public PartialTrees continueSearchProps(String searchName) {
 		Search search = (Search) getHttpServletRequest().getSession()
 				.getAttribute(searchName);
-		PropsAndArgs propsAndArgs = search.getBatch(ofy);
+		PartialTrees propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
 		return propsAndArgs;
 	}
@@ -851,7 +845,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	 * the two steps of deleting and linking.
 	 */
 	@Override
-	public Nodes replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
+	public Map<Long, Node> replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
 			Long removePropID) throws ServiceException {
 		Lock parentLock = getNodeLock(parentArgID);
 		Lock oldChildLock = getNodeLock(removePropID);
@@ -943,7 +937,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			ofy.put(linkProp);
 			saveVersionInfo(change);
 
-			Nodes nodes = new Nodes();
+			Map<Long, Node> nodes = new HashMap<Long, Node>();
 			nodes.put(linkProp.id, linkProp);
 			recursiveGetProps(linkProp, nodes, 100);
 			return nodes;
@@ -960,9 +954,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Nodes getNodesChildren(List<Long> nodeIDs, int depth)
+	public Map<Long, Node> getNodesChildren(List<Long> nodeIDs, int depth)
 			throws ServiceException {
-		Nodes nodes = new Nodes();
+		Map<Long, Node> nodes = new HashMap<Long, Node>();
 		for (Long id : nodeIDs) {
 			try {
 				Argument arg = ofy.get(Argument.class, id);

@@ -3,9 +3,9 @@ package org.argmap.client;
 import java.util.List;
 
 import org.argmap.client.ArgMap.MessageType;
-import org.argmap.client.ArgMapService.PropsAndArgs;
+import org.argmap.client.ArgMapService.PartialTrees;
 
-public class Search implements ServerComm.LocalCallback<PropsAndArgs> {
+public class Search implements ServerComm.LocalCallback<PartialTrees> {
 
 	private final String searchString;
 	private final SearchResultsHandler handler;
@@ -17,7 +17,7 @@ public class Search implements ServerComm.LocalCallback<PropsAndArgs> {
 	private ArgMap.Message userMessage;
 
 	public interface SearchResultsHandler {
-		public void processSearchResults(PropsAndArgs propsAndArgs);
+		public void processSearchResults(PartialTrees propsAndArgs);
 
 		public void searchExhausted();
 
@@ -60,7 +60,7 @@ public class Search implements ServerComm.LocalCallback<PropsAndArgs> {
 	}
 
 	@Override
-	public void call(PropsAndArgs propsAndArgs) {
+	public void call(PartialTrees propsAndArgs) {
 		if (!cancelled) {
 			if (propsAndArgs.rootProps != null) {
 				resultCount += propsAndArgs.rootProps.size();

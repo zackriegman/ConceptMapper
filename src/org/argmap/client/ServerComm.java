@@ -11,7 +11,7 @@ import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.ForwardChanges;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
-import org.argmap.client.ArgMapService.PropsAndArgs;
+import org.argmap.client.ArgMapService.PartialTrees;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
@@ -209,16 +209,16 @@ public class ServerComm {
 	// }
 
 	public static void getRootProps(int depthLimit,
-			LocalCallback<PropsAndArgs> localCallback) {
-		argMapService.getPropsAndArgs(depthLimit,
-				new ServerCallback<PropsAndArgs>(localCallback, "loading...",
+			LocalCallback<PartialTrees> localCallback) {
+		argMapService.getRootProps(depthLimit,
+				new ServerCallback<PartialTrees>(localCallback, "loading...",
 						"finished loading"));
 	}
 
 	public static void getNodesChildren(List<Long> nodeIDs, int depth,
-			LocalCallback<Nodes> localCallback) {
+			LocalCallback<Map<Long, Node>> localCallback) {
 		argMapService.getNodesChildren(nodeIDs, depth,
-				new ServerCallback<Nodes>(localCallback, "pre-loading...",
+				new ServerCallback<Map<Long, Node>>(localCallback, "pre-loading...",
 						"finished pre-loading"));
 	}
 
@@ -264,16 +264,16 @@ public class ServerComm {
 
 	public static void searchProps(String searchString, String searchName,
 			int resultLimit, List<Long> filterNodeIDs,
-			LocalCallback<PropsAndArgs> localCallback) {
+			LocalCallback<PartialTrees> localCallback) {
 		argMapService.searchProps(searchString, searchName, resultLimit,
-				filterNodeIDs, new ServerCallback<PropsAndArgs>(localCallback,
+				filterNodeIDs, new ServerCallback<PartialTrees>(localCallback,
 						null, null));
 	}
 
 	public static void continueSearchProps(String searchName,
-			LocalCallback<PropsAndArgs> localCallback) {
+			LocalCallback<PartialTrees> localCallback) {
 		argMapService.continueSearchProps(searchName,
-				new ServerCallback<PropsAndArgs>(localCallback, null, null));
+				new ServerCallback<PartialTrees>(localCallback, null, null));
 	}
 
 	public static void addArg(final boolean pro, final Proposition parentProp,
@@ -359,8 +359,8 @@ public class ServerComm {
 
 	public static void replaceWithLinkAndGet(final Argument parentArg,
 			final Proposition linkProp, final Proposition removeProp,
-			final LocalCallback<Nodes> localCallback) {
-		queueCommand(new ServerCallbackWithDispatch<Nodes>("saving...", "saved") {
+			final LocalCallback<Map<Long, Node>> localCallback) {
+		queueCommand(new ServerCallbackWithDispatch<Map<Long, Node>>("saving...", "saved") {
 			@Override
 			public void execute() {
 				argMapService.replaceWithLinkAndGet(parentArg.id, linkProp.id,
@@ -368,7 +368,7 @@ public class ServerComm {
 			}
 
 			@Override
-			public void doOnSuccess(Nodes result) {
+			public void doOnSuccess(Map<Long, Node> result) {
 				localCallback.call(result);
 			}
 		});

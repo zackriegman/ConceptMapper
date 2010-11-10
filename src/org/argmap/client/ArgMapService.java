@@ -35,22 +35,22 @@ public interface ArgMapService extends RemoteService {
 	public void unlinkProp(Long parentArgID, Long propositionID)
 			throws ServiceException;
 
-	public class PropsAndArgs implements Serializable {
+	public class PartialTrees implements Serializable {
 		/* added to suppress warnings */
 		private static final long serialVersionUID = 1L;
 		public List<Proposition> rootProps;
-		public Nodes nodes;
+		public Map<Long, Node> nodes;
 	}
 
-	public PropsAndArgs getPropsAndArgs(int depthLimit);
+	public PartialTrees getRootProps(int depthLimit);
 
-	public Nodes replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
+	public Map<Long, Node> replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
 			Long removePropID) throws ServiceException;
 
 	public class NodesWithHistory implements Serializable {
 		/* added to suppress warnings */
 		private static final long serialVersionUID = 1L;
-		public Nodes nodes;
+		public Map<Long, Node> nodes;
 		public SortedMap<Date, Change> changes;
 	}
 
@@ -61,7 +61,7 @@ public interface ArgMapService extends RemoteService {
 		public Map<Long, Proposition> unlinkedLinks = new HashMap<Long, Proposition>();
 	}
 
-	public Nodes getNodesChildren(List<Long> nodeIDs, int depth)
+	public Map<Long, Node> getNodesChildren(List<Long> nodeIDs, int depth)
 			throws ServiceException;
 
 	public Map<Long, NodeWithChanges> getPropsWithChanges(List<Long> propIDs)
@@ -116,9 +116,9 @@ public interface ArgMapService extends RemoteService {
 	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs)
 			throws ServiceException;
 
-	public PropsAndArgs searchProps(String searchString, String searchName, int resultLimit, List<Long> filerNodeIDs) throws ServiceException;
+	public PartialTrees searchProps(String searchString, String searchName, int resultLimit, List<Long> filerNodeIDs) throws ServiceException;
 	
-	public PropsAndArgs continueSearchProps( String searchName ) throws ServiceException;
+	public PartialTrees continueSearchProps( String searchName ) throws ServiceException;
 	
 	public LoginInfo getLoginInfo( String requestURI ) throws ServiceException;
 

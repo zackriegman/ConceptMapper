@@ -2,6 +2,7 @@ package org.argmap.server;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,9 +12,9 @@ import java.util.logging.Logger;
 import javax.persistence.Embedded;
 import javax.persistence.Id;
 
-import org.argmap.client.Nodes;
+import org.argmap.client.ArgMapService.PartialTrees;
+import org.argmap.client.Node;
 import org.argmap.client.Proposition;
-import org.argmap.client.ArgMapService.PropsAndArgs;
 
 import com.google.appengine.api.datastore.Cursor;
 import com.google.appengine.api.datastore.QueryResultIterable;
@@ -67,8 +68,8 @@ public class Search implements Serializable {
 
 	}
 
-	public PropsAndArgs getBatch(Objectify ofy) {
-		PropsAndArgs results = setUpResults();
+	public PartialTrees getBatch(Objectify ofy) {
+		PartialTrees results = setUpResults();
 		Query<Proposition> query = repeatPreviousQueryOrBuildNext(ofy);
 		if (query == null) {
 			/* set rootProps to null as sign to client that the search has been exhausted */
@@ -95,11 +96,11 @@ public class Search implements Serializable {
 		return query;
 	}
 
-	public PropsAndArgs setUpResults() {
+	public PartialTrees setUpResults() {
 		List<Proposition> results = new LinkedList<Proposition>();
-		PropsAndArgs propsAndArgs = new PropsAndArgs();
+		PartialTrees propsAndArgs = new PartialTrees();
 		propsAndArgs.rootProps = results;
-		propsAndArgs.nodes = new Nodes();
+		propsAndArgs.nodes = new HashMap<Long, Node>();
 		return propsAndArgs;
 	}
 
@@ -112,8 +113,8 @@ public class Search implements Serializable {
 	 * it gets "limit" number of results. Then it saves it state in member
 	 * variables and returns. The next call will pick up where it left off.
 	 */
-	public PropsAndArgs getBatchToLimit(Objectify ofy) {
-		PropsAndArgs results = setUpResults();
+	public PartialTrees getBatchToLimit(Objectify ofy) {
+		PartialTrees results = setUpResults();
 
 		Query<Proposition> currentQuery = repeatPreviousQueryOrBuildNext(ofy);
 

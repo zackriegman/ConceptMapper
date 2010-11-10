@@ -107,17 +107,6 @@ public abstract class ViewArg extends ViewNode {
 	public String toString() {
 		return "text:" + getText() + "; arg:" + argument;
 	}
-
-	/*
-	public ViewProp getPropView(int index) {
-		return (ViewProp) getChild(index);
-	}
-	*/
-	
-	@Override
-	public Node getChildNodeFromNodeList( Long nodeID, Nodes nodes ){
-		return nodes.get( nodeID );
-	}
 	
 	@Override
 	public void setAsCircularLink(){

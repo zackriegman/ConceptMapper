@@ -3,6 +3,7 @@ package org.argmap.client;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 import com.google.gwt.user.client.ui.TreeItem;
@@ -106,8 +107,6 @@ public abstract class ViewNode extends TreeItem {
 
 	public abstract ViewNode createChild();
 
-	public abstract Node getChildNodeFromNodeList(Long nodeID, Nodes nodes);
-
 	public abstract void setNode(Node node);
 
 	public abstract Node getNode();
@@ -117,14 +116,14 @@ public abstract class ViewNode extends TreeItem {
 	/*
 	 * As far as I can tell this is currently only used in EditMode.
 	 */
-	public void recursiveBuildViewNode(Node node, Nodes nodes, int openDepth) {
+	public void recursiveBuildViewNode(Node node, Map<Long, Node> nodes, int openDepth) {
 		setNode(node);
 		boolean circularLink = linkExistsInAncestorPath(node.id);
 		if (circularLink) {
 			getParentView().setAsCircularLink();
 		}
 		for (Long nodeID : node.childIDs) {
-			Node childNode = getChildNodeFromNodeList(nodeID, nodes);
+			Node childNode = nodes.get(nodeID);
 			if (childNode != null && !circularLink) {
 				ViewNode childView = createChild();
 				if (openDepth <= 1) {

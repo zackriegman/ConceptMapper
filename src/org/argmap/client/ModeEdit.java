@@ -10,7 +10,7 @@ import java.util.Map;
 import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.DateAndChildIDs;
 import org.argmap.client.ArgMapService.ForwardChanges;
-import org.argmap.client.ArgMapService.PropsAndArgs;
+import org.argmap.client.ArgMapService.PartialTrees;
 import org.argmap.client.Search.SearchResultsHandler;
 import org.argmap.client.ServerComm.LocalCallback;
 
@@ -219,10 +219,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 	private void getRootProps() {
 		ServerComm.getRootProps(0,
-				new ServerComm.LocalCallback<PropsAndArgs>() {
+				new ServerComm.LocalCallback<PartialTrees>() {
 
 					@Override
-					public void call(PropsAndArgs allNodes) {
+					public void call(PartialTrees allNodes) {
 
 						Log log = Log.getLog("em.em.cb");
 						log.log("Prop Tree From Server");
@@ -604,14 +604,14 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			ViewPropEdit propViewToRemove = ViewPropEdit
 					.getLastPropositionWithFocus();
 			if (propViewToRemove.getChildCount() == 0) {
-				class ThisCallback implements LocalCallback<Nodes> {
+				class ThisCallback implements LocalCallback<Map<Long, Node>> {
 					ViewArgEdit parentArgView;
 					ViewPropEdit propViewToRemove;
 					int propIndex;
 					Long linkPropID;
 
 					@Override
-					public void call(Nodes nodes) {
+					public void call(Map<Long, Node> nodes) {
 						parentArgView.removeItem(propViewToRemove);
 						Proposition proposition = (Proposition) nodes.get(linkPropID);
 						ViewProp newViewProp = new ViewPropEdit();
@@ -674,7 +674,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 						@Override
 						public void processSearchResults(
-								PropsAndArgs propMatches) {
+								PartialTrees propMatches) {
 							sideSearchAppendResults(propMatches);
 							if (sideSearchResults.getRowCount() > 0) {
 								displaySearchBox();
@@ -689,7 +689,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 	}
 
-	private void sideSearchAppendResults(PropsAndArgs propMatches) {
+	private void sideSearchAppendResults(PartialTrees propMatches) {
 		int i = sideSearchResults.getRowCount();
 		HTMLTable.RowFormatter rowFormatter = sideSearchResults
 				.getRowFormatter();
@@ -940,7 +940,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					new SearchResultsHandler() {
 						@Override
 						public void processSearchResults(
-								PropsAndArgs propsAndArgs) {
+								PartialTrees propsAndArgs) {
 							mainSearchAppendResultsToTree(propsAndArgs);
 						}
 
@@ -960,7 +960,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 	}
 
-	public void mainSearchAppendResultsToTree(PropsAndArgs results) {
+	public void mainSearchAppendResultsToTree(PartialTrees results) {
 		for (Proposition proposition : results.rootProps) {
 
 			ViewProp propView = new ViewPropEdit();
@@ -988,9 +988,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		final int openDepthCB = openDepth;
 		final List<ViewNode> viewNodesCB = viewNodes;
 		ServerComm.getNodesChildren(viewNodeIDs, loadDepth,
-				new LocalCallback<Nodes>() {
+				new LocalCallback<Map<Long, Node>>() {
 					@Override
-					public void call(Nodes nodes) {
+					public void call(Map<Long, Node> nodes) {
 						for (ViewNode source : viewNodesCB) {
 							while (source.getChildCount() > 0) {
 								source.getChild(0).remove();
