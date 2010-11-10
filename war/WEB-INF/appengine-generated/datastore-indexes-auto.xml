@@ -1,11 +1,11 @@
-<!-- Indices written at Tue, 9 Nov 2010 01:47:20 UTC -->
+<!-- Indices written at Wed, 10 Nov 2010 17:15:04 UTC -->
 
 <datastore-indexes>
 
     <!-- Used 2 times in query history -->
     <datastore-index kind="Proposition" ancestor="false" source="auto">
         <property name="linkCount" direction="asc"/>
-        <property name="creationDate" direction="desc"/>
+        <property name="created" direction="desc"/>
     </datastore-index>
 
 </datastore-indexes>

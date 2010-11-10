@@ -116,7 +116,7 @@ public abstract class ViewArg extends ViewNode {
 	
 	@Override
 	public Node getChildNodeFromNodeList( Long nodeID, Nodes nodes ){
-		return nodes.props.get( nodeID );
+		return nodes.get( nodeID );
 	}
 	
 	@Override

@@ -92,7 +92,7 @@ public class Change implements Serializable {
 	 */
 	public String oldContent;
 	
-	public String newContent;
+	public String newContent_DELETE_ME;
 
 	/*
 	 * For change types: PROP_DELETION, PROP_ADDITION, PROP_UNLINK, PROP_LINK

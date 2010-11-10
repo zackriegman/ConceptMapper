@@ -70,7 +70,7 @@ public interface ArgMapServiceAsync {
 	void searchProps(String searchString, String searchName, int resultLimit,
 			List<Long> filerNodeIDs, AsyncCallback<PropsAndArgs> callback);
 
-	void getNewChanges(Date date, Set<Long> propIDs, Set<Long> argIDs,
+	void getNewChanges_DELETE_ME(Date date, Set<Long> propIDs, Set<Long> argIDs,
 			AsyncCallback<ForwardChanges> callback);
 
 

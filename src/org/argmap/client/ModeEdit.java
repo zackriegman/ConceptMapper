@@ -2,9 +2,13 @@ package org.argmap.client;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.argmap.client.ArgMap.MessageType;
+import org.argmap.client.ArgMapService.DateAndChildIDs;
 import org.argmap.client.ArgMapService.ForwardChanges;
 import org.argmap.client.ArgMapService.PropsAndArgs;
 import org.argmap.client.Search.SearchResultsHandler;
@@ -102,7 +106,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 			@Override
 			public void run() {
-				getNewChangesAndUpdateTree( lastUpdate);
+				getUpdatesAndApply();
+				// getNewChangesAndUpdateTree_DELETE_ME( lastUpdate_DELETE_ME);
 			}
 		};
 
@@ -233,7 +238,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 						tree.resetState();
 						if (Log.on) tree.logTree(log);
 
-						updateTimer.scheduleRepeating(10000);
+						//updateTimer.scheduleRepeating(10000);
 						log.finish();
 
 					}
@@ -241,79 +246,75 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	}
 
 	/*
-	 * TODO make sure lastUpdate is updated on every search and also on initial
-	 * getRootPropsTODO make sure that the loadedProp/Args maps are updated
+	 * TODO also might make sense to think more about how to make sure that
+	 * asearch doesn't step on an update. So the flow that I'm concerned aboutin
+	 * that case would be, update starts before search (search can
+	 * clearlastUpdate when it begins and set it to a new date when it returns)
+	 * andsearch starts and returns while update is still working, and then
+	 * clears thetree while update is still working... might not be a problem
+	 * actually...because the nodes that update was working on will still be in
+	 * memory, updatecan finish updating the pointless nodes, even after search
+	 * has cleared the tree...hmmm...
+	 */
+
+	/*
+	 * TODO whether or not a proposition is shown in yellow to designate that it
+	 * is linked depends on how many links it has... that is something I'm not
+	 * necessarily sending change data for... but maybe I should, it would
+	 * require the change info for all of the propositions parents, some of
+	 * which would not necessarily be present, so it would mean that I return
+	 * all the unlink events featureing a proposition, regardless of whether the
+	 * parent item is loaded on the client...
 	 */
 	/*
-	 * TODO also might make sense to think more about how to make sure that asearch
-	 * doesn't step on an update. So the flow that I'm concerned aboutin that
-	 * case would be, update starts before search (search can clearlastUpdate
-	 * when it begins and set it to a new date when it returns) andsearch starts
-	 * and returns while update is still working, and then clears thetree while
-	 * update is still working... might not be a problem actually...because the
-	 * nodes that update was working on will still be in memory, updatecan
-	 * finish updating the pointless nodes, even after search has cleared the
-	 * tree...hmmm...
-	 */
-	 /* TODO might want to have a way to remove deleted search
-	 * results so that the userdoesn't start editing a deleted item. This should
-	 * be easy, just supply the serverwith a list of root items, and return
-	 * add/remove changes for them...
-	 */
-	/* TODO as I'm adding nodes, how do I decide whether to add them as open
-	 * or closed, loaded or unloaded?  What I decided is that the first layer
-	 * of added nodes would be added as preloaded but closed, and the second layer
-	 * would be added as closed and unloaded.
+	 * TODO does the server currently fetch an extra layer deep? The first
+	 * iteration gets changes for existing nodes, including additions of new
+	 * nodes. The second iteration gets changes for new nodes to bring them up
+	 * to date, as well as additions of grandchildren. The third iteration
+	 * brings the grandchildren's content uptodate and creates the information
+	 * we need to create dummy nodes. Thus if the children are closed, we have
+	 * fully loaded children and grandchildren that are content uptodate with
+	 * dummy nodes (i.e. not loaded). So I think the server is doing it right, 3
+	 * iterations.
 	 */
 	/*
-	 * TODO whether or not a proposition is shown in yellow to designate that it is linked
-	 * depends on how many links it has... that is something I'm not necessarily sending
-	 * change data for... but maybe I should, it would require the change info for all of the 
-	 * propositions parents, some of which would not necessarily be present, so it would mean
-	 * that I return all the unlink events featureing a proposition, regardless of whether
-	 * the parent item is loaded on the client...
+	 * TODO in addition to the note below regarding getting rid of the extra
+	 * link property in the change I think we can also get rid of the newContent
+	 * variable as well. Will I want it for email? I don't see why. If I want to
+	 * show incremental changes, I can just construct the email backwards,
+	 * working from the current version of the tree. So instead of newContent
+	 * property, whenever there is an update we can just assume the update
+	 * brings us current with the current content, and send the current content
+	 * as the content of the update (and perhaps collapse multiple updates into
+	 * a single change). However will this run into problems with updates that
+	 * happen after the change list has started to be compiled? The client could
+	 * have content from a change that comes after its lastUpdate date. But this
+	 * doesn't really cause any problems does it? All that means is that ten
+	 * seconds later the client will be updated with content that it already
+	 * has. It should cause any extra conflicts/stomping, if the client edits
+	 * the node there is a conflict regardless of whether what he started with
+	 * was a ten second old copy. However this might be the key to why I decided
+	 * to save links in the change. Lets say an update starts at time T setting
+	 * the lastUpdate value to time T, and then at time T+1 a newly linked
+	 * proposition has a child added to it, then at time T+2 the update grabs a
+	 * copy of the newly linked proposition, including the child, then at time
+	 * T+3 the update returns, then at time T+4 a new update starts grabbing
+	 * changes from the lastUpdate value...which included the addition of the
+	 * child, so the child is double added. This is a little bit more serious
+	 * that updating the content before it is technically supposed to be
+	 * updated, but how much more serious? I guess it depends on how the client
+	 * handles a request to add an argument to a linked proposition that already
+	 * has an argument with that id... The same thing could happen but with a
+	 * delete, and the client would have to handle a deletion of a non-existant
+	 * node gracefully. OK, I think for now it makes sense to leave linked props
+	 * as properties of changes to avoid having to figure this all out...
 	 */
-	/* TODO does the server currently fetch an extra layer deep?  The first iteration gets
-	 * changes for existing nodes, including additions of new nodes.  The second iteration
-	 * gets changes for new nodes to bring them up to date, as well as additions of grandchildren.
-	 * The third iteration brings the grandchildren's content uptodate and creates the information
-	 * we need to create dummy nodes.  Thus if the children are closed, we have fully loaded children
-	 * and grandchildren that are content uptodate with dummy nodes (i.e. not loaded).  So I think
-	 * the server is doing it right, 3 iterations. 
-	 */
-	/* TODO in addition to the note below regarding getting rid of the extra link property in the change
-	 * I think we can also get rid of the newContent variable as well.  Will I want it for email?
-	 * I don't see why.  If I want to show incremental changes, I can just construct the email backwards,
-	 * working from the current version of the tree.
-	 * So instead of newContent property, whenever there is an update we can just assume the update brings
-	 * us current with the current content, and send the current content as the content of the update (and
-	 * perhaps collapse multiple updates into a single change).  However will this run into problems
-	 * with updates that happen after the change list has started to be compiled?  The client could have content
-	 * from a change that comes after its lastUpdate date.  But this doesn't really cause any problems does
-	 * it?  All that means is that ten seconds later the client will be updated with content that it already
-	 * has.  It should cause any extra conflicts/stomping, if the client edits the node there is a conflict
-	 * regardless of whether what he started with was a ten second old copy.
-	 * However this might be the key to why I decided to save links in the change.  Lets say an update 
-	 * starts at time T setting the lastUpdate value to time T, and then at time T+1 a newly linked
-	 * proposition has a child added to it, then at time T+2 the update grabs a copy of the newly linked
-	 * proposition, including the child, then at time T+3 the update returns, then at time T+4 a new update starts
-	 * grabbing changes from the lastUpdate value...which included the addition of the child, so the child
-	 * is double added.  This is a little bit more serious that updating the content before it is technically
-	 * supposed to be updated, but how much more serious?  I guess it depends on how the client handles a
-	 * request to add an argument to a linked proposition that already has an argument with that id...  The same
-	 * thing could happen but with a delete, and the client would have to handle a deletion of a non-existant
-	 * node gracefully.  OK, I think for now it makes sense to leave linked props as properties of changes
-	 * to avoid having to figure this all out...
-	 * 
-	 */
-	private Date lastUpdate;
-	private final MultiMap<Long, ViewProp> loadedProps = new MultiMap<Long, ViewProp>();
-	private final MultiMap<Long, ViewArg> loadedArgs = new MultiMap<Long, ViewArg>();
+	private Date lastUpdate_DELETE_ME;
 
-	private void getNewChangesAndUpdateTree(final Date startDate) {
+	private void getNewChangesAndUpdateTree_DELETE_ME(final Date startDate) {
 
-		ServerComm.getNewChanges(lastUpdate, loadedProps.keySet(),
-				loadedArgs.keySet(),
+		ServerComm.getNewChanges_DELETE_ME(lastUpdate_DELETE_ME,
+				loadedProps.keySet(), loadedArgs.keySet(),
 				new LocalCallback<ArgMapService.ForwardChanges>() {
 
 					@Override
@@ -325,7 +326,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 						 * apply to the existing tree and they should be
 						 * discarded.
 						 */
-						if (startDate != lastUpdate) {
+						if (startDate != lastUpdate_DELETE_ME) {
 							return;
 						}
 						for (Change change : changes.changes) {
@@ -337,51 +338,82 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 							case ARG_MODIFICATION:
 								for (ViewArg viewArg : loadedArgs
 										.get(change.argID)) {
-									switch( change.changeType ){
+									switch (change.changeType) {
 									case PROP_LINK:
-										/* note that for non-link nodes I'm updating the children
-										 * of the first layer of children but link nodes are created
-										 * unloaded with only dummies for children, because otherwise
-										 * I would have to send uptodate copies of the children seperately
-										 * or I would have to send backdated copies of the children along
-										 * with the updates needed to bring them to date.  I'm beginning
-										 * to think that really it makes more sense to send the fully uptodate
-										 * links...but perhaps not, because I also have to update the open+loaded
-										 * links on the client.  So I need to send and process the link changes
-										 * anyway.  But why not do both.  Send the link changes for open/loaded
-										 * links (as well as any changes of already open/loaded children)
-										 * and uptodate copies of newly linked/links 2 layers deeps (i.e. prefetched).
-										 * This would seem to make it unecessary to save a complete copy of the
-										 * link in the change, which seems sort of ugly to me (and thus far hasn't
-										 * been necessary for going back in time).
+										/*
+										 * note that for non-link nodes I'm
+										 * updating the children of the first
+										 * layer of children but link nodes are
+										 * created unloaded with only dummies
+										 * for children, because otherwise I
+										 * would have to send uptodate copies of
+										 * the children seperately or I would
+										 * have to send backdated copies of the
+										 * children along with the updates
+										 * needed to bring them to date. I'm
+										 * beginning to think that really it
+										 * makes more sense to send the fully
+										 * uptodate links...but perhaps not,
+										 * because I also have to update the
+										 * open+loaded links on the client. So I
+										 * need to send and process the link
+										 * changes anyway. But why not do both.
+										 * Send the link changes for open/loaded
+										 * links (as well as any changes of
+										 * already open/loaded children) and
+										 * uptodate copies of newly linked/links
+										 * 2 layers deeps (i.e. prefetched).
+										 * This would seem to make it unecessary
+										 * to save a complete copy of the link
+										 * in the change, which seems sort of
+										 * ugly to me (and thus far hasn't been
+										 * necessary for going back in time).
 										 */
-										ViewPropEdit linkView = new ViewPropEdit( change.link );
-										for( Long id : change.link.childIDs ){
-											linkView.addItem(new ViewDummyVer(id));
+										ViewPropEdit linkView = new ViewPropEdit(
+												change.link);
+										for (Long id : change.link.childIDs) {
+											linkView.addItem(new ViewDummyVer(
+													id));
 										}
 										linkView.setLoaded(false);
 										linkView.setOpen(false);
-										viewArg.insertItem(change.argPropIndex, linkView );
-										/*TODO is the link loaded or isn't it?  I can't remember how
-										 * I define loaded.  If the link isn't loaded, that means
-										 * I won't get updates for it right?  That isn't good.  I want
-										 * content changes for the link.  If the link is loaded...
-										 * I think the link is loaded because it's not a dummy...look
-										 * at how I use isLoaded in other parts of the program*/
-										loadedProps.put(change.propID, linkView);
+										viewArg.insertItem(change.argPropIndex,
+												linkView);
+										/*
+										 * TODO is the link loaded or isn't it?
+										 * I can't remember how I define loaded.
+										 * If the link isn't loaded, that means
+										 * I won't get updates for it right?
+										 * That isn't good. I want content
+										 * changes for the link. If the link is
+										 * loaded... I think the link is loaded
+										 * because it's not a dummy...look at
+										 * how I use isLoaded in other parts of
+										 * the program
+										 */
+										loadedProps
+												.put(change.propID, linkView);
 										break;
 									case PROP_ADDITION:
 										Proposition prop = new Proposition();
 										prop.id = change.propID;
-										prop.content = change.newContent;
-										ViewPropEdit child = new ViewPropEdit( prop );
-										viewArg.insertItem(change.argPropIndex, child);
-										/*TODO hmmm... on the first time through this loop
-										 * all the new items are loaded right.  But that isn't true
-										 * on the last time through the loop is it?  Or is it?
-										 * Figure that out one way or another.  And if its not true
-										 * then I need to distinguish the first time through from the last time.*/
-										loadedProps.put(change.propID, linkView);
+										prop.content = change.newContent_DELETE_ME;
+										ViewPropEdit child = new ViewPropEdit(
+												prop);
+										viewArg.insertItem(change.argPropIndex,
+												child);
+										/*
+										 * TODO hmmm... on the first time
+										 * through this loop all the new items
+										 * are loaded right. But that isn't true
+										 * on the last time through the loop is
+										 * it? Or is it? Figure that out one way
+										 * or another. And if its not true then
+										 * I need to distinguish the first time
+										 * through from the last time.
+										 */
+										// loadedProps.put(change.propID,
+										// linkView);
 										break;
 									case PROP_UNLINK:
 										viewArg.removeChildView(change.propID);
@@ -390,7 +422,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 										viewArg.removeChildView(change.propID);
 										break;
 									case ARG_MODIFICATION:
-										viewArg.setArgTitle(change.newContent);
+										viewArg.setArgTitle(change.newContent_DELETE_ME);
 										break;
 									}
 								}
@@ -400,9 +432,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 							case ARG_ADDITION:
 								for (ViewProp viewProp : loadedProps
 										.get(change.propID)) {
-									switch( change.changeType ){
+									switch (change.changeType) {
 									case PROP_MODIFICATION:
-										viewProp.setContent(change.newContent);
+										viewProp.setContent(change.newContent_DELETE_ME);
 										break;
 									case ARG_DELETION:
 										viewProp.removeChildView(change.argID);
@@ -410,11 +442,15 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 									case ARG_ADDITION:
 										Argument arg = new Argument();
 										arg.id = change.argID;
-										arg.content = change.newContent;
+										arg.content = change.newContent_DELETE_ME;
 										arg.pro = change.argPro;
-										ViewArgEdit child = new ViewArgEdit( arg );
-										viewProp.insertItem(change.argPropIndex, child);
-										/* TODO don't forget to add to the loadedArgs map if I need too here... */
+										ViewArgEdit child = new ViewArgEdit(arg);
+										viewProp.insertItem(
+												change.argPropIndex, child);
+										/*
+										 * TODO don't forget to add to the
+										 * loadedArgs map if I need too here...
+										 */
 										break;
 									}
 								}
@@ -425,6 +461,109 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 						// loadedProps/Args maps as I go
 					}
 				});
+	}
+
+	/*
+	 * TODO might want to have a way to remove deleted search results so that
+	 * the userdoesn't start editing a deleted item. This should be easy, just
+	 * supply the serverwith a list of root items, and return add/remove changes
+	 * for them...
+	 */
+	/*
+	 * TODO as I'm adding nodes, how do I decide whether to add them as open or
+	 * closed, loaded or unloaded? What I decided is that the first layer of
+	 * added nodes would be added as preloaded but closed, and the second layer
+	 * would be added as closed and unloaded.
+	 */
+	/*
+	 * TODO make sure that updates and searches don't step on each other. The
+	 * update callback can just make sure that there is no search in progress,
+	 * and if there is it can throw out its results. The search... maybe it
+	 * should remove the tree so the update is working on an irrelevant tree? Or
+	 * maybe we don't need to worry about this, becuase the search clears the
+	 * tree... so update will be working on detached nodes... but what about
+	 * root props and what about loadedProps and loadedArgs... the search will
+	 * clear those and replenish them and the update will continue working from
+	 * them. Maybe the search should replace loadedProps and loadedArgs with new
+	 * maps entirely (instead of clearing them) so that the update is working
+	 * with the old list and the search can go ahead and create a new list...?
+	 */
+	private final MultiMap<Long, ViewProp> loadedProps = new MultiMap<Long, ViewProp>();
+	private final MultiMap<Long, ViewArg> loadedArgs = new MultiMap<Long, ViewArg>();
+
+	/*
+	 * TODO make sure lastUpdate is updated on every search and also on initial
+	 * getRootProps
+	 */
+	/* TODO TODO make sure that the loadedProp/Args maps are updated */
+	/*
+	 * TODO make sure that the node.childIDs are updated on every ModeEdit
+	 * change...
+	 */
+	private void getUpdatesAndApply() {
+		Map<Long, DateAndChildIDs> propsInfo = new HashMap<Long, DateAndChildIDs>();
+		loadNodeInfo(loadedProps, propsInfo);
+		Map<Long, DateAndChildIDs> argsInfo = new HashMap<Long, DateAndChildIDs>();
+		loadNodeInfo(loadedArgs, argsInfo);
+
+		/*
+		 * public Map<Long, Node> getUpToDateNodes( Map<Long, DateAndChildIDs>
+		 * propInfo, Map<Long, DateAndChildIDs> argInfo )
+		 */
+		// TODO maybe just return a valuesSet instead of a map...
+		// TODO put this in a callback
+		Map<Long, Node> results = new HashMap<Long, Node>();
+		for (Node node : results.values()) {
+			if (node instanceof Proposition) {
+				for (ViewProp viewProp : loadedProps.get(node.id)) {
+					updateNode(viewProp, node, results);
+				}
+			} else if (node instanceof Argument) {
+				for (ViewArg viewArg : loadedArgs.get(node.id)) {
+					updateNode(viewArg, node, results);
+				}
+			} else
+				assert false;
+		}
+	}
+
+	private void updateNode(ViewNode viewNode, Node node,
+			Map<Long, Node> results) {
+		viewNode.setNode(node);
+
+		// TODO note: this list comparison also depends on the viewNode's Node
+		// have an uptodate childID list...make sure that it does...
+		if (!node.childIDs.equals(viewNode.getNode().childIDs)) {
+			Map<Long, ViewNode> removed = new HashMap<Long, ViewNode>();
+			while (viewNode.getChildCount() != 0) {
+				ViewNode child = viewNode.getChildView(0);
+				removed.put(child.getNodeID(), child);
+				child.remove();
+			}
+			for (int i = 0; i < node.childIDs.size(); i++) {
+				Long id = node.childIDs.get(i);
+				if (removed.containsKey(id)) {
+					viewNode.addItem(removed.get(id));
+				} else if (results.containsKey(id)) {
+					ViewNode child = viewNode.createChild();
+					viewNode.addItem(child);
+					//child.recursiveBuildViewNode(node, results, 0);
+				} else {
+					viewNode.addItem(new ViewDummyVer(id));
+				}
+			}
+		}
+	}
+
+	private <T extends ViewNode> void loadNodeInfo(
+			MultiMap<Long, T> loadedNodes, Map<Long, DateAndChildIDs> nodesInfo) {
+		for (Long id : loadedNodes.keySet()) {
+			Node node = loadedNodes.get(id).get(0).getNode();
+			DateAndChildIDs nodeInfo = new DateAndChildIDs();
+			nodeInfo.date = node.updated;
+			nodeInfo.childIDs = new HashSet<Long>(node.childIDs);
+			nodesInfo.put(id, nodeInfo);
+		}
 	}
 
 	private void addRootProp() {
@@ -474,7 +613,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					@Override
 					public void call(Nodes nodes) {
 						parentArgView.removeItem(propViewToRemove);
-						Proposition proposition = nodes.props.get(linkPropID);
+						Proposition proposition = (Proposition) nodes.get(linkPropID);
 						ViewProp newViewProp = new ViewPropEdit();
 						newViewProp.recursiveBuildViewNode(proposition, nodes,
 								5);

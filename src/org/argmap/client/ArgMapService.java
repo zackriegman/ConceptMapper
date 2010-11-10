@@ -99,13 +99,19 @@ public interface ArgMapService extends RemoteService {
 
 	}
 	
+	public class DateAndChildIDs implements Serializable {
+		private static final long serialVersionUID = 1L;
+		public Date date;
+		public Set<Long> childIDs;
+	}
+	
 	public class ForwardChanges implements Serializable {
 		private static final long serialVersionUID = 1L;
 		public List<Change> changes;
 		public Date date;
 	}
 	
-	public ForwardChanges getNewChanges(Date date, Set<Long> propIDs, Set<Long> argIDs ) throws ServiceException;
+	public ForwardChanges getNewChanges_DELETE_ME(Date date, Set<Long> propIDs, Set<Long> argIDs ) throws ServiceException;
 
 	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs)
 			throws ServiceException;

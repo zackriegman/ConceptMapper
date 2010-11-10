@@ -374,9 +374,9 @@ public class ServerComm {
 		});
 	}
 
-	public static void getNewChanges(Date date, Set<Long> propIDs,
+	public static void getNewChanges_DELETE_ME(Date date, Set<Long> propIDs,
 			Set<Long> argIDs, LocalCallback<ForwardChanges> localCallback) {
-		argMapService.getNewChanges(date, propIDs, argIDs,
+		argMapService.getNewChanges_DELETE_ME(date, propIDs, argIDs,
 				new ServerCallback<ArgMapService.ForwardChanges>(localCallback, "refreshing...", "refreshed") );
 	}
 }

@@ -23,5 +23,6 @@ public class Node implements Serializable {
 	public String content;
 	public List<Long> childIDs = new LinkedList<Long>();
 	
-	transient public Date creationDate;
+	public Date updated;
+	transient public Date created;
 }

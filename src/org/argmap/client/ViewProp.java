@@ -231,7 +231,7 @@ public abstract class ViewProp extends ViewNode {
 
 	@Override
 	public Node getChildNodeFromNodeList(Long nodeID, Nodes nodes) {
-		return nodes.args.get(nodeID);
+		return nodes.get(nodeID);
 	}
 
 	@Override

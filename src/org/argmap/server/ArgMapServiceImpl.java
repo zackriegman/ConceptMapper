@@ -100,7 +100,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		 * args and return them all.
 		 */
 		Query<Proposition> propQuery = ofy.query(Proposition.class)
-				.filter("linkCount =", 0).order("-creationDate").limit(30);
+				.filter("linkCount =", 0).order("-created").limit(30);
 
 		List<Proposition> rootProps = propQuery.list();
 		Nodes nodes = new Nodes();
@@ -124,9 +124,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		/* for each argument */
 		for (Argument arg : argMap.values()) {
 			/* if it hasn't yet been added to the map */
-			if (!nodes.args.containsKey(arg.id)) {
+			if (!nodes.containsKey(arg.id)) {
 				/* add it */
-				nodes.args.put(arg.id, arg);
+				nodes.put(arg.id, arg);
 				/* add it's children */
 				recursiveGetArgs(arg, nodes, depthLimit - 1);
 			}
@@ -143,9 +143,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				arg.childIDs);
 		for (Proposition prop : propMap.values()) {
 			/* if it hasn't yet been added to the map */
-			if (!nodes.props.containsKey(prop.id)) {
+			if (!nodes.containsKey(prop.id)) {
 				/* add it */
-				nodes.props.put(prop.id, prop);
+				nodes.put(prop.id, prop);
 				/* add it's descendants */
 				recursiveGetProps(prop, nodes, depthLimit - 1);
 			}
@@ -162,7 +162,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 		// log.finest("addProp()");
 		Proposition newProposition = new Proposition();
-		newProposition.creationDate = new Date();
+		newProposition.created = new Date();
 		newProposition.content = content;
 		newProposition.tokens = getTokensForIndexingOrQuery(content, 30);
 		Argument parentArg = null;
@@ -190,7 +190,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		Change change = new Change(ChangeType.PROP_ADDITION);
 		change.propID = newProposition.id;
 		change.argID = parentArgID;
-		change.newContent = content;
+		change.newContent_DELETE_ME = content;
+		//TODO this line not needed any longer as we aren't doing forward updates with changes
 		change.argPropIndex = position;
 		saveVersionInfo(change);
 
@@ -215,6 +216,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			Change change = new Change(ChangeType.PROP_LINK);
 			change.argID = parentArgID;
 			change.propID = proposition.id;
+			//TODO this line not needed any longer as we aren't doing forward updates with changes
 			change.argPropIndex = position;
 			change.link = proposition;
 			saveVersionInfo(change);
@@ -342,7 +344,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 			change.propID = prop.id;
 			change.oldContent = prop.content;
-			change.newContent = content;
+			change.newContent_DELETE_ME = content;
 			// TODO is this line necessary for some reason?
 			// change.propTopLevel = prop.topLevel;
 
@@ -421,7 +423,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			// ofy.put(newProp);
 
 			Argument newArg = new Argument();
-			newArg.creationDate = new Date();
+			newArg.created = new Date();
 			timer.lap("----");
 			// newArg.propIDs.add(0, newProp.id);
 
@@ -437,6 +439,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			Change change = new Change(ChangeType.ARG_ADDITION);
 			change.argID = newArg.id;
 			change.propID = parentPropID;
+			//TODO this line not needed any longer as we aren't doing forward updates with changes
 			change.argPropIndex = parentProp.childIDs.indexOf(newArg.id);
 			saveVersionInfo(change);
 			timer.lap("````");
@@ -462,7 +465,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 			change.argID = arg.id;
 			change.oldContent = arg.content;
-			change.newContent = content;
+			change.newContent_DELETE_ME = content;
 			// TODO is this line necessary for some reason?
 			// change.propTopLevel = prop.topLevel;
 
@@ -512,9 +515,46 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 		return nodesChanges;
 	}
+	
+	/*
+	 * TODO make sure lastUpdate is saved whenever a node is changed
+	 */
+	public Map<Long, Node> getUpToDateNodes( Map<Long, DateAndChildIDs> propInfo, Map<Long, DateAndChildIDs> argInfo ){
+		Map<Long, Node> results = new HashMap<Long, Node>();
+		Map<Long, Proposition> props = ofy.get(Proposition.class, propInfo.keySet());
+		Map<Long, Argument> args = ofy.get(Argument.class, argInfo.keySet());
+		
+		for( Proposition prop : props.values() ){
+			if( ! prop.updated.equals( propInfo.get(prop.id).date)){
+				results.put(prop.id, prop);
+				for( Long childID : prop.childIDs ){
+					if( ! propInfo.get(prop.id).childIDs.contains(childID)){
+						Argument child = ofy.get(Argument.class, childID);
+						results.put(child.id, child);
+						results.putAll( ofy.get(Proposition.class, child.childIDs) );
+					}
+				}
+			}
+		}
+		
+		for( Argument arg : args.values() ){
+			if( ! arg.updated.equals( argInfo.get(arg.id).date)){
+				results.put(arg.id, arg);
+				for( Long childID : arg.childIDs ){
+					if( ! propInfo.get(arg.id).childIDs.contains(childID)){
+						Proposition child = ofy.get(Proposition.class, childID);
+						results.put(child.id, child);
+						results.putAll( ofy.get(Argument.class, child.childIDs) );
+					}
+				}
+			}
+		}
+		
+		return results;
+	}
 
 	@Override
-	public ForwardChanges getNewChanges(Date startDate, Set<Long> propIDs,
+	public ForwardChanges getNewChanges_DELETE_ME(Date startDate, Set<Long> propIDs,
 			Set<Long> argIDs) throws ServiceException {
 
 		/*
@@ -904,7 +944,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			saveVersionInfo(change);
 
 			Nodes nodes = new Nodes();
-			nodes.props.put(linkProp.id, linkProp);
+			nodes.put(linkProp.id, linkProp);
 			recursiveGetProps(linkProp, nodes, 100);
 			return nodes;
 		} finally {
