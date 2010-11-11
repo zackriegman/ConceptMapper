@@ -223,25 +223,37 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				new ServerComm.LocalCallback<PartialTrees>() {
 
 					@Override
-					public void call(PartialTrees allNodes) {
+					public void call(final PartialTrees allNodes) {
+						GWT.runAsync(new RunAsyncCallback() {
+							
+							@Override
+							public void onSuccess() {
+								Log log = Log.getLog("em.em.cb");
+								log.log("Prop Tree From Server");
+								for (Proposition proposition : allNodes.rootProps) {
 
-						Log log = Log.getLog("em.em.cb");
-						log.log("Prop Tree From Server");
-						for (Proposition proposition : allNodes.rootProps) {
+									ViewProp propView = new ViewPropEdit();
+									propView.recursiveBuildViewNode(proposition,
+											allNodes.nodes, 5);
 
-							ViewProp propView = new ViewPropEdit();
-							propView.recursiveBuildViewNode(proposition,
-									allNodes.nodes, 5);
+									tree.addItem(propView);
+									// propView.logNodeRecursive(0, "em.em.cb", true);
+								}
+								tree.resetState();
+								if (Log.on) tree.logTree(log);
 
-							tree.addItem(propView);
-							// propView.logNodeRecursive(0, "em.em.cb", true);
-						}
-						tree.resetState();
-						if (Log.on) tree.logTree(log);
-
-						// updateTimer.scheduleRepeating(10000);
-						log.finish();
-
+								// updateTimer.scheduleRepeating(10000);
+								log.finish();
+								
+							}
+							
+							@Override
+							public void onFailure(Throwable reason) {
+								ArgMap.messageTimed("Code download failed", MessageType.ERROR);
+								Log.log("me.me", "Code download failed" + reason.toString());
+								
+							}
+						});
 					}
 				});
 	}
