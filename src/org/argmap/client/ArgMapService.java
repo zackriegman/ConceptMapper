@@ -16,14 +16,14 @@ public interface ArgMapService extends RemoteService {
 
 	public void logClientException(String ExceptionStr);
 
-	public Long addProp(Long parentArgID, int position, String content)
+	public Proposition addProp(Long parentArgID, int position, String content)
 			throws ServiceException;
 
 	public void deleteProp(Long propID) throws ServiceException;
 
 	public void deleteArg(Long argID) throws ServiceException;
 
-	public Long addArg(Long parentPropID, boolean pro) throws ServiceException;
+	public Argument addArg(Long parentPropID, boolean pro) throws ServiceException;
 
 	public void updateProp(Long propID, String content) throws ServiceException;
 
@@ -103,6 +103,17 @@ public interface ArgMapService extends RemoteService {
 		private static final long serialVersionUID = 1L;
 		public Date date;
 		public Set<Long> childIDs;
+		
+		@Override
+		public String toString(){
+			StringBuilder sb = new StringBuilder();
+			sb.append("{ date:" + date + "; childIDs:");
+			for( Long id : childIDs ){
+				sb.append("" + id + " ");
+			}
+			sb.append("}");
+			return sb.toString();
+		}
 	}
 	
 	public class ForwardChanges implements Serializable {

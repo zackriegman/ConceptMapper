@@ -21,6 +21,10 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
+/*TODO: currently only addProp and addArg return the updated nodes, and even the only for the 
+ * added node not for the parent node.  This means that the parent node will be updated in the
+ * next refresh... that isn't really a problem maybe... but it some cases it may be less than ideal
+ * for instance... maybe its ok actually...*/
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
 /*TODO: track down exceptions in ModeVersion (unrelated to circular linking)
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)

@@ -20,6 +20,9 @@ import net.sf.jsr107cache.CacheException;
 import net.sf.jsr107cache.CacheFactory;
 import net.sf.jsr107cache.CacheManager;
 
+import org.argmap.client.Argument;
+import org.argmap.client.Proposition;
+
 import com.google.appengine.api.labs.taskqueue.Queue;
 import com.google.appengine.api.labs.taskqueue.QueueFactory;
 import com.google.appengine.api.labs.taskqueue.TaskOptions;
@@ -185,9 +188,9 @@ public class TaskPopulate extends HttpServlet {
 	public static void queueRootTaskPopulates(HttpServletRequest req) {
 		argMapService.setCurrentRequest(req);
 		for (int i = 0; i < ROOT_NODES; i++) {
-			Long propID = argMapService.addProp(null, 0,
+			Proposition prop = argMapService.addProp(null, 0,
 					getRandomSentence());
-			queueTaskPopulate(propID, AVERAGE_PROPS_AT_ROOT,
+			queueTaskPopulate(prop.id, AVERAGE_PROPS_AT_ROOT,
 					AVERAGE_ARGS_AT_ROOT);
 		}
 	}
@@ -228,11 +231,11 @@ public class TaskPopulate extends HttpServlet {
 				// create roughly 3/4 arguments pro and 1/4 con
 				boolean pro = random.nextInt(4) <= 2 ? true : false;
 				timer.lap("0000 " + i);
-				Long argID = argMapService.addArg(propID, pro);
+				Argument arg = argMapService.addArg(propID, pro);
 				timer.lap("1111 " + i);
 				String randomSentence = getRandomSentence();
 				timer.lap("2222 " + i);
-				argMapService.updateArg(argID, randomSentence);
+				argMapService.updateArg(arg.id, randomSentence);
 				timer.lap("3333 " + i);
 				double propCount = random.nextGaussian()
 						* PROPS_STANDARD_DEVIATION + averageProps;
@@ -241,9 +244,9 @@ public class TaskPopulate extends HttpServlet {
 				timer.lap("5555 " + i);
 				for (int j = 0; j < propCount; j++) {
 					timer.lap("EEEE " + j);
-					Long childPropID = argMapService.addProp(argID, 0,
+					Proposition childProp = argMapService.addProp(arg.id, 0,
 							getRandomSentence());
-					queueTaskPopulate(childPropID, averageProps - PROPS_STEP,
+					queueTaskPopulate(childProp.id, averageProps - PROPS_STEP,
 							averageArgs - ARGS_STEP);
 					timer.lap("FFFF " + j);
 				}

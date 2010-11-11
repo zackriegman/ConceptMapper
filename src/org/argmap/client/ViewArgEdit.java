@@ -1,6 +1,7 @@
 package org.argmap.client;
 
 import org.argmap.client.ModeEdit.EditModeTree;
+import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -88,13 +89,18 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 				event.preventDefault();
 			} else if (charCode == KeyCodes.KEY_ENTER
 					&& textBox.getCursorPos() == textBox.getText().length()) {
-				ViewPropEdit newPropView = new ViewPropEdit();
+				final ViewPropEdit newPropView = new ViewPropEdit();
 				insertItem(0, newPropView);
 				newPropView.haveFocus();
 				setOpen(true);
 				newPropView.setOpen(true);
 				getEditModeTree().resetState();
-				ServerComm.addProp(newPropView.proposition, argument, 0);
+				ServerComm.addProp(newPropView.proposition, argument, 0, new LocalCallback<Proposition>() {
+					@Override
+					public void call(Proposition result) {
+						newPropView.addPropositionCallback(newPropView, result);
+					}
+				});
 				event.preventDefault();
 
 			}

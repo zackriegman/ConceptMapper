@@ -30,6 +30,7 @@ import org.argmap.client.Node;
 import org.argmap.client.NodeChanges;
 import org.argmap.client.Proposition;
 import org.argmap.client.ServiceException;
+import org.argmap.client.Util;
 
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
@@ -103,7 +104,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		return propsAndArgs;
 	}
 
-	private void recursiveGetProps(Proposition prop, Map<Long, Node> nodes, int depthLimit) {
+	private void recursiveGetProps(Proposition prop, Map<Long, Node> nodes,
+			int depthLimit) {
 		if (depthLimit == 0) {
 			return;
 		}
@@ -122,7 +124,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
-	private void recursiveGetArgs(Argument arg, Map<Long, Node> nodes, int depthLimit) {
+	private void recursiveGetArgs(Argument arg, Map<Long, Node> nodes,
+			int depthLimit) {
 		if (depthLimit == 0) {
 			return;
 		}
@@ -146,7 +149,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Long addProp(Long parentArgID, int position, String content) {
+	public Proposition addProp(Long parentArgID, int position, String content) {
 		content = content.trim();
 
 		// log.finest("addProp()");
@@ -164,27 +167,28 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				lock.lock();
 				parentArg = ofy.get(Argument.class, parentArgID);
 				newProposition.linkCount = 1;
-				ofy.put(newProposition);
+				putNode(newProposition);
 				parentArg.childIDs.add(position, newProposition.id);
 
-				ofy.put(parentArg);
+				putNode(parentArg);
 			} finally {
 				lock.unlock();
 			}
 		} else {
 			newProposition.linkCount = 0;
-			ofy.put(newProposition);
+			putNode(newProposition);
 		}
 
 		Change change = new Change(ChangeType.PROP_ADDITION);
 		change.propID = newProposition.id;
 		change.argID = parentArgID;
 		change.newContent_DELETE_ME = content;
-		//TODO this line not needed any longer as we aren't doing forward updates with changes
+		// TODO this line not needed any longer as we aren't doing forward
+		// updates with changes
 		change.argPropIndex = position;
 		saveVersionInfo(change);
 
-		return newProposition.id;
+		return newProposition;
 	}
 
 	@Override
@@ -199,13 +203,14 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			Argument argument = ofy.get(Argument.class, parentArgID);
 
 			argument.childIDs.add(position, propositionID);
-			ofy.put(argument);
+			putNode(argument);
 			proposition.linkCount++;
-			ofy.put(proposition);
+			putNode(proposition);
 			Change change = new Change(ChangeType.PROP_LINK);
 			change.argID = parentArgID;
 			change.propID = proposition.id;
-			//TODO this line not needed any longer as we aren't doing forward updates with changes
+			// TODO this line not needed any longer as we aren't doing forward
+			// updates with changes
 			change.argPropIndex = position;
 			change.link_DELETE_ME = proposition;
 			saveVersionInfo(change);
@@ -262,7 +267,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 				/* remove the proposition from the argument */
 				argument.childIDs.remove(propID);
-				ofy.put(argument);
+				putNode(argument);
 			} finally {
 				lock.unlock();
 			}
@@ -297,10 +302,10 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			}
 
 			argument.childIDs.remove(propositionID);
-			ofy.put(argument);
+			putNode(argument);
 
 			proposition.linkCount--;
-			ofy.put(proposition);
+			putNode(proposition);
 
 			Change change = new Change(ChangeType.PROP_UNLINK);
 			change.argID = parentArgID;
@@ -345,7 +350,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 			prop.setContent(content);
 			prop.tokens = getTokensForIndexingOrQuery(content, 30);
-			ofy.put(prop);
+			putNode(prop);
 		} finally {
 			lock.unlock();
 		}
@@ -383,7 +388,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			 */
 			parentProp.childIDs.remove(argument.id);
 
-			ofy.put(parentProp);
+			putNode(parentProp);
 
 			ofy.delete(argument);
 			saveVersionInfo(argDeletionChange);
@@ -394,7 +399,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Long addArg(Long parentPropID, boolean pro) {
+	public Argument addArg(Long parentPropID, boolean pro) {
 		LapTimer timer = new LapTimer();
 		Lock lock = getNodeLock(parentPropID);
 		try {
@@ -409,7 +414,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			timer.lap("{{{{");
 			// Proposition newProp = new Proposition();
 			// newProp.linkCount = 1;
-			// ofy.put(newProp);
+			// putNode(newProp);
 
 			Argument newArg = new Argument();
 			newArg.created = new Date();
@@ -418,21 +423,22 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 			newArg.pro = pro;
 			timer.lap("====");
-			ofy.put(newArg);
+			putNode(newArg);
 			timer.lap("]]]]");
 			parentProp.childIDs.add(newArg.id);
 
 			timer.lap("\\\\");
-			ofy.put(parentProp);
+			putNode(parentProp);
 			timer.lap(";;;;");
 			Change change = new Change(ChangeType.ARG_ADDITION);
 			change.argID = newArg.id;
 			change.propID = parentPropID;
-			//TODO this line not needed any longer as we aren't doing forward updates with changes
+			// TODO this line not needed any longer as we aren't doing forward
+			// updates with changes
 			change.argPropIndex = parentProp.childIDs.indexOf(newArg.id);
 			saveVersionInfo(change);
 			timer.lap("````");
-			return newArg.id;
+			return newArg;
 		} finally {
 			lock.unlock();
 			log.fine(timer.getRecord());
@@ -465,7 +471,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			saveVersionInfo(change);
 
 			arg.content = content;
-			ofy.put(arg);
+			putNode(arg);
 		} finally {
 			lock.unlock();
 		}
@@ -479,10 +485,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		change.remoteHost = request.getRemoteHost();
 		change.remotePort = request.getRemotePort();
 		change.remoteUser = request.getRemoteUser();
-		try{
-		change.sessionID = request.getSession().getId();
-		}
-		catch(java.lang.IllegalStateException e){
+		try {
+			change.sessionID = request.getSession().getId();
+		} catch (java.lang.IllegalStateException e) {
 			log.fine("no session information logged because there was no session found");
 		}
 
@@ -510,47 +515,63 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		return nodesChanges;
 	}
 	
+	private void putNode( Node node ){
+		node.updated = new Date();
+		ofy.put( node );
+	}
+
 	/*
 	 * TODO make sure lastUpdate is saved whenever a node is changed
 	 */
 	@Override
-	public Map<Long, Node> getUpToDateNodes( Map<Long, DateAndChildIDs> propInfo, Map<Long, DateAndChildIDs> argInfo ){
+	public Map<Long, Node> getUpToDateNodes(
+			Map<Long, DateAndChildIDs> propsInfo,
+			Map<Long, DateAndChildIDs> argsInfo) {
 		Map<Long, Node> results = new HashMap<Long, Node>();
-		Map<Long, Proposition> props = ofy.get(Proposition.class, propInfo.keySet());
-		Map<Long, Argument> args = ofy.get(Argument.class, argInfo.keySet());
 		
-		for( Proposition prop : props.values() ){
-			if( ! prop.updated.equals( propInfo.get(prop.id).date)){
+		log.severe("got request for these-\nprops:" + Util.mapToString(propsInfo) + "\nargs:" + Util.mapToString(argsInfo));
+		
+		Map<Long, Proposition> props = ofy.get(Proposition.class,
+				propsInfo.keySet());
+		Map<Long, Argument> args = ofy.get(Argument.class, argsInfo.keySet());
+
+		for (Proposition prop : props.values()) {
+			log.severe("propID:" + prop.id + "; DateAndChildIDs:" + propsInfo.get( prop.id ).toString() );
+			if (!prop.updated.equals(propsInfo.get(prop.id).date)) {
 				results.put(prop.id, prop);
-				for( Long childID : prop.childIDs ){
-					if( ! propInfo.get(prop.id).childIDs.contains(childID)){
+				for (Long childID : prop.childIDs) {
+					if (!propsInfo.get(prop.id).childIDs.contains(childID)) {
 						Argument child = ofy.get(Argument.class, childID);
 						results.put(child.id, child);
-						results.putAll( ofy.get(Proposition.class, child.childIDs) );
+						results.putAll(ofy.get(Proposition.class,
+								child.childIDs));
 					}
 				}
 			}
 		}
-		
-		for( Argument arg : args.values() ){
-			if( ! arg.updated.equals( argInfo.get(arg.id).date)){
+
+		for (Argument arg : args.values()) {
+			if (!arg.updated.equals(argsInfo.get(arg.id).date)) {
 				results.put(arg.id, arg);
-				for( Long childID : arg.childIDs ){
-					if( ! propInfo.get(arg.id).childIDs.contains(childID)){
+				for (Long childID : arg.childIDs) {
+					if (!argsInfo.get(arg.id).childIDs.contains(childID)) {
 						Proposition child = ofy.get(Proposition.class, childID);
 						results.put(child.id, child);
-						results.putAll( ofy.get(Argument.class, child.childIDs) );
+						results.putAll(ofy.get(Argument.class, child.childIDs));
 					}
 				}
 			}
 		}
 		
+		log.severe("returning these nodes:" + Util.mapToString(results));
 		return results;
 	}
+	
+	
 
 	@Override
-	public ForwardChanges getNewChanges_DELETE_ME(Date startDate, Set<Long> propIDs,
-			Set<Long> argIDs) throws ServiceException {
+	public ForwardChanges getNewChanges_DELETE_ME(Date startDate,
+			Set<Long> propIDs, Set<Long> argIDs) throws ServiceException {
 
 		/*
 		 * hmmm it's going to be more complicated than this, I will need to
@@ -846,8 +867,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	 * the two steps of deleting and linking.
 	 */
 	@Override
-	public Map<Long, Node> replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
-			Long removePropID) throws ServiceException {
+	public Map<Long, Node> replaceWithLinkAndGet(Long parentArgID,
+			Long linkPropID, Long removePropID) throws ServiceException {
 		Lock parentLock = getNodeLock(parentArgID);
 		Lock oldChildLock = getNodeLock(removePropID);
 		Lock newChildLock = getNodeLock(linkPropID);
@@ -903,7 +924,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				parentArg.childIDs.remove(index);
 
 				ofy.delete(removeProp);
-				ofy.put(parentArg);
+				putNode(parentArg);
 				saveVersionInfo(change);
 			}
 			/*
@@ -922,8 +943,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 				removeProp.linkCount--;
 
-				ofy.put(removeProp);
-				ofy.put(parentArg);
+				putNode(removeProp);
+				putNode(parentArg);
 				saveVersionInfo(change);
 			}
 
@@ -933,14 +954,14 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			change.link_DELETE_ME = linkProp;
 
 			parentArg.childIDs.add(index, linkPropID);
-			ofy.put(parentArg);
+			putNode(parentArg);
 			linkProp.linkCount++;
-			ofy.put(linkProp);
+			putNode(linkProp);
 			saveVersionInfo(change);
 
 			Map<Long, Node> nodes = new HashMap<Long, Node>();
 			nodes.put(linkProp.id, linkProp);
-			recursiveGetProps(linkProp, nodes, 100);
+			recursiveGetProps(linkProp, nodes, 2);
 			return nodes;
 		} finally {
 			parentLock.unlock();

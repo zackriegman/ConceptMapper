@@ -20,7 +20,7 @@ public class Node implements Serializable {
 	 */
 	@Id
 	public Long id;
-	public String content;
+	public String content = "";
 	public List<Long> childIDs = new LinkedList<Long>();
 	
 	public Date updated;

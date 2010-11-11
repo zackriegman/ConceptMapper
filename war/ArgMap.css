@@ -8,10 +8,10 @@
 	border-style: dotted;
 	border-width: 1px;
 	padding: .5em;
-	-moz-border-radius: 5px;
-	-webkit-border-radius: 5px;
-	-khtml-border-radius: 5px;
-	border-radius: 5px;
+	-moz-border-radius: 6px;
+	-webkit-border-radius: 6px;
+	-khtml-border-radius: 6px;
+	border-radius: 6px;
 }
 
 .circularLink {
@@ -73,10 +73,10 @@
 	border-style: solid;
 	border-color: #C9C9C9;
 	border-width: 1px;
-	-moz-border-radius: 5px;
-	-webkit-border-radius: 5px;
-	-khtml-border-radius: 5px;
-	border-radius: 5px;
+	-moz-border-radius: 6px;
+	-webkit-border-radius: 6px;
+	-khtml-border-radius: 6px;
+	border-radius: 6px;
 }
 
 .nodeText {
@@ -109,19 +109,20 @@
 .infoMessage {
 	text-align: center;
 	background-color: #FFF1A8;
-	-moz-border-radius: 10px;
-	-webkit-border-radius: 10px;
-	-khtml-border-radius: 10px;
-	border-radius: 10px;
+	
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	-khtml-border-radius: 8px;
+	border-radius: 8px;
 }
 
 .errorMessage {
 	text-align: center;
 	background-color: #FF5151;
-	-moz-border-radius: 10px;
-	-webkit-border-radius: 10px;
-	-khtml-border-radius: 10px;
-	border-radius: 10px;
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	-khtml-border-radius: 8px;
+	border-radius: 8px;
 }
 
 .messageArea {

@@ -1,6 +1,7 @@
 package org.argmap.client;
 
 import org.argmap.client.ModeEdit.EditModeTree;
+import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -134,16 +135,27 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	}
 
 	public void addArgument(boolean pro) {
-		ViewArgEdit newArgView = new ViewArgEdit(pro);
-		ViewPropEdit newPropView = new ViewPropEdit();
+		final ViewArgEdit newArgView = new ViewArgEdit(pro);
+		final ViewPropEdit newPropView = new ViewPropEdit();
 		newArgView.addItem(newPropView);
 		this.addItem(newArgView);
 		newArgView.setOpen(true);
 		this.setOpen(true);
 		getEditModeTree().resetState();
 		newPropView.haveFocus();
-		ServerComm.addArg(pro, this.proposition, newArgView.argument);
-		ServerComm.addProp(newPropView.proposition, newArgView.argument, 0);
+		ServerComm.addArg(pro, this.proposition, new LocalCallback<Argument>() {
+			@Override
+			public void call(Argument result) {
+				newArgView.setNode( result );
+				newArgView.setLoaded(true);
+			}
+		});
+		ServerComm.addProp(newPropView.proposition, newArgView.argument, 0, new LocalCallback<Proposition>() {
+			@Override
+			public void call(Proposition result) {
+				addPropositionCallback(newPropView, result);
+			}
+		});
 	}
 
 	@Override
@@ -285,6 +297,11 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			ServerComm.deleteArg(parentArgView.argument);
 		}
 	}
+	
+	public void addPropositionCallback( ViewProp newPropView, Proposition result ){
+		newPropView.setNode( result );
+		newPropView.setLoaded(true);
+	}
 
 	public void addProposition() {
 		int cursorPosition = textArea.getCursorPos();
@@ -300,11 +317,16 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		}
 
 		int treePosition = parentArgView().getChildIndex(this);
-		ViewPropEdit newPropView = new ViewPropEdit();
+		final ViewPropEdit newPropView = new ViewPropEdit();
 		if (cursorPosition == 0) {
 			parentArgView().insertItem(treePosition, newPropView);
 			ServerComm.addProp(newPropView.proposition,
-					parentArgView().argument, treePosition);
+					parentArgView().argument, treePosition, new LocalCallback<Proposition>() {
+						@Override
+						public void call(Proposition result) {
+							addPropositionCallback( newPropView, result );
+						}
+					});
 		} else {
 			parentArgView().insertItem(treePosition + 1, newPropView);
 
@@ -323,7 +345,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			newPropView.textArea.setFocus(true);
 
 			ServerComm.addProp(newPropView.proposition,
-					parentArgView().argument, treePosition + 1);
+					parentArgView().argument, treePosition + 1, new LocalCallback<Proposition>() {
+						@Override
+						public void call(Proposition result) {
+							addPropositionCallback(newPropView, result);
+						}
+					});
 			updatePropOnServerIfChanged();
 		}
 

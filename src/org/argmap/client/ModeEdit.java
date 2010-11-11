@@ -9,7 +9,6 @@ import java.util.Map;
 
 import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.DateAndChildIDs;
-import org.argmap.client.ArgMapService.ForwardChanges;
 import org.argmap.client.ArgMapService.PartialTrees;
 import org.argmap.client.Search.SearchResultsHandler;
 import org.argmap.client.ServerComm.LocalCallback;
@@ -73,9 +72,25 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	private Button sideSearchContinueButton;
 	private final ArgMap argMap;
 
-	private final Timer updateTimer;
+	private final UpdateTimer updateTimer;
 	private Search mainSearch;
 	private Search sideSearch;
+	
+	/*
+	 * rather than keep these lists of loadedProps and loadedArgs it really
+	 * might just make a lot more sense to walk through the tree to generate a
+	 * list of loaded nodes to send to the server, and then walk through the
+	 * tree to decide whether each node needs to be updated. [I initially
+	 * started keeping these lists when when updates were implemented throw
+	 * Change lists, but now that we aren't using Changes, these lists probably
+	 * aren't necessary anymore] On the other hand if they save even a fraction
+	 * of a second while performing an update they might be worth it because
+	 * updates are running every few seconds to even a small delay could be
+	 * jarring
+	 */
+	private final MultiMap<Long, ViewProp> loadedProps = new MultiMap<Long, ViewProp>();
+	private final MultiMap<Long, ViewArg> loadedArgs = new MultiMap<Long, ViewArg>();
+	//private Date lastUpdate;
 
 	public ModeEdit(ArgMap argMap) {
 		super();
@@ -98,19 +113,12 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		 * get the props and preload the callback
 		 */
 		getRootProps();
-		getRootPropsCallback( null );
+		getRootPropsCallback(null);
 
 		/*
 		 * setup the update timer
 		 */
-		updateTimer = new Timer() {
-
-			@Override
-			public void run() {
-				getUpdatesAndApply();
-				// getNewChangesAndUpdateTree_DELETE_ME( lastUpdate_DELETE_ME);
-			}
-		};
+		updateTimer = new UpdateTimer();
 
 		GWT.runAsync(new RunAsyncCallback() {
 
@@ -217,13 +225,13 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			}
 		});
 	}
-	
-	private void getRootPropsCallback(final PartialTrees allNodes){
+
+	private void getRootPropsCallback(final PartialTrees allNodes) {
 		GWT.runAsync(new RunAsyncCallback() {
-			
+
 			@Override
 			public void onSuccess() {
-				if(allNodes == null){
+				if (allNodes == null) {
 					return;
 				}
 				Log log = Log.getLog("em.em.cb");
@@ -240,28 +248,27 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				tree.resetState();
 				if (Log.on) tree.logTree(log);
 
-				// updateTimer.scheduleRepeating(10000);
+				updateTimer.start();
 				log.finish();
-				
+
 			}
-			
+
 			@Override
 			public void onFailure(Throwable reason) {
 				ArgMap.messageTimed("Code download failed", MessageType.ERROR);
 				Log.log("me.me", "Code download failed" + reason.toString());
-				
+
 			}
 		});
 	}
 
 	private void getRootProps() {
-		lastUpdate = new Date();
 		ServerComm.getRootProps(0,
 				new ServerComm.LocalCallback<PartialTrees>() {
 
 					@Override
 					public void call(PartialTrees allNodes) {
-						getRootPropsCallback( allNodes );
+						getRootPropsCallback(allNodes);
 					}
 				});
 	}
@@ -330,157 +337,157 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	 * as properties of changes to avoid having to figure this all out...
 	 */
 
-	private void getNewChangesAndUpdateTree_DELETE_ME(final Date startDate) {
-
-		ServerComm.getNewChanges_DELETE_ME(lastUpdate, loadedProps.keySet(),
-				loadedArgs.keySet(),
-				new LocalCallback<ArgMapService.ForwardChanges>() {
-
-					@Override
-					public void call(ForwardChanges changes) {
-						/*
-						 * check to make sure that a search subsequent to this
-						 * update being called hasn't changed the tree and the
-						 * lastUpdate date. If it has, then these changes do not
-						 * apply to the existing tree and they should be
-						 * discarded.
-						 */
-						if (startDate != lastUpdate) {
-							return;
-						}
-						for (Change change : changes.changes) {
-							switch (change.changeType) {
-							case PROP_LINK:
-							case PROP_ADDITION:
-							case PROP_UNLINK:
-							case PROP_DELETION:
-							case ARG_MODIFICATION:
-								for (ViewArg viewArg : loadedArgs
-										.get(change.argID)) {
-									switch (change.changeType) {
-									case PROP_LINK:
-										/*
-										 * note that for non-link nodes I'm
-										 * updating the children of the first
-										 * layer of children but link nodes are
-										 * created unloaded with only dummies
-										 * for children, because otherwise I
-										 * would have to send uptodate copies of
-										 * the children seperately or I would
-										 * have to send backdated copies of the
-										 * children along with the updates
-										 * needed to bring them to date. I'm
-										 * beginning to think that really it
-										 * makes more sense to send the fully
-										 * uptodate links...but perhaps not,
-										 * because I also have to update the
-										 * open+loaded links on the client. So I
-										 * need to send and process the link
-										 * changes anyway. But why not do both.
-										 * Send the link changes for open/loaded
-										 * links (as well as any changes of
-										 * already open/loaded children) and
-										 * uptodate copies of newly linked/links
-										 * 2 layers deeps (i.e. prefetched).
-										 * This would seem to make it unecessary
-										 * to save a complete copy of the link
-										 * in the change, which seems sort of
-										 * ugly to me (and thus far hasn't been
-										 * necessary for going back in time).
-										 */
-										ViewPropEdit linkView = new ViewPropEdit(
-												change.link_DELETE_ME);
-										for (Long id : change.link_DELETE_ME.childIDs) {
-											linkView.addItem(new ViewDummyVer(
-													id));
-										}
-										linkView.setLoaded(false);
-										linkView.setOpen(false);
-										viewArg.insertItem(change.argPropIndex,
-												linkView);
-										/*
-										 * TODO is the link loaded or isn't it?
-										 * I can't remember how I define loaded.
-										 * If the link isn't loaded, that means
-										 * I won't get updates for it right?
-										 * That isn't good. I want content
-										 * changes for the link. If the link is
-										 * loaded... I think the link is loaded
-										 * because it's not a dummy...look at
-										 * how I use isLoaded in other parts of
-										 * the program
-										 */
-										loadedProps
-												.put(change.propID, linkView);
-										break;
-									case PROP_ADDITION:
-										Proposition prop = new Proposition();
-										prop.id = change.propID;
-										prop.content = change.newContent_DELETE_ME;
-										ViewPropEdit child = new ViewPropEdit(
-												prop);
-										viewArg.insertItem(change.argPropIndex,
-												child);
-										/*
-										 * TODO hmmm... on the first time
-										 * through this loop all the new items
-										 * are loaded right. But that isn't true
-										 * on the last time through the loop is
-										 * it? Or is it? Figure that out one way
-										 * or another. And if its not true then
-										 * I need to distinguish the first time
-										 * through from the last time.
-										 */
-										// loadedProps.put(change.propID,
-										// linkView);
-										break;
-									case PROP_UNLINK:
-										viewArg.removeChildWithID(change.propID);
-										break;
-									case PROP_DELETION:
-										viewArg.removeChildWithID(change.propID);
-										break;
-									case ARG_MODIFICATION:
-										viewArg.setArgTitle(change.newContent_DELETE_ME);
-										break;
-									}
-								}
-								break;
-							case PROP_MODIFICATION:
-							case ARG_DELETION:
-							case ARG_ADDITION:
-								for (ViewProp viewProp : loadedProps
-										.get(change.propID)) {
-									switch (change.changeType) {
-									case PROP_MODIFICATION:
-										viewProp.setContent(change.newContent_DELETE_ME);
-										break;
-									case ARG_DELETION:
-										viewProp.removeChildWithID(change.argID);
-										break;
-									case ARG_ADDITION:
-										Argument arg = new Argument();
-										arg.id = change.argID;
-										arg.content = change.newContent_DELETE_ME;
-										arg.pro = change.argPro;
-										ViewArgEdit child = new ViewArgEdit(arg);
-										viewProp.insertItem(
-												change.argPropIndex, child);
-										/*
-										 * TODO don't forget to add to the
-										 * loadedArgs map if I need too here...
-										 */
-										break;
-									}
-								}
-								break;
-							}
-						}
-						// TODO process changes, making sure to update the
-						// loadedProps/Args maps as I go
-					}
-				});
-	}
+//	private void getNewChangesAndUpdateTree_DELETE_ME(final Date startDate) {
+//
+//		ServerComm.getNewChanges_DELETE_ME(lastUpdate, loadedProps.keySet(),
+//				loadedArgs.keySet(),
+//				new LocalCallback<ArgMapService.ForwardChanges>() {
+//
+//					@Override
+//					public void call(ForwardChanges changes) {
+//						/*
+//						 * check to make sure that a search subsequent to this
+//						 * update being called hasn't changed the tree and the
+//						 * lastUpdate date. If it has, then these changes do not
+//						 * apply to the existing tree and they should be
+//						 * discarded.
+//						 */
+//						if (startDate != lastUpdate) {
+//							return;
+//						}
+//						for (Change change : changes.changes) {
+//							switch (change.changeType) {
+//							case PROP_LINK:
+//							case PROP_ADDITION:
+//							case PROP_UNLINK:
+//							case PROP_DELETION:
+//							case ARG_MODIFICATION:
+//								for (ViewArg viewArg : loadedArgs
+//										.get(change.argID)) {
+//									switch (change.changeType) {
+//									case PROP_LINK:
+//										/*
+//										 * note that for non-link nodes I'm
+//										 * updating the children of the first
+//										 * layer of children but link nodes are
+//										 * created unloaded with only dummies
+//										 * for children, because otherwise I
+//										 * would have to send uptodate copies of
+//										 * the children seperately or I would
+//										 * have to send backdated copies of the
+//										 * children along with the updates
+//										 * needed to bring them to date. I'm
+//										 * beginning to think that really it
+//										 * makes more sense to send the fully
+//										 * uptodate links...but perhaps not,
+//										 * because I also have to update the
+//										 * open+loaded links on the client. So I
+//										 * need to send and process the link
+//										 * changes anyway. But why not do both.
+//										 * Send the link changes for open/loaded
+//										 * links (as well as any changes of
+//										 * already open/loaded children) and
+//										 * uptodate copies of newly linked/links
+//										 * 2 layers deeps (i.e. prefetched).
+//										 * This would seem to make it unecessary
+//										 * to save a complete copy of the link
+//										 * in the change, which seems sort of
+//										 * ugly to me (and thus far hasn't been
+//										 * necessary for going back in time).
+//										 */
+//										ViewPropEdit linkView = new ViewPropEdit(
+//												change.link_DELETE_ME);
+//										for (Long id : change.link_DELETE_ME.childIDs) {
+//											linkView.addItem(new ViewDummyVer(
+//													id));
+//										}
+//										linkView.setLoaded(false);
+//										linkView.setOpen(false);
+//										viewArg.insertItem(change.argPropIndex,
+//												linkView);
+//										/*
+//										 * TODO is the link loaded or isn't it?
+//										 * I can't remember how I define loaded.
+//										 * If the link isn't loaded, that means
+//										 * I won't get updates for it right?
+//										 * That isn't good. I want content
+//										 * changes for the link. If the link is
+//										 * loaded... I think the link is loaded
+//										 * because it's not a dummy...look at
+//										 * how I use isLoaded in other parts of
+//										 * the program
+//										 */
+//										loadedProps
+//												.put(change.propID, linkView);
+//										break;
+//									case PROP_ADDITION:
+//										Proposition prop = new Proposition();
+//										prop.id = change.propID;
+//										prop.content = change.newContent_DELETE_ME;
+//										ViewPropEdit child = new ViewPropEdit(
+//												prop);
+//										viewArg.insertItem(change.argPropIndex,
+//												child);
+//										/*
+//										 * TODO hmmm... on the first time
+//										 * through this loop all the new items
+//										 * are loaded right. But that isn't true
+//										 * on the last time through the loop is
+//										 * it? Or is it? Figure that out one way
+//										 * or another. And if its not true then
+//										 * I need to distinguish the first time
+//										 * through from the last time.
+//										 */
+//										// loadedProps.put(change.propID,
+//										// linkView);
+//										break;
+//									case PROP_UNLINK:
+//										viewArg.removeChildWithID(change.propID);
+//										break;
+//									case PROP_DELETION:
+//										viewArg.removeChildWithID(change.propID);
+//										break;
+//									case ARG_MODIFICATION:
+//										viewArg.setArgTitle(change.newContent_DELETE_ME);
+//										break;
+//									}
+//								}
+//								break;
+//							case PROP_MODIFICATION:
+//							case ARG_DELETION:
+//							case ARG_ADDITION:
+//								for (ViewProp viewProp : loadedProps
+//										.get(change.propID)) {
+//									switch (change.changeType) {
+//									case PROP_MODIFICATION:
+//										viewProp.setContent(change.newContent_DELETE_ME);
+//										break;
+//									case ARG_DELETION:
+//										viewProp.removeChildWithID(change.argID);
+//										break;
+//									case ARG_ADDITION:
+//										Argument arg = new Argument();
+//										arg.id = change.argID;
+//										arg.content = change.newContent_DELETE_ME;
+//										arg.pro = change.argPro;
+//										ViewArgEdit child = new ViewArgEdit(arg);
+//										viewProp.insertItem(
+//												change.argPropIndex, child);
+//										/*
+//										 * TODO don't forget to add to the
+//										 * loadedArgs map if I need too here...
+//										 */
+//										break;
+//									}
+//								}
+//								break;
+//							}
+//						}
+//						// TODO process changes, making sure to update the
+//						// loadedProps/Args maps as I go
+//					}
+//				});
+//	}
 
 	/*
 	 * TODO after I get the basics working, I'll want to think about what
@@ -524,41 +531,30 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	 * maps entirely (instead of clearing them) so that the update is working
 	 * with the old list and the search can go ahead and create a new list...?
 	 */
-	
-	/* rather than keep these lists of loadedProps and loadedArgs it really might just make
-	 * a lot more sense to walk through the tree to generate a list of loaded nodes to send
-	 * to the server, and then walk through the tree to decide whether each node needs to be
-	 * updated.  [I initially started keeping these lists when when updates were implemented
-	 * throw Change lists, but now that we aren't using Changes, these lists probably aren't
-	 * necessary anymore]  On the other hand if they save even a fraction of a second while
-	 * performing an update they might be worth it because updates are running every few
-	 * seconds to even a small delay could be jarring
-	 */
-	private final MultiMap<Long, ViewProp> loadedProps = new MultiMap<Long, ViewProp>();
-	private final MultiMap<Long, ViewArg> loadedArgs = new MultiMap<Long, ViewArg>();
-	private Date lastUpdate;
 
 	/*
 	 * TODO make sure that the node.childIDs are updated on every ModeEdit
 	 * change...
 	 */
 	/*
-	 * TODO trying to sort out the isLoaded mess.  The question is whether or not a new ViewNode
-	 * is loaded before it gets its id.  We can't keep track of it in loadedProps/Args until it
-	 * has an id so in that sense it is not loaded.  On the otherhand it cannot be loaded from the
-	 * server without an id, so if someone is checking to see if it should be loaded (which was
-	 * the previous and ongoing purpose of isLoaded() they would want to see a yes on a brand new
-	 * ViewNode.  So I think I decided to go with isLoaded is only true for Views with ids set,
-	 * and other uses have to check hasID() to find out if an unloaded View can be loaded from the server.
-	 * This means that all the servercomm add methods have to be updated to accept a ViewNode, and to
-	 * updated that ViewNode to loaded upon receiving the ID back from the server.  In my extremely
-	 * tired state right now I don't see any problem with this approach, so I just need to change
-	 * servercomm, and also make sure that flipping the default isLoaded state from true to false didn't
+	 * TODO trying to sort out the isLoaded mess. The question is whether or not
+	 * a new ViewNode is loaded before it gets its id. We can't keep track of it
+	 * in loadedProps/Args until it has an id so in that sense it is not loaded.
+	 * On the otherhand it cannot be loaded from the server without an id, so if
+	 * someone is checking to see if it should be loaded (which was the previous
+	 * and ongoing purpose of isLoaded() they would want to see a yes on a brand
+	 * new ViewNode. So I think I decided to go with isLoaded is only true for
+	 * Views with ids set, and other uses have to check hasID() to find out if
+	 * an unloaded View can be loaded from the server. This means that all the
+	 * servercomm add methods have to be updated to accept a ViewNode, and to
+	 * updated that ViewNode to loaded upon receiving the ID back from the
+	 * server. In my extremely tired state right now I don't see any problem
+	 * with this approach, so I just need to change servercomm, and also make
+	 * sure that flipping the default isLoaded state from true to false didn't
 	 * fuck anything else up... which it probably did...)
 	 */
 	private void getUpdatesAndApply() {
-		lastUpdate = new Date();
-		final Date startTime = lastUpdate;
+		final Date startTime = updateTimer.getStartDate();
 
 		Map<Long, DateAndChildIDs> propsInfo = new HashMap<Long, DateAndChildIDs>();
 		loadNodeInfo(loadedProps, propsInfo);
@@ -576,7 +572,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 						 * replaced all the nodes, we just throw this batch of
 						 * updates out since they are no longer relevant.
 						 */
-						if (!lastUpdate.equals(startTime)) {
+						if (!startTime.equals(updateTimer.getStartDate())) {
 							return;
 						}
 
@@ -648,7 +644,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	}
 
 	private void addRootProp() {
-		ViewPropEdit newPropView = new ViewPropEdit();
+		final ViewPropEdit newPropView = new ViewPropEdit();
 
 		/*
 		 * close the other tree items for (int i = 0; i < tree.getItemCount();
@@ -660,7 +656,13 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		// tree.addItem(newPropView);
 		tree.insertItem(0, newPropView);
 		newPropView.haveFocus();
-		ServerComm.addProp(newPropView.getProposition(), null, 0);
+		ServerComm.addProp(newPropView.getProposition(), null, 0,
+				new LocalCallback<Proposition>() {
+					@Override
+					public void call(Proposition result) {
+						newPropView.addPropositionCallback(newPropView, result);
+					}
+				});
 	}
 
 	public static void log(String string) {
@@ -724,7 +726,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	}
 
 	public void sideSearch(ViewPropEdit viewProp) {
-		;
 		if (sideSearch != null) {
 			sideSearch.cancelSearch();
 			sideSearch = null;
@@ -835,9 +836,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		@Override
 		public void onRemovedLoadedNode(ViewNode node) {
 			if (node instanceof ViewProp) {
-				loadedProps.remove(node.getNodeID(), (ViewProp) node);
+				loadedProps.remove(node.getNodeID(), (ViewProp) node, false);
 			} else if (node instanceof ViewArg) {
-				loadedArgs.remove(node.getNodeID(), (ViewArg) node);
+				loadedArgs.remove(node.getNodeID(), (ViewArg) node, false);
 			}
 		}
 
@@ -960,6 +961,31 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		public abstract String getNewSearchString();
 	}
 
+	private class UpdateTimer extends Timer {
+		private Date startDate;
+
+		@Override
+		public void run() {
+			getUpdatesAndApply();
+			// getNewChangesAndUpdateTree_DELETE_ME( lastUpdate_DELETE_ME);
+		}
+
+		public void start() {
+			scheduleRepeating(2000);
+			startDate = new Date();
+		}
+		
+		public Date getStartDate(){
+			return startDate;
+		}
+		
+		@Override
+		public void cancel(){
+			super.cancel();
+			startDate = null;
+		}
+	};
+
 	private class MainSearchTimer extends SearchTimer {
 		@Override
 		public void run() {
@@ -1044,7 +1070,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		String searchString = searchTextBox.getText().trim();
 
 		if (!searchString.equals("")) {
-			lastUpdate = new Date();
 			mainSearch = new Search(searchString, MAIN_SEARCH_LIMIT, null,
 					new SearchResultsHandler() {
 						@Override
@@ -1056,15 +1081,33 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 						@Override
 						public void searchCompleted() {
 							mainSearchContinueButton.setVisible(true);
+							updateTimer.start();
 						}
 
 						@Override
 						public void searchExhausted() {
 							mainSearchContinueButton.setVisible(false);
+							updateTimer.start();
+						}
+
+						@Override
+						public void searchStarted() {
+							updateTimer.cancel();
+						}
+
+						@Override
+						public void searchContinued() {
+							updateTimer.cancel();
+						}
+
+						@Override
+						public void searchCancelled() {
+							updateTimer.start();
 						}
 					});
 			mainSearch.startSearch();
 		} else {
+			updateTimer.cancel();
 			getRootProps();
 		}
 	}

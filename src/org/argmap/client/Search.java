@@ -16,12 +16,18 @@ public class Search implements ServerComm.LocalCallback<PartialTrees> {
 	private int resultCount;
 	private ArgMap.Message userMessage;
 
-	public interface SearchResultsHandler {
-		public void processSearchResults(PartialTrees propsAndArgs);
+	public static abstract class SearchResultsHandler {
+		public abstract void processSearchResults(PartialTrees propsAndArgs);
 
-		public void searchExhausted();
+		public abstract void searchExhausted();
 
-		public void searchCompleted();
+		public abstract void searchCompleted();
+		
+		public void searchStarted(){};
+		
+		public void searchContinued(){};
+		
+		public void searchCancelled(){};
 	}
 
 	public Search(String searchString, int resultLimit,
@@ -35,6 +41,7 @@ public class Search implements ServerComm.LocalCallback<PartialTrees> {
 	}
 
 	public void startSearch() {
+		handler.searchStarted();
 		if (!searchString.equals("")) {
 			resultCount = 0;
 			ServerComm.searchProps(searchString, searchName, resultLimit,
@@ -44,6 +51,7 @@ public class Search implements ServerComm.LocalCallback<PartialTrees> {
 	}
 
 	public void continueSearch() {
+		handler.searchContinued();
 		resultCount = 0;
 		ServerComm.continueSearchProps(searchName, this);
 		userMessage.setMessage("searching for more...");
@@ -51,6 +59,7 @@ public class Search implements ServerComm.LocalCallback<PartialTrees> {
 	}
 
 	public void cancelSearch() {
+		handler.searchCancelled();
 		cancelled = true;
 		userMessage.hide();
 	}

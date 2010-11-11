@@ -234,6 +234,21 @@ public class ServerComm {
 				localCallback, "authenticating...", null));
 	}
 
+	public static void getNewChanges_DELETE_ME(Date date, Set<Long> propIDs,
+			Set<Long> argIDs, LocalCallback<ForwardChanges> localCallback) {
+		argMapService.getNewChanges_DELETE_ME(date, propIDs, argIDs,
+				new ServerCallback<ArgMapService.ForwardChanges>(localCallback,
+						"refreshing...", "refreshed"));
+	}
+
+	public static void getUpdates(Map<Long, DateAndChildIDs> propsInfo,
+			Map<Long, DateAndChildIDs> argsInfo,
+			LocalCallback<Map<Long, Node>> localCallback) {
+		argMapService.getUpToDateNodes(propsInfo, argsInfo,
+				new ServerCallback<Map<Long, Node>>(localCallback,
+						"refreshing...", "refreshed"));
+	}
+
 	public static void getChanges(List<Proposition> props, List<Argument> args,
 			LocalCallback<NodeChangesMaps> localCallback) {
 		List<Long> propIDs = new LinkedList<Long>();
@@ -278,16 +293,16 @@ public class ServerComm {
 	}
 
 	public static void addArg(final boolean pro, final Proposition parentProp,
-			final Argument newArg) {
-		queueCommand(new ServerCallbackWithDispatch<Long>("saving...", "saved") {
+			final LocalCallback<Argument> localCallback) {
+		queueCommand(new ServerCallbackWithDispatch<Argument>("saving...", "saved") {
 			@Override
 			public void execute() {
 				argMapService.addArg(parentProp.id, pro, this);
 			}
 
 			@Override
-			public void doOnSuccess(Long result) {
-				newArg.id = result;
+			public void doOnSuccess(Argument argument) {
+				localCallback.call( argument );
 			}
 		});
 	}
@@ -339,8 +354,9 @@ public class ServerComm {
 	}
 
 	public static void addProp(final Proposition newProposition,
-			final Argument parentArgument, final int position) {
-		queueCommand(new ServerCallbackWithDispatch<Long>("saving...", "saved") {
+			final Argument parentArgument, final int position,
+			final LocalCallback<Proposition> localCallback) {
+		queueCommand(new ServerCallbackWithDispatch<Proposition>("saving...", "saved") {
 			@Override
 			public void execute() {
 				if (parentArgument != null)
@@ -352,8 +368,8 @@ public class ServerComm {
 			}
 
 			@Override
-			public void doOnSuccess(Long result) {
-				newProposition.id = result;
+			public void doOnSuccess(Proposition proposition) {
+				localCallback.call(proposition);
 			}
 		});
 	}
@@ -374,20 +390,5 @@ public class ServerComm {
 				localCallback.call(result);
 			}
 		});
-	}
-
-	public static void getNewChanges_DELETE_ME(Date date, Set<Long> propIDs,
-			Set<Long> argIDs, LocalCallback<ForwardChanges> localCallback) {
-		argMapService.getNewChanges_DELETE_ME(date, propIDs, argIDs,
-				new ServerCallback<ArgMapService.ForwardChanges>(localCallback,
-						"refreshing...", "refreshed"));
-	}
-
-	public static void getUpdates(Map<Long, DateAndChildIDs> propsInfo,
-			Map<Long, DateAndChildIDs> argsInfo,
-			LocalCallback<Map<Long, Node>> localCallback) {
-		argMapService.getUpToDateNodes(propsInfo, argsInfo,
-				new ServerCallback<Map<Long, Node>>(localCallback,
-						"refreshing...", "refreshed"));
 	}
 }

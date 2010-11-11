@@ -22,8 +22,6 @@ public interface ArgMapServiceAsync {
 
 	void deleteProp(Long propID, AsyncCallback<Void> callback);
 
-	void addArg(Long parentPropID, boolean pro,
-			AsyncCallback<Long> callback);
 
 	void updateProp(Long propID, String content,
 			AsyncCallback<Void> callback);
@@ -40,8 +38,6 @@ public interface ArgMapServiceAsync {
 			Long removePropID, AsyncCallback<Map<Long, Node>> callback);
 
 
-	void addProp(Long parentArgID, int position, String content,
-			AsyncCallback<Long> callback);
 
 	void updateArg(Long argID, String content, AsyncCallback<Void> callback);
 
@@ -77,6 +73,13 @@ public interface ArgMapServiceAsync {
 	void getUpToDateNodes(Map<Long, DateAndChildIDs> propInfo,
 			Map<Long, DateAndChildIDs> argInfo,
 			AsyncCallback<Map<Long, Node>> callback);
+
+
+	void addProp(Long parentArgID, int position, String content,
+			AsyncCallback<Proposition> callback);
+
+
+	void addArg(Long parentPropID, boolean pro, AsyncCallback<Argument> callback);
 
 
 }

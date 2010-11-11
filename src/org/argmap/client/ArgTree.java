@@ -175,17 +175,23 @@ public class ArgTree extends Tree {
 		}
 	}
 
-	@Override
-	public void clear() {
-		onRemoveAllLoadedNodes();
-		super.clear();
-	}
+	/*
+	 * the current implementation of clear() in GWT is to call remove on each
+	 * item, so we don't need a special method for clear() (and having one
+	 * causes problems because nodes are removed multiple times causing
+	 * MultiMap to throw an exception
+	 */
+//	@Override
+//	public void clear() {
+//		onRemoveAllLoadedNodes();
+//		super.clear();
+//	}
 
-	@Override
-	public void removeItems() {
-		onRemoveAllLoadedNodes();
-		super.removeItems();
-	}
+//	@Override
+//	public void removeItems() {
+//		onRemoveAllLoadedNodes();
+//		super.removeItems();
+//	}
 
 	@Override
 	public void addItem(TreeItem item) {
