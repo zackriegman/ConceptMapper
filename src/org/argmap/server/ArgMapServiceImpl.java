@@ -149,7 +149,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Proposition addProp(Long parentArgID, int position, String content) {
+	public NodesAndNode addProp(NodeInfo parentArg, int position, String content){
 		content = content.trim();
 
 		// log.finest("addProp()");
