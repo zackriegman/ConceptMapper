@@ -1,8 +1,10 @@
 package org.argmap.client;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,35 +18,42 @@ public interface ArgMapService extends RemoteService {
 
 	public void logClientException(String ExceptionStr);
 
-	public Proposition addProp(Long parentArgID, int position, String content)
+	public NodesAndNode addProp(NodeInfo parentArg, int position, String content)
 			throws ServiceException;
 
-	public void deleteProp(Long propID) throws ServiceException;
+	public Map<Long, Node> deleteProp(Long propID) throws ServiceException;
 
-	public void deleteArg(Long argID) throws ServiceException;
+	public Map<Long, Node> deleteArg(Long argID) throws ServiceException;
 
-	public Argument addArg(Long parentPropID, boolean pro) throws ServiceException;
+	public NodesAndNode addArg(NodeInfo parentProp, boolean pro) throws ServiceException;
 
-	public void updateProp(Long propID, String content) throws ServiceException;
+	public Map<Long, Node> updateProp(NodeInfo prop, String content) throws ServiceException;
 
-	public void updateArg(Long argID, String content) throws ServiceException;
+	public Map<Long, Node> updateArg(NodeInfo arg, String content) throws ServiceException;
 
-	public void linkProposition(Long parentArgID, int position,
-			Long propositionID) throws ServiceException;
+	public void linkProposition(Argument arg, int position,
+			Long propID) throws ServiceException;
 
-	public void unlinkProp(Long parentArgID, Long propositionID)
+	public Map<Long, Node> unlinkProp(NodeInfo parentArg, NodeInfo linkProp)
 			throws ServiceException;
 
-	public class PartialTrees implements Serializable {
+	public class PartialTrees_DELETE_ME implements Serializable {
 		/* added to suppress warnings */
 		private static final long serialVersionUID = 1L;
 		public List<Proposition> rootProps;
 		public Map<Long, Node> nodes;
 	}
+	
+	public class PartialTrees implements Serializable {
+		/* added to suppress warnings */
+		private static final long serialVersionUID = 1L;
+		public List<Long> rootIDs = new ArrayList<Long>();
+		public Map<Long, Node> nodes = new HashMap<Long, Node>();
+	}
 
-	public PartialTrees getRootProps(int depthLimit);
+	public PartialTrees_DELETE_ME getRootProps(int depthLimit);
 
-	public Map<Long, Node> replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
+	public Map<Long, Node> replaceWithLinkAndGet(NodeInfo parentArg, NodeInfo linkProp,
 			Long removePropID) throws ServiceException;
 
 	public class NodesWithHistory implements Serializable {
@@ -99,6 +108,24 @@ public interface ArgMapService extends RemoteService {
 
 	}
 	
+	public class NodesAndNode implements Serializable {
+		private static final long serialVersionUID = 1L;
+		public Map<Long, Node> nodes;
+		public Node node;
+	}
+	
+	public class NodeInfo implements Serializable {
+		private static final long serialVersionUID = 1L;
+		public DateAndChildIDs info = new DateAndChildIDs();
+		public Long id;
+		
+		public NodeInfo( Node node ){
+			info.date = node.updated;
+			info.childIDs = new HashSet<Long>( node.childIDs );
+			id = node.id;
+		}
+	}
+	
 	public class DateAndChildIDs implements Serializable {
 		private static final long serialVersionUID = 1L;
 		public Date date;
@@ -124,14 +151,14 @@ public interface ArgMapService extends RemoteService {
 	
 	public ForwardChanges getNewChanges_DELETE_ME(Date date, Set<Long> propIDs, Set<Long> argIDs ) throws ServiceException;
 
-	public Map<Long, Node> getUpToDateNodes( Map<Long, DateAndChildIDs> propInfo, Map<Long, DateAndChildIDs> argInfo );
+	public PartialTrees getUpToDateNodes( Map<Long, DateAndChildIDs> propInfo, Map<Long, DateAndChildIDs> argInfo );
 	
 	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs)
 			throws ServiceException;
 
-	public PartialTrees searchProps(String searchString, String searchName, int resultLimit, List<Long> filerNodeIDs) throws ServiceException;
+	public PartialTrees_DELETE_ME searchProps(String searchString, String searchName, int resultLimit, List<Long> filerNodeIDs) throws ServiceException;
 	
-	public PartialTrees continueSearchProps( String searchName ) throws ServiceException;
+	public PartialTrees_DELETE_ME continueSearchProps( String searchName ) throws ServiceException;
 	
 	public LoginInfo getLoginInfo( String requestURI ) throws ServiceException;
 

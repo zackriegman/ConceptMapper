@@ -2,6 +2,8 @@ package org.argmap.client;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.google.gwt.core.client.GWT;
 
@@ -21,7 +23,12 @@ public class Log {
 	 * emulate that
 	 */
 	public static Log getLog(String logName) {
+		return getLog(logName, false);
+	}
+
+	public static Log getLog(String logName, boolean immediatePrint) {
 		Log log = new Log(logName);
+		log.immediatePrint = immediatePrint;
 		openLogs.add(log);
 		return log;
 	}
@@ -48,9 +55,9 @@ public class Log {
 			}
 		}
 	}
-	
-	public static void log(String logName, String logMessage){
-		if( on ){
+
+	public static void log(String logName, String logMessage) {
+		if (on) {
 			GWT.log(logName + ": " + logMessage);
 		}
 	}
@@ -89,11 +96,11 @@ public class Log {
 
 	public static String spaces(int spaces) {
 		if (on) {
-			String string = "";
+			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < spaces; i++) {
-				string = string + " ";
+				sb.append(" ");
 			}
-			return string;
+			return sb.toString();
 		} else {
 			return null;
 		}
@@ -109,5 +116,34 @@ public class Log {
 			}
 			GWT.log(string);
 		}
+	}
+
+	public static <K, V> String mapToString(Map<K, V> map) {
+		StringBuilder sb = new StringBuilder();
+		for (Entry<K, V> entry : map.entrySet()) {
+			sb.append("\nK:" + entry.getKey().toString() + "; V:"
+					+ entry.getValue().toString());
+		}
+		return sb.toString();
+	}
+
+	public static <K, V> String multiMapToString(MultiMap<K, V> map) {
+		StringBuilder sb = new StringBuilder();
+		for (K key : map.keySet()) {
+			sb.append("\nK:" + key);
+			List<V> values = map.get(key);
+			for (V value : values) {
+				sb.append("\n" + spaces(4) + "V:" + value);
+			}
+		}
+		return sb.toString();
+	}
+	
+	public static <T> String listToString(List<T> list){
+		StringBuilder sb = new StringBuilder();
+		for( T item : list ){
+			sb.append(item + " ");
+		}
+		return sb.toString();
 	}
 }

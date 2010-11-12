@@ -10,6 +10,7 @@ import java.util.Map;
 import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.DateAndChildIDs;
 import org.argmap.client.ArgMapService.PartialTrees;
+import org.argmap.client.ArgMapService.PartialTrees_DELETE_ME;
 import org.argmap.client.Search.SearchResultsHandler;
 import org.argmap.client.ServerComm.LocalCallback;
 
@@ -72,10 +73,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	private Button sideSearchContinueButton;
 	private final ArgMap argMap;
 
-	private final UpdateTimer updateTimer;
+	public final UpdateTimer updateTimer;
 	private Search mainSearch;
 	private Search sideSearch;
-	
+
 	/*
 	 * rather than keep these lists of loadedProps and loadedArgs it really
 	 * might just make a lot more sense to walk through the tree to generate a
@@ -90,7 +91,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	 */
 	private final MultiMap<Long, ViewProp> loadedProps = new MultiMap<Long, ViewProp>();
 	private final MultiMap<Long, ViewArg> loadedArgs = new MultiMap<Long, ViewArg>();
-	//private Date lastUpdate;
+
+	// private Date lastUpdate;
 
 	public ModeEdit(ArgMap argMap) {
 		super();
@@ -226,7 +228,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		});
 	}
 
-	private void getRootPropsCallback(final PartialTrees allNodes) {
+	private void getRootPropsCallback(final PartialTrees_DELETE_ME allNodes) {
 		GWT.runAsync(new RunAsyncCallback() {
 
 			@Override
@@ -264,10 +266,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 	private void getRootProps() {
 		ServerComm.getRootProps(0,
-				new ServerComm.LocalCallback<PartialTrees>() {
+				new ServerComm.LocalCallback<PartialTrees_DELETE_ME>() {
 
 					@Override
-					public void call(PartialTrees allNodes) {
+					public void call(PartialTrees_DELETE_ME allNodes) {
 						getRootPropsCallback(allNodes);
 					}
 				});
@@ -337,157 +339,157 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	 * as properties of changes to avoid having to figure this all out...
 	 */
 
-//	private void getNewChangesAndUpdateTree_DELETE_ME(final Date startDate) {
-//
-//		ServerComm.getNewChanges_DELETE_ME(lastUpdate, loadedProps.keySet(),
-//				loadedArgs.keySet(),
-//				new LocalCallback<ArgMapService.ForwardChanges>() {
-//
-//					@Override
-//					public void call(ForwardChanges changes) {
-//						/*
-//						 * check to make sure that a search subsequent to this
-//						 * update being called hasn't changed the tree and the
-//						 * lastUpdate date. If it has, then these changes do not
-//						 * apply to the existing tree and they should be
-//						 * discarded.
-//						 */
-//						if (startDate != lastUpdate) {
-//							return;
-//						}
-//						for (Change change : changes.changes) {
-//							switch (change.changeType) {
-//							case PROP_LINK:
-//							case PROP_ADDITION:
-//							case PROP_UNLINK:
-//							case PROP_DELETION:
-//							case ARG_MODIFICATION:
-//								for (ViewArg viewArg : loadedArgs
-//										.get(change.argID)) {
-//									switch (change.changeType) {
-//									case PROP_LINK:
-//										/*
-//										 * note that for non-link nodes I'm
-//										 * updating the children of the first
-//										 * layer of children but link nodes are
-//										 * created unloaded with only dummies
-//										 * for children, because otherwise I
-//										 * would have to send uptodate copies of
-//										 * the children seperately or I would
-//										 * have to send backdated copies of the
-//										 * children along with the updates
-//										 * needed to bring them to date. I'm
-//										 * beginning to think that really it
-//										 * makes more sense to send the fully
-//										 * uptodate links...but perhaps not,
-//										 * because I also have to update the
-//										 * open+loaded links on the client. So I
-//										 * need to send and process the link
-//										 * changes anyway. But why not do both.
-//										 * Send the link changes for open/loaded
-//										 * links (as well as any changes of
-//										 * already open/loaded children) and
-//										 * uptodate copies of newly linked/links
-//										 * 2 layers deeps (i.e. prefetched).
-//										 * This would seem to make it unecessary
-//										 * to save a complete copy of the link
-//										 * in the change, which seems sort of
-//										 * ugly to me (and thus far hasn't been
-//										 * necessary for going back in time).
-//										 */
-//										ViewPropEdit linkView = new ViewPropEdit(
-//												change.link_DELETE_ME);
-//										for (Long id : change.link_DELETE_ME.childIDs) {
-//											linkView.addItem(new ViewDummyVer(
-//													id));
-//										}
-//										linkView.setLoaded(false);
-//										linkView.setOpen(false);
-//										viewArg.insertItem(change.argPropIndex,
-//												linkView);
-//										/*
-//										 * TODO is the link loaded or isn't it?
-//										 * I can't remember how I define loaded.
-//										 * If the link isn't loaded, that means
-//										 * I won't get updates for it right?
-//										 * That isn't good. I want content
-//										 * changes for the link. If the link is
-//										 * loaded... I think the link is loaded
-//										 * because it's not a dummy...look at
-//										 * how I use isLoaded in other parts of
-//										 * the program
-//										 */
-//										loadedProps
-//												.put(change.propID, linkView);
-//										break;
-//									case PROP_ADDITION:
-//										Proposition prop = new Proposition();
-//										prop.id = change.propID;
-//										prop.content = change.newContent_DELETE_ME;
-//										ViewPropEdit child = new ViewPropEdit(
-//												prop);
-//										viewArg.insertItem(change.argPropIndex,
-//												child);
-//										/*
-//										 * TODO hmmm... on the first time
-//										 * through this loop all the new items
-//										 * are loaded right. But that isn't true
-//										 * on the last time through the loop is
-//										 * it? Or is it? Figure that out one way
-//										 * or another. And if its not true then
-//										 * I need to distinguish the first time
-//										 * through from the last time.
-//										 */
-//										// loadedProps.put(change.propID,
-//										// linkView);
-//										break;
-//									case PROP_UNLINK:
-//										viewArg.removeChildWithID(change.propID);
-//										break;
-//									case PROP_DELETION:
-//										viewArg.removeChildWithID(change.propID);
-//										break;
-//									case ARG_MODIFICATION:
-//										viewArg.setArgTitle(change.newContent_DELETE_ME);
-//										break;
-//									}
-//								}
-//								break;
-//							case PROP_MODIFICATION:
-//							case ARG_DELETION:
-//							case ARG_ADDITION:
-//								for (ViewProp viewProp : loadedProps
-//										.get(change.propID)) {
-//									switch (change.changeType) {
-//									case PROP_MODIFICATION:
-//										viewProp.setContent(change.newContent_DELETE_ME);
-//										break;
-//									case ARG_DELETION:
-//										viewProp.removeChildWithID(change.argID);
-//										break;
-//									case ARG_ADDITION:
-//										Argument arg = new Argument();
-//										arg.id = change.argID;
-//										arg.content = change.newContent_DELETE_ME;
-//										arg.pro = change.argPro;
-//										ViewArgEdit child = new ViewArgEdit(arg);
-//										viewProp.insertItem(
-//												change.argPropIndex, child);
-//										/*
-//										 * TODO don't forget to add to the
-//										 * loadedArgs map if I need too here...
-//										 */
-//										break;
-//									}
-//								}
-//								break;
-//							}
-//						}
-//						// TODO process changes, making sure to update the
-//						// loadedProps/Args maps as I go
-//					}
-//				});
-//	}
+	// private void getNewChangesAndUpdateTree_DELETE_ME(final Date startDate) {
+	//
+	// ServerComm.getNewChanges_DELETE_ME(lastUpdate, loadedProps.keySet(),
+	// loadedArgs.keySet(),
+	// new LocalCallback<ArgMapService.ForwardChanges>() {
+	//
+	// @Override
+	// public void call(ForwardChanges changes) {
+	// /*
+	// * check to make sure that a search subsequent to this
+	// * update being called hasn't changed the tree and the
+	// * lastUpdate date. If it has, then these changes do not
+	// * apply to the existing tree and they should be
+	// * discarded.
+	// */
+	// if (startDate != lastUpdate) {
+	// return;
+	// }
+	// for (Change change : changes.changes) {
+	// switch (change.changeType) {
+	// case PROP_LINK:
+	// case PROP_ADDITION:
+	// case PROP_UNLINK:
+	// case PROP_DELETION:
+	// case ARG_MODIFICATION:
+	// for (ViewArg viewArg : loadedArgs
+	// .get(change.argID)) {
+	// switch (change.changeType) {
+	// case PROP_LINK:
+	// /*
+	// * note that for non-link nodes I'm
+	// * updating the children of the first
+	// * layer of children but link nodes are
+	// * created unloaded with only dummies
+	// * for children, because otherwise I
+	// * would have to send uptodate copies of
+	// * the children seperately or I would
+	// * have to send backdated copies of the
+	// * children along with the updates
+	// * needed to bring them to date. I'm
+	// * beginning to think that really it
+	// * makes more sense to send the fully
+	// * uptodate links...but perhaps not,
+	// * because I also have to update the
+	// * open+loaded links on the client. So I
+	// * need to send and process the link
+	// * changes anyway. But why not do both.
+	// * Send the link changes for open/loaded
+	// * links (as well as any changes of
+	// * already open/loaded children) and
+	// * uptodate copies of newly linked/links
+	// * 2 layers deeps (i.e. prefetched).
+	// * This would seem to make it unecessary
+	// * to save a complete copy of the link
+	// * in the change, which seems sort of
+	// * ugly to me (and thus far hasn't been
+	// * necessary for going back in time).
+	// */
+	// ViewPropEdit linkView = new ViewPropEdit(
+	// change.link_DELETE_ME);
+	// for (Long id : change.link_DELETE_ME.childIDs) {
+	// linkView.addItem(new ViewDummyVer(
+	// id));
+	// }
+	// linkView.setLoaded(false);
+	// linkView.setOpen(false);
+	// viewArg.insertItem(change.argPropIndex,
+	// linkView);
+	// /*
+	// * TODO is the link loaded or isn't it?
+	// * I can't remember how I define loaded.
+	// * If the link isn't loaded, that means
+	// * I won't get updates for it right?
+	// * That isn't good. I want content
+	// * changes for the link. If the link is
+	// * loaded... I think the link is loaded
+	// * because it's not a dummy...look at
+	// * how I use isLoaded in other parts of
+	// * the program
+	// */
+	// loadedProps
+	// .put(change.propID, linkView);
+	// break;
+	// case PROP_ADDITION:
+	// Proposition prop = new Proposition();
+	// prop.id = change.propID;
+	// prop.content = change.newContent_DELETE_ME;
+	// ViewPropEdit child = new ViewPropEdit(
+	// prop);
+	// viewArg.insertItem(change.argPropIndex,
+	// child);
+	// /*
+	// * TODO hmmm... on the first time
+	// * through this loop all the new items
+	// * are loaded right. But that isn't true
+	// * on the last time through the loop is
+	// * it? Or is it? Figure that out one way
+	// * or another. And if its not true then
+	// * I need to distinguish the first time
+	// * through from the last time.
+	// */
+	// // loadedProps.put(change.propID,
+	// // linkView);
+	// break;
+	// case PROP_UNLINK:
+	// viewArg.removeChildWithID(change.propID);
+	// break;
+	// case PROP_DELETION:
+	// viewArg.removeChildWithID(change.propID);
+	// break;
+	// case ARG_MODIFICATION:
+	// viewArg.setArgTitle(change.newContent_DELETE_ME);
+	// break;
+	// }
+	// }
+	// break;
+	// case PROP_MODIFICATION:
+	// case ARG_DELETION:
+	// case ARG_ADDITION:
+	// for (ViewProp viewProp : loadedProps
+	// .get(change.propID)) {
+	// switch (change.changeType) {
+	// case PROP_MODIFICATION:
+	// viewProp.setContent(change.newContent_DELETE_ME);
+	// break;
+	// case ARG_DELETION:
+	// viewProp.removeChildWithID(change.argID);
+	// break;
+	// case ARG_ADDITION:
+	// Argument arg = new Argument();
+	// arg.id = change.argID;
+	// arg.content = change.newContent_DELETE_ME;
+	// arg.pro = change.argPro;
+	// ViewArgEdit child = new ViewArgEdit(arg);
+	// viewProp.insertItem(
+	// change.argPropIndex, child);
+	// /*
+	// * TODO don't forget to add to the
+	// * loadedArgs map if I need too here...
+	// */
+	// break;
+	// }
+	// }
+	// break;
+	// }
+	// }
+	// // TODO process changes, making sure to update the
+	// // loadedProps/Args maps as I go
+	// }
+	// });
+	// }
 
 	/*
 	 * TODO after I get the basics working, I'll want to think about what
@@ -562,10 +564,13 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		loadNodeInfo(loadedArgs, argsInfo);
 
 		ServerComm.getUpdates(propsInfo, argsInfo,
-				new LocalCallback<Map<Long, Node>>() {
+				new LocalCallback<PartialTrees>() {
 
 					@Override
-					public void call(Map<Long, Node> t) {
+					public void call(PartialTrees results) {
+						Log log = Log.getLog("me.guaa.cb", true);
+						log.log("loadedNodes:\npropViews:" + Log.multiMapToString(loadedProps) +
+								"\nargViews:" + Log.multiMapToString(loadedArgs));
 						/*
 						 * makes sure that there hasn't been an update since
 						 * this update started... for instance if a search has
@@ -573,11 +578,13 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 						 * updates out since they are no longer relevant.
 						 */
 						if (!startTime.equals(updateTimer.getStartDate())) {
+							log.log("start times not equal, returns");
 							return;
 						}
 
-						Map<Long, Node> results = new HashMap<Long, Node>();
-						for (Node node : results.values()) {
+						for (Long id : results.rootIDs) {
+							Node node = results.nodes.get(id);
+							log.log("prossesing node:" + node );
 							if (node instanceof Proposition) {
 								/*
 								 * need to create a new list here because in the
@@ -586,28 +593,35 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 								 * are already up-to-date and which therefore
 								 * should not be processed.
 								 */
+								/*
+								 * TODO this doens't make sense at all... I'm walking through a list of all the nodes that
+								 * are return, but I'm asking loaded props for nodes... but obviously the new nodes won't be
+								 * in loaded props.  Instead I need to get back a list of updated nodes *from the list I asked for*
+								 * with an accompanying list of nodes needed to update them.
+								 */
 								List<ViewProp> viewProps = new ArrayList<ViewProp>(
 										loadedProps.get(node.id));
 								for (ViewProp viewProp : viewProps) {
+									log.log("prossesing ViewProp:" + viewProp );
 									updateNode(viewProp, node, results);
 								}
 							} else if (node instanceof Argument) {
 								List<ViewArg> viewArgs = new ArrayList<ViewArg>(
 										loadedArgs.get(node.id));
 								for (ViewArg viewArg : viewArgs) {
+									log.log("prossesing ViewArg:" + viewArg );
 									updateNode(viewArg, node, results);
 								}
 							} else
 								assert false;
 						}
+						log.finish();
 					}
 				});
 	}
 
 	private void updateNode(ViewNode viewNode, Node node,
-			Map<Long, Node> results) {
-		viewNode.setNode(node);
-
+			PartialTrees results) {
 		// TODO note: this list comparison also depends on the viewNode's Node
 		// having an up-to-date childID list...make sure that it does...
 		if (!node.childIDs.equals(viewNode.getNode().childIDs)) {
@@ -621,15 +635,28 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				Long id = node.childIDs.get(i);
 				if (removed.containsKey(id)) {
 					viewNode.addItem(removed.get(id));
-				} else if (results.containsKey(id)) {
+				} else if (results.nodes.containsKey(id)) {
 					ViewNode child = viewNode.createChild();
 					viewNode.addItem(child);
-					child.recursiveBuildViewNode(node, results, 0);
+					child.recursiveBuildViewNode(node, results.nodes, 0);
 				} else {
-					viewNode.addItem(new ViewDummyVer(id));
+					/* TODO when would the results not contain a key for a child?
+					 * since I'm using recursiveBuildViewNode it should take care
+					 * of a number of children that have been added.  updateNode()
+					 * should only be called for nodes in the pre-existing tree.
+					 * recursiveBuildViewNode takes care of creating the children
+					 * and any grandchildren/dummy nodes necessary.  Update node
+					 * takes care of removing/adding/and updating the content
+					 * of the node.  So I'm commmenting out this addItem()
+					 * and replacing it with an assert false;
+					 */
+					assert false;
+					//viewNode.addItem(new ViewDummyVer(id));
 				}
 			}
 		}
+		
+		viewNode.setNode(node);
 	}
 
 	private <T extends ViewNode> void loadNodeInfo(
@@ -757,7 +784,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 						@Override
 						public void processSearchResults(
-								PartialTrees propMatches) {
+								PartialTrees_DELETE_ME propMatches) {
 							sideSearchAppendResults(propMatches);
 							if (sideSearchResults.getRowCount() > 0) {
 								displaySearchBox();
@@ -772,7 +799,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 	}
 
-	private void sideSearchAppendResults(PartialTrees propMatches) {
+	private void sideSearchAppendResults(PartialTrees_DELETE_ME propMatches) {
 		int i = sideSearchResults.getRowCount();
 		HTMLTable.RowFormatter rowFormatter = sideSearchResults
 				.getRowFormatter();
@@ -961,28 +988,38 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		public abstract String getNewSearchString();
 	}
 
-	private class UpdateTimer extends Timer {
+	public class UpdateTimer extends Timer {
 		private Date startDate;
+		private boolean on;
 
 		@Override
 		public void run() {
+			if( on )
 			getUpdatesAndApply();
 			// getNewChangesAndUpdateTree_DELETE_ME( lastUpdate_DELETE_ME);
 		}
 
 		public void start() {
-			scheduleRepeating(2000);
-			startDate = new Date();
+				scheduleRepeating(2000);
+				startDate = new Date();
 		}
-		
-		public Date getStartDate(){
+
+		public Date getStartDate() {
 			return startDate;
 		}
-		
+
 		@Override
-		public void cancel(){
+		public void cancel() {
 			super.cancel();
 			startDate = null;
+		}
+		
+		public void setOn( boolean on ){
+			this.on = on;
+		}
+		
+		public boolean getOn(){
+			return on;
 		}
 	};
 
@@ -1074,7 +1111,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					new SearchResultsHandler() {
 						@Override
 						public void processSearchResults(
-								PartialTrees propsAndArgs) {
+								PartialTrees_DELETE_ME propsAndArgs) {
 							mainSearchAppendResultsToTree(propsAndArgs);
 						}
 
@@ -1112,7 +1149,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 	}
 
-	public void mainSearchAppendResultsToTree(PartialTrees results) {
+	public void mainSearchAppendResultsToTree(PartialTrees_DELETE_ME results) {
 		for (Proposition proposition : results.rootProps) {
 
 			ViewProp propView = new ViewPropEdit();

@@ -18,6 +18,9 @@ public class ModeAdmin extends ResizeComposite implements ClickHandler {
 	private final Button clearDatastoreButton = new Button("Wipe Database");
 	private final Button populateDatastoreButton = new Button("Populate Database");
 	private final Button getPopulateDatastoreCountButton = new Button("Get Populate Database Count");
+	private final Button refreshEditModeOn = new Button("Turn Refresh On");
+	private final Button refreshEditModeOff = new Button("Turn Refresh Off");
+
 
 	private static ArgMapAdminServiceAsync argMapAdminService = GWT
 			.create(ArgMapAdminService.class);
@@ -31,12 +34,16 @@ public class ModeAdmin extends ResizeComposite implements ClickHandler {
 		clearDatastoreButton.addClickHandler(this);
 		populateDatastoreButton.addClickHandler(this);
 		getPopulateDatastoreCountButton.addClickHandler(this);
+		refreshEditModeOn.addClickHandler(this);
+		refreshEditModeOff.addClickHandler(this);
 
 		FlowPanel flowPanel = new FlowPanel();
 		flowPanel.add(label);
 		flowPanel.add(clearDatastoreButton);
 		flowPanel.add(populateDatastoreButton);
 		flowPanel.add(getPopulateDatastoreCountButton);
+		flowPanel.add(refreshEditModeOn);
+		flowPanel.add(refreshEditModeOff);
 
 		DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.EM);
 		mainPanel.add(flowPanel);
@@ -51,6 +58,10 @@ public class ModeAdmin extends ResizeComposite implements ClickHandler {
 			populateDatastore();
 		} else if (event.getSource() == getPopulateDatastoreCountButton ){
 			getPopulateDatastoreCount();
+		} else if( event.getSource() == refreshEditModeOn ){
+			refreshEditMode( true );
+		} else if( event.getSource() == refreshEditModeOff ){
+			refreshEditMode( false );
 		}
 	}
 	
@@ -106,5 +117,9 @@ public class ModeAdmin extends ResizeComposite implements ClickHandler {
 
 			}
 		});
+	}
+	
+	private void refreshEditMode( boolean on ){
+		argMap.getModeEdit().updateTimer.setOn( on );
 	}
 }

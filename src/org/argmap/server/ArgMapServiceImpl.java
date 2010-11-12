@@ -25,12 +25,12 @@ import org.argmap.client.ArgMapService;
 import org.argmap.client.Argument;
 import org.argmap.client.Change;
 import org.argmap.client.Change.ChangeType;
+import org.argmap.client.Log;
 import org.argmap.client.LoginInfo;
 import org.argmap.client.Node;
 import org.argmap.client.NodeChanges;
 import org.argmap.client.Proposition;
 import org.argmap.client.ServiceException;
-import org.argmap.client.Util;
 
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
@@ -86,9 +86,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public PartialTrees getRootProps(int depthLimit) {
+	public PartialTrees_DELETE_ME getRootProps(int depthLimit) {
 
-		PartialTrees propsAndArgs = new PartialTrees();
+		PartialTrees_DELETE_ME propsAndArgs = new PartialTrees_DELETE_ME();
 		Query<Proposition> propQuery = ofy.query(Proposition.class)
 				.filter("linkCount =", 0).order("-created").limit(30);
 
@@ -514,36 +514,55 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 		return nodesChanges;
 	}
-	
-	private void putNode( Node node ){
+
+	private void putNode(Node node) {
 		node.updated = new Date();
-		ofy.put( node );
+		ofy.put(node);
+	}
+	
+	private PartialTrees getUpToDateProp(NodeInfo prop){
+		Map<Long, DateAndChildIDs> propsInfo = new HashMap<Long, DateAndChildIDs>();
+		propsInfo.put(prop.id, prop.info);
+		Map<Long, DateAndChildIDs> argsInfo = new HashMap<Long, DateAndChildIDs>();
+		return getUpToDateNodes( propsInfo, argsInfo );
+	}
+	
+	private PartialTrees getUpToDateArg(NodeInfo arg){
+		Map<Long, DateAndChildIDs> propsInfo = new HashMap<Long, DateAndChildIDs>();
+		Map<Long, DateAndChildIDs> argsInfo = new HashMap<Long, DateAndChildIDs>();
+		propsInfo.put(arg.id, arg.info);
+		return getUpToDateNodes( propsInfo, argsInfo );
 	}
 
 	/*
 	 * TODO make sure lastUpdate is saved whenever a node is changed
 	 */
 	@Override
-	public Map<Long, Node> getUpToDateNodes(
+	public PartialTrees getUpToDateNodes(
 			Map<Long, DateAndChildIDs> propsInfo,
 			Map<Long, DateAndChildIDs> argsInfo) {
-		Map<Long, Node> results = new HashMap<Long, Node>();
-		
-		log.severe("got request for these-\nprops:" + Util.mapToString(propsInfo) + "\nargs:" + Util.mapToString(argsInfo));
-		
+		// Map<Long, Node> results = new HashMap<Long, Node>();
+		PartialTrees results = new PartialTrees();
+
+		log.severe("got request for these-\nprops:"
+				+ Log.mapToString(propsInfo) + "\nargs:"
+				+ Log.mapToString(argsInfo));
+
 		Map<Long, Proposition> props = ofy.get(Proposition.class,
 				propsInfo.keySet());
 		Map<Long, Argument> args = ofy.get(Argument.class, argsInfo.keySet());
 
 		for (Proposition prop : props.values()) {
-			log.severe("propID:" + prop.id + "; DateAndChildIDs:" + propsInfo.get( prop.id ).toString() );
+			// log.severe("propID:" + prop.id + "; DateAndChildIDs:" +
+			// propsInfo.get( prop.id ).toString() );
 			if (!prop.updated.equals(propsInfo.get(prop.id).date)) {
-				results.put(prop.id, prop);
+				results.nodes.put(prop.id, prop);
+				results.rootIDs.add(prop.id);
 				for (Long childID : prop.childIDs) {
 					if (!propsInfo.get(prop.id).childIDs.contains(childID)) {
 						Argument child = ofy.get(Argument.class, childID);
-						results.put(child.id, child);
-						results.putAll(ofy.get(Proposition.class,
+						results.nodes.put(child.id, child);
+						results.nodes.putAll(ofy.get(Proposition.class,
 								child.childIDs));
 					}
 				}
@@ -552,22 +571,24 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 		for (Argument arg : args.values()) {
 			if (!arg.updated.equals(argsInfo.get(arg.id).date)) {
-				results.put(arg.id, arg);
+				results.nodes.put(arg.id, arg);
+				results.rootIDs.add(arg.id);
 				for (Long childID : arg.childIDs) {
 					if (!argsInfo.get(arg.id).childIDs.contains(childID)) {
 						Proposition child = ofy.get(Proposition.class, childID);
-						results.put(child.id, child);
-						results.putAll(ofy.get(Argument.class, child.childIDs));
+						results.nodes.put(child.id, child);
+						results.nodes.putAll(ofy.get(Argument.class,
+								child.childIDs));
 					}
 				}
 			}
 		}
-		
-		log.severe("returning these nodes:" + Util.mapToString(results));
+
+		log.severe("returning these nodes:" + Log.mapToString(results.nodes)
+				+ "\nfor these updated root ids:"
+				+ Log.listToString(results.rootIDs));
 		return results;
 	}
-	
-	
 
 	@Override
 	public ForwardChanges getNewChanges_DELETE_ME(Date startDate,
@@ -797,24 +818,24 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public PartialTrees searchProps(String searchString, String searchName,
-			int resultLimit, List<Long> filterNodeIDs) {
+	public PartialTrees_DELETE_ME searchProps(String searchString,
+			String searchName, int resultLimit, List<Long> filterNodeIDs) {
 		Set<String> tokenSet = getTokensForIndexingOrQuery(searchString, 6);
 		if (tokenSet.isEmpty()) {
-			return new PartialTrees();
+			return new PartialTrees_DELETE_ME();
 		}
 
 		Search search = new Search(ofy, tokenSet, resultLimit, filterNodeIDs);
-		PartialTrees propsAndArgs = search.getBatch(ofy);
+		PartialTrees_DELETE_ME propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
 		return propsAndArgs;
 	}
 
 	@Override
-	public PartialTrees continueSearchProps(String searchName) {
+	public PartialTrees_DELETE_ME continueSearchProps(String searchName) {
 		Search search = (Search) getHttpServletRequest().getSession()
 				.getAttribute(searchName);
-		PartialTrees propsAndArgs = search.getBatch(ofy);
+		PartialTrees_DELETE_ME propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
 		return propsAndArgs;
 	}

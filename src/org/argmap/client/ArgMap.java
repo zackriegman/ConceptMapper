@@ -21,15 +21,33 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 
+/*
+ * refresh currently ask for updates for unloaded root nodes... strange... its only supposed to ask
+ * for updates for loaded nodes...
+ */
+/*
+ * should updates pause whenever there are message in ServerComm's queue?  If there are messages in the
+ * queue that means that there are ViewNodes without updated Nodes... if we try to do an update... well
+ * the updated node might be empty.  I guess it would make sense just to put the update in the dispatch queue
+ * so that no other operations work in the mean time....
+ */
+/*
+ * Another problem that might exist with my current implementation is that the there can be multiple
+ *  different ViewNodes on the client that refer to the same node but have different updated times
+ *   associated with them...  Currently I think my implementation sends only one node to the server.
+ *     It needs to make sure that its sends the oldest one to the server... otherwise there might not
+ *      have been an update since the newest one, and the oldest one won't be updated to the newest
+ *       one as a result.
+ */
 /*TODO: currently only addProp and addArg return the updated nodes, and even the only for the 
  * added node not for the parent node.  This means that the parent node will be updated in the
  * next refresh... that isn't really a problem maybe... but it some cases it may be less than ideal
  * for instance... maybe its ok actually...*/
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
 /*TODO: track down exceptions in ModeVersion (unrelated to circular linking)
-//TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
-//TODO: provide a way to see deleted top level nodes
-/*TODO: move changes from propID/argID to parentID/childID (this will make querying more efficient:  want
+ //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
+ //TODO: provide a way to see deleted top level nodes
+ /*TODO: move changes from propID/argID to parentID/childID (this will make querying more efficient:  want
  * all the changes having to do with a particular node?  Just query on parentID with that node's ID.
  * Hmmm... what about prop adds where the proposition has content?  Anyway, the idea being, that when
  * a node is updated we store its id in the parentID.  So when we query on parentID we get all the additions to,
@@ -118,9 +136,9 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 		messageArea = new HTML();
 		messageMap = new MultiMap<String, Message>();
 		editMode = new ModeEdit(this);
-		
+
 		GWT.runAsync(new RunAsyncCallback() {
-			
+
 			@Override
 			public void onSuccess() {
 				mainPanel = new DockLayoutPanel(Style.Unit.EM);
@@ -148,7 +166,8 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 				bannerPanel.add(htmlTitle);
 				bannerPanel.add(loginPanel);
 				loginPanel.addStyleName("loginPanel");
-				bannerPanel.setWidgetHorizontalPosition(loginPanel, Alignment.END);
+				bannerPanel.setWidgetHorizontalPosition(loginPanel,
+						Alignment.END);
 				mainPanel.addNorth(bannerPanel, 4);
 				mainPanel.addNorth(messageArea, 2);
 				mainPanel.add(modePanel);
@@ -158,14 +177,13 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 
 				getLoginInfo();
 
-				
 			}
-			
+
 			@Override
 			public void onFailure(Throwable reason) {
 				ArgMap.messageTimed("Code download failed", MessageType.ERROR);
 				Log.log("am.oml", "Code download failed" + reason.toString());
-				
+
 			}
 		});
 	}
@@ -351,13 +369,13 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 			} else {
 				sb.append("infoMessage");
 			}
-			sb.append("\">" + sp + sp );
+			sb.append("\">" + sp + sp);
 
 			sb.append(messageList.get(0).content);
 			if (messageList.size() > 1) {
 				sb.append(sp + "(" + messageList.size() + ")");
 			}
-			sb.append(sp + sp  + "</span>" + sp + sp);
+			sb.append(sp + sp + "</span>" + sp + sp);
 		}
 		sb.append("</div>");
 
@@ -385,5 +403,9 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 		}
 		GWT.log("Uncaught Exception", e);
 		if (Log.on) Log.finishOpenLogs();
+	}
+
+	public ModeEdit getModeEdit() {
+		return editMode;
 	}
 }

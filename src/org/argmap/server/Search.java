@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 import javax.persistence.Embedded;
 import javax.persistence.Id;
 
-import org.argmap.client.ArgMapService.PartialTrees;
+import org.argmap.client.ArgMapService.PartialTrees_DELETE_ME;
 import org.argmap.client.Node;
 import org.argmap.client.Proposition;
 
@@ -68,8 +68,8 @@ public class Search implements Serializable {
 
 	}
 
-	public PartialTrees getBatch(Objectify ofy) {
-		PartialTrees results = setUpResults();
+	public PartialTrees_DELETE_ME getBatch(Objectify ofy) {
+		PartialTrees_DELETE_ME results = setUpResults();
 		Query<Proposition> query = repeatPreviousQueryOrBuildNext(ofy);
 		if (query == null) {
 			/* set rootProps to null as sign to client that the search has been exhausted */
@@ -96,9 +96,9 @@ public class Search implements Serializable {
 		return query;
 	}
 
-	public PartialTrees setUpResults() {
+	public PartialTrees_DELETE_ME setUpResults() {
 		List<Proposition> results = new LinkedList<Proposition>();
-		PartialTrees propsAndArgs = new PartialTrees();
+		PartialTrees_DELETE_ME propsAndArgs = new PartialTrees_DELETE_ME();
 		propsAndArgs.rootProps = results;
 		propsAndArgs.nodes = new HashMap<Long, Node>();
 		return propsAndArgs;
@@ -113,8 +113,8 @@ public class Search implements Serializable {
 	 * it gets "limit" number of results. Then it saves it state in member
 	 * variables and returns. The next call will pick up where it left off.
 	 */
-	public PartialTrees getBatchToLimit(Objectify ofy) {
-		PartialTrees results = setUpResults();
+	public PartialTrees_DELETE_ME getBatchToLimit(Objectify ofy) {
+		PartialTrees_DELETE_ME results = setUpResults();
 
 		Query<Proposition> currentQuery = repeatPreviousQueryOrBuildNext(ofy);
 
