@@ -1,7 +1,6 @@
 package org.argmap.client;
 
 import org.argmap.client.ModeEdit.EditModeTree;
-import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -95,12 +94,14 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 				setOpen(true);
 				newPropView.setOpen(true);
 				getEditModeTree().resetState();
-				ServerComm.addProp(newPropView.proposition, argument, 0, new LocalCallback<Proposition>() {
-					@Override
-					public void call(Proposition result) {
-						newPropView.addPropositionCallback(newPropView, result);
-					}
-				});
+				ServerComm.addProp(newPropView.proposition, argument, 0);
+				// ServerComm.addProp(newPropView.proposition, argument, 0, new
+				// LocalCallback<Proposition>() {
+				// @Override
+				// public void call(Proposition result) {
+				// newPropView.addPropositionCallback(newPropView, result);
+				// }
+				// });
 				event.preventDefault();
 
 			}
@@ -120,7 +121,7 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 
 	@Override
 	public void onMouseOver(MouseOverEvent event) {
-		if (!isLoaded() && hasID() ) {
+		if (!isLoaded() && hasID()) {
 			horizontalPanel.add(expandButton);
 		}
 	}

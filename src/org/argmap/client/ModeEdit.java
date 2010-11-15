@@ -569,8 +569,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					@Override
 					public void call(PartialTrees results) {
 						Log log = Log.getLog("me.guaa.cb", true);
-						log.log("loadedNodes:\npropViews:" + Log.multiMapToString(loadedProps) +
-								"\nargViews:" + Log.multiMapToString(loadedArgs));
+						log.log("loadedNodes:\npropViews:"
+								+ Log.multiMapToString(loadedProps)
+								+ "\nargViews:"
+								+ Log.multiMapToString(loadedArgs));
 						/*
 						 * makes sure that there hasn't been an update since
 						 * this update started... for instance if a search has
@@ -584,7 +586,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 						for (Long id : results.rootIDs) {
 							Node node = results.nodes.get(id);
-							log.log("prossesing node:" + node );
+							log.log("prossesing node:" + node);
 							if (node instanceof Proposition) {
 								/*
 								 * need to create a new list here because in the
@@ -594,22 +596,26 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 								 * should not be processed.
 								 */
 								/*
-								 * TODO this doens't make sense at all... I'm walking through a list of all the nodes that
-								 * are return, but I'm asking loaded props for nodes... but obviously the new nodes won't be
-								 * in loaded props.  Instead I need to get back a list of updated nodes *from the list I asked for*
-								 * with an accompanying list of nodes needed to update them.
+								 * TODO this doens't make sense at all... I'm
+								 * walking through a list of all the nodes that
+								 * are return, but I'm asking loaded props for
+								 * nodes... but obviously the new nodes won't be
+								 * in loaded props. Instead I need to get back a
+								 * list of updated nodes *from the list I asked
+								 * for* with an accompanying list of nodes
+								 * needed to update them.
 								 */
 								List<ViewProp> viewProps = new ArrayList<ViewProp>(
 										loadedProps.get(node.id));
 								for (ViewProp viewProp : viewProps) {
-									log.log("prossesing ViewProp:" + viewProp );
+									log.log("prossesing ViewProp:" + viewProp);
 									updateNode(viewProp, node, results);
 								}
 							} else if (node instanceof Argument) {
 								List<ViewArg> viewArgs = new ArrayList<ViewArg>(
 										loadedArgs.get(node.id));
 								for (ViewArg viewArg : viewArgs) {
-									log.log("prossesing ViewArg:" + viewArg );
+									log.log("prossesing ViewArg:" + viewArg);
 									updateNode(viewArg, node, results);
 								}
 							} else
@@ -620,8 +626,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				});
 	}
 
-	private void updateNode(ViewNode viewNode, Node node,
-			PartialTrees results) {
+	private void updateNode(ViewNode viewNode, Node node, PartialTrees results) {
 		// TODO note: this list comparison also depends on the viewNode's Node
 		// having an up-to-date childID list...make sure that it does...
 		if (!node.childIDs.equals(viewNode.getNode().childIDs)) {
@@ -640,22 +645,23 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					viewNode.addItem(child);
 					child.recursiveBuildViewNode(node, results.nodes, 0);
 				} else {
-					/* TODO when would the results not contain a key for a child?
-					 * since I'm using recursiveBuildViewNode it should take care
-					 * of a number of children that have been added.  updateNode()
-					 * should only be called for nodes in the pre-existing tree.
-					 * recursiveBuildViewNode takes care of creating the children
-					 * and any grandchildren/dummy nodes necessary.  Update node
-					 * takes care of removing/adding/and updating the content
-					 * of the node.  So I'm commmenting out this addItem()
-					 * and replacing it with an assert false;
+					/*
+					 * TODO when would the results not contain a key for a
+					 * child? since I'm using recursiveBuildViewNode it should
+					 * take care of a number of children that have been added.
+					 * updateNode() should only be called for nodes in the
+					 * pre-existing tree. recursiveBuildViewNode takes care of
+					 * creating the children and any grandchildren/dummy nodes
+					 * necessary. Update node takes care of removing/adding/and
+					 * updating the content of the node. So I'm commmenting out
+					 * this addItem() and replacing it with an assert false;
 					 */
 					assert false;
-					//viewNode.addItem(new ViewDummyVer(id));
+					// viewNode.addItem(new ViewDummyVer(id));
 				}
 			}
 		}
-		
+
 		viewNode.setNode(node);
 	}
 
@@ -683,13 +689,14 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		// tree.addItem(newPropView);
 		tree.insertItem(0, newPropView);
 		newPropView.haveFocus();
-		ServerComm.addProp(newPropView.getProposition(), null, 0,
-				new LocalCallback<Proposition>() {
-					@Override
-					public void call(Proposition result) {
-						newPropView.addPropositionCallback(newPropView, result);
-					}
-				});
+		ServerComm.addProp(newPropView.getProposition(), null, 0);
+		// ServerComm.addProp(newPropView.getProposition(), null, 0,
+		// new LocalCallback<Proposition>() {
+		// @Override
+		// public void call(Proposition result) {
+		// newPropView.addPropositionCallback(newPropView, result);
+		// }
+		// });
 	}
 
 	public static void log(String string) {
@@ -994,14 +1001,13 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 		@Override
 		public void run() {
-			if( on )
-			getUpdatesAndApply();
+			if (on) getUpdatesAndApply();
 			// getNewChangesAndUpdateTree_DELETE_ME( lastUpdate_DELETE_ME);
 		}
 
 		public void start() {
-				scheduleRepeating(2000);
-				startDate = new Date();
+			scheduleRepeating(2000);
+			startDate = new Date();
 		}
 
 		public Date getStartDate() {
@@ -1013,12 +1019,12 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			super.cancel();
 			startDate = null;
 		}
-		
-		public void setOn( boolean on ){
+
+		public void setOn(boolean on) {
 			this.on = on;
 		}
-		
-		public boolean getOn(){
+
+		public boolean getOn() {
 			return on;
 		}
 	};

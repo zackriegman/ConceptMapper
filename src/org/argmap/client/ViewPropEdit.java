@@ -1,7 +1,6 @@
 package org.argmap.client;
 
 import org.argmap.client.ModeEdit.EditModeTree;
-import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -135,27 +134,33 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	}
 
 	public void addArgument(boolean pro) {
-		final ViewArgEdit newArgView = new ViewArgEdit(pro);
-		final ViewPropEdit newPropView = new ViewPropEdit();
+		// final ViewArgEdit newArgView = new ViewArgEdit(pro);
+		// final ViewPropEdit newPropView = new ViewPropEdit();
+		ViewArgEdit newArgView = new ViewArgEdit(pro);
+		ViewPropEdit newPropView = new ViewPropEdit();
 		newArgView.addItem(newPropView);
 		this.addItem(newArgView);
 		newArgView.setOpen(true);
 		this.setOpen(true);
 		getEditModeTree().resetState();
 		newPropView.haveFocus();
-		ServerComm.addArg(pro, this.proposition, new LocalCallback<Argument>() {
-			@Override
-			public void call(Argument result) {
-				newArgView.setNode( result );
-				newArgView.setLoaded(true);
-			}
-		});
-		ServerComm.addProp(newPropView.proposition, newArgView.argument, 0, new LocalCallback<Proposition>() {
-			@Override
-			public void call(Proposition result) {
-				addPropositionCallback(newPropView, result);
-			}
-		});
+		ServerComm.addArg(pro, this.proposition, newArgView.argument);
+		ServerComm.addProp(newPropView.proposition, newArgView.argument, 0);
+		// ServerComm.addArg(pro, this.proposition, new
+		// LocalCallback<Argument>() {
+		// @Override
+		// public void call(Argument result) {
+		// newArgView.setNode( result );
+		// newArgView.setLoaded(true);
+		// }
+		// });
+		// ServerComm.addProp(newPropView.proposition, newArgView.argument, 0,
+		// new LocalCallback<Proposition>() {
+		// @Override
+		// public void call(Proposition result) {
+		// addPropositionCallback(newPropView, result);
+		// }
+		// });
 	}
 
 	@Override
@@ -297,9 +302,9 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			ServerComm.deleteArg(parentArgView.argument);
 		}
 	}
-	
-	public void addPropositionCallback( ViewProp newPropView, Proposition result ){
-		newPropView.setNode( result );
+
+	public void addPropositionCallback(ViewProp newPropView, Proposition result) {
+		newPropView.setNode(result);
 		newPropView.setLoaded(true);
 	}
 
@@ -321,12 +326,14 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		if (cursorPosition == 0) {
 			parentArgView().insertItem(treePosition, newPropView);
 			ServerComm.addProp(newPropView.proposition,
-					parentArgView().argument, treePosition, new LocalCallback<Proposition>() {
-						@Override
-						public void call(Proposition result) {
-							addPropositionCallback( newPropView, result );
-						}
-					});
+					parentArgView().argument, treePosition);
+			// parentArgView().argument, treePosition,
+			// new LocalCallback<Proposition>() {
+			// @Override
+			// public void call(Proposition result) {
+			// addPropositionCallback(newPropView, result);
+			// }
+			// });
 		} else {
 			parentArgView().insertItem(treePosition + 1, newPropView);
 
@@ -345,12 +352,14 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			newPropView.textArea.setFocus(true);
 
 			ServerComm.addProp(newPropView.proposition,
-					parentArgView().argument, treePosition + 1, new LocalCallback<Proposition>() {
-						@Override
-						public void call(Proposition result) {
-							addPropositionCallback(newPropView, result);
-						}
-					});
+					parentArgView().argument, treePosition + 1);
+			// parentArgView().argument, treePosition + 1,
+			// new LocalCallback<Proposition>() {
+			// @Override
+			// public void call(Proposition result) {
+			// addPropositionCallback(newPropView, result);
+			// }
+			// });
 			updatePropOnServerIfChanged();
 		}
 
@@ -363,7 +372,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			getEditMode().sideSearchTimer.setViewProp(this);
 		}
 	}
-
 
 	private ModeEdit getEditMode() {
 		return ((EditModeTree) getTree()).getEditMode();
@@ -426,7 +434,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		int charCode = event.getNativeKeyCode();
 		Object source = event.getSource();
 		if (source == textArea) {
-			getEditMode().sideSearchTimer.keyPress( charCode );
+			getEditMode().sideSearchTimer.keyPress(charCode);
 		}
 	}
 
@@ -451,7 +459,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	@Override
 	public void onMouseOver(MouseOverEvent event) {
 
-		if (!isLoaded() && hasID() ) {
+		if (!isLoaded() && hasID()) {
 			// topPanel.add(expandButton, 580, 2);
 			topPanel.add(expandButton);
 			expandButton.setVisible(true);

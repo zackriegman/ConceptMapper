@@ -175,41 +175,6 @@ public class ServerComm {
 		};
 	}
 
-	// private static abstract class ServerCallbackWithDispatch<T> implements
-	// AsyncCallback<T>, Command {
-	// String message;
-	//
-	// public ServerCallbackWithDispatch(String successMessage) {
-	// this.message = successMessage;
-	// }
-	//
-	// @Override
-	// public final void onFailure(Throwable caught) {
-	// dispatchCommand();
-	// handleFailure(message, caught);
-	// }
-	//
-	// @Override
-	// public final void onSuccess(T result) {
-	//
-	// /*
-	// * this must come before dispatchCommand() otherwise the client
-	// * might send a request to add a proposition to an argument before
-	// * the argument has been assigned an id by the return call from the
-	// * server...
-	// */
-	// doOnSuccess(result);
-	// dispatchCommand();
-	// if (message != null) {
-	// handleSuccess(message);
-	// }
-	//
-	// }
-	//
-	// public void doOnSuccess(T result) {
-	// };
-	// }
-
 	public static void getRootProps(int depthLimit,
 			LocalCallback<PartialTrees_DELETE_ME> localCallback) {
 		argMapService.getRootProps(depthLimit,
@@ -295,7 +260,10 @@ public class ServerComm {
 	}
 
 	public static void addArg(final boolean pro, final Proposition parentProp,
-			final LocalCallback<Argument> localCallback) {
+			final Argument newArg) {
+		// public static void addArg(final boolean pro, final Proposition
+		// parentProp,
+		// final LocalCallback<Argument> localCallback) {
 		queueCommand(new ServerCallbackWithDispatch<Argument>("saving...",
 				"saved") {
 			@Override
@@ -305,7 +273,9 @@ public class ServerComm {
 
 			@Override
 			public void doOnSuccess(Argument argument) {
-				localCallback.call(argument);
+				// localCallback.call(argument);
+				newArg.id = argument.id;
+				newArg.updated = argument.updated;
 			}
 		});
 	}
@@ -357,8 +327,10 @@ public class ServerComm {
 	}
 
 	public static void addProp(final Proposition newProposition,
-			final Argument parentArgument, final int position,
-			final LocalCallback<Proposition> localCallback) {
+			final Argument parentArgument, final int position) {
+		// public static void addProp(final Proposition newProposition,
+		// final Argument parentArgument, final int position,
+		// final LocalCallback<Void> localCallback) {
 		queueCommand(new ServerCallbackWithDispatch<Proposition>("saving...",
 				"saved") {
 			@Override
@@ -373,7 +345,9 @@ public class ServerComm {
 
 			@Override
 			public void doOnSuccess(Proposition proposition) {
-				localCallback.call(proposition);
+				// localCallback.call(proposition);
+				newProposition.id = proposition.id;
+				newProposition.updated = proposition.updated;
 			}
 		});
 	}
