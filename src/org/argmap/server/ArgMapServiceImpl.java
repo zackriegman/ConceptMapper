@@ -152,7 +152,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	public NodesAndNode addProp(NodeInfo parentArg, int position, String content){
 		content = content.trim();
 
-		// log.finest("addProp()");
+		// log.finest("addProp()"); 
 		Proposition newProposition = new Proposition();
 		newProposition.created = new Date();
 		newProposition.content = content;
