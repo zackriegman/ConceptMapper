@@ -149,10 +149,10 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public NodesAndNode addProp(NodeInfo parentArg, int position, String content){
+	public Proposition addProp(Long parentArgID, int position, String content) {
 		content = content.trim();
 
-		// log.finest("addProp()"); 
+		// log.finest("addProp()");
 		Proposition newProposition = new Proposition();
 		newProposition.created = new Date();
 		newProposition.content = content;
@@ -519,27 +519,12 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		node.updated = new Date();
 		ofy.put(node);
 	}
-	
-	private PartialTrees getUpToDateProp(NodeInfo prop){
-		Map<Long, DateAndChildIDs> propsInfo = new HashMap<Long, DateAndChildIDs>();
-		propsInfo.put(prop.id, prop.info);
-		Map<Long, DateAndChildIDs> argsInfo = new HashMap<Long, DateAndChildIDs>();
-		return getUpToDateNodes( propsInfo, argsInfo );
-	}
-	
-	private PartialTrees getUpToDateArg(NodeInfo arg){
-		Map<Long, DateAndChildIDs> propsInfo = new HashMap<Long, DateAndChildIDs>();
-		Map<Long, DateAndChildIDs> argsInfo = new HashMap<Long, DateAndChildIDs>();
-		propsInfo.put(arg.id, arg.info);
-		return getUpToDateNodes( propsInfo, argsInfo );
-	}
 
 	/*
 	 * TODO make sure lastUpdate is saved whenever a node is changed
 	 */
 	@Override
-	public PartialTrees getUpToDateNodes(
-			Map<Long, DateAndChildIDs> propsInfo,
+	public PartialTrees getUpToDateNodes(Map<Long, DateAndChildIDs> propsInfo,
 			Map<Long, DateAndChildIDs> argsInfo) {
 		// Map<Long, Node> results = new HashMap<Long, Node>();
 		PartialTrees results = new PartialTrees();

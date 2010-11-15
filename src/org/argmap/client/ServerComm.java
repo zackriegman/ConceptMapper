@@ -11,9 +11,7 @@ import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.DateAndChildIDs;
 import org.argmap.client.ArgMapService.ForwardChanges;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
-import org.argmap.client.ArgMapService.NodeInfo;
 import org.argmap.client.ArgMapService.NodeWithChanges;
-import org.argmap.client.ArgMapService.NodesAndNode;
 import org.argmap.client.ArgMapService.PartialTrees;
 import org.argmap.client.ArgMapService.PartialTrees_DELETE_ME;
 
@@ -173,8 +171,44 @@ public class ServerComm {
 			messageForSuccess(successMessage, message);
 		}
 
-		public abstract void doOnSuccess(T result);
+		public void doOnSuccess(T result) {
+		};
 	}
+
+	// private static abstract class ServerCallbackWithDispatch<T> implements
+	// AsyncCallback<T>, Command {
+	// String message;
+	//
+	// public ServerCallbackWithDispatch(String successMessage) {
+	// this.message = successMessage;
+	// }
+	//
+	// @Override
+	// public final void onFailure(Throwable caught) {
+	// dispatchCommand();
+	// handleFailure(message, caught);
+	// }
+	//
+	// @Override
+	// public final void onSuccess(T result) {
+	//
+	// /*
+	// * this must come before dispatchCommand() otherwise the client
+	// * might send a request to add a proposition to an argument before
+	// * the argument has been assigned an id by the return call from the
+	// * server...
+	// */
+	// doOnSuccess(result);
+	// dispatchCommand();
+	// if (message != null) {
+	// handleSuccess(message);
+	// }
+	//
+	// }
+	//
+	// public void doOnSuccess(T result) {
+	// };
+	// }
 
 	public static void getRootProps(int depthLimit,
 			LocalCallback<PartialTrees_DELETE_ME> localCallback) {
@@ -259,155 +293,105 @@ public class ServerComm {
 				new ServerCallback<PartialTrees_DELETE_ME>(localCallback, null,
 						null));
 	}
-	
-	
-	public static interface LocalDispatchCallback{
-		public Node getNode();
-		public void updateNode( Map<Long, Node> nodes );
-	}
-	
-	public static interface LocalDispatchAddCallback extends LocalDispatchCallback {
-		public void setAddedNode( Node node );
-	}
 
-	public static void addArg(final boolean pro,
-			final LocalDispatchAddCallback localCallback) {
-		queueCommand(new ServerCallbackWithDispatch<NodesAndNode>("saving...",
+	public static void addArg(final boolean pro, final Proposition parentProp,
+			final LocalCallback<Argument> localCallback) {
+		queueCommand(new ServerCallbackWithDispatch<Argument>("saving...",
 				"saved") {
 			@Override
 			public void execute() {
-				argMapService.addArg(new NodeInfo(localCallback.getNode()), pro, this);
+				argMapService.addArg(parentProp.id, pro, this);
 			}
 
 			@Override
-			public void doOnSuccess(NodesAndNode result) {
-				localCallback.setAddedNode(result.node);
-				localCallback.updateNode(result.nodes);
+			public void doOnSuccess(Argument argument) {
+				localCallback.call(argument);
 			}
 		});
 	}
 
-	public static void deleteProp(final LocalDispatchCallback localCallback) {
-		queueCommand(new ServerCallbackWithDispatch<Map<Long, Node>>("saving...", "saved") {
+	public static void deleteProp(final Proposition prop) {
+		queueCommand(new ServerCallbackWithDispatch<Void>("saving...", "saved") {
 			@Override
 			public void execute() {
-				argMapService.deleteProp(localCallback.getNode().id, this);
-			}
-			
-			@Override
-			public void doOnSuccess(Map<Long, Node> nodes) {
-				localCallback.updateNode( nodes );
+				argMapService.deleteProp(prop.id, this);
 			}
 		});
 	}
 
-	public static void deleteArg(final LocalDispatchCallback localCallback) {
-		queueCommand(new ServerCallbackWithDispatch<Map<Long, Node>>("saving...", "saved") {
+	public static void deleteArg(final Argument arg) {
+		queueCommand(new ServerCallbackWithDispatch<Void>("saving...", "saved") {
 			@Override
 			public void execute() {
-				argMapService.deleteArg(localCallback.getNode().id, this);
-			}
-			
-			@Override
-			public void doOnSuccess(Map<Long, Node> nodes){
-				localCallback.updateNode( nodes );
-			}
-		});
-	}
-	
-	public static interface LocalDispatchUnlinkCallback extends LocalDispatchCallback{
-		public Node getChildNode();
-		public void updateChildNode( Map<Long, Node> nodes );
-	}
-
-	public static void unlinkProp(final LocalDispatchUnlinkCallback localCallback) {
-		queueCommand(new ServerCallbackWithDispatch<Map<Long, Node>>("saving...", "saved") {
-			@Override
-			public void execute() {
-				argMapService.unlinkProp(new NodeInfo(localCallback.getNode()),
-						new NodeInfo(localCallback.getChildNode()), this);
-			}
-			
-			@Override
-			public void doOnSuccess(Map<Long, Node> nodes){
-				localCallback.updateNode( nodes );
-				localCallback.updateChildNode( nodes );
-			}
-		});
-	}
-	
-	
-
-	public static void updateArg(final LocalDispatchCallback localCallback, final String content) {
-		queueCommand(new ServerCallbackWithDispatch<Map<Long, Node>>("saving...", "saved") {
-			@Override
-			public void execute() {
-				argMapService.updateArg(new NodeInfo(localCallback.getNode()), content, this);
-			}
-			
-			@Override
-			public void doOnSuccess(Map<Long, Node> nodes ){
-				localCallback.updateNode( nodes );
+				argMapService.deleteArg(arg.id, this);
 			}
 		});
 	}
 
-	public static void updateProp(final LocalDispatchCallback localCallback, final String content) {
-		queueCommand(new ServerCallbackWithDispatch<Map<Long, Node>>("saving...", "saved") {
+	public static void unlinkProp(final Argument parentArg,
+			final Proposition unlinkProp) {
+		queueCommand(new ServerCallbackWithDispatch<Void>("saving...", "saved") {
 			@Override
 			public void execute() {
-				argMapService.updateProp(new NodeInfo(localCallback.getNode()), content, this);
-			}
-			
-			@Override
-			public void doOnSuccess(Map<Long, Node> nodes ){
-				localCallback.updateNode( nodes );
+				argMapService.unlinkProp(parentArg.id, unlinkProp.id, this);
 			}
 		});
 	}
-	
-	public static void addProp(final LocalDispatchAddCallback localCallback, final int position, final String content) {
-		queueCommand(new ServerCallbackWithDispatch<NodesAndNode>("saving...",
+
+	public static void updateArg(final Argument arg) {
+		queueCommand(new ServerCallbackWithDispatch<Void>("saving...", "saved") {
+			@Override
+			public void execute() {
+				argMapService.updateArg(arg.id, arg.content, this);
+			}
+		});
+	}
+
+	public static void updateProp(final Proposition prop) {
+		queueCommand(new ServerCallbackWithDispatch<Void>("saving...", "saved") {
+			@Override
+			public void execute() {
+				argMapService.updateProp(prop.id, prop.getContent(), this);
+			}
+		});
+	}
+
+	public static void addProp(final Proposition newProposition,
+			final Argument parentArgument, final int position,
+			final LocalCallback<Proposition> localCallback) {
+		queueCommand(new ServerCallbackWithDispatch<Proposition>("saving...",
 				"saved") {
 			@Override
 			public void execute() {
-				if (localCallback.getNode() != null)
-					argMapService.addProp(new NodeInfo(localCallback.getNode()), position,
-							content, this);
+				if (parentArgument != null)
+					argMapService.addProp(parentArgument.id, position,
+							newProposition.content, this);
 				else
 					argMapService
-							.addProp(null, 0, content, this);
+							.addProp(null, 0, newProposition.content, this);
 			}
 
 			@Override
-			public void doOnSuccess(NodesAndNode result) {
-				localCallback.setAddedNode(result.node);
-				localCallback.updateNode(result.nodes);
+			public void doOnSuccess(Proposition proposition) {
+				localCallback.call(proposition);
 			}
 		});
 	}
-	
-	public interface LocalReplaceWithLinkCallback {
-		public Node getParentNode();
-		public Node getChildToRemove();
-		public Node getLinkChild();
-		public void updateParentNode( Map<Long, Node> nodes );
-		public void updateLinkedNode( Map<Long, Node> nodes );
-	}
 
-	public static void replaceWithLinkAndGet(final LocalReplaceWithLinkCallback localCallback) {
+	public static void replaceWithLinkAndGet(final Argument parentArg,
+			final Proposition linkProp, final Proposition removeProp,
+			final LocalCallback<Map<Long, Node>> localCallback) {
 		queueCommand(new ServerCallbackWithDispatch<Map<Long, Node>>(
 				"saving...", "saved") {
 			@Override
 			public void execute() {
-				argMapService.replaceWithLinkAndGet(new NodeInfo(localCallback.getParentNode()), new NodeInfo(localCallback.getLinkChild()),
-						localCallback.getChildToRemove().id, this);
+				argMapService.replaceWithLinkAndGet(parentArg.id, linkProp.id,
+						removeProp.id, this);
 			}
 
 			@Override
-			public void doOnSuccess(Map<Long, Node> nodes) {
-				localCallback.updateParentNode( nodes );
-				localCallback.updateLinkedNode( nodes );
+			public void doOnSuccess(Map<Long, Node> result) {
+				localCallback.call(result);
 			}
 		});
 	}
