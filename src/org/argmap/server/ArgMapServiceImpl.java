@@ -96,6 +96,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		List<Long> rootIDs = new ArrayList<Long>();
 		for (Proposition prop : rootProps) {
 			rootIDs.add(prop.id);
+			nodes.put(prop.id, prop);
 			recursiveGetProps(prop, nodes, depthLimit);
 		}
 		propsAndArgs.rootIDs = rootIDs;
