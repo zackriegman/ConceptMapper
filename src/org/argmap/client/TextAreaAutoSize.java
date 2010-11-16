@@ -21,6 +21,12 @@ public class TextAreaAutoSize extends TextArea implements KeyUpHandler,
 		GWT.log("constructed");
 	}
 
+	/*
+	 * TODO currently this never cleans up the garbage it appends to the
+	 * document... in a long lived application that is constantly creating new
+	 * text areas and throwing them away (like this one) that might be a
+	 * problem.
+	 */
 	public void init() {
 		if (initialized == false) {
 			GWT.log("initilized");

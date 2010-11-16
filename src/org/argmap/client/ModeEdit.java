@@ -277,7 +277,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 	public void onEditModeTabSelected() {
 		Log.log("me.oemts", "resizing tree");
-		tree.resizeTree();
+		// tree.resizeTree();
 	}
 
 	/*
@@ -628,7 +628,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 								assert false;
 						}
 						log.finish();
-						tree.resizeTree();
+						// tree.resizeTree();
 					}
 				});
 	}
@@ -671,7 +671,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 
 		viewNode.setNode(node);
-		tree.recursiveResizeNode(viewNode);
+		// tree.recursiveResizeNode(viewNode);
 	}
 
 	private <T extends ViewNode> void loadNodeInfo(

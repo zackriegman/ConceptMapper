@@ -27,7 +27,6 @@ public class ArgTree extends Tree {
 			@Override
 			public void onOpen(OpenEvent<TreeItem> event) {
 				updateStateOpen(event);
-				recursiveResizeNode(event.getTarget());
 			}
 		});
 
@@ -38,31 +37,6 @@ public class ArgTree extends Tree {
 				updateStateClose(event);
 			}
 		});
-	}
-
-	public final void recursiveResizeNode(Object object) {
-		if (object instanceof ViewNode && !(object instanceof ViewDummyVer)) {
-			if (object instanceof ViewProp) {
-				Log.log("at.rrn", "resizing:" + object);
-				((ViewProp) object).resize();
-			}
-			ViewNode viewNode = (ViewNode) object;
-			if (viewNode.isOpen()) {
-				for (int i = 0; i < viewNode.getChildCount(); i++) {
-					recursiveResizeNode(viewNode.getChild(i));
-				}
-			}
-		}
-
-	}
-
-	public final void resizeTree() {
-		for (int i = 0; i < getItemCount(); i++) {
-			TreeItem treeItem = getItem(i);
-			if (treeItem instanceof ViewNode) {
-				recursiveResizeNode(treeItem);
-			}
-		}
 	}
 
 	private final void updateStateClose(CloseEvent<TreeItem> event) {
