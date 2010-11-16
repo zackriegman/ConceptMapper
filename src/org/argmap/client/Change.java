@@ -3,7 +3,6 @@ package org.argmap.client;
 import java.io.Serializable;
 import java.util.Date;
 
-import javax.persistence.Embedded;
 import javax.persistence.Id;
 
 import com.googlecode.objectify.annotation.Cached;
@@ -91,8 +90,6 @@ public class Change implements Serializable {
 	 * For change type: ARG_MODIFICATION content refers to the argument title
 	 */
 	public String oldContent;
-	
-	public String newContent_DELETE_ME;
 
 	/*
 	 * For change types: PROP_DELETION, PROP_ADDITION, PROP_UNLINK, PROP_LINK
@@ -106,9 +103,6 @@ public class Change implements Serializable {
 	public Long argID;
 	public int argPropIndex = -1;
 	public boolean argPro;
-	
-	@Embedded
-	public Proposition link_DELETE_ME;
 
 	public Change() {
 
@@ -125,7 +119,8 @@ public class Change implements Serializable {
 		case ARG_DELETION:
 			return propID;
 		}
-		throw new RuntimeException( "this change type does not have parent:" + toString() );
+		throw new RuntimeException("this change type does not have parent:"
+				+ toString());
 	}
 
 	public Long getDeletedID() {
@@ -136,9 +131,10 @@ public class Change implements Serializable {
 		case PROP_UNLINK:
 			return propID;
 		}
-		throw new RuntimeException( "this change type does not have deleted ID:" + toString() );
+		throw new RuntimeException("this change type does not have deleted ID:"
+				+ toString());
 	}
-	
+
 	public Long getAddedID() {
 		switch (changeType) {
 		case ARG_ADDITION:
@@ -147,10 +143,11 @@ public class Change implements Serializable {
 		case PROP_LINK:
 			return propID;
 		}
-		throw new RuntimeException( "this change type does not have added ID:" + toString() );
+		throw new RuntimeException("this change type does not have added ID:"
+				+ toString());
 	}
-	
-	public boolean isDeletion(){
+
+	public boolean isDeletion() {
 		switch (changeType) {
 		case ARG_DELETION:
 		case PROP_DELETION:
@@ -159,8 +156,8 @@ public class Change implements Serializable {
 		}
 		return false;
 	}
-	
-	public boolean isAddition(){
+
+	public boolean isAddition() {
 		switch (changeType) {
 		case ARG_ADDITION:
 		case PROP_ADDITION:

@@ -133,15 +133,6 @@ public interface ArgMapService extends RemoteService {
 		}
 	}
 
-	public class ForwardChanges implements Serializable {
-		private static final long serialVersionUID = 1L;
-		public List<Change> changes;
-		public Date date;
-	}
-
-	public ForwardChanges getNewChanges_DELETE_ME(Date date, Set<Long> propIDs,
-			Set<Long> argIDs) throws ServiceException;
-
 	public PartialTrees getUpToDateNodes(Map<Long, DateAndChildIDs> propInfo,
 			Map<Long, DateAndChildIDs> argInfo);
 

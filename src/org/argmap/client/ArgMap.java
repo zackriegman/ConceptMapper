@@ -23,6 +23,15 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /*
+ * new prop losses focus when auto refresh is on.
+ */
+/*
+ * TODO when I implement auto-saving (which I think I should do soon) it will probably have weird effects
+ * on the currently edited proposition).
+ */
+// TODO test links behavoir with auto update (do linked nodes become yellow, do they lose there yellow when unlinked?)
+/* TODO textArea not properly resized on Chrome's first load... afterwords textArea can still be too small...
+ /*
  * refresh currently ask for updates for unloaded root nodes... strange... its only supposed to ask
  * for updates for loaded nodes...
  */
@@ -55,6 +64,9 @@ import com.google.gwt.user.client.ui.Widget;
  * deletions from, and content modifications of, the node and nothing else.  Right now querying on propID
  * gives not only additions to, deletions from, and content modifications of, the prop, it also gives additions of,
  * links of, and deletions of the prop, which in my current paradigm for handling changes, I don't need.
+ */
+/*
+ * fix TextAreaAutoSize so that it removes it's garbage from the tree?
  */
 
 //TODO: implement proposition strength voting, and scoring algorithm
@@ -408,8 +420,6 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 		Widget widget = modePanel.getWidget(modePanel.getSelectedIndex());
 		if (widget == versionsMode) {
 			versionsMode.displayVersions();
-		} else if (widget == editMode) {
-			editMode.onEditModeTabSelected();
 		}
 	}
 

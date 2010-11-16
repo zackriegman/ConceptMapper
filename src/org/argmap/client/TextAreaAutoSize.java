@@ -2,7 +2,6 @@ package org.argmap.client;
 
 import static com.google.gwt.query.client.GQuery.$;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -18,7 +17,7 @@ public class TextAreaAutoSize extends TextArea implements KeyUpHandler,
 	boolean initialized = false;
 
 	public TextAreaAutoSize() {
-		GWT.log("constructed");
+		// GWT.log("constructed");
 	}
 
 	/*
@@ -29,7 +28,7 @@ public class TextAreaAutoSize extends TextArea implements KeyUpHandler,
 	 */
 	public void init() {
 		if (initialized == false) {
-			GWT.log("initilized");
+			// GWT.log("initilized");
 			GQuery textArea = $(getElement());
 			textArea.css("resize", "none").css("overflow-y", "hidden");
 			origHeight = textArea.height();
@@ -84,11 +83,11 @@ public class TextAreaAutoSize extends TextArea implements KeyUpHandler,
 	@Override
 	public void onAttachOrDetach(AttachEvent event) {
 		if (event.isAttached()) {
-			GWT.log("attached");
+			// GWT.log("attached");
 			resize();
 			init();
 		}
-		GWT.log("attach event");
+		// GWT.log("attach event");
 	}
 
 	@Override

@@ -1,15 +1,12 @@
 package org.argmap.client;
 
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 
 import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.DateAndChildIDs;
-import org.argmap.client.ArgMapService.ForwardChanges;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
 import org.argmap.client.ArgMapService.PartialTrees;
@@ -198,13 +195,6 @@ public class ServerComm {
 		}
 		argMapService.getLoginInfo(requestURI, new ServerCallback<LoginInfo>(
 				localCallback, "authenticating...", null));
-	}
-
-	public static void getNewChanges_DELETE_ME(Date date, Set<Long> propIDs,
-			Set<Long> argIDs, LocalCallback<ForwardChanges> localCallback) {
-		argMapService.getNewChanges_DELETE_ME(date, propIDs, argIDs,
-				new ServerCallback<ArgMapService.ForwardChanges>(localCallback,
-						"refreshing...", "refreshed"));
 	}
 
 	public static void getUpdates(Map<Long, DateAndChildIDs> propsInfo,

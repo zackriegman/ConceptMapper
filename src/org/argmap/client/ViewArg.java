@@ -106,7 +106,7 @@ public abstract class ViewArg extends ViewNode {
 
 	@Override
 	public String toString() {
-		return "text:" + getText() + "; arg:" + argument;
+		return super.toString() + "; text:" + getText() + "; arg:" + argument;
 	}
 
 	@Override

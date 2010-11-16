@@ -60,7 +60,8 @@ public abstract class ViewProp extends ViewNode {
 
 	@Override
 	public String toString() {
-		return "textArea:" + textArea.getText() + "; prop:" + proposition;
+		return super.toString() + "; textArea:" + textArea.getText()
+				+ "; prop:" + proposition;
 	}
 
 	@Override

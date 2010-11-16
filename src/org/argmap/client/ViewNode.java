@@ -19,6 +19,16 @@ public abstract class ViewNode extends TreeItem {
 	private boolean isLoaded = false;
 	private List<Long> ancestorIDs;
 
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("isOpen:");
+		sb.append(isOpen);
+		sb.append("; isLoaded:");
+		sb.append(isLoaded);
+		return sb.toString();
+	}
+
 	public abstract ViewNode createViewNodeVerClone();
 
 	public ViewNode removeChildWithID(Long id) {
@@ -165,6 +175,9 @@ public abstract class ViewNode extends TreeItem {
 				addItem(new ViewDummyVer(nodeID));
 				isOpen = false;
 			}
+		}
+		if (node.childIDs.size() == 0) {
+			setLoaded(true);
 		}
 	}
 

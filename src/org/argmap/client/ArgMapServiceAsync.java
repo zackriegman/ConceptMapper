@@ -1,12 +1,9 @@
 package org.argmap.client;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.argmap.client.ArgMapService.DateAndChildIDs;
-import org.argmap.client.ArgMapService.ForwardChanges;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
 import org.argmap.client.ArgMapService.PartialTrees;
@@ -50,9 +47,6 @@ public interface ArgMapServiceAsync {
 			AsyncCallback<Map<Long, Node>> callback);
 
 	void getLoginInfo(String requestURI, AsyncCallback<LoginInfo> callback);
-
-	void getNewChanges_DELETE_ME(Date date, Set<Long> propIDs,
-			Set<Long> argIDs, AsyncCallback<ForwardChanges> callback);
 
 	void addProp(Long parentArgID, int position, String content,
 			AsyncCallback<Proposition> callback);
