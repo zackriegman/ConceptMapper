@@ -4,8 +4,10 @@
 }
 
 .propositionTextArea { /*border: 1px dotted #00f;*/
-	border-color: #B2B2FF;
-	border-style: dotted;
+	/*border-color: #B2B2FF;*/
+	/*border-style: dotted;*/
+	border-color: #DADAFF;
+	border-style: solid;
 	border-width: 1px;
 	padding: .5em;
 	-moz-border-radius: 6px;

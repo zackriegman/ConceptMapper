@@ -40,9 +40,10 @@ public class ArgTree extends Tree {
 		});
 	}
 
-	private final void recursiveResizeNode(Object object) {
+	public final void recursiveResizeNode(Object object) {
 		if (object instanceof ViewNode && !(object instanceof ViewDummyVer)) {
 			if (object instanceof ViewProp) {
+				Log.log("at.rrn", "resizing:" + object);
 				((ViewProp) object).resize();
 			}
 			ViewNode viewNode = (ViewNode) object;
@@ -53,6 +54,15 @@ public class ArgTree extends Tree {
 			}
 		}
 
+	}
+
+	public final void resizeTree() {
+		for (int i = 0; i < getItemCount(); i++) {
+			TreeItem treeItem = getItem(i);
+			if (treeItem instanceof ViewNode) {
+				recursiveResizeNode(treeItem);
+			}
+		}
 	}
 
 	private final void updateStateClose(CloseEvent<TreeItem> event) {
@@ -178,20 +188,20 @@ public class ArgTree extends Tree {
 	/*
 	 * the current implementation of clear() in GWT is to call remove on each
 	 * item, so we don't need a special method for clear() (and having one
-	 * causes problems because nodes are removed multiple times causing
-	 * MultiMap to throw an exception
+	 * causes problems because nodes are removed multiple times causing MultiMap
+	 * to throw an exception
 	 */
-//	@Override
-//	public void clear() {
-//		onRemoveAllLoadedNodes();
-//		super.clear();
-//	}
+	// @Override
+	// public void clear() {
+	// onRemoveAllLoadedNodes();
+	// super.clear();
+	// }
 
-//	@Override
-//	public void removeItems() {
-//		onRemoveAllLoadedNodes();
-//		super.removeItems();
-//	}
+	// @Override
+	// public void removeItems() {
+	// onRemoveAllLoadedNodes();
+	// super.removeItems();
+	// }
 
 	@Override
 	public void addItem(TreeItem item) {

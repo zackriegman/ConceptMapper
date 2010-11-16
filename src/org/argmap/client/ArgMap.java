@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 /*
  * refresh currently ask for updates for unloaded root nodes... strange... its only supposed to ask
@@ -118,7 +119,8 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
-public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
+public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
+		SelectionHandler<Integer> {
 
 	private ModeEdit editMode;
 
@@ -148,15 +150,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 				GWT.setUncaughtExceptionHandler(ArgMap.this);
 				modePanel.add(editMode, "Find And Collaborate");
 
-				modePanel.addSelectionHandler(new SelectionHandler<Integer>() {
-
-					@Override
-					public void onSelection(SelectionEvent<Integer> event) {
-						if (modePanel.getWidget(modePanel.getSelectedIndex()) == versionsMode) {
-							versionsMode.displayVersions();
-						}
-					}
-				});
+				modePanel.addSelectionHandler(ArgMap.this);
 
 				HTML htmlTitle = new HTML(
 						"<div class=\"title\">coreason.org</div>"
@@ -408,4 +402,15 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler {
 	public ModeEdit getModeEdit() {
 		return editMode;
 	}
+
+	@Override
+	public void onSelection(SelectionEvent<Integer> event) {
+		Widget widget = modePanel.getWidget(modePanel.getSelectedIndex());
+		if (widget == versionsMode) {
+			versionsMode.displayVersions();
+		} else if (widget == editMode) {
+			editMode.onEditModeTabSelected();
+		}
+	}
+
 }

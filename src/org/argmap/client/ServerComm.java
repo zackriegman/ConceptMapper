@@ -260,7 +260,7 @@ public class ServerComm {
 	}
 
 	public static void addArg(final boolean pro, final Proposition parentProp,
-			final Argument newArg) {
+			final Argument newArg, final LocalCallback<Void> localCallback) {
 		// public static void addArg(final boolean pro, final Proposition
 		// parentProp,
 		// final LocalCallback<Argument> localCallback) {
@@ -276,6 +276,7 @@ public class ServerComm {
 				// localCallback.call(argument);
 				newArg.id = argument.id;
 				newArg.updated = argument.updated;
+				localCallback.call(null);
 			}
 		});
 	}
@@ -327,7 +328,8 @@ public class ServerComm {
 	}
 
 	public static void addProp(final Proposition newProposition,
-			final Argument parentArgument, final int position) {
+			final Argument parentArgument, final int position,
+			final LocalCallback<Void> localCallback) {
 		// public static void addProp(final Proposition newProposition,
 		// final Argument parentArgument, final int position,
 		// final LocalCallback<Void> localCallback) {
@@ -348,6 +350,7 @@ public class ServerComm {
 				// localCallback.call(proposition);
 				newProposition.id = proposition.id;
 				newProposition.updated = proposition.updated;
+				localCallback.call(null);
 			}
 		});
 	}

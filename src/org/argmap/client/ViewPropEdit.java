@@ -1,6 +1,7 @@
 package org.argmap.client;
 
 import org.argmap.client.ModeEdit.EditModeTree;
+import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -136,16 +137,28 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	public void addArgument(boolean pro) {
 		// final ViewArgEdit newArgView = new ViewArgEdit(pro);
 		// final ViewPropEdit newPropView = new ViewPropEdit();
-		ViewArgEdit newArgView = new ViewArgEdit(pro);
-		ViewPropEdit newPropView = new ViewPropEdit();
+		final ViewArgEdit newArgView = new ViewArgEdit(pro);
+		final ViewPropEdit newPropView = new ViewPropEdit();
 		newArgView.addItem(newPropView);
 		this.addItem(newArgView);
 		newArgView.setOpen(true);
 		this.setOpen(true);
 		getEditModeTree().resetState();
 		newPropView.haveFocus();
-		ServerComm.addArg(pro, this.proposition, newArgView.argument);
-		ServerComm.addProp(newPropView.proposition, newArgView.argument, 0);
+		ServerComm.addArg(pro, this.proposition, newArgView.argument,
+				new LocalCallback<Void>() {
+					@Override
+					public void call(Void t) {
+						newArgView.setLoaded(true);
+					}
+				});
+		ServerComm.addProp(newPropView.proposition, newArgView.argument, 0,
+				new LocalCallback<Void>() {
+					@Override
+					public void call(Void t) {
+						newPropView.setLoaded(true);
+					}
+				});
 		// ServerComm.addArg(pro, this.proposition, new
 		// LocalCallback<Argument>() {
 		// @Override
@@ -326,7 +339,13 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		if (cursorPosition == 0) {
 			parentArgView().insertItem(treePosition, newPropView);
 			ServerComm.addProp(newPropView.proposition,
-					parentArgView().argument, treePosition);
+					parentArgView().argument, treePosition,
+					new LocalCallback<Void>() {
+						@Override
+						public void call(Void t) {
+							newPropView.setLoaded(true);
+						}
+					});
 			// parentArgView().argument, treePosition,
 			// new LocalCallback<Proposition>() {
 			// @Override
@@ -352,7 +371,13 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			newPropView.textArea.setFocus(true);
 
 			ServerComm.addProp(newPropView.proposition,
-					parentArgView().argument, treePosition + 1);
+					parentArgView().argument, treePosition + 1,
+					new LocalCallback<Void>() {
+						@Override
+						public void call(Void t) {
+							newPropView.setLoaded(true);
+						}
+					});
 			// parentArgView().argument, treePosition + 1,
 			// new LocalCallback<Proposition>() {
 			// @Override

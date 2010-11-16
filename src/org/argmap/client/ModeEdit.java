@@ -275,6 +275,11 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				});
 	}
 
+	public void onEditModeTabSelected() {
+		Log.log("me.oemts", "resizing tree");
+		tree.resizeTree();
+	}
+
 	/*
 	 * TODO also might make sense to think more about how to make sure that
 	 * asearch doesn't step on an update. So the flow that I'm concerned aboutin
@@ -559,6 +564,17 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		final Date startTime = updateTimer.getStartDate();
 
 		Map<Long, DateAndChildIDs> propsInfo = new HashMap<Long, DateAndChildIDs>();
+		/*
+		 * TODO need to make sure that the list send to the server contains the
+		 * oldest versino of the node on the client, and that when updated the
+		 * nodes return by the server, that the client checks each node to make
+		 * sure that it needs to be updated, because nodes on the client may
+		 * have different ages and updated values. For instance, when a link
+		 * that is opened twice on the client is updated, there will be two
+		 * copies, one will be updated on the client... well... currently I
+		 * don't update the Nodes updated value so maybe this actually isn't a
+		 * concern... hmmm...
+		 */
 		loadNodeInfo(loadedProps, propsInfo);
 		Map<Long, DateAndChildIDs> argsInfo = new HashMap<Long, DateAndChildIDs>();
 		loadNodeInfo(loadedArgs, argsInfo);
@@ -595,16 +611,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 								 * are already up-to-date and which therefore
 								 * should not be processed.
 								 */
-								/*
-								 * TODO this doens't make sense at all... I'm
-								 * walking through a list of all the nodes that
-								 * are return, but I'm asking loaded props for
-								 * nodes... but obviously the new nodes won't be
-								 * in loaded props. Instead I need to get back a
-								 * list of updated nodes *from the list I asked
-								 * for* with an accompanying list of nodes
-								 * needed to update them.
-								 */
 								List<ViewProp> viewProps = new ArrayList<ViewProp>(
 										loadedProps.get(node.id));
 								for (ViewProp viewProp : viewProps) {
@@ -622,6 +628,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 								assert false;
 						}
 						log.finish();
+						tree.resizeTree();
 					}
 				});
 	}
@@ -643,7 +650,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				} else if (results.nodes.containsKey(id)) {
 					ViewNode child = viewNode.createChild();
 					viewNode.addItem(child);
-					child.recursiveBuildViewNode(node, results.nodes, 0);
+					child.recursiveBuildViewNode(results.nodes.get(id),
+							results.nodes, 0);
 				} else {
 					/*
 					 * TODO when would the results not contain a key for a
@@ -663,6 +671,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 
 		viewNode.setNode(node);
+		tree.recursiveResizeNode(viewNode);
 	}
 
 	private <T extends ViewNode> void loadNodeInfo(
@@ -689,7 +698,13 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		// tree.addItem(newPropView);
 		tree.insertItem(0, newPropView);
 		newPropView.haveFocus();
-		ServerComm.addProp(newPropView.getProposition(), null, 0);
+		ServerComm.addProp(newPropView.getProposition(), null, 0,
+				new LocalCallback<Void>() {
+					@Override
+					public void call(Void t) {
+						newPropView.setLoaded(true);
+					}
+				});
 		// ServerComm.addProp(newPropView.getProposition(), null, 0,
 		// new LocalCallback<Proposition>() {
 		// @Override
