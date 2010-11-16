@@ -7,7 +7,6 @@ import org.argmap.client.ArgMapService.DateAndChildIDs;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
 import org.argmap.client.ArgMapService.PartialTrees;
-import org.argmap.client.ArgMapService.PartialTrees_DELETE_ME;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -54,17 +53,15 @@ public interface ArgMapServiceAsync {
 	void addArg(Long parentPropID, boolean pro, AsyncCallback<Argument> callback);
 
 	void continueSearchProps(String searchName,
-			AsyncCallback<PartialTrees_DELETE_ME> callback);
+			AsyncCallback<PartialTrees> callback);
 
 	void searchProps(String searchString, String searchName, int resultLimit,
-			List<Long> filerNodeIDs,
-			AsyncCallback<PartialTrees_DELETE_ME> callback);
+			List<Long> filerNodeIDs, AsyncCallback<PartialTrees> callback);
 
 	void getUpToDateNodes(Map<Long, DateAndChildIDs> propInfo,
 			Map<Long, DateAndChildIDs> argInfo,
 			AsyncCallback<PartialTrees> callback);
 
-	void getRootProps(int depthLimit,
-			AsyncCallback<PartialTrees_DELETE_ME> callback);
+	void getRootProps(int depthLimit, AsyncCallback<PartialTrees> callback);
 
 }

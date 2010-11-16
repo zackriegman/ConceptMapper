@@ -2,6 +2,7 @@ package org.argmap.server;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -83,19 +84,21 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public PartialTrees_DELETE_ME getRootProps(int depthLimit) {
+	public PartialTrees getRootProps(int depthLimit) {
 
-		PartialTrees_DELETE_ME propsAndArgs = new PartialTrees_DELETE_ME();
+		PartialTrees propsAndArgs = new PartialTrees();
 		Query<Proposition> propQuery = ofy.query(Proposition.class)
 				.filter("linkCount =", 0).order("-created").limit(30);
 
 		List<Proposition> rootProps = propQuery.list();
 		Map<Long, Node> nodes = new HashMap<Long, Node>();
 
+		List<Long> rootIDs = new ArrayList<Long>();
 		for (Proposition prop : rootProps) {
+			rootIDs.add(prop.id);
 			recursiveGetProps(prop, nodes, depthLimit);
 		}
-		propsAndArgs.rootProps = rootProps;
+		propsAndArgs.rootIDs = rootIDs;
 		propsAndArgs.nodes = nodes;
 
 		return propsAndArgs;
@@ -700,24 +703,24 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public PartialTrees_DELETE_ME searchProps(String searchString,
-			String searchName, int resultLimit, List<Long> filterNodeIDs) {
+	public PartialTrees searchProps(String searchString, String searchName,
+			int resultLimit, List<Long> filterNodeIDs) {
 		Set<String> tokenSet = getTokensForIndexingOrQuery(searchString, 6);
 		if (tokenSet.isEmpty()) {
-			return new PartialTrees_DELETE_ME();
+			return new PartialTrees();
 		}
 
 		Search search = new Search(ofy, tokenSet, resultLimit, filterNodeIDs);
-		PartialTrees_DELETE_ME propsAndArgs = search.getBatch(ofy);
+		PartialTrees propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
 		return propsAndArgs;
 	}
 
 	@Override
-	public PartialTrees_DELETE_ME continueSearchProps(String searchName) {
+	public PartialTrees continueSearchProps(String searchName) {
 		Search search = (Search) getHttpServletRequest().getSession()
 				.getAttribute(searchName);
-		PartialTrees_DELETE_ME propsAndArgs = search.getBatch(ofy);
+		PartialTrees propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
 		return propsAndArgs;
 	}

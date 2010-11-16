@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 import javax.persistence.Embedded;
 import javax.persistence.Id;
 
-import org.argmap.client.ArgMapService.PartialTrees_DELETE_ME;
+import org.argmap.client.ArgMapService.PartialTrees;
 import org.argmap.client.Node;
 import org.argmap.client.Proposition;
 
@@ -68,14 +68,17 @@ public class Search implements Serializable {
 
 	}
 
-	public PartialTrees_DELETE_ME getBatch(Objectify ofy) {
-		PartialTrees_DELETE_ME results = setUpResults();
+	public PartialTrees getBatch(Objectify ofy) {
+		PartialTrees results = setUpResults();
 		Query<Proposition> query = repeatPreviousQueryOrBuildNext(ofy);
 		if (query == null) {
-			/* set rootProps to null as sign to client that the search has been exhausted */
-			results.rootProps = null;
+			/*
+			 * set rootProps to null as sign to client that the search has been
+			 * exhausted
+			 */
+			results.rootIDs = null;
 		} else {
-			getUpToLimitMatches(results.rootProps, query, ofy);
+			getUpToLimitMatches(results, query, ofy);
 		}
 		return results;
 	}
@@ -96,10 +99,10 @@ public class Search implements Serializable {
 		return query;
 	}
 
-	public PartialTrees_DELETE_ME setUpResults() {
-		List<Proposition> results = new LinkedList<Proposition>();
-		PartialTrees_DELETE_ME propsAndArgs = new PartialTrees_DELETE_ME();
-		propsAndArgs.rootProps = results;
+	public PartialTrees setUpResults() {
+		List<Long> results = new LinkedList<Long>();
+		PartialTrees propsAndArgs = new PartialTrees();
+		propsAndArgs.rootIDs = results;
 		propsAndArgs.nodes = new HashMap<Long, Node>();
 		return propsAndArgs;
 	}
@@ -113,8 +116,8 @@ public class Search implements Serializable {
 	 * it gets "limit" number of results. Then it saves it state in member
 	 * variables and returns. The next call will pick up where it left off.
 	 */
-	public PartialTrees_DELETE_ME getBatchToLimit(Objectify ofy) {
-		PartialTrees_DELETE_ME results = setUpResults();
+	public PartialTrees getBatchToLimit(Objectify ofy) {
+		PartialTrees results = setUpResults();
 
 		Query<Proposition> currentQuery = repeatPreviousQueryOrBuildNext(ofy);
 
@@ -126,8 +129,8 @@ public class Search implements Serializable {
 		 * reached.
 		 */
 		while (currentQuery != null) {
-			if (getUpToLimitMatches(results.rootProps, currentQuery, ofy)) {
-				log.severe("returning " + results.rootProps.size()
+			if (getUpToLimitMatches(results, currentQuery, ofy)) {
+				log.severe("returning " + results.rootIDs.size()
 						+ " results after reaching limit (" + queryCount
 						+ " queries)");
 				return results;
@@ -144,7 +147,7 @@ public class Search implements Serializable {
 		 * if all possible combinations of all possible number of terms has been
 		 * searched we fall out of the while loop and return whatever we got
 		 */
-		log.severe("returning " + results.rootProps.size()
+		log.severe("returning " + results.rootIDs.size()
 				+ " results after exchausting search combinations ("
 				+ queryCount + " queries)");
 		return results;
@@ -155,7 +158,7 @@ public class Search implements Serializable {
 	 * stopped getting matches because we ran out of matches in the current
 	 * query
 	 */
-	private boolean getUpToLimitMatches(List<Proposition> results,
+	private boolean getUpToLimitMatches(PartialTrees results,
 			Query<Proposition> currentQuery, Objectify ofy) {
 		/*
 		 * we iterate through the keys (instead of the propositions) to avoid
@@ -177,10 +180,12 @@ public class Search implements Serializable {
 				 * add the result (might be better to add the result to a list
 				 * and then do a batch get for all the props at once)
 				 */
-				results.add(ofy.get(propKey));
+				Proposition prop = ofy.get(propKey);
+				results.rootIDs.add(prop.id);
+				results.nodes.put(prop.id, prop);
 
 				/* if we've reached the limit save the cursor and return */
-				if (results.size() == limit) {
+				if (results.rootIDs.size() == limit) {
 					cursorString = iterator.getCursor().toWebSafeString();
 					return true;
 				}
@@ -210,8 +215,8 @@ public class Search implements Serializable {
 		 * but there are more combinations with fewer terms
 		 */
 		else if (combinationSetSize > 0) {
-			currentCombinationGenerator = new CombinationGenerator(tokens
-					.size(), combinationSetSize);
+			currentCombinationGenerator = new CombinationGenerator(
+					tokens.size(), combinationSetSize);
 			currentCombination = currentCombinationGenerator.getNext();
 			nextQuery = buildQueryFromCurrentCombination(ofy);
 			combinationSetSize--;

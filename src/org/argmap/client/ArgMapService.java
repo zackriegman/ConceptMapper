@@ -37,21 +37,6 @@ public interface ArgMapService extends RemoteService {
 	public void unlinkProp(Long parentArgID, Long propositionID)
 			throws ServiceException;
 
-	// public class PartialTrees implements Serializable {
-	// /* added to suppress warnings */
-	// private static final long serialVersionUID = 1L;
-	// public List<Proposition> rootProps;
-	// public Map<Long, Node> nodes;
-	// }
-
-	public class PartialTrees_DELETE_ME implements Serializable {
-
-		/* added to suppress warnings */
-		private static final long serialVersionUID = 1L;
-		public List<Proposition> rootProps;
-		public Map<Long, Node> nodes;
-	}
-
 	public class PartialTrees implements Serializable {
 		/* added to suppress warnings */
 		private static final long serialVersionUID = 1L;
@@ -59,7 +44,7 @@ public interface ArgMapService extends RemoteService {
 		public Map<Long, Node> nodes = new HashMap<Long, Node>();
 	}
 
-	public PartialTrees_DELETE_ME getRootProps(int depthLimit);
+	public PartialTrees getRootProps(int depthLimit);
 
 	public Map<Long, Node> replaceWithLinkAndGet(Long parentArgID,
 			Long linkPropID, Long removePropID) throws ServiceException;
@@ -113,7 +98,6 @@ public interface ArgMapService extends RemoteService {
 			return buffer.toString();
 
 		}
-
 	}
 
 	public class DateAndChildIDs implements Serializable {
@@ -139,11 +123,10 @@ public interface ArgMapService extends RemoteService {
 	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs)
 			throws ServiceException;
 
-	public PartialTrees_DELETE_ME searchProps(String searchString,
-			String searchName, int resultLimit, List<Long> filerNodeIDs)
-			throws ServiceException;
+	public PartialTrees searchProps(String searchString, String searchName,
+			int resultLimit, List<Long> filerNodeIDs) throws ServiceException;
 
-	public PartialTrees_DELETE_ME continueSearchProps(String searchName)
+	public PartialTrees continueSearchProps(String searchName)
 			throws ServiceException;
 
 	public LoginInfo getLoginInfo(String requestURI) throws ServiceException;

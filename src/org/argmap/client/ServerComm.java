@@ -10,7 +10,6 @@ import org.argmap.client.ArgMapService.DateAndChildIDs;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
 import org.argmap.client.ArgMapService.PartialTrees;
-import org.argmap.client.ArgMapService.PartialTrees_DELETE_ME;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
@@ -173,10 +172,10 @@ public class ServerComm {
 	}
 
 	public static void getRootProps(int depthLimit,
-			LocalCallback<PartialTrees_DELETE_ME> localCallback) {
+			LocalCallback<PartialTrees> localCallback) {
 		argMapService.getRootProps(depthLimit,
-				new ServerCallback<PartialTrees_DELETE_ME>(localCallback,
-						"loading...", "finished loading"));
+				new ServerCallback<PartialTrees>(localCallback, "loading...",
+						"finished loading"));
 	}
 
 	public static void getNodesChildren(List<Long> nodeIDs, int depth,
@@ -236,17 +235,16 @@ public class ServerComm {
 
 	public static void searchProps(String searchString, String searchName,
 			int resultLimit, List<Long> filterNodeIDs,
-			LocalCallback<PartialTrees_DELETE_ME> localCallback) {
+			LocalCallback<PartialTrees> localCallback) {
 		argMapService.searchProps(searchString, searchName, resultLimit,
-				filterNodeIDs, new ServerCallback<PartialTrees_DELETE_ME>(
-						localCallback, null, null));
+				filterNodeIDs, new ServerCallback<PartialTrees>(localCallback,
+						null, null));
 	}
 
 	public static void continueSearchProps(String searchName,
-			LocalCallback<PartialTrees_DELETE_ME> localCallback) {
+			LocalCallback<PartialTrees> localCallback) {
 		argMapService.continueSearchProps(searchName,
-				new ServerCallback<PartialTrees_DELETE_ME>(localCallback, null,
-						null));
+				new ServerCallback<PartialTrees>(localCallback, null, null));
 	}
 
 	public static void addArg(final boolean pro, final Proposition parentProp,

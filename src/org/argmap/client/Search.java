@@ -3,9 +3,9 @@ package org.argmap.client;
 import java.util.List;
 
 import org.argmap.client.ArgMap.MessageType;
-import org.argmap.client.ArgMapService.PartialTrees_DELETE_ME;
+import org.argmap.client.ArgMapService.PartialTrees;
 
-public class Search implements ServerComm.LocalCallback<PartialTrees_DELETE_ME> {
+public class Search implements ServerComm.LocalCallback<PartialTrees> {
 
 	private final String searchString;
 	private final SearchResultsHandler handler;
@@ -17,17 +17,20 @@ public class Search implements ServerComm.LocalCallback<PartialTrees_DELETE_ME> 
 	private ArgMap.Message userMessage;
 
 	public static abstract class SearchResultsHandler {
-		public abstract void processSearchResults(PartialTrees_DELETE_ME propsAndArgs);
+		public abstract void processSearchResults(PartialTrees propsAndArgs);
 
 		public abstract void searchExhausted();
 
 		public abstract void searchCompleted();
-		
-		public void searchStarted(){};
-		
-		public void searchContinued(){};
-		
-		public void searchCancelled(){};
+
+		public void searchStarted() {
+		};
+
+		public void searchContinued() {
+		};
+
+		public void searchCancelled() {
+		};
 	}
 
 	public Search(String searchString, int resultLimit,
@@ -69,10 +72,10 @@ public class Search implements ServerComm.LocalCallback<PartialTrees_DELETE_ME> 
 	}
 
 	@Override
-	public void call(PartialTrees_DELETE_ME propsAndArgs) {
+	public void call(PartialTrees propsAndArgs) {
 		if (!cancelled) {
-			if (propsAndArgs.rootProps != null) {
-				resultCount += propsAndArgs.rootProps.size();
+			if (propsAndArgs.rootIDs != null) {
+				resultCount += propsAndArgs.rootIDs.size();
 
 				if (resultCount < resultLimit) {
 					ServerComm.continueSearchProps(searchName, this);
@@ -83,7 +86,7 @@ public class Search implements ServerComm.LocalCallback<PartialTrees_DELETE_ME> 
 					handler.searchCompleted();
 				}
 
-				if (propsAndArgs.rootProps.size() > 0) {
+				if (propsAndArgs.rootIDs.size() > 0) {
 					handler.processSearchResults(propsAndArgs);
 				}
 			} else {

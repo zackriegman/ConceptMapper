@@ -10,7 +10,6 @@ import java.util.Map;
 import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.DateAndChildIDs;
 import org.argmap.client.ArgMapService.PartialTrees;
-import org.argmap.client.ArgMapService.PartialTrees_DELETE_ME;
 import org.argmap.client.Search.SearchResultsHandler;
 import org.argmap.client.ServerComm.LocalCallback;
 
@@ -228,7 +227,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		});
 	}
 
-	private void getRootPropsCallback(final PartialTrees_DELETE_ME allNodes) {
+	private void getRootPropsCallback(final PartialTrees allNodes) {
 		GWT.runAsync(new RunAsyncCallback() {
 
 			@Override
@@ -238,8 +237,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				}
 				Log log = Log.getLog("em.em.cb");
 				log.log("Prop Tree From Server");
-				for (Proposition proposition : allNodes.rootProps) {
-
+				for (Long id : allNodes.rootIDs) {
+					Proposition proposition = (Proposition) allNodes.nodes
+							.get(id);
 					ViewProp propView = new ViewPropEdit();
 					propView.recursiveBuildViewNode(proposition,
 							allNodes.nodes, 5);
@@ -266,10 +266,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 	private void getRootProps() {
 		ServerComm.getRootProps(0,
-				new ServerComm.LocalCallback<PartialTrees_DELETE_ME>() {
+				new ServerComm.LocalCallback<PartialTrees>() {
 
 					@Override
-					public void call(PartialTrees_DELETE_ME allNodes) {
+					public void call(PartialTrees allNodes) {
 						getRootPropsCallback(allNodes);
 					}
 				});
@@ -512,9 +512,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	/* this type of button is used in the side search box */
 	private class SideSearchButton extends Button implements ClickHandler {
 		int resultIndex;
-		List<Proposition> propMatches;
+		PartialTrees propMatches;
 
-		SideSearchButton(int resultIndex, List<Proposition> propMatches) {
+		SideSearchButton(int resultIndex, PartialTrees propMatches) {
 			super("use this");
 			this.resultIndex = resultIndex;
 			this.propMatches = propMatches;
@@ -552,7 +552,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				callback.propViewToRemove = propViewToRemove;
 				callback.propIndex = parentArgView
 						.getChildIndex(propViewToRemove);
-				Proposition propToLinkTo = propMatches.get(resultIndex);
+				Proposition propToLinkTo = (Proposition) propMatches.nodes
+						.get(propMatches.rootIDs.get(resultIndex));
 				callback.linkPropID = propToLinkTo.id;
 				ServerComm.replaceWithLinkAndGet(parentArgView.argument,
 						propToLinkTo, propViewToRemove.proposition, callback);
@@ -597,7 +598,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 						@Override
 						public void processSearchResults(
-								PartialTrees_DELETE_ME propMatches) {
+								PartialTrees propMatches) {
 							sideSearchAppendResults(propMatches);
 							if (sideSearchResults.getRowCount() > 0) {
 								displaySearchBox();
@@ -612,14 +613,15 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 	}
 
-	private void sideSearchAppendResults(PartialTrees_DELETE_ME propMatches) {
+	private void sideSearchAppendResults(PartialTrees propMatches) {
 		int i = sideSearchResults.getRowCount();
 		HTMLTable.RowFormatter rowFormatter = sideSearchResults
 				.getRowFormatter();
-		for (Proposition prop : propMatches.rootProps) {
+		for (Long id : propMatches.rootIDs) {
+			Proposition prop = (Proposition) propMatches.nodes.get(id);
 			sideSearchResults.setText(i, 0, prop.getContent());
 			sideSearchResults.setWidget(i, 1, new SideSearchButton(i,
-					propMatches.rootProps));
+					propMatches));
 			// rowFormatter.addStyle(i, "sideSearchRow");
 			rowFormatter.setStylePrimaryName(i, "sideSearchRow");
 			i++;
@@ -923,7 +925,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					new SearchResultsHandler() {
 						@Override
 						public void processSearchResults(
-								PartialTrees_DELETE_ME propsAndArgs) {
+								PartialTrees propsAndArgs) {
 							mainSearchAppendResultsToTree(propsAndArgs);
 						}
 
@@ -961,9 +963,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 	}
 
-	public void mainSearchAppendResultsToTree(PartialTrees_DELETE_ME results) {
-		for (Proposition proposition : results.rootProps) {
-
+	public void mainSearchAppendResultsToTree(PartialTrees results) {
+		for (Long id : results.rootIDs) {
+			Proposition proposition = (Proposition) results.nodes.get(id);
 			ViewProp propView = new ViewPropEdit();
 			propView.recursiveBuildViewNode(proposition, results.nodes, 1);
 
