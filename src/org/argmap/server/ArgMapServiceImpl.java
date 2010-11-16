@@ -23,7 +23,6 @@ import org.argmap.client.ArgMapService;
 import org.argmap.client.Argument;
 import org.argmap.client.Change;
 import org.argmap.client.Change.ChangeType;
-import org.argmap.client.Log;
 import org.argmap.client.LoginInfo;
 import org.argmap.client.Node;
 import org.argmap.client.NodeChanges;
@@ -525,9 +524,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		// Map<Long, Node> results = new HashMap<Long, Node>();
 		PartialTrees results = new PartialTrees();
 
-		log.severe("got request for these-\nprops:"
-				+ Log.mapToString(propsInfo) + "\nargs:"
-				+ Log.mapToString(argsInfo));
+		// log.severe("got request for these-\nprops:"
+		// + Log.mapToString(propsInfo) + "\nargs:"
+		// + Log.mapToString(argsInfo));
 
 		Map<Long, Proposition> props = ofy.get(Proposition.class,
 				propsInfo.keySet());
@@ -565,9 +564,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			}
 		}
 
-		log.severe("returning these nodes:" + Log.mapToString(results.nodes)
-				+ "\nfor these updated root ids:"
-				+ Log.listToString(results.rootIDs));
+		// log.severe("returning these nodes:" + Log.mapToString(results.nodes)
+		// + "\nfor these updated root ids:"
+		// + Log.listToString(results.rootIDs));
 		return results;
 	}
 
@@ -714,16 +713,38 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		Search search = new Search(ofy, tokenSet, resultLimit, filterNodeIDs);
 		PartialTrees propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
+		log.severe("saved search '" + searchName + "' in session '"
+				+ getHttpServletRequest().getSession().getId() + "'");
 		return propsAndArgs;
 	}
 
 	@Override
-	public PartialTrees continueSearchProps(String searchName) {
-		Search search = (Search) getHttpServletRequest().getSession()
-				.getAttribute(searchName);
-		PartialTrees propsAndArgs = search.getBatch(ofy);
-		getHttpServletRequest().getSession().setAttribute(searchName, search);
-		return propsAndArgs;
+	public PartialTrees continueSearchProps(String searchName)
+			throws ServiceException {
+		Search search;
+		try {
+			search = (Search) getHttpServletRequest().getSession()
+					.getAttribute(searchName);
+			PartialTrees propsAndArgs = search.getBatch(ofy);
+			getHttpServletRequest().getSession().setAttribute(searchName,
+					search);
+			return propsAndArgs;
+		} catch (NullPointerException e) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("failed to retrieve '" + searchName + "' from session");
+			if (getHttpServletRequest() == null) {
+				sb.append("\ngetHttpServletRequest() == null");
+			} else if (getHttpServletRequest().getSession() == null) {
+				sb.append("\ngetHttpServletRequest().getSession() == null");
+			} else if (getHttpServletRequest().getSession().getAttribute(
+					searchName) == null) {
+				sb.append(" with id '"
+						+ getHttpServletRequest().getSession().getId() + "'");
+				sb.append("\ngetHttpServletRequest().getSession().getAttribute(searchName) == null");
+			}
+			log.severe(sb.toString());
+			throw new ServiceException(sb.toString());
+		}
 	}
 
 	/**

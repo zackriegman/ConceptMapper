@@ -8,6 +8,10 @@ import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.query.client.GQuery;
 import com.google.gwt.user.client.ui.TextArea;
 
+/*
+ * using this method:
+ * http://james.padolsey.com/demos/plugins/jQuery/autoresize.jquery.js
+ */
 public class TextAreaAutoSize extends TextArea implements KeyUpHandler,
 		AttachEvent.Handler {
 	private GQuery clone;

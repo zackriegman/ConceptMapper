@@ -173,7 +173,7 @@ public class TaskPopulate extends HttpServlet {
 				timer.lap("TTTT");
 				cache.put(RANDOM_SENTENCE_COUNT, count);
 				timer.lap("YYYY");
-				//cache.put(RANDOM_SENTENCE_FILE_POSITION, offset);
+				// cache.put(RANDOM_SENTENCE_FILE_POSITION, offset);
 				Property.put(RANDOM_SENTENCE_FILE_POSITION, offset);
 				cache.put(RANDOM_SENTENCE_LIST, sentenceList);
 				timer.lap("UUUU");
@@ -209,7 +209,7 @@ public class TaskPopulate extends HttpServlet {
 			throws IOException {
 		LapTimer timer = new LapTimer();
 		try {
-			log.severe("AAAA");
+			// log.severe("AAAA");
 			timer.lap("AAAAA");
 			argMapService.setCurrentRequest(req);
 			timer.lap("BBBB");
@@ -258,7 +258,7 @@ public class TaskPopulate extends HttpServlet {
 			timer.lap("ZZZZ");
 			String strCallResult = "FAIL: TaskPopulate: " + ex.getMessage()
 					+ timer.getRecord();
-			log.log( Level.SEVERE, "FAIL: TaskPopulate: ", ex);
+			log.log(Level.SEVERE, "FAIL: TaskPopulate: ", ex);
 			resp.getWriter().println(strCallResult);
 		}
 	}

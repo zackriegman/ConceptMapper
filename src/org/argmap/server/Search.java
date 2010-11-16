@@ -225,15 +225,15 @@ public class Search implements Serializable {
 	}
 
 	private Query<Proposition> buildQueryFromCurrentCombination(Objectify ofy) {
-		StringBuffer sb = new StringBuffer();
-		sb.append("Building search for these terms:");
+		// StringBuffer sb = new StringBuffer();
+		// sb.append("Building search for these terms:");
 		Query<Proposition> query = ofy.query(Proposition.class);
 		for (int i = 0; i < currentCombination.length; i++) {
 			String token = tokens.get(currentCombination[i]);
 			query.filter("tokens", token);
-			sb.append(token + " ");
+			// sb.append(token + " ");
 		}
-		log.severe(sb.toString());
+		// log.severe(sb.toString());
 		return query;
 	}
 }

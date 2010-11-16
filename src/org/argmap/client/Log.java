@@ -62,6 +62,16 @@ public class Log {
 		}
 	}
 
+	public <T> void log(List<T> list) {
+		log(list, " ");
+	}
+
+	public <T> void log(List<T> list, String seperator) {
+		for (T t : list) {
+			log(t + seperator);
+		}
+	}
+
 	public void log(String string) {
 		if (on) {
 			assert openLogs.contains(this);
@@ -72,6 +82,15 @@ public class Log {
 				content.append(indentString + string);
 			}
 		}
+	}
+
+	public <T> void logln(List<T> list) {
+		logln(list, " ");
+	}
+
+	public <T> void logln(List<T> list, String seperator) {
+		log("\n");
+		log(list, seperator);
 	}
 
 	public void logln(String string) {
@@ -138,10 +157,10 @@ public class Log {
 		}
 		return sb.toString();
 	}
-	
-	public static <T> String listToString(List<T> list){
+
+	public static <T> String listToString(List<T> list) {
 		StringBuilder sb = new StringBuilder();
-		for( T item : list ){
+		for (T item : list) {
 			sb.append(item + " ");
 		}
 		return sb.toString();
