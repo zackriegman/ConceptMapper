@@ -16,7 +16,7 @@ public abstract class ViewProp extends ViewNode {
 	private static final int PROP_WIDTH_NUMBER = 47;
 	private static final String PROP_WIDTH = "" + PROP_WIDTH_NUMBER + "em";
 
-	protected final TextAreaGrow textArea = new TextAreaGrow();
+	protected final TextAreaAutoSize textArea = new TextAreaAutoSize();
 	// protected TextArea textArea = new TextArea();
 	protected VerticalPanel mainPanel = new VerticalPanel();
 	protected HorizontalPanel topPanel = new HorizontalPanel();
@@ -30,6 +30,8 @@ public abstract class ViewProp extends ViewNode {
 		topPanel.add(textArea);
 		textArea.setStylePrimaryName("propositionTextArea");
 		textArea.addStyleName("nodeText");
+		textArea.setWidth(PROP_WIDTH);
+		textArea.init();
 		focusPanel = new FocusPanel(mainPanel);
 		this.setWidget(focusPanel);
 	}
@@ -63,10 +65,10 @@ public abstract class ViewProp extends ViewNode {
 
 	@Override
 	public Long getNodeID() {
-		if( proposition != null ){
+		if (proposition != null) {
 			return proposition.id;
-		}
-		else return null;
+		} else
+			return null;
 	}
 
 	public Argument parentArgument() {
@@ -129,14 +131,15 @@ public abstract class ViewProp extends ViewNode {
 			}
 		}
 
-		// tried to copy this link but ran into problem that I can't get padding as
+		// tried to copy this link but ran into problem that I can't get padding
+		// as
 		// pixels and I can't do math with pixel results in EM
 		// https://github.com/jaz303/jquery-grab-bag/blob/f1a3cc1e86cbb248bcb41391d6eff115b1be6d89/javascripts/jquery.autogrow-textarea.js
 		private void resize() {
 			Element shadow = DOM.createDiv();
 			Element areaElement = getElement();
 
-			//Style style = areaElement.getStyle();
+			// Style style = areaElement.getStyle();
 			// GWT.log( style.getWidth() + " ||| " +
 			// areaElement.getAttribute("width") + "]]" );
 			int areaWidth = Integer.parseInt(areaElement.getAttribute("width"));

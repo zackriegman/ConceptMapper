@@ -20,7 +20,7 @@
 	<source path='shared' />
 
 	<inherits name="com.googlecode.objectify.Objectify" />
-
+	<inherits name='com.google.gwt.query.Query' />
 
 	<inherits name="com.google.gwt.logging.Logging" />
 	<!-- To change the default logLevel -->
@@ -30,6 +30,6 @@
 	<!-- To disable a default Handler -->
 	<set-property name="gwt.logging.consoleHandler" value="DISABLED" />
 	<set-property name="gwt.logging.systemHandler" value="DISABLED" />
-	
+
 
 </module>
