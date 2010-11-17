@@ -22,6 +22,7 @@ public class ArgTree extends Tree {
 
 	public ArgTree() {
 		super();
+
 		addOpenHandlerTracked(new OpenHandler<TreeItem>() {
 
 			@Override

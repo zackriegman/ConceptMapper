@@ -20,6 +20,8 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -139,6 +141,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				sideSearchContinueButton = new Button("loadMoreResults");
 				sideSearchContinueButton.setStylePrimaryName("addPropButton");
 				sideSearchContinueButton.addClickHandler(ModeEdit.this);
+				sideSearchContinueButton.addClickHandler(updateTimer);
 				sideSearchContinueButton.setVisible(false);
 				sideSearchLabel.setVisible(false);
 				FlowPanel sideSearchArea = new FlowPanel();
@@ -170,8 +173,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				addPropButton.setStylePrimaryName("addPropButton");
 				addPropButton.setEnabled(false);
 				addPropButton.addClickHandler(ModeEdit.this);
+				addPropButton.addClickHandler(updateTimer);
 
 				searchTextBox.addKeyUpHandler(ModeEdit.this);
+				searchTextBox.addKeyUpHandler(updateTimer);
 				searchTextBox.addStyleName("searchTextBox");
 				searchTextBox.setWidth("95%");
 				Label searchLabel = new Label("Search:");
@@ -191,6 +196,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				 */
 				mainSearchContinueButton = new Button("load more results");
 				mainSearchContinueButton.addClickHandler(ModeEdit.this);
+				mainSearchContinueButton.addClickHandler(updateTimer);
 				mainSearchContinueButton.setVisible(false);
 				mainSearchContinueButton.setStylePrimaryName("addPropButton");
 
@@ -352,6 +358,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	 */
 	private void getUpdatesAndApply() {
 		final Date startTime = updateTimer.getStartDate();
+		if (startTime == null) {
+			Log.log("me.guaa",
+					"strange: startTime == null on getUpdatesAndApply()");
+		}
 
 		Map<Long, DateAndChildIDs> propsInfo = new HashMap<Long, DateAndChildIDs>();
 		/*
@@ -822,12 +832,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				}
 				/* if its any other key set timer for .3 seconds */
 				else {
-					/*
-					 * not sure if this is necessary but just in case... (I
-					 * don't want to add additional timer to fire rather I want
-					 * to replace the previous.)
-					 */
-					cancel();
 					schedule(SEARCH_DELAY);
 				}
 			}
@@ -843,7 +847,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		public abstract String getNewSearchString();
 	}
 
-	public class UpdateTimer extends Timer {
+	public class UpdateTimer extends Timer implements KeyDownHandler,
+			KeyUpHandler, ClickHandler, OpenHandler<TreeItem>,
+			CloseHandler<TreeItem> {
 		private Date startDate;
 		private boolean on = true;
 		private long lastUserAction;
@@ -869,8 +875,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 
 		private void message(long millis) {
-			message.setMessage("because of inactivity reducing update frequency to every "
-					+ millis / SECOND + " seconds");
+			message.setMessage(
+					"because of inactivity reducing update frequency to every "
+							+ millis / SECOND + " seconds", MessageType.INFO);
 			message.display();
 		}
 
@@ -896,18 +903,23 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 
 		public void start() {
+			startDate = new Date();
+			Log.log("me.ut.s", "started");
 			schedule(INITIAL_FREQUENCY);
 			userAction();
-			startDate = new Date();
 		}
 
 		public Date getStartDate() {
 			return startDate;
 		}
 
-		@Override
-		public void cancel() {
-			super.cancel();
+		/*
+		 * note that this method cannot override Timer.cancel() becuase that
+		 * method is called by Timer every time schedule() is called.
+		 */
+		public void cancelTimer() {
+			Log.log("me.ut.s", "cancelled");
+			cancel();
 			startDate = null;
 		}
 
@@ -917,6 +929,31 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 		public boolean getOn() {
 			return on;
+		}
+
+		@Override
+		public void onClose(CloseEvent<TreeItem> event) {
+			userAction();
+		}
+
+		@Override
+		public void onOpen(OpenEvent<TreeItem> event) {
+			userAction();
+		}
+
+		@Override
+		public void onClick(ClickEvent event) {
+			userAction();
+		}
+
+		@Override
+		public void onKeyUp(KeyUpEvent event) {
+			userAction();
+		}
+
+		@Override
+		public void onKeyDown(KeyDownEvent event) {
+			userAction();
 		}
 	};
 
@@ -1026,12 +1063,12 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 						@Override
 						public void searchStarted() {
-							updateTimer.cancel();
+							updateTimer.cancelTimer();
 						}
 
 						@Override
 						public void searchContinued() {
-							updateTimer.cancel();
+							updateTimer.cancelTimer();
 						}
 
 						@Override
@@ -1041,7 +1078,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					});
 			mainSearch.startSearch();
 		} else {
-			updateTimer.cancel();
+			updateTimer.cancelTimer();
 			getRootProps();
 		}
 	}

@@ -4,7 +4,6 @@ import static com.google.gwt.query.client.GQuery.$;
 
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.query.client.GQuery;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.TextArea;
@@ -33,15 +32,15 @@ public class TextAreaAutoHeight extends TextArea {
 			}
 		});
 
-		addAttachHandler(new AttachEvent.Handler() {
-
-			@Override
-			public void onAttachOrDetach(AttachEvent event) {
-				if (event.isAttached()) {
-					resize();
-				}
-			}
-		});
+		// addAttachHandler(new AttachEvent.Handler() {
+		//
+		// @Override
+		// public void onAttachOrDetach(AttachEvent event) {
+		// if (event.isAttached()) {
+		// resize();
+		// }
+		// }
+		// });
 	}
 
 	// private long lastTime;
@@ -55,6 +54,19 @@ public class TextAreaAutoHeight extends TextArea {
 	// GWT.log(string + " " + (thisTime - lastTime));
 	// lastTime = thisTime;
 	// }
+
+	@Override
+	public void onLoad() {
+		resize();
+	}
+
+	@Override
+	public void setText(String text) {
+		super.setText(text);
+		if (isAttached()) {
+			resize();
+		}
+	}
 
 	public void resize() {
 		// timerStart();

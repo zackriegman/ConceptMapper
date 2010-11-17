@@ -73,7 +73,7 @@ public class Search implements Serializable {
 		Query<Proposition> query = repeatPreviousQueryOrBuildNext(ofy);
 		if (query == null) {
 			/*
-			 * set rootProps to null as sign to client that the search has been
+			 * set rootIDs to null as sign to client that the search has been
 			 * exhausted
 			 */
 			results.rootIDs = null;

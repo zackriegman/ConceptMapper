@@ -705,9 +705,19 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public PartialTrees searchProps(String searchString, String searchName,
 			int resultLimit, List<Long> filterNodeIDs) {
+		log.severe("recieved request for search '" + searchName + "'");
 		Set<String> tokenSet = getTokensForIndexingOrQuery(searchString, 6);
 		if (tokenSet.isEmpty()) {
-			return new PartialTrees();
+			PartialTrees result = new PartialTrees();
+			/*
+			 * set rootIDs to null as a signal to the client that not only where
+			 * there no results for this particular combination but that all
+			 * combinations have been exhausted (which is true because there are
+			 * no tokens to search for (probably because the string contained
+			 * only stop words
+			 */
+			result.rootIDs = null;
+			return result;
 		}
 
 		Search search = new Search(ofy, tokenSet, resultLimit, filterNodeIDs);
@@ -728,6 +738,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			PartialTrees propsAndArgs = search.getBatch(ofy);
 			getHttpServletRequest().getSession().setAttribute(searchName,
 					search);
+			log.severe("re-saved search '" + searchName + "' in session '"
+					+ getHttpServletRequest().getSession().getId() + "'");
 			return propsAndArgs;
 		} catch (NullPointerException e) {
 			StringBuilder sb = new StringBuilder();

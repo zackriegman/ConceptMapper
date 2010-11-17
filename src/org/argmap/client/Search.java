@@ -90,7 +90,7 @@ public class Search implements ServerComm.LocalCallback<PartialTrees> {
 					handler.processSearchResults(propsAndArgs);
 				}
 			} else {
-				userMessage.setMessage("search completed");
+				userMessage.setMessage("search completed: no more results");
 				userMessage.hideAfter(3000);
 				handler.searchExhausted();
 			}

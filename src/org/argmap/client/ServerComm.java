@@ -237,6 +237,7 @@ public class ServerComm {
 	public static void searchProps(String searchString, String searchName,
 			int resultLimit, List<Long> filterNodeIDs,
 			LocalCallback<PartialTrees> localCallback) {
+		Log.log("sc.csp", "starting search '" + searchName + "'");
 		argMapService.searchProps(searchString, searchName, resultLimit,
 				filterNodeIDs, new ServerCallback<PartialTrees>(localCallback,
 						null, null));
@@ -244,6 +245,7 @@ public class ServerComm {
 
 	public static void continueSearchProps(String searchName,
 			LocalCallback<PartialTrees> localCallback) {
+		Log.log("sc.csp", "continuing search'" + searchName + "'");
 		argMapService.continueSearchProps(searchName,
 				new ServerCallback<PartialTrees>(localCallback, null, null));
 	}

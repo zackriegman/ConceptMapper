@@ -111,6 +111,10 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		textArea.setFocus(true);
 	}
 
+	public void onLoad() {
+		textArea.addKeyDownHandler(getEditMode().updateTimer);
+	}
+
 	@Override
 	public void onClick(ClickEvent event) {
 		if (event.getSource() == proButton) {
