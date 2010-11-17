@@ -373,12 +373,14 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 					@Override
 					public void call(PartialTrees results) {
-						// Log log = Log.getLog("me.guaa.cb", false);
+						Log log = Log.getLog("me.guaa.cb", false);
 						// log.log("loadedNodes:\npropViews:"
 						// + Log.multiMapToString(loadedProps)
 						// + "\nargViews:"
 						// + Log.multiMapToString(loadedArgs));
 						// tree.logTree(log);
+						log.logln("live update results returned from server:");
+						log.log(results.toString());
 						/*
 						 * makes sure that there hasn't been an update since
 						 * this update started... for instance if a search has
@@ -393,7 +395,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 						for (Long id : results.rootIDs) {
 							Node node = results.nodes.get(id);
-							// log.log("prossesing node:" + node);
+							log.logln("prossesing node:" + node);
 							if (node instanceof Proposition) {
 								/*
 								 * need to create a new list here because in the
@@ -405,8 +407,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 								List<ViewProp> viewProps = new ArrayList<ViewProp>(
 										loadedProps.get(node.id));
 								for (ViewProp viewProp : viewProps) {
-									// log.log("prossesing ViewProp:" +
-									// viewProp);
+									log.logln("prossesing ViewProp:" + viewProp);
 									updateNode(viewProp, node, results);
 								}
 							} else if (node instanceof Argument) {
@@ -419,8 +420,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 							} else
 								assert false;
 						}
-						// log.finish();
-						// tree.resizeTree();
+						log.finish();
 					}
 				});
 	}
@@ -479,6 +479,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			}
 		}
 
+		log.logln("setting node -- \nold:" + viewNode.getNode().toString()
+				+ "\n new:" + node.toString());
 		viewNode.setNode(node);
 		// tree.recursiveResizeNode(viewNode);
 		log.finish();
@@ -496,15 +498,18 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			 * Node.id that is least up to date. This is necessary because a
 			 * link might be updated... maybe not
 			 */
-			T oldestNode = null;
-			for (T viewNode : viewNodeList) {
-				if (oldestNode == null
-						|| viewNode.getNode().updated.before(oldestNode
-								.getNode().updated)) {
-					oldestNode = viewNode;
-				}
-			}
-			Node node = oldestNode.getNode();
+			// T oldestNode = null;
+			// for (T viewNode : viewNodeList) {
+			// if (oldestNode == null
+			// || viewNode.getNode().updated.before(oldestNode
+			// .getNode().updated)) {
+			// oldestNode = viewNode;
+			// }
+			// }
+			// Node node = oldestNode.getNode();
+
+			Node node = viewNodeList.get(0).getNode();
+
 			nodesInfo.put(id, new DateAndChildIDs(node));
 		}
 	}
