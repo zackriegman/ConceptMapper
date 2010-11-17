@@ -16,7 +16,7 @@ public abstract class ViewProp extends ViewNode {
 	private static final int PROP_WIDTH_NUMBER = 47;
 	private static final String PROP_WIDTH = "" + PROP_WIDTH_NUMBER + "em";
 
-	protected final TextAreaAutoSize textArea = new TextAreaAutoSize();
+	protected final TextAreaAutoHeight textArea = new TextAreaAutoHeight();
 	// protected TextArea textArea = new TextArea();
 	protected VerticalPanel mainPanel = new VerticalPanel();
 	protected HorizontalPanel topPanel = new HorizontalPanel();
@@ -31,7 +31,7 @@ public abstract class ViewProp extends ViewNode {
 		textArea.setStylePrimaryName("propositionTextArea");
 		textArea.addStyleName("nodeText");
 		textArea.setWidth(PROP_WIDTH);
-		textArea.init();
+		// textArea.init();
 		focusPanel = new FocusPanel(mainPanel);
 		this.setWidget(focusPanel);
 	}

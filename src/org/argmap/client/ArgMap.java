@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+//TODO debug text area on ie8 and test on safari/opera...
 /*
  * TODO when I implement auto-saving (which I think I should do soon) it will probably have weird effects
  * on the currently edited proposition).
@@ -29,8 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
 /* TODO test links behavoir with auto update (do linked nodes become yellow, do they lose there yellow when unlinked?)
  * so far they seem to work ok, but don't lose their yellow when unlinked...
  */
-/* TODO textArea not properly resized on Chrome's first load... afterwords textArea can still be too small...
- /*
+/*
  * refresh currently ask for updates for unloaded root nodes... strange... its only supposed to ask
  * for updates for loaded nodes...
  */
