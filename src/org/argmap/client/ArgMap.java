@@ -26,9 +26,6 @@ import com.google.gwt.user.client.ui.Widget;
  * TODO when I implement auto-saving (which I think I should do soon) it will probably have weird effects
  * on the currently edited proposition).
  */
-/* TODO test links behavoir with auto update (do linked nodes become yellow, do they lose there yellow when unlinked?)
- * so far they seem to work ok, but don't lose their yellow when unlinked...
- */
 /*
  * refresh currently ask for updates for unloaded root nodes... strange... its only supposed to ask
  * for updates for loaded nodes...

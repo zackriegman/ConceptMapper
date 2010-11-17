@@ -14,7 +14,7 @@ public abstract class ViewNode extends TreeItem {
 	/*
 	 * a ViewNode is defined to be loaded when it's children are attached, and
 	 * are real nodes with actual content, rather than dummy nodes (with a
-	 * "loading from server" message
+	 * "loading from server" message)
 	 */
 	private boolean isLoaded = false;
 	private List<Long> ancestorIDs;
