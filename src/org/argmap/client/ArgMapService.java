@@ -43,6 +43,29 @@ public interface ArgMapService extends RemoteService {
 		private static final long serialVersionUID = 1L;
 		public List<Long> rootIDs = new ArrayList<Long>();
 		public Map<Long, Node> nodes = new HashMap<Long, Node>();
+
+		@Override
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			for (Long id : rootIDs) {
+				Set<Long> parentPath = new HashSet<Long>();
+				recursiveToString(sb, 0, nodes.get(id), parentPath);
+			}
+			return sb.toString();
+		}
+
+		private void recursiveToString(StringBuilder sb, int indent, Node node,
+				Set<Long> ancestors) {
+			sb.append("\n" + Log.spaces(indent * 3) + node.toString());
+			if (ancestors.add(node.id)) {
+				for (Long id : node.childIDs) {
+					Node child = nodes.get(id);
+					if (child != null) {
+						recursiveToString(sb, indent + 1, child, ancestors);
+					}
+				}
+			}
+		}
 	}
 
 	public PartialTrees getRootProps(int depthLimit);
@@ -115,6 +138,10 @@ public interface ArgMapService extends RemoteService {
 			}
 			sb.append("}");
 			return sb.toString();
+		}
+
+		/* need no arg constructor for RPC serializer */
+		public DateAndChildIDs() {
 		}
 
 		public DateAndChildIDs(Node node) {
