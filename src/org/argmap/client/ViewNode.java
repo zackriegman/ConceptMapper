@@ -69,7 +69,7 @@ public abstract class ViewNode extends TreeItem {
 		recursiveCallOnAddLoadedNode((ViewNode) item);
 	}
 
-	private void recursiveCallOnAddLoadedNode(ViewNode viewNode) {
+	public void recursiveCallOnAddLoadedNode(ViewNode viewNode) {
 		if (viewNode.isLoaded() && getArgTree() != null) {
 			getArgTree().onAddLoadedNode(viewNode);
 			for (int i = 0; i < viewNode.getChildCount(); i++) {

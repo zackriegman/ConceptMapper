@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.argmap.client.ArgMap.Message;
 import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.DateAndChildIDs;
 import org.argmap.client.ArgMapService.PartialTrees;
@@ -374,11 +375,12 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					@Override
 					public void call(PartialTrees results) {
 						Log log = Log.getLog("me.guaa.cb", false);
-						// log.log("loadedNodes:\npropViews:"
-						// + Log.multiMapToString(loadedProps)
-						// + "\nargViews:"
-						// + Log.multiMapToString(loadedArgs));
-						// tree.logTree(log);
+						log.logln("loadedNodes:\npropViews:"
+								+ Log.multiMapToString(loadedProps)
+								+ "\nargViews:"
+								+ Log.multiMapToString(loadedArgs));
+						log.logln("the current tree");
+						tree.logTree(log);
 						log.logln("live update results returned from server:");
 						log.log(results.toString());
 						/*
@@ -844,12 +846,38 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	public class UpdateTimer extends Timer {
 		private Date startDate;
 		private boolean on = true;
-		private final Timer stopTimer = new Timer() {
+		private final int INITIAL_FREQUENCY = 4000;
+
+		private final Timer updateFrequencyAdjustTimer = new Timer() {
+			private long lastUserAction;
+			private final int SECOND = 1000;
+			private final int MINUTE = 60 * SECOND;
+			private final int HOUR = 60 * MINUTE;
+			private final int DAY = 24 * HOUR;
+			private final int[] frequencies = { INITIAL_FREQUENCY, 30 * SECOND,
+					30 * MINUTE, DAY };
+			private final int[] nextIncrement = { 10 * MINUTE, HOUR, DAY };
+			private int index = 0;
+			private final Message message = ArgMap.getMessage();
+
+			public void userAction() {
+				lastUserAction = System.currentTimeMillis();
+				index = 0;
+				UpdateTimer.this.scheduleRepeating(frequencies[index]);
+				schedule(nextIncrement[index]);
+				message.hide();
+			}
+
 			@Override
 			public void run() {
-				on = false;
-				ArgMap.message("live updates paused... reload page to resume",
-						MessageType.INFO);
+				index++;
+				UpdateTimer.this.scheduleRepeating(frequencies[index]);
+				if (index < nextIncrement.length) {
+					schedule(nextIncrement[index]);
+				}
+				message.setMessage("because of inactivity reducing update frequency to every "
+						+ frequencies[index] / SECOND + " seconds");
+				message.display();
 			}
 		};
 
@@ -860,7 +888,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 
 		public void start() {
-			scheduleRepeating(5000);
+			scheduleRepeating(INITIAL_FREQUENCY);
 			stopTimer.schedule(1000 * 60 * 10);
 			startDate = new Date();
 		}
