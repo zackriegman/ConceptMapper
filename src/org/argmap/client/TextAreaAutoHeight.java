@@ -2,7 +2,6 @@ package org.argmap.client;
 
 import static com.google.gwt.query.client.GQuery.$;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -22,9 +21,8 @@ public class TextAreaAutoHeight extends TextArea {
 			shadow = $(DOM.createDiv());
 			shadow.appendTo(GQuery.body);
 			shadow.css("position", "absolute").css("top", "-1000px")
-					.css("left", "-1000px")
-					// .css("top", "200px").css("left", "1px")
-					.css("resize", "none").appendTo(GQuery.body);
+					.css("left", "-1000px").css("resize", "none")
+					.appendTo(GQuery.body);
 		}
 
 		addKeyUpHandler(new KeyUpHandler() {
@@ -66,9 +64,9 @@ public class TextAreaAutoHeight extends TextArea {
 		// timerLap("b");
 		int shadowWidth = elem.width() - cssAsInt(elem, "paddingLeft")
 				- cssAsInt(elem, "paddingRight");
-		shadowWidth = shadowWidth > 0 ? shadowWidth : 500;
-		GWT.log(elem.width() + " - " + cssAsInt(elem, "paddingLeft") + " - "
-				+ cssAsInt(elem, "paddingRight") + " - " + shadowWidth);
+		shadowWidth = shadowWidth > 0 ? shadowWidth : 700;
+		// GWT.log(elem.width() + " - " + cssAsInt(elem, "paddingLeft") + " - "
+		// + cssAsInt(elem, "paddingRight") + " - " + shadowWidth);
 		// timerLap("c");
 		shadow.css("width", "" + shadowWidth + "px");
 		// timerLap("1");
