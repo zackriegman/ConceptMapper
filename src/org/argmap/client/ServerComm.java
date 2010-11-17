@@ -70,7 +70,7 @@ public class ServerComm {
 
 		@Override
 		public final void onFailure(Throwable caught) {
-			messageForFailure(startMessage, message);
+			messageForFailure(startMessage, message, caught);
 		}
 
 		@Override
@@ -92,7 +92,7 @@ public class ServerComm {
 	}
 
 	private static void messageForFailure(String startMessage,
-			ArgMap.Message message) {
+			ArgMap.Message message, Throwable caught) {
 		if (startMessage != null) {
 			message.setMessage("Server error while " + startMessage,
 					MessageType.ERROR);
@@ -101,6 +101,7 @@ public class ServerComm {
 		}
 		message.display();
 		message.hideAfter(15000);
+		GWT.log("ServerComm got exception from server:", caught);
 		// Window.alert("Exception: " + caught.toString());
 	}
 
@@ -150,7 +151,7 @@ public class ServerComm {
 		@Override
 		public final void onFailure(Throwable caught) {
 			dispatchCommand();
-			messageForFailure(startMessage, message);
+			messageForFailure(startMessage, message, caught);
 		}
 
 		@Override
