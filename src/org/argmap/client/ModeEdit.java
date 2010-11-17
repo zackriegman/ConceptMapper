@@ -846,50 +846,58 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	public class UpdateTimer extends Timer {
 		private Date startDate;
 		private boolean on = true;
+		private long lastUserAction;
+		private int currentFrequency;
+
 		private final int INITIAL_FREQUENCY = 4000;
+		private final int SECOND = 1000;
+		private final int MINUTE = 60 * SECOND;
+		private final int HOUR = 60 * MINUTE;
+		private final int DAY = 24 * HOUR;
+		private final Message message = ArgMap.getMessage();
 
-		private final Timer updateFrequencyAdjustTimer = new Timer() {
-			private long lastUserAction;
-			private final int SECOND = 1000;
-			private final int MINUTE = 60 * SECOND;
-			private final int HOUR = 60 * MINUTE;
-			private final int DAY = 24 * HOUR;
-			private final int[] frequencies = { INITIAL_FREQUENCY, 30 * SECOND,
-					30 * MINUTE, DAY };
-			private final int[] nextIncrement = { 10 * MINUTE, HOUR, DAY };
-			private int index = 0;
-			private final Message message = ArgMap.getMessage();
+		public void userAction() {
+			lastUserAction = System.currentTimeMillis();
 
-			public void userAction() {
-				lastUserAction = System.currentTimeMillis();
-				index = 0;
-				UpdateTimer.this.scheduleRepeating(frequencies[index]);
-				schedule(nextIncrement[index]);
+			if (currentFrequency != INITIAL_FREQUENCY) {
+				currentFrequency = INITIAL_FREQUENCY;
 				message.hide();
-			}
-
-			@Override
-			public void run() {
-				index++;
-				UpdateTimer.this.scheduleRepeating(frequencies[index]);
-				if (index < nextIncrement.length) {
-					schedule(nextIncrement[index]);
+				if (startDate != null) {
+					schedule(currentFrequency);
 				}
-				message.setMessage("because of inactivity reducing update frequency to every "
-						+ frequencies[index] / SECOND + " seconds");
-				message.display();
 			}
-		};
+		}
+
+		private void message(long millis) {
+			message.setMessage("because of inactivity reducing update frequency to every "
+					+ millis / SECOND + " seconds");
+			message.display();
+		}
 
 		@Override
 		public void run() {
+			long timeSinceUserAction = System.currentTimeMillis()
+					- lastUserAction;
+			if (timeSinceUserAction < 10 * MINUTE) {
+				currentFrequency = INITIAL_FREQUENCY;
+			} else if (timeSinceUserAction < HOUR) {
+				currentFrequency = 30 * SECOND;
+				message(currentFrequency);
+			} else if (timeSinceUserAction < DAY) {
+				currentFrequency = 30 * MINUTE;
+				message(currentFrequency);
+			} else {
+				currentFrequency = DAY;
+				message(currentFrequency);
+			}
+
+			schedule(currentFrequency);
 			if (on) getUpdatesAndApply();
-			// getNewChangesAndUpdateTree_DELETE_ME( lastUpdate_DELETE_ME);
 		}
 
 		public void start() {
-			scheduleRepeating(INITIAL_FREQUENCY);
-			stopTimer.schedule(1000 * 60 * 10);
+			schedule(INITIAL_FREQUENCY);
+			userAction();
 			startDate = new Date();
 		}
 
