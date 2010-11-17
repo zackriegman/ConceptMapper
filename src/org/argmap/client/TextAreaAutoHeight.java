@@ -2,12 +2,16 @@ package org.argmap.client;
 
 import static com.google.gwt.query.client.GQuery.$;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.query.client.GQuery;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.TextArea;
+
+//technique copied from:
+//https://github.com/jaz303/jquery-grab-bag/blob/f1a3cc1e86cbb248bcb41391d6eff115b1be6d89/javascripts/jquery.autogrow-textarea.js
 
 public class TextAreaAutoHeight extends TextArea {
 	private static GQuery shadow;
@@ -62,6 +66,9 @@ public class TextAreaAutoHeight extends TextArea {
 		// timerLap("b");
 		int shadowWidth = elem.width() - cssAsInt(elem, "paddingLeft")
 				- cssAsInt(elem, "paddingRight");
+		shadowWidth = shadowWidth > 0 ? shadowWidth : 500;
+		GWT.log(elem.width() + " - " + cssAsInt(elem, "paddingLeft") + " - "
+				+ cssAsInt(elem, "paddingRight") + " - " + shadowWidth);
 		// timerLap("c");
 		shadow.css("width", "" + shadowWidth + "px");
 		// timerLap("1");

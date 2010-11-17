@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-//TODO debug text area on ie8 and test on safari/opera...
 /*
  * TODO when I implement auto-saving (which I think I should do soon) it will probably have weird effects
  * on the currently edited proposition).
