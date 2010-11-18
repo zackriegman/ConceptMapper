@@ -466,6 +466,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 		if (oldContent.equals(editContent)) {
 			viewNode.setNode(node);
+			if (resolveConflictDialog != null
+					&& viewNode == resolveConflictDialog.getViewNode()) {
+				resolveConflictDialog.updateConflictInfo(newContent);
+			}
 		} else {
 			if (oldContent.equals(newContent)) {
 				viewNode.setNodeButNotTextAreaContent(node);
@@ -492,14 +496,17 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		private Node node;
 		private String clientContent;
 
-		public void setConflictInfo(final ViewNode viewNode, final Node node,
-				String client, String other) {
-			/*
-			 * cancel the save timer so this user's changes aren't saved while
-			 * waiting for a the users's decision.
-			 */
-			editContentSaveTimer.cancel();
+		public void hideDialog() {
+			viewNode = null;
+			hide();
+		}
 
+		public ViewNode getViewNode() {
+			return viewNode;
+		}
+
+		public void setConflictInfo(ViewNode viewNode, Node node,
+				String client, String other) {
 			this.viewNode = viewNode;
 			this.node = node;
 			clientContent = client;
@@ -507,6 +514,11 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			clientHTML.setHTML("Your version: \""
 					+ SafeHtmlUtils.htmlEscape(client) + "\"");
 			otherHTML.setHTML("Other user's version: \""
+					+ SafeHtmlUtils.htmlEscape(other) + "\"");
+		}
+
+		public void updateConflictInfo(String other) {
+			otherHTML.setHTML("Other user's version (updated): \""
 					+ SafeHtmlUtils.htmlEscape(other) + "\"");
 		}
 
@@ -537,12 +549,12 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			Button myVersionButton = new Button("use my version",
 					new ClickHandler() {
 						public void onClick(ClickEvent event) {
-							resolveConflictDialog.hide();
 							viewNode.setTextAreaContent(clientContent);
 
-							/* resume save timer */
-							editContentSaveTimer
-									.setNodeForTimedSave((SavableNode) viewNode);
+							((SavableNode) viewNode)
+									.saveContentToServerIfChanged();
+
+							resolveConflictDialog.hideDialog();
 						}
 					});
 			dialogContents.add(myVersionButton);
@@ -553,7 +565,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			Button otherVersionButton = new Button("use other user's version",
 					new ClickHandler() {
 						public void onClick(ClickEvent event) {
-							resolveConflictDialog.hide();
 							/*
 							 * don't need to do anything because node was set to
 							 * other user's content before showing this dialog
@@ -562,6 +573,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 							 * causing the user's changes to be saved and
 							 * overwriting the other user's changes
 							 */
+							resolveConflictDialog.hideDialog();
 						}
 					});
 			dialogContents.add(otherVersionButton);
