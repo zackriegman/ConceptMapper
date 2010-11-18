@@ -22,7 +22,7 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-//TODO decide on traking method for loadedNodes and finish it up
+//TODO decide on tracking method for loadedNodes and finish it up
 /*
  * TODO when I implement auto-saving (which I think I should do soon) it will probably have weird effects
  * on the currently edited proposition).

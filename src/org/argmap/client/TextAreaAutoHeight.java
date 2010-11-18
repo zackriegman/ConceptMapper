@@ -8,9 +8,9 @@ import com.google.gwt.query.client.GQuery;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.TextArea;
 
-//technique copied from:
-//https://github.com/jaz303/jquery-grab-bag/blob/f1a3cc1e86cbb248bcb41391d6eff115b1be6d89/javascripts/jquery.autogrow-textarea.js
-
+/*technique copied from:
+ https://github.com/jaz303/jquery-grab-bag/blob/f1a3cc1e86cbb248bcb41391d6eff115b1be6d89/javascripts/jquery.autogrow-textarea.js
+ */
 public class TextAreaAutoHeight extends TextArea {
 	private static GQuery shadow;
 
@@ -31,16 +31,6 @@ public class TextAreaAutoHeight extends TextArea {
 				resize();
 			}
 		});
-
-		// addAttachHandler(new AttachEvent.Handler() {
-		//
-		// @Override
-		// public void onAttachOrDetach(AttachEvent event) {
-		// if (event.isAttached()) {
-		// resize();
-		// }
-		// }
-		// });
 	}
 
 	// private long lastTime;
@@ -129,7 +119,7 @@ public class TextAreaAutoHeight extends TextArea {
 		}
 		String html = sb.toString();
 		if (html.trim().length() == 0) {
-			return "M";
+			return "Mj";
 		} else
 			return html;
 	}

@@ -251,16 +251,24 @@ public abstract class ViewNode extends TreeItem {
 	public void setLoaded(boolean isLoaded) {
 		if (getArgTree() != null && getNodeID() != null) {
 			if (isLoaded && this.isLoaded == false) {
+				this.isLoaded = isLoaded;
 				getArgTree().trackLoadedAdd(this);
+				Log.log("vn.sl", "trackLoadedAdd called:" + getNodeID() + "|"
+						+ isLoaded() + "|" + (getArgTree() == null));
 			} else if (isLoaded == false && this.isLoaded) {
+				this.isLoaded = isLoaded;
 				getArgTree().trackLoadedRemove(this);
 			}
+		} else {
+			Log.log("vn.sl", "trackLoadedAdd NOT called:" + getNodeID() + "|"
+					+ isLoaded() + "|" + (getArgTree() == null));
 		}
 		if (isLoaded == true && this.isLoaded == false && getArgTree() != null) {
 			getArgTree().onNodeIsLoaded(this);
 
 		}
 		this.isLoaded = isLoaded;
+
 	}
 
 	public boolean hasID() {
