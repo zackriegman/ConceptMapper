@@ -23,7 +23,25 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /* TODO when I implement auto-saving (which I think I should do soon) it will probably have weird effects
- * on the currently edited proposition).
+ * on the currently edited proposition).  It does.  If you are typing and pause for long enough for the
+ * Node to be saved, and then continue typing the newly typed text is deleted.  
+ * 
+ * Unfortunately, I currently use setNode() to updated the content.  
+ * 
+ * Interestingly, in order to avoid saving when unecessary
+ * both the ViewArgEdit and ViewPropEdit save the content in their Nodes whenever they save to the server
+ * so they can compare their TextArea/Box content with their Node content to see if their is anything
+ * worth saving the next time.  This means that ModeEdit.updateNode() can compare the new nodes content
+ * with the old nodes content to determine if the TextArea/Box content needs to be updated.
+ * 
+ * If the two are different and the TextArea/Box content is the same as the old Node's content
+ * then the TextArea/Box content needs to be updated.
+ * 
+ * If the two are the same and the TextArea/Box content is different from the old Node's content
+ * then the TextArea/Box does not need to be updated.
+ * 
+ * If the two are different and the TextArea/Box content is different from the old Node's content,
+ * then I think that means we have a conflict and we can pop up a conflict dialog for the user?
  */
 /* TODO fix argument formating on chrome (for/against misplaced because of textbox too big?*/
 /* TODO limit argument text length on client and server */

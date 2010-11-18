@@ -8,8 +8,8 @@ import org.argmap.client.ArgMapService.NodeChangesMaps;
 
 public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	Long nodeID;
-	
-	public ViewDummyVer(Long nodeID ){
+
+	public ViewDummyVer(Long nodeID) {
 		super();
 		this.nodeID = nodeID;
 		setText("loading from server...");
@@ -48,7 +48,7 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	@Override
 	public void setClosedDate(Date closedDate) {
 		assert false;
-		
+
 	}
 
 	@Override
@@ -76,7 +76,7 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 
 	@Override
 	public NodeChanges chooseNodeChanges(NodeChangesMaps changesMaps) {
-		
+
 		return null;
 	}
 
@@ -91,12 +91,9 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	}
 
 	/*
-	@Override
-	public ViewNodeVer createDeletedDummyView(Long id) {
-		assert false;
-		return null;
-	}
-	*/
+	 * @Override public ViewNodeVer createDeletedDummyView(Long id) { assert
+	 * false; return null; }
+	 */
 
 	@Override
 	public ViewNode createChild() {
@@ -107,13 +104,13 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	@Override
 	public void setNode(Node node) {
 		assert false;
-		
+
 	}
 
 	@Override
 	public void addDeletedItem(ViewNodeVer viewNodeVer) {
 		assert false;
-		
+
 	}
 
 	@Override
@@ -138,17 +135,21 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 		assert false;
 		return null;
 	}
-	
+
 	@Override
-	public String toString(){
+	public String toString() {
 		return "[DUMMY - ID: " + nodeID + "]";
 	}
 
 	@Override
 	public void setAsCircularLink() {
-		assert false;		
+		assert false;
 	}
 
-	
+	@Override
+	public String getContent() {
+		assert false;
+		return null;
+	}
 
 }
