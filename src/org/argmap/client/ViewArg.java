@@ -34,6 +34,12 @@ public abstract class ViewArg extends ViewNode {
 
 	@Override
 	public void setNode(Node node) {
+		setNodeButNotTextAreaContent(node);
+		textBox.setText(argument.content);
+	}
+
+	@Override
+	public void setNodeButNotTextAreaContent(Node node) {
 		if (!hasID() && isLoaded() && isAttachedToTree()) {
 			/*
 			 * can't set node before testing for hasID() (because then hasID()
@@ -45,7 +51,6 @@ public abstract class ViewArg extends ViewNode {
 			getArgTree().onLoadedNodeAdd(this);
 		}
 		argument = (Argument) node;
-		textBox.setText(argument.content);
 		setPro(argument.pro);
 	}
 
@@ -54,8 +59,14 @@ public abstract class ViewArg extends ViewNode {
 		return argument;
 	}
 
-	public String getContent() {
+	@Override
+	public String getTextAreaContent() {
 		return textBox.getText();
+	}
+
+	@Override
+	public void setTextAreaContent(String content) {
+		textBox.setText(content);
 	}
 
 	/*

@@ -93,11 +93,19 @@ public abstract class ViewNode extends TreeItem {
 
 	public abstract void setNode(Node node);
 
+	public abstract void setNodeButNotTextAreaContent(Node node);
+
 	public abstract Node getNode();
 
 	public abstract void setAsCircularLink();
 
-	public abstract String getContent();
+	public abstract String getTextAreaContent();
+
+	public abstract void setTextAreaContent(String content);
+
+	public String getNodeContent() {
+		return getNode().content;
+	}
 
 	/*
 	 * As far as I can tell this is currently only used in EditMode.

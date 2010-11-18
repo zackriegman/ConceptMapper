@@ -30,10 +30,12 @@ import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -46,6 +48,7 @@ import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		OpenHandler<TreeItem>, CloseHandler<TreeItem>,
@@ -432,9 +435,140 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 		log.logln("setting node -- \nold:" + viewNode.getNode().toString()
 				+ "\n new:" + node.toString());
-		viewNode.setNode(node);
+
+		/*
+		 * In order to avoid saving when unecessary both the ViewArgEdit and
+		 * ViewPropEdit save the content of their TextArea/Box to their Nodes
+		 * whenever they save to the server so they can compare their
+		 * TextArea/Box content with their Node content to see if their is
+		 * anything worth saving the next time. This means that
+		 * ModeEdit.updateNode() can compare the new Nodes content with the old
+		 * nodes content to determine if the TextArea/Box content needs to be
+		 * updated.
+		 * 
+		 * If the old Node and new Node are different and the TextArea/Box
+		 * content is the same as the old Node's content then the TextArea/Box
+		 * content needs to be updated. This indicates that there has been a
+		 * change to the content on the server since the last update, and that
+		 * there has not been a change to the content on the client.
+		 * 
+		 * If the old Node and new Node are the same (and the TextArea/Box
+		 * content is either different from the old Node's content or the same)
+		 * then the TextArea/Box does not need to be updated.
+		 * 
+		 * If the two are different and the TextArea/Box content is different
+		 * from the old Node's content, then I think that means we have a
+		 * conflict and we can pop up a conflict dialog for the user?
+		 */
+		String oldContent = viewNode.getNodeContent().trim();
+		String newContent = node.content.trim();
+		String editContent = viewNode.getTextAreaContent().trim();
+
+		if (oldContent.equals(editContent)) {
+			viewNode.setNode(node);
+		} else {
+			if (oldContent.equals(newContent)) {
+				viewNode.setNodeButNotTextAreaContent(node);
+			} else {
+				viewNode.setNode(node);
+				if (resolveConflictDialog == null) {
+					resolveConflictDialog = new ResolveConflictDialog();
+				}
+
+				resolveConflictDialog.setConflictInfo(viewNode, node,
+						editContent, newContent);
+
+				resolveConflictDialog.center();
+				resolveConflictDialog.show();
+			}
+		}
 		log.finish();
 	}
+
+	private class ResolveConflictDialog extends DialogBox {
+		private final HTML clientHTML = new HTML();
+		private final HTML otherHTML = new HTML();
+		private ViewNode viewNode;
+		private Node node;
+		private String clientContent;
+
+		public void setConflictInfo(final ViewNode viewNode, final Node node,
+				String client, String other) {
+			/*
+			 * cancel the save timer so this user's changes aren't saved while
+			 * waiting for a the users's decision.
+			 */
+			editContentSaveTimer.cancel();
+
+			this.viewNode = viewNode;
+			this.node = node;
+			clientContent = client;
+
+			clientHTML.setHTML("Your version: \""
+					+ SafeHtmlUtils.htmlEscape(client) + "\"");
+			otherHTML.setHTML("Other user's version: \""
+					+ SafeHtmlUtils.htmlEscape(other) + "\"");
+		}
+
+		public ResolveConflictDialog() {
+			super();
+			setGlassEnabled(true);
+			setAnimationEnabled(true);
+			// setWidth("50%");
+
+			setText("Resolve Conflicting Change");
+
+			VerticalPanel dialogContents = new VerticalPanel();
+			dialogContents.setSpacing(4);
+			setWidget(dialogContents);
+
+			HTML details = new HTML(
+					"Another user has made changes to the text you are editing.  "
+							+ "Please review the text below and choose a version to keep.  "
+							+ "If you would like to merge text from both versions, copy the text you"
+							+ " would like to merge, and paste it after choosing a version to work from.  "
+							+ "If you continue getting these message wait a short time for the other user"
+							+ " to finish editing and try again.");
+			details.getElement().getStyle().setMarginBottom(2, Unit.EM);
+			dialogContents.add(details);
+
+			dialogContents.add(clientHTML);
+
+			Button myVersionButton = new Button("use my version",
+					new ClickHandler() {
+						public void onClick(ClickEvent event) {
+							resolveConflictDialog.hide();
+							viewNode.setTextAreaContent(clientContent);
+
+							/* resume save timer */
+							editContentSaveTimer
+									.setNodeForTimedSave((SavableNode) viewNode);
+						}
+					});
+			dialogContents.add(myVersionButton);
+
+			otherHTML.getElement().getStyle().setMarginTop(2, Unit.EM);
+			dialogContents.add(otherHTML);
+
+			Button otherVersionButton = new Button("use other user's version",
+					new ClickHandler() {
+						public void onClick(ClickEvent event) {
+							resolveConflictDialog.hide();
+							/*
+							 * don't need to do anything because node was set to
+							 * other user's content before showing this dialog
+							 * (have to do it that way otherwise clicking on a
+							 * dialog button causes textArea's focus to be lost,
+							 * causing the user's changes to be saved and
+							 * overwriting the other user's changes
+							 */
+						}
+					});
+			dialogContents.add(otherVersionButton);
+		}
+	};
+
+	private ResolveConflictDialog resolveConflictDialog;
 
 	private <T extends ViewNode> void loadNodeInfo(
 			MultiMap<Long, T> loadedNodes, Map<Long, DateAndChildIDs> nodesInfo) {
@@ -539,7 +673,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		sideSearchResults.removeAllRows();
 		sideSearchContinueButton.setVisible(false);
 
-		String searchString = viewProp.getContent().trim();
+		String searchString = viewProp.getTextAreaContent().trim();
 		if (!searchString.equals("") && viewProp.getChildCount() == 0
 				&& !viewProp.deleted) {
 			List<Long> filterIDs = new ArrayList<Long>();
@@ -773,10 +907,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			}
 		}
 
-		private void message(long millis) {
+		private void message(String delay) {
 			message.setMessage(
 					"because of inactivity reducing update frequency to every "
-							+ millis / SECOND + " seconds", MessageType.INFO);
+							+ delay, MessageType.INFO);
 			message.display();
 		}
 
@@ -788,13 +922,13 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				currentFrequency = INITIAL_FREQUENCY;
 			} else if (timeSinceUserAction < HOUR) {
 				currentFrequency = 30 * SECOND;
-				message(currentFrequency);
+				message("30 seconds");
 			} else if (timeSinceUserAction < DAY) {
 				currentFrequency = 30 * MINUTE;
-				message(currentFrequency);
+				message("30 minutes");
 			} else {
 				currentFrequency = DAY;
-				message(currentFrequency);
+				message("24 hours");
 			}
 
 			schedule(currentFrequency);
@@ -894,7 +1028,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 		@Override
 		public String getNewSearchString() {
-			return viewProp.getContent();
+			return viewProp.getTextAreaContent();
 
 		}
 

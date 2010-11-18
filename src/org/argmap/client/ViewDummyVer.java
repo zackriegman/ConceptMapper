@@ -147,9 +147,18 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	}
 
 	@Override
-	public String getContent() {
+	public String getTextAreaContent() {
 		assert false;
 		return null;
 	}
 
+	@Override
+	public void setNodeButNotTextAreaContent(Node node) {
+		assert false;
+	}
+
+	@Override
+	public void setTextAreaContent(String content) {
+		assert false;
+	}
 }

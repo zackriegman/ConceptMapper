@@ -771,7 +771,7 @@ public class ModeVersions extends ResizeComposite implements
 					 * other, without a chance for the content to be changed by
 					 * a different change...
 					 */
-					mapPropContent.put(vC, propView.getContent());
+					mapPropContent.put(vC, propView.getTextAreaContent());
 					propView.setContent(vC.change.oldContent);
 					break;
 				}

@@ -56,7 +56,7 @@ public abstract class ViewProp extends ViewNode {
 	};
 
 	@Override
-	public void setNode(Node node) {
+	public void setNodeButNotTextAreaContent(Node node) {
 		if (!hasID() && isLoaded() && isAttachedToTree()) {
 			/*
 			 * can't set node before testing hasID() (because then hasID() would
@@ -69,7 +69,6 @@ public abstract class ViewProp extends ViewNode {
 		}
 
 		proposition = (Proposition) node;
-		setContent(proposition.getContent());
 
 		if (proposition.linkCount <= 1) {
 			textArea.removeStyleName("linkedPropositionTextArea");
@@ -78,6 +77,12 @@ public abstract class ViewProp extends ViewNode {
 			textArea.addStyleName("linkedPropositionTextArea");
 			setNodeLink(true);
 		}
+	}
+
+	@Override
+	public void setNode(Node node) {
+		setNodeButNotTextAreaContent(node);
+		setContent(proposition.getContent());
 	}
 
 	@Override
@@ -132,8 +137,14 @@ public abstract class ViewProp extends ViewNode {
 		textArea.setText(content);
 	}
 
-	public String getContent() {
+	@Override
+	public String getTextAreaContent() {
 		return textArea.getText();
+	}
+
+	@Override
+	public void setTextAreaContent(String content) {
+		textArea.setText(content);
 	}
 
 	public Proposition getProposition() {
