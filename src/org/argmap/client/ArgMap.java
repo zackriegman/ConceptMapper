@@ -22,52 +22,21 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+//TODO decide on traking method for loadedNodes and finish it up
 /*
  * TODO when I implement auto-saving (which I think I should do soon) it will probably have weird effects
  * on the currently edited proposition).
  */
-/*
- * refresh currently ask for updates for unloaded root nodes... strange... its only supposed to ask
- * for updates for loaded nodes...
- */
-/*
- * should updates pause whenever there are message in ServerComm's queue?  If there are messages in the
- * queue that means that there are ViewNodes without updated Nodes... if we try to do an update... well
- * the updated node might be empty.  I guess it would make sense just to put the update in the dispatch queue
- * so that no other operations work in the mean time....
- */
-/*
- * Another problem that might exist with my current implementation is that the there can be multiple
- *  different ViewNodes on the client that refer to the same node but have different updated times
- *   associated with them...  Currently I think my implementation sends only one node to the server.
- *     It needs to make sure that its sends the oldest one to the server... otherwise there might not
- *      have been an update since the newest one, and the oldest one won't be updated to the newest
- *       one as a result.
- */
-/*TODO: currently only addProp and addArg return the updated nodes, and even the only for the 
- * added node not for the parent node.  This means that the parent node will be updated in the
- * next refresh... that isn't really a problem maybe... but it some cases it may be less than ideal
- * for instance... maybe its ok actually...*/
+
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
-/*TODO: track down exceptions in ModeVersion (unrelated to circular linking)
- //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
- //TODO: provide a way to see deleted top level nodes
- /*TODO: move changes from propID/argID to parentID/childID (this will make querying more efficient:  want
- * all the changes having to do with a particular node?  Just query on parentID with that node's ID.
- * Hmmm... what about prop adds where the proposition has content?  Anyway, the idea being, that when
- * a node is updated we store its id in the parentID.  So when we query on parentID we get all the additions to,
- * deletions from, and content modifications of, the node and nothing else.  Right now querying on propID
- * gives not only additions to, deletions from, and content modifications of, the prop, it also gives additions of,
- * links of, and deletions of the prop, which in my current paradigm for handling changes, I don't need.
- */
-/*
- * fix TextAreaAutoSize so that it removes it's garbage from the tree?
- */
+/*TODO: track down exceptions in ModeVersion (unrelated to circular linking)*/
+//TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
+//TODO: provide a way to see deleted top level nodes
 
 //TODO: implement proposition strength voting, and scoring algorithm
 //TODO: add helpful message along the side (tips box)
 //TODO: implement user accounts, email updates of changes, inviting friends
-//TODO: poll server every few seconds for server side changes (this has to come after versioning I think)
+//TODO: add 'real' example arguments for demonstration (for instance my argument about legalizing unauthorized access)
 
 /*TODO: a proposition tree begins at time A.  At time C a pre-existing node is linked into the proposition tree.
  * The user browses to a time B between times A and C.  At that time the linked node is not present.
@@ -78,13 +47,9 @@ import com.google.gwt.user.client.ui.Widget;
 //TODO: comment the hell out of versions mode!!!!!!! someday I'll need to change it...
 //TODO: try running speed tracer
 
-/* TODO: deploy with big database (~40 nodes) and test speed of search */
-//TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
-//TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
-
+//TODO: make batch open icon visible, and open tree a few layers deep regardless of whether mouse over node is already loaded
 //TODO: batch open icon not visible/clickable on props that reach right screen edge
-
-/*TODO: undoing unlinks does not restore the link's yellow color if the link *currently* is not  
+/*TODO: ModeVersions:  undoing unlinks does not restore the link's yellow color if the link *currently* is not  
  * linked to by more than one argument because the server sends the current proposition which
  * indicates a link count of 1.  This could be addressed by having a proposition's link/unlink
  * events also be owned by that proposition in VersionsMode, and hiding them probably (because
@@ -101,9 +66,19 @@ import com.google.gwt.user.client.ui.Widget;
  * change on the server to return the coloring events for a proposition, and would require changes on the client
  * to insert the coloring events into the timeMachineMap and so forth.
  */
-//TODO: linking: original linked item should also change color immediately upon first linking
-//TODO: linking: how will client automatically update link changes...
 //TODO: figure out how to make server log more than warn and severe while in hosted mode...
+
+/*TODO: move changes from propID/argID to parentID/childID (this will make querying more efficient:  want
+ * all the changes having to do with a particular node?  Just query on parentID with that node's ID.
+ * Hmmm... what about prop adds where the proposition has content?  Anyway, the idea being, that when
+ * a node is updated we store its id in the parentID.  So when we query on parentID we get all the additions to,
+ * deletions from, and content modifications of, the node and nothing else.  Right now querying on propID
+ * gives not only additions to, deletions from, and content modifications of, the prop, it also gives additions of,
+ * links of, and deletions of the prop, which in my current paradigm for handling changes, I don't need.
+ */
+/* TODO: deploy with big database (~40 root nodes) and test speed of search */
+//TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
+//TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
 
 //TODO: setup backups on home computer
 //TODO: highlight last change node after time travel
@@ -117,7 +92,6 @@ import com.google.gwt.user.client.ui.Widget;
 //TODO: figure out how to have logging code compiled out like the GWT logger framework supposedly does
 
 // TO DO: test in IE8, chrome, safari, opera, etc.
-// TO DO: upload to appengine, and add an example argument (for instance my argument about legalizing unauthorized access)
 // TO DO: implement some basic database integrity checks (e.g. every argument belongs to an existing proposition...)
 // TO DO: give people a way to specify logical structure (first order predicate calculus structure of each proposition
 // TO DO: add definitions (as a special kind of proposition?)
