@@ -34,6 +34,10 @@ public abstract class ViewArg extends ViewNode {
 
 	@Override
 	public void setNode(Node node) {
+		if (getNodeID() == null && isLoaded() && getArgTree() != null) {
+			argument = (Argument) node;
+			getArgTree().trackLoadedAdd(this);
+		}
 		argument = (Argument) node;
 		textBox.setText(argument.content);
 		setPro(argument.pro);
@@ -59,7 +63,21 @@ public abstract class ViewArg extends ViewNode {
 	private final void initialize() {
 		label = new Label();
 		label.addStyleName("argLabel");
-		textBox = new TextBox();
+		textBox = new TextBox() {
+			@Override
+			protected void onLoad() {
+				super.onLoad();
+				if (getNodeID() != null) {
+					getArgTree().trackLoadedAdd(ViewArg.this);
+				}
+			};
+
+			@Override
+			public void onUnload() {
+				super.onUnload();
+				getArgTree().trackLoadedRemove(ViewArg.this);
+			}
+		};
 		textBox.setVisibleLength(Argument.MAX_LENGTH);
 		textBox.setMaxLength(Argument.MAX_LENGTH);
 		textBox.addStyleName("argTextBox");

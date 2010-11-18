@@ -201,6 +201,31 @@ public class ArgTree extends Tree {
 		}
 	}
 
+	public void trackLoadedAdd(ViewNode node) {
+		if (node.isLoaded()) {
+			Log.log("at.tla", "loaded added:" + node.toString());
+			onLoadedNodeAdd(node);
+		} else {
+			// Log.log("at.tla", "unloaded added");
+		}
+	}
+
+	public void trackLoadedRemove(ViewNode node) {
+		if (node.isLoaded()) {
+			Log.log("at.tla", "loaded removed:" + node.toString());
+			onLoadedNodeRemove(node);
+		} else {
+			// Log.log("at.tla", "unloaded removed");
+		}
+	}
+
+	public void onLoadedNodeAdd(ViewNode node) {
+	}
+
+	public void onLoadedNodeRemove(ViewNode node) {
+
+	}
+
 	/*
 	 * these methods are called by a ViewNode whenever a loaded Node is attached
 	 * or removed from the ArgTree or whenever an attached Node becomes loaded.

@@ -16,7 +16,23 @@ public abstract class ViewProp extends ViewNode {
 	private static final int PROP_WIDTH_NUMBER = 47;
 	private static final String PROP_WIDTH = "" + PROP_WIDTH_NUMBER + "em";
 
-	protected final TextAreaAutoHeight textArea = new TextAreaAutoHeight();
+	protected final TextAreaAutoHeight textArea = new TextAreaAutoHeight() {
+		@Override
+		public void onLoad() {
+			super.onLoad();
+			if (getNodeID() != null) {
+				getArgTree().trackLoadedAdd(ViewProp.this);
+			}
+			Log.log("vp.taah.on", "onLoad:" + proposition.id);
+		};
+
+		@Override
+		public void onUnload() {
+			super.onUnload();
+			Log.log("vp.taah.on", "onUnload:" + proposition.id);
+			getArgTree().trackLoadedRemove(ViewProp.this);
+		}
+	};
 	// protected TextArea textArea = new TextArea();
 	protected VerticalPanel mainPanel = new VerticalPanel();
 	protected HorizontalPanel topPanel = new HorizontalPanel();
@@ -41,6 +57,10 @@ public abstract class ViewProp extends ViewNode {
 
 	@Override
 	public void setNode(Node node) {
+		if (getNodeID() == null && isLoaded() && getArgTree() != null) {
+			proposition = (Proposition) node;
+			getArgTree().trackLoadedAdd(this);
+		}
 		proposition = (Proposition) node;
 		setContent(proposition.getContent());
 
