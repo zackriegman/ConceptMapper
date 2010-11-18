@@ -43,60 +43,60 @@ public abstract class ViewNode extends TreeItem {
 
 	public ViewNode removeChildAt(int index) {
 		ViewNode child = getChild(index);
-		recursiveCallOnRemoveLoadedNode(child);
+		// recursiveCallOnRemoveLoadedNode(child);
 		child.remove();
 		return child;
 	}
 
-	private void recursiveCallOnRemoveLoadedNode(ViewNode viewNode) {
-		if (viewNode.isLoaded() && getArgTree() != null) {
-			getArgTree().onRemovedLoadedNode(viewNode);
-			for (int i = 0; i < viewNode.getChildCount(); i++) {
-				recursiveCallOnRemoveLoadedNode(viewNode.getChild(i));
-			}
-		}
-	}
+	// private void recursiveCallOnRemoveLoadedNode(ViewNode viewNode) {
+	// if (viewNode.isLoaded() && getArgTree() != null) {
+	// getArgTree().onRemovedLoadedNode(viewNode);
+	// for (int i = 0; i < viewNode.getChildCount(); i++) {
+	// recursiveCallOnRemoveLoadedNode(viewNode.getChild(i));
+	// }
+	// }
+	// }
 
-	@Override
-	public void insertItem(int beforeIndex, TreeItem item) {
-		super.insertItem(beforeIndex, item);
-		recursiveCallOnAddLoadedNode((ViewNode) item);
-	}
+	// @Override
+	// public void insertItem(int beforeIndex, TreeItem item) {
+	// super.insertItem(beforeIndex, item);
+	// recursiveCallOnAddLoadedNode((ViewNode) item);
+	// }
 
-	@Override
-	public void addItem(TreeItem item) {
-		super.addItem(item);
-		recursiveCallOnAddLoadedNode((ViewNode) item);
-	}
+	// @Override
+	// public void addItem(TreeItem item) {
+	// super.addItem(item);
+	// recursiveCallOnAddLoadedNode((ViewNode) item);
+	// }
 
-	public void recursiveCallOnAddLoadedNode(ViewNode viewNode) {
-		if (viewNode.isLoaded() && getArgTree() != null) {
-			getArgTree().onAddLoadedNode(viewNode);
-			for (int i = 0; i < viewNode.getChildCount(); i++) {
-				recursiveCallOnAddLoadedNode(viewNode.getChild(i));
-			}
-		}
-	}
+	// public void recursiveCallOnAddLoadedNode(ViewNode viewNode) {
+	// if (viewNode.isLoaded() && getArgTree() != null) {
+	// getArgTree().onAddLoadedNode(viewNode);
+	// for (int i = 0; i < viewNode.getChildCount(); i++) {
+	// recursiveCallOnAddLoadedNode(viewNode.getChild(i));
+	// }
+	// }
+	// }
 
-	@Override
-	public void remove() {
-		recursiveCallOnRemoveLoadedNode(this);
-		super.remove();
-	}
+	// @Override
+	// public void remove() {
+	// recursiveCallOnRemoveLoadedNode(this);
+	// super.remove();
+	// }
 
-	@Override
-	public void removeItems() {
-		for (int i = 0; i < getChildCount(); i++) {
-			recursiveCallOnRemoveLoadedNode(getChild(i));
-		}
-		super.removeItems();
-	}
+	// @Override
+	// public void removeItems() {
+	// for (int i = 0; i < getChildCount(); i++) {
+	// recursiveCallOnRemoveLoadedNode(getChild(i));
+	// }
+	// super.removeItems();
+	// }
 
-	@Override
-	public void removeItem(TreeItem item) {
-		recursiveCallOnRemoveLoadedNode((ViewNode) item);
-		super.removeItem(item);
-	}
+	// @Override
+	// public void removeItem(TreeItem item) {
+	// recursiveCallOnRemoveLoadedNode((ViewNode) item);
+	// super.removeItem(item);
+	// }
 
 	public int indexOfChildWithID(Long id) {
 		for (int i = 0; i < getChildCount(); i++) {
@@ -249,37 +249,34 @@ public abstract class ViewNode extends TreeItem {
 	}
 
 	public void setLoaded(boolean isLoaded) {
-		if (getArgTree() != null && getNodeID() != null) {
-			if (isLoaded && this.isLoaded == false) {
-				this.isLoaded = isLoaded;
-				getArgTree().trackLoadedAdd(this);
-				Log.log("vn.sl", "trackLoadedAdd called:" + getNodeID() + "|"
-						+ isLoaded() + "|" + (getArgTree() == null));
-			} else if (isLoaded == false && this.isLoaded) {
-				this.isLoaded = isLoaded;
-				getArgTree().trackLoadedRemove(this);
+		if (this.isLoaded != isLoaded) {
+			this.isLoaded = isLoaded;
+
+			if (isAttachedToTree() && hasID()) {
+				if (isLoaded == true) {
+					getArgTree().onLoadedNodeAdd(this);
+					// Log.log("vn.sl", "trackLoadedAdd called:" + getNodeID()
+					// + "|" + isLoaded() + "|" + (getArgTree() == null));
+				} else { // if (isLoaded == false) {
+					getArgTree().onLoadedNodeRemove(this);
+				}
 			}
-		} else {
-			Log.log("vn.sl", "trackLoadedAdd NOT called:" + getNodeID() + "|"
-					+ isLoaded() + "|" + (getArgTree() == null));
+			// else {
+			// Log.log("vn.sl", "trackLoadedAdd NOT called:" + getNodeID()
+			// + "|" + isLoaded() + "|" + (getArgTree() == null));
+			// }
 		}
-		if (isLoaded == true && this.isLoaded == false && getArgTree() != null) {
-			getArgTree().onNodeIsLoaded(this);
-
-		}
-		this.isLoaded = isLoaded;
-
 	}
 
 	public boolean hasID() {
-		if (getNodeID() != null) {
-			return true;
-		} else {
-			return false;
-		}
+		return getNodeID() != null;
 	}
 
 	public ArgTree getArgTree() {
 		return (ArgTree) super.getTree();
+	}
+
+	public boolean isAttachedToTree() {
+		return getArgTree() != null;
 	}
 }

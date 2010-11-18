@@ -20,23 +20,26 @@ public abstract class ViewProp extends ViewNode {
 		@Override
 		public void onLoad() {
 			super.onLoad();
-			if (getNodeID() != null) {
-				getArgTree().trackLoadedAdd(ViewProp.this);
-				Log.log("vp.taah.on", "trackLoadedAdd called:" + getNodeID()
-						+ "|" + isLoaded() + "|" + (getArgTree() == null));
-			} else {
-				Log.log("vp.taah.on", "trackLoadedAdd NOT called:"
-						+ getNodeID() + "|" + isLoaded() + "|"
-						+ (getArgTree() == null));
+			if (hasID() && isLoaded()) {
+				getArgTree().onLoadedNodeAdd(ViewProp.this);
+				// Log.log("vp.taah.on", "trackLoadedAdd called:" + getNodeID()
+				// + "|" + isLoaded() + "|" + (getArgTree() == null));
 			}
+			// else {
+			// Log.log("vp.taah.on", "trackLoadedAdd NOT called:"
+			// + getNodeID() + "|" + isLoaded() + "|"
+			// + (getArgTree() == null));
+			// }
 
 		};
 
 		@Override
 		public void onUnload() {
 			super.onUnload();
-			Log.log("vp.taah.on", "onUnload:" + proposition.id);
-			getArgTree().trackLoadedRemove(ViewProp.this);
+			// Log.log("vp.taah.on", "onUnload:" + proposition.id);
+			if (hasID() && isLoaded()) {
+				getArgTree().onLoadedNodeRemove(ViewProp.this);
+			}
 		}
 	};
 	// protected TextArea textArea = new TextArea();
@@ -63,15 +66,23 @@ public abstract class ViewProp extends ViewNode {
 
 	@Override
 	public void setNode(Node node) {
-		if (getNodeID() == null && isLoaded() && getArgTree() != null) {
+		if (!hasID() && isLoaded() && isAttachedToTree()) {
+			/*
+			 * can't set node before testing hasID() (because then hasID() would
+			 * always return true), but need it set before calling
+			 * trackLoadedAdd(), and need it set regardless of this if() clause
+			 * so I just set it here, and after the if() clause.
+			 */
 			proposition = (Proposition) node;
-			getArgTree().trackLoadedAdd(this);
-			Log.log("vp.taah.sn", "trackLoadedAdd called:" + getNodeID() + "|"
-					+ isLoaded() + "|" + (getArgTree() == null));
-		} else {
-			Log.log("vp.taah.sn", "trackLoadedAdd NOT called:" + getNodeID()
-					+ "|" + isLoaded() + "|" + (getArgTree() == null));
+			getArgTree().onLoadedNodeAdd(this);
+			// Log.log("vp.taah.sn", "trackLoadedAdd called:" + getNodeID() +
+			// "|"
+			// + isLoaded() + "|" + (getArgTree() == null));
 		}
+		// else {
+		// Log.log("vp.taah.sn", "trackLoadedAdd NOT called:" + getNodeID()
+		// + "|" + isLoaded() + "|" + (getArgTree() == null));
+		// }
 		proposition = (Proposition) node;
 		setContent(proposition.getContent());
 

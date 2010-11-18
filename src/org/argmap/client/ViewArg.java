@@ -34,9 +34,15 @@ public abstract class ViewArg extends ViewNode {
 
 	@Override
 	public void setNode(Node node) {
-		if (getNodeID() == null && isLoaded() && getArgTree() != null) {
+		if (!hasID() && isLoaded() && isAttachedToTree()) {
+			/*
+			 * can't set node before testing for hasID() (because then hasID()
+			 * will always return true), but need it set before calling
+			 * trackLoadedAdd(), and need it set regardless of this if() clause
+			 * so I just set it here, and after the if() clause.
+			 */
 			argument = (Argument) node;
-			getArgTree().trackLoadedAdd(this);
+			getArgTree().onLoadedNodeAdd(this);
 		}
 		argument = (Argument) node;
 		textBox.setText(argument.content);
@@ -67,15 +73,17 @@ public abstract class ViewArg extends ViewNode {
 			@Override
 			protected void onLoad() {
 				super.onLoad();
-				if (getNodeID() != null) {
-					getArgTree().trackLoadedAdd(ViewArg.this);
+				if (hasID() && isLoaded()) {
+					getArgTree().onLoadedNodeAdd(ViewArg.this);
 				}
 			};
 
 			@Override
 			public void onUnload() {
 				super.onUnload();
-				getArgTree().trackLoadedRemove(ViewArg.this);
+				if (hasID() && isLoaded()) {
+					getArgTree().onLoadedNodeRemove(ViewArg.this);
+				}
 			}
 		};
 		textBox.setVisibleLength(Argument.MAX_LENGTH);

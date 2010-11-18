@@ -185,61 +185,44 @@ public class ArgTree extends Tree {
 	// super.removeItem(item);
 	// }
 
-	@Override
-	public void addItem(TreeItem item) {
-		super.addItem(item);
-		if (item instanceof ViewNode) {
-			((ViewNode) item).recursiveCallOnAddLoadedNode((ViewNode) item);
-		}
-	}
-
-	@Override
-	public void insertItem(int index, TreeItem item) {
-		super.insertItem(index, item);
-		if (item instanceof ViewNode) {
-			((ViewNode) item).recursiveCallOnAddLoadedNode((ViewNode) item);
-		}
-	}
-
-	public void trackLoadedAdd(ViewNode node) {
-		if (node.isLoaded()) {
-			Log.log("at.tla", "loaded added:" + node.toString());
-			onLoadedNodeAdd(node);
-		} else {
-			// Log.log("at.tla", "unloaded added");
-		}
-	}
-
-	public void trackLoadedRemove(ViewNode node) {
-		if (node.isLoaded()) {
-			Log.log("at.tla", "loaded removed:" + node.toString());
-			onLoadedNodeRemove(node);
-		} else {
-			// Log.log("at.tla", "unloaded removed");
-		}
-	}
+	// @Override
+	// public void addItem(TreeItem item) {
+	// super.addItem(item);
+	// if (item instanceof ViewNode) {
+	// ((ViewNode) item).recursiveCallOnAddLoadedNode((ViewNode) item);
+	// }
+	// }
+	//
+	// @Override
+	// public void insertItem(int index, TreeItem item) {
+	// super.insertItem(index, item);
+	// if (item instanceof ViewNode) {
+	// ((ViewNode) item).recursiveCallOnAddLoadedNode((ViewNode) item);
+	// }
+	// }
 
 	public void onLoadedNodeAdd(ViewNode node) {
 	}
 
 	public void onLoadedNodeRemove(ViewNode node) {
-
 	}
 
-	/*
-	 * these methods are called by a ViewNode whenever a loaded Node is attached
-	 * or removed from the ArgTree or whenever an attached Node becomes loaded.
-	 * Edit modes uses them to keep track of loaded nodes.
-	 */
-	public void onRemovedLoadedNode(ViewNode node) {
-	}
-
-	public void onAddLoadedNode(ViewNode node) {
-	}
-
-	public void onNodeIsLoaded(ViewNode node) {
-	}
-
-	public void onRemoveAllLoadedNodes() {
-	}
+	// /*
+	// * these methods are called by a ViewNode whenever a loaded Node is
+	// attached
+	// * or removed from the ArgTree or whenever an attached Node becomes
+	// loaded.
+	// * Edit modes uses them to keep track of loaded nodes.
+	// */
+	// public void onRemovedLoadedNode(ViewNode node) {
+	// }
+	//
+	// public void onAddLoadedNode(ViewNode node) {
+	// }
+	//
+	// public void onNodeIsLoaded(ViewNode node) {
+	// }
+	//
+	// public void onRemoveAllLoadedNodes() {
+	// }
 }
