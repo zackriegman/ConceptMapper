@@ -97,6 +97,8 @@ public abstract class ViewNode extends TreeItem {
 
 	public abstract void setAsCircularLink();
 
+	public abstract String getContent();
+
 	/*
 	 * As far as I can tell this is currently only used in EditMode.
 	 */

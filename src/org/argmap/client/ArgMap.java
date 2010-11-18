@@ -25,6 +25,8 @@ import com.google.gwt.user.client.ui.Widget;
 /* TODO when I implement auto-saving (which I think I should do soon) it will probably have weird effects
  * on the currently edited proposition).
  */
+/* TODO fix argument formating on chrome (for/against misplaced because of textbox too big?*/
+/* TODO limit argument text length on client and server */
 
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
 /*TODO: track down exceptions in ModeVersion (unrelated to circular linking)*/

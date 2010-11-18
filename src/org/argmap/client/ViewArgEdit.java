@@ -1,6 +1,7 @@
 package org.argmap.client;
 
 import org.argmap.client.ModeEdit.EditModeTree;
+import org.argmap.client.ModeEdit.SavableNode;
 import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -20,7 +21,7 @@ import com.google.gwt.user.client.ui.Button;
 
 public class ViewArgEdit extends ViewArg implements ChangeHandler,
 		KeyDownHandler, MouseOverHandler, MouseOutHandler, ClickHandler,
-		FocusHandler {
+		FocusHandler, SavableNode {
 
 	private final Button expandButton = new Button("+");
 
@@ -52,7 +53,10 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 
 	@Override
 	public void onChange(ChangeEvent event) {
+		saveContentToServerIfChanged();
+	}
 
+	public void saveContentToServerIfChanged() {
 		String trimmedTextBoxContent = textBox.getText() == null ? "" : textBox
 				.getText().trim();
 		String trimmedArgumentTitle = argument.content == null ? ""
@@ -61,7 +65,6 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 			argument.content = trimmedTextBoxContent;
 			ServerComm.updateArg(argument);
 		}
-
 	}
 
 	public void haveFocus() {
@@ -109,7 +112,12 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 							}
 						});
 				event.preventDefault();
-
+			} else {
+				/*
+				 * if the key stroke indicates a change of this argument's text
+				 * set the save timer
+				 */
+				getEditMode().editContentSaveTimer.setNodeForTimedSave(this);
 			}
 		}
 	}

@@ -54,6 +54,10 @@ public abstract class ViewArg extends ViewNode {
 		return argument;
 	}
 
+	public String getContent() {
+		return textBox.getText();
+	}
+
 	/*
 	 * TODO: move this method from ViewArg and the equivalent from ViewProp into
 	 * ViewArgVer and ViewPropVer.

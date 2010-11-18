@@ -1,6 +1,7 @@
 package org.argmap.client;
 
 import org.argmap.client.ModeEdit.EditModeTree;
+import org.argmap.client.ModeEdit.SavableNode;
 import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -24,7 +25,7 @@ import com.google.gwt.user.client.ui.TextArea;
 
 public class ViewPropEdit extends ViewProp implements ClickHandler,
 		KeyDownHandler, KeyUpHandler, FocusHandler, ChangeHandler,
-		MouseOverHandler, MouseOutHandler {
+		MouseOverHandler, MouseOutHandler, SavableNode {
 
 	private static ViewPropEdit lastPropositionWithFocus = null;
 	private final Button proButton;
@@ -203,7 +204,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 								.length() && textArea.getSelectionLength() == 0) {
 					removeNextProposition();
 					event.preventDefault();
+				} else {
+					getEditMode().editContentSaveTimer
+							.setNodeForTimedSave(this);
 				}
+			} else {
+				getEditMode().editContentSaveTimer.setNodeForTimedSave(this);
 			}
 		}
 	}
@@ -295,7 +301,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			preTextArea.setCursorPos(newCursorPosition);
 			prePropView.proposition.setContent(combinedText);
 			remove();
-			prePropView.updatePropOnServerIfChanged();
+			prePropView.saveContentToServerIfChanged();
 		}
 		ServerComm.deleteProp(this.proposition);
 
@@ -367,7 +373,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 							newPropView.setLoaded(true);
 						}
 					});
-			updatePropOnServerIfChanged();
+			saveContentToServerIfChanged();
 		}
 
 	}
@@ -420,14 +426,14 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	@Override
 	public void onChange(ChangeEvent event) {
-		updatePropOnServerIfChanged();
+		saveContentToServerIfChanged();
 		if (proposition.linkCount > 1) {
 			textArea.setReadOnly(true);
 		}
 
 	}
 
-	private void updatePropOnServerIfChanged() {
+	public void saveContentToServerIfChanged() {
 		String trimmedTextAreaContent = textArea.getText() == null ? ""
 				: textArea.getText().trim();
 		String trimmedPropositionContent = proposition.getContent() == null ? ""

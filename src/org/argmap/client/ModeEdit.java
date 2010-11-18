@@ -70,6 +70,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	private Button addPropButton;
 	private MainSearchTimer mainSearchTimer;
 	public SideSearchTimer sideSearchTimer;
+	public EditContentSaveTimer editContentSaveTimer;
 	private Button mainSearchContinueButton;
 	private Button sideSearchContinueButton;
 	private final ArgMap argMap;
@@ -168,6 +169,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				 */
 				mainSearchTimer = new MainSearchTimer();
 				searchTextBox = new TextBox();
+				editContentSaveTimer = new EditContentSaveTimer();
 
 				addPropButton = new Button("Add as new proposition");
 				addPropButton.setStylePrimaryName("addPropButton");
@@ -904,6 +906,33 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				return "";
 			}
 		}
+	}
+
+	public interface SavableNode {
+		public void saveContentToServerIfChanged();
+	}
+
+	public class EditContentSaveTimer extends Timer {
+		/*
+		 * I think this is fine for now. Saves after the user has stopped typing
+		 * for 3 seconds. Is that too frequent? Or not frequent enough? If
+		 * someone is typing for a minute it might be nice to see it before they
+		 * stop. On the other hand how common is it for someone to type
+		 * continuously for a minute without pausing for three seconds?
+		 */
+
+		private SavableNode viewNode;
+
+		public void setNodeForTimedSave(SavableNode viewNode) {
+			this.viewNode = viewNode;
+			schedule(3000);
+		}
+
+		@Override
+		public void run() {
+			viewNode.saveContentToServerIfChanged();
+		}
+
 	}
 
 	@Override
