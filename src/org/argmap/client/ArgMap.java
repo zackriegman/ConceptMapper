@@ -22,19 +22,18 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/* TODO fix argument formating on chrome (for/against misplaced because of textbox too big?*/
-/* TODO limit argument text length on client and server */
+//TODO: implement proposition strength voting, and scoring algorithm
 
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
 /*TODO: track down exceptions in ModeVersion (unrelated to circular linking)*/
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
 
-//TODO: implement proposition strength voting, and scoring algorithm
 //TODO: add helpful message along the side (tips box)
 //TODO: add 'real' example arguments for demonstration (for instance my argument about legalizing unauthorized access)
 //TODO: implement user accounts, email updates of changes, inviting friends
 
+/* TODO limit argument text length on client and server */
 /*TODO: a proposition tree begins at time A.  At time C a pre-existing node is linked into the proposition tree.
  * The user browses to a time B between times A and C.  At that time the linked node is not present.
  * However the linked node is open in the tree(as a deleted node, so its changes are displayed in the change list).
