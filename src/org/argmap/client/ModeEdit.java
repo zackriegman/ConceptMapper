@@ -742,39 +742,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				loadedArgs.remove(node.getNodeID(), (ViewArg) node, false);
 			}
 		}
-
-		// @Override
-		// public void onRemovedLoadedNode(ViewNode node) {
-		// if (node instanceof ViewProp) {
-		// loadedProps.remove(node.getNodeID(), (ViewProp) node, false);
-		// } else if (node instanceof ViewArg) {
-		// loadedArgs.remove(node.getNodeID(), (ViewArg) node, false);
-		// }
-		// }
-		//
-		// @Override
-		// public void onAddLoadedNode(ViewNode node) {
-		// if (node instanceof ViewProp) {
-		// loadedProps.put(node.getNodeID(), (ViewProp) node);
-		// } else if (node instanceof ViewArg) {
-		// loadedArgs.put(node.getNodeID(), (ViewArg) node);
-		// }
-		// }
-		//
-		// @Override
-		// public void onNodeIsLoaded(ViewNode node) {
-		// if (node instanceof ViewProp) {
-		// loadedProps.put(node.getNodeID(), (ViewProp) node);
-		// } else if (node instanceof ViewArg) {
-		// loadedArgs.put(node.getNodeID(), (ViewArg) node);
-		// }
-		// }
-		//
-		// @Override
-		// public void onRemoveAllLoadedNodes() {
-		// loadedProps.clear();
-		// loadedArgs.clear();
-		// }
 	}
 
 	public Tree buildTreeCloneOfOpenNodes(Tree cloneTree) {

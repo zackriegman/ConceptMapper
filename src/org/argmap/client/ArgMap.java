@@ -22,9 +22,7 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-//TODO decide on tracking method for loadedNodes and finish it up
-/*
- * TODO when I implement auto-saving (which I think I should do soon) it will probably have weird effects
+/* TODO when I implement auto-saving (which I think I should do soon) it will probably have weird effects
  * on the currently edited proposition).
  */
 
@@ -35,8 +33,8 @@ import com.google.gwt.user.client.ui.Widget;
 
 //TODO: implement proposition strength voting, and scoring algorithm
 //TODO: add helpful message along the side (tips box)
-//TODO: implement user accounts, email updates of changes, inviting friends
 //TODO: add 'real' example arguments for demonstration (for instance my argument about legalizing unauthorized access)
+//TODO: implement user accounts, email updates of changes, inviting friends
 
 /*TODO: a proposition tree begins at time A.  At time C a pre-existing node is linked into the proposition tree.
  * The user browses to a time B between times A and C.  At that time the linked node is not present.

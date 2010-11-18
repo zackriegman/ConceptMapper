@@ -114,6 +114,11 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 			}
 		}
 
+		/*
+		 * tell edit mode that there has been a user action so it doesn't
+		 * throttle live updates
+		 */
+		getEditMode().updateTimer.userAction();
 	}
 
 	@Override
@@ -137,6 +142,10 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 		return (EditModeTree) getTree();
 	}
 
+	private ModeEdit getEditMode() {
+		return ((EditModeTree) getTree()).getEditMode();
+	}
+
 	@Override
 	public void onClick(ClickEvent event) {
 		expandButton.setVisible(false);
@@ -149,5 +158,11 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 	@Override
 	public void onFocus(FocusEvent event) {
 		getEditModeTree().getEditMode().hideSearchBox();
+
+		/*
+		 * tell edit mode that there has been a user action so it doesn't
+		 * throttle live updates
+		 */
+		getEditMode().updateTimer.userAction();
 	}
 }

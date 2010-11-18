@@ -214,6 +214,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				}
 			}
 		}
+
+		/*
+		 * tell edit mode that there has been a user action so it doesn't
+		 * throttle live updates
+		 */
+		getEditMode().updateTimer.userAction();
 	}
 
 	public void removeNextProposition() {
@@ -400,6 +406,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			updateButtons();
 			getEditMode().sideSearchTimer.setViewProp(this);
 		}
+
+		/*
+		 * tell edit mode that there has been a user action so it doesn't
+		 * throttle live updates
+		 */
+		getEditMode().updateTimer.userAction();
 	}
 
 	private ModeEdit getEditMode() {
