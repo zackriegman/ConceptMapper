@@ -22,21 +22,12 @@ public abstract class ViewProp extends ViewNode {
 			super.onLoad();
 			if (hasID() && isLoaded()) {
 				getArgTree().onLoadedNodeAdd(ViewProp.this);
-				// Log.log("vp.taah.on", "trackLoadedAdd called:" + getNodeID()
-				// + "|" + isLoaded() + "|" + (getArgTree() == null));
 			}
-			// else {
-			// Log.log("vp.taah.on", "trackLoadedAdd NOT called:"
-			// + getNodeID() + "|" + isLoaded() + "|"
-			// + (getArgTree() == null));
-			// }
-
 		};
 
 		@Override
 		public void onUnload() {
 			super.onUnload();
-			// Log.log("vp.taah.on", "onUnload:" + proposition.id);
 			if (hasID() && isLoaded()) {
 				getArgTree().onLoadedNodeRemove(ViewProp.this);
 			}
@@ -75,14 +66,8 @@ public abstract class ViewProp extends ViewNode {
 			 */
 			proposition = (Proposition) node;
 			getArgTree().onLoadedNodeAdd(this);
-			// Log.log("vp.taah.sn", "trackLoadedAdd called:" + getNodeID() +
-			// "|"
-			// + isLoaded() + "|" + (getArgTree() == null));
 		}
-		// else {
-		// Log.log("vp.taah.sn", "trackLoadedAdd NOT called:" + getNodeID()
-		// + "|" + isLoaded() + "|" + (getArgTree() == null));
-		// }
+
 		proposition = (Proposition) node;
 		setContent(proposition.getContent());
 

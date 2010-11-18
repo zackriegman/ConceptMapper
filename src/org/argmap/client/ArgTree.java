@@ -161,68 +161,26 @@ public class ArgTree extends Tree {
 	}
 
 	/*
-	 * the current implementation of clear() in GWT is to call remove on each
-	 * item, so we don't need a special method for clear() (and having one
-	 * causes problems because nodes are removed multiple times causing MultiMap
-	 * to throw an exception. Also if the super implementation of removeItem is
-	 * to call remove() on the item then onRemoveLoadedNode will be called there
-	 * and it doesn't need to be called here...
+	 * ViewNode, ViewArg and ViewProp make calls to these methods when a node is
+	 * loaded/unloaded so these empty methods need to be here instead of in
+	 * ModeEditTree, even though they are only used in ModeEditTree. They are
+	 * overriden in ModeEditTree to track the additions/deletions of nodes.
+	 * ViewNode calls these methods upon a ViewNode being loaded/unloaded when
+	 * it is already attached to the tree and already has an ID. ViewProp and
+	 * ViewArg call these methods when a upon setNode() if the node is already
+	 * loaded and already attached to the tree, or upon being attached to the
+	 * tree if the node is already loaded and already has an ID. In otherwords
+	 * we are trying to track all the Nodes for which three things are true: it
+	 * isLoaded(), it hasID(), and it isAttachedToTree(). (It's easier to test
+	 * for those conditions at each of the points where a change happens instead
+	 * of here because some of the conditions have to be tested for before
+	 * calling here, for instance isAttachedToTree() must be called before
+	 * calling these methods because if a node is not attached to the tree it
+	 * won't have a reference here.
 	 */
-	// @Override
-	// public void clear() {
-	// onRemoveAllLoadedNodes();
-	// super.clear();
-	// }
-
-	// @Override
-	// public void removeItems() {
-	// onRemoveAllLoadedNodes();
-	// super.removeItems();
-	// }
-	// @Override
-	// public void removeItem(TreeItem item) {
-	// onRemoveAllLoadedNodes();
-	// super.removeItem(item);
-	// }
-
-	// @Override
-	// public void addItem(TreeItem item) {
-	// super.addItem(item);
-	// if (item instanceof ViewNode) {
-	// ((ViewNode) item).recursiveCallOnAddLoadedNode((ViewNode) item);
-	// }
-	// }
-	//
-	// @Override
-	// public void insertItem(int index, TreeItem item) {
-	// super.insertItem(index, item);
-	// if (item instanceof ViewNode) {
-	// ((ViewNode) item).recursiveCallOnAddLoadedNode((ViewNode) item);
-	// }
-	// }
-
 	public void onLoadedNodeAdd(ViewNode node) {
 	}
 
 	public void onLoadedNodeRemove(ViewNode node) {
 	}
-
-	// /*
-	// * these methods are called by a ViewNode whenever a loaded Node is
-	// attached
-	// * or removed from the ArgTree or whenever an attached Node becomes
-	// loaded.
-	// * Edit modes uses them to keep track of loaded nodes.
-	// */
-	// public void onRemovedLoadedNode(ViewNode node) {
-	// }
-	//
-	// public void onAddLoadedNode(ViewNode node) {
-	// }
-	//
-	// public void onNodeIsLoaded(ViewNode node) {
-	// }
-	//
-	// public void onRemoveAllLoadedNodes() {
-	// }
 }
