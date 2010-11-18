@@ -163,25 +163,17 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 						newPropView.setLoaded(true);
 					}
 				});
-		// ServerComm.addArg(pro, this.proposition, new
-		// LocalCallback<Argument>() {
-		// @Override
-		// public void call(Argument result) {
-		// newArgView.setNode( result );
-		// newArgView.setLoaded(true);
-		// }
-		// });
-		// ServerComm.addProp(newPropView.proposition, newArgView.argument, 0,
-		// new LocalCallback<Proposition>() {
-		// @Override
-		// public void call(Proposition result) {
-		// addPropositionCallback(newPropView, result);
-		// }
-		// });
 	}
 
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
+		/*
+		 * tell edit mode that there has been a user action so it doesn't
+		 * throttle live updates (do it first in case the key press results in a
+		 * deletion in which case the getEditMode() will return null)
+		 */
+		getEditMode().updateTimer.userAction();
+
 		int charCode = event.getNativeKeyCode();
 		Object source = event.getSource();
 		if (source == textArea) {
@@ -214,12 +206,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				}
 			}
 		}
-
-		/*
-		 * tell edit mode that there has been a user action so it doesn't
-		 * throttle live updates
-		 */
-		getEditMode().updateTimer.userAction();
 	}
 
 	public void removeNextProposition() {
@@ -356,13 +342,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 							newPropView.setLoaded(true);
 						}
 					});
-			// parentArgView().argument, treePosition,
-			// new LocalCallback<Proposition>() {
-			// @Override
-			// public void call(Proposition result) {
-			// addPropositionCallback(newPropView, result);
-			// }
-			// });
 		} else {
 			parentArgView().insertItem(treePosition + 1, newPropView);
 
@@ -388,13 +367,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 							newPropView.setLoaded(true);
 						}
 					});
-			// parentArgView().argument, treePosition + 1,
-			// new LocalCallback<Proposition>() {
-			// @Override
-			// public void call(Proposition result) {
-			// addPropositionCallback(newPropView, result);
-			// }
-			// });
 			updatePropOnServerIfChanged();
 		}
 
@@ -422,10 +394,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		return (EditModeTree) getTree();
 	}
 
-	/*
-	 * TODO: delete this method not using this while I test out having the
-	 * buttons appear on mouseover events...
-	 */
 	private void updateButtons() {
 		// if another Proposition's buttons are visible hide them
 		if (lastPropositionWithFocus != this
@@ -487,31 +455,14 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	@Override
 	public void onMouseOut(MouseOutEvent event) {
 		topPanel.remove(expandButton);
-
-		// proButton.setVisible(false);
-		// conButton.setVisible(false);
-		// expandButton.setVisible(false);
-		// if (linkEditButton != null) {
-		// linkEditButton.setVisible(false);
-		// linkRemoveButton.setVisible(false);
-		// }
 	}
 
 	@Override
 	public void onMouseOver(MouseOverEvent event) {
 
 		if (!isLoaded() && hasID()) {
-			// topPanel.add(expandButton, 580, 2);
 			topPanel.add(expandButton);
 			expandButton.setVisible(true);
 		}
-
-		// proButton.setVisible(true);
-		// conButton.setVisible(true);
-		// if (linkEditButton != null) {
-		// linkEditButton.setVisible(true);
-		// linkRemoveButton.setVisible(true);
-		// }
-
 	}
 }

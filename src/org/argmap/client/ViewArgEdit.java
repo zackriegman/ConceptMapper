@@ -70,6 +70,12 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
+		/*
+		 * tell edit mode that there has been a user action so it doesn't
+		 * throttle live updates (do it first in case the key press results in a
+		 * deletion in which case the getEditMode() might return null)
+		 */
+		getEditMode().updateTimer.userAction();
 
 		int charCode = event.getNativeKeyCode();
 		Object source = event.getSource();
@@ -102,23 +108,10 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 								newPropView.setLoaded(true);
 							}
 						});
-				// ServerComm.addProp(newPropView.proposition, argument, 0, new
-				// LocalCallback<Proposition>() {
-				// @Override
-				// public void call(Proposition result) {
-				// newPropView.addPropositionCallback(newPropView, result);
-				// }
-				// });
 				event.preventDefault();
 
 			}
 		}
-
-		/*
-		 * tell edit mode that there has been a user action so it doesn't
-		 * throttle live updates
-		 */
-		getEditMode().updateTimer.userAction();
 	}
 
 	@Override

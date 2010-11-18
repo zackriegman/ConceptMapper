@@ -88,6 +88,16 @@ import com.google.gwt.user.client.ui.Widget;
 //TODO: maintain order of propositions? waiting to see if order gets screwed up
 //TODO: IE problems: (1) VersionsMode doesn't seem to work (2) can delete root level proposition without first deleting its text
 //TODO: figure out how to have logging code compiled out like the GWT logger framework supposedly does
+/* TODO live updates: I might want to have a way to remove deleted search
+ * results so that the user doesn't start editing a deleted item. This
+ * should be easy, just supply the server with a list of root items, and
+ * return add/remove changes for them...
+ */
+/* TODO live updates: currently root nodes returned from a call to
+ * getRootProps() are not live updated, but a user can start editing them,
+ * increasing the chances that the user will overwrite someone else's
+ * changes without know it
+ */
 
 // TO DO: test in IE8, chrome, safari, opera, etc.
 // TO DO: implement some basic database integrity checks (e.g. every argument belongs to an existing proposition...)

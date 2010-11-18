@@ -298,63 +298,17 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	 * update/add/delete operation, and update the updated field on the client
 	 * so it has the latest updates and doesn't need to get them...
 	 */
-	/*
-	 * TODO might want to have a way to remove deleted search results so that
-	 * the userdoesn't start editing a deleted item. This should be easy, just
-	 * supply the serverwith a list of root items, and return add/remove changes
-	 * for them...
-	 */
-	/*
-	 * TODO as I'm adding nodes, how do I decide whether to add them as open or
-	 * closed, loaded or unloaded? What I decided is that the first layer of
-	 * added nodes would be added as preloaded but closed, and the second layer
-	 * would be added as closed and unloaded.
-	 */
-	/*
-	 * TODO make sure that updates and searches don't step on each other. The
-	 * update callback can just make sure that there is no search in progress,
-	 * and if there is it can throw out its results. The search... maybe it
-	 * should remove the tree so the update is working on an irrelevant tree? Or
-	 * maybe we don't need to worry about this, becuase the search clears the
-	 * tree... so update will be working on detached nodes... but what about
-	 * root props and what about loadedProps and loadedArgs... the search will
-	 * clear those and replenish them and the update will continue working from
-	 * them. Maybe the search should replace loadedProps and loadedArgs with new
-	 * maps entirely (instead of clearing them) so that the update is working
-	 * with the old list and the search can go ahead and create a new list...?
-	 */
-	/*
-	 * TODO also might make sense to think more about how to make sure that
-	 * asearch doesn't step on an update. So the flow that I'm concerned aboutin
-	 * that case would be, update starts before search (search can
-	 * clearlastUpdate when it begins and set it to a new date when it returns)
-	 * andsearch starts and returns while update is still working, and then
-	 * clears thetree while update is still working... might not be a problem
-	 * actually...because the nodes that update was working on will still be in
-	 * memory, updatecan finish updating the pointless nodes, even after search
-	 * has cleared the tree...hmmm...
-	 */
 
 	/*
-	 * TODO make sure that the node.childIDs are updated on every ModeEdit
-	 * change...
-	 */
-	/*
-	 * TODO trying to sort out the isLoaded mess. The question is whether or not
-	 * a new ViewNode is loaded before it gets its id. We can't keep track of it
-	 * in loadedProps/Args until it has an id so in that sense it is not loaded.
-	 * On the otherhand it cannot be loaded from the server without an id, so if
-	 * someone is checking to see if it should be loaded (which was the previous
-	 * and ongoing purpose of isLoaded() they would want to see a yes on a brand
-	 * new ViewNode. So I think I decided to go with isLoaded is only true for
-	 * Views with ids set, and other uses have to check hasID() to find out if
-	 * an unloaded View can be loaded from the server. This means that all the
-	 * servercomm add methods have to be updated to accept a ViewNode, and to
-	 * updated that ViewNode to loaded upon receiving the ID back from the
-	 * server. In my extremely tired state right now I don't see any problem
-	 * with this approach, so I just need to change servercomm, and also make
-	 * sure that flipping the default isLoaded state from true to false didn't
-	 * fuck anything else up... which it probably did...)
+	 * This is how I prevent searches and updates from stepping on each other:
+	 * When a search begins it pauses updates, and if there is an update that
+	 * returns after a search has happened the update throws out the result. In
+	 * the case where an update returns before a search has start, and is still
+	 * working when a search clears the tree and gets search results back, I
+	 * don't there there should be any problems. The update will be working with
+	 * the new loadedProps and loadedArgs list so might have references to nodes
+	 * that don't need to be updated... but I think that all that means is that
+	 * some up-to-date nodes get unnecessarily updated.
 	 */
 	private void getUpdatesAndApply() {
 		final Date startTime = updateTimer.getStartDate();
@@ -364,17 +318,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 
 		Map<Long, DateAndChildIDs> propsInfo = new HashMap<Long, DateAndChildIDs>();
-		/*
-		 * TODO need to make sure that the list sent to the server contains the
-		 * oldest version of the node on the client, and that when updated the
-		 * nodes return by the server, that the client checks each node to make
-		 * sure that it needs to be updated, because nodes on the client may
-		 * have different ages and updated values. For instance, when a link
-		 * that is opened twice on the client is updated, there will be two
-		 * copies, one will be updated on the client... well... currently I
-		 * don't update the Nodes updated value so maybe this actually isn't a
-		 * concern... hmmm...
-		 */
+
 		loadNodeInfo(loadedProps, propsInfo);
 		Map<Long, DateAndChildIDs> argsInfo = new HashMap<Long, DateAndChildIDs>();
 		loadNodeInfo(loadedArgs, argsInfo);
@@ -475,18 +419,11 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 							results.nodes, 0);
 				} else {
 					/*
-					 * TODO when would the results not contain a key for a
-					 * child? since I'm using recursiveBuildViewNode it should
-					 * take care of a number of children that have been added.
-					 * updateNode() should only be called for nodes in the
-					 * pre-existing tree. recursiveBuildViewNode takes care of
-					 * creating the children and any grandchildren/dummy nodes
-					 * necessary. Update node takes care of removing/adding/and
-					 * updating the content of the node. So I'm commmenting out
-					 * this addItem() and replacing it with an assert false;
+					 * either the child node should already exist on the client
+					 * or be in the set of nodes return by the server, so this
+					 * should never happen
 					 */
 					assert false;
-					// viewNode.addItem(new ViewDummyVer(id));
 				}
 			}
 		}
@@ -494,7 +431,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		log.logln("setting node -- \nold:" + viewNode.getNode().toString()
 				+ "\n new:" + node.toString());
 		viewNode.setNode(node);
-		// tree.recursiveResizeNode(viewNode);
 		log.finish();
 	}
 
@@ -502,23 +438,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			MultiMap<Long, T> loadedNodes, Map<Long, DateAndChildIDs> nodesInfo) {
 		for (Long id : loadedNodes.keySet()) {
 			List<T> viewNodeList = loadedNodes.get(id);
-
-			/*
-			 * TODO: is this necessary? When can nodes for the same Node.id have
-			 * different 'updated' values? Aren't they all updated
-			 * simultaneously by the live updates? get the ViewNode for this
-			 * Node.id that is least up to date. This is necessary because a
-			 * link might be updated... maybe not
-			 */
-			// T oldestNode = null;
-			// for (T viewNode : viewNodeList) {
-			// if (oldestNode == null
-			// || viewNode.getNode().updated.before(oldestNode
-			// .getNode().updated)) {
-			// oldestNode = viewNode;
-			// }
-			// }
-			// Node node = oldestNode.getNode();
 
 			Node node = viewNodeList.get(0).getNode();
 
@@ -546,13 +465,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 						newPropView.setLoaded(true);
 					}
 				});
-		// ServerComm.addProp(newPropView.getProposition(), null, 0,
-		// new LocalCallback<Proposition>() {
-		// @Override
-		// public void call(Proposition result) {
-		// newPropView.addPropositionCallback(newPropView, result);
-		// }
-		// });
 	}
 
 	public static void log(String string) {
