@@ -22,9 +22,9 @@ public class Lock {
 		this.lockName = lockName;
 		this.locked = false;
 	}
-	
-	public static Lock getLock( String lockName ){
-		return new Lock( lockName );
+
+	public static Lock getLock(String lockName) {
+		return new Lock(lockName);
 	}
 
 	public void lock() {
@@ -53,5 +53,9 @@ public class Lock {
 			memcacheService.delete(LOCK_PREFIX + lockName);
 			locked = false;
 		}
+	}
+
+	public static Lock getNodeLock(Long nodeID) {
+		return Lock.getLock("NODE_ID:" + nodeID);
 	}
 }

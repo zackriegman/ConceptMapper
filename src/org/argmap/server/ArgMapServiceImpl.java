@@ -144,10 +144,6 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 	}
 
-	private Lock getNodeLock(Long nodeID) {
-		return Lock.getLock("NODE_ID:" + nodeID);
-	}
-
 	@Override
 	public Proposition addProp(Long parentArgID, int position, String content) {
 		content = content.trim();
@@ -162,7 +158,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		if (parentArgID != null) {
 			// exception will be generated if there is a bogus parentArgID
 
-			Lock lock = getNodeLock(parentArgID);
+			Lock lock = Lock.getNodeLock(parentArgID);
 			try {
 				lock.lock();
 				parentArg = ofy.get(Argument.class, parentArgID);
@@ -193,8 +189,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public void linkProposition(Long parentArgID, int position,
 			Long propositionID) {
-		Lock parentLock = getNodeLock(parentArgID);
-		Lock childLock = getNodeLock(propositionID);
+		Lock parentLock = Lock.getNodeLock(parentArgID);
+		Lock childLock = Lock.getNodeLock(propositionID);
 		try {
 			parentLock.lock();
 			childLock.lock();
@@ -253,7 +249,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		/* if the proposition is used in an argument */
 		else if (query.count() == 1) {
 			Long argID = query.getKey().getId();
-			Lock lock = getNodeLock(argID);
+			Lock lock = Lock.getNodeLock(argID);
 			try {
 				lock.lock();
 				Argument argument = query.get();
@@ -283,8 +279,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	public void unlinkProp(Long parentArgID, Long propositionID)
 			throws ServiceException {
 
-		Lock parentLock = getNodeLock(parentArgID);
-		Lock childLock = getNodeLock(propositionID);
+		Lock parentLock = Lock.getNodeLock(parentArgID);
+		Lock childLock = Lock.getNodeLock(propositionID);
 		try {
 			parentLock.lock();
 			childLock.lock();
@@ -323,7 +319,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		logln("propID:" + propID + "; content:" + content);
 
 		Change change = new Change(ChangeType.PROP_MODIFICATION);
-		Lock lock = getNodeLock(propID);
+		Lock lock = Lock.getNodeLock(propID);
 		try {
 			lock.lock();
 			Proposition prop = ofy.get(Proposition.class, propID);
@@ -356,8 +352,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 		Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
 				"childIDs", argID);
-		Lock parentLock = getNodeLock(propQuery.getKey().getId());
-		Lock childLock = getNodeLock(argID);
+		Lock parentLock = Lock.getNodeLock(propQuery.getKey().getId());
+		Lock childLock = Lock.getNodeLock(argID);
 		try {
 			parentLock.lock();
 			childLock.lock();
@@ -397,7 +393,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public Argument addArg(Long parentPropID, boolean pro) {
 		LapTimer timer = new LapTimer();
-		Lock lock = getNodeLock(parentPropID);
+		Lock lock = Lock.getNodeLock(parentPropID);
 		try {
 			timer.lap("<<<<");
 			lock.lock();
@@ -444,7 +440,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public void updateArg(Long argID, String content) throws ServiceException {
 		content = content.trim();
-		Lock lock = getNodeLock(argID);
+		Lock lock = Lock.getNodeLock(argID);
 		try {
 			lock.lock();
 			Change change = new Change(ChangeType.ARG_MODIFICATION);
@@ -483,7 +479,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		try {
 			change.sessionID = request.getSession().getId();
 		} catch (java.lang.IllegalStateException e) {
-			log.fine("no session information logged because there was no session found");
+			log.fine("no session information saved in Change object because there was no session found");
 		}
 
 		// logln("Change Logged -- " + change.toString());
@@ -511,6 +507,15 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	private void putNode(Node node) {
+		/*
+		 * every time a node is saved on the server this method should be called
+		 * to update the 'updated' field, unless of course we don't want to
+		 * update the 'updated' field for instance when updating the voteSum.
+		 * See Vote class for an example. So remember, if anything is added to
+		 * this method in at least one place Nodes are updated without calling
+		 * this method.
+		 */
+
 		node.updated = new Date();
 		ofy.put(node);
 	}
@@ -809,9 +814,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public Map<Long, Node> replaceWithLinkAndGet(Long parentArgID,
 			Long linkPropID, Long removePropID) throws ServiceException {
-		Lock parentLock = getNodeLock(parentArgID);
-		Lock oldChildLock = getNodeLock(removePropID);
-		Lock newChildLock = getNodeLock(linkPropID);
+		Lock parentLock = Lock.getNodeLock(parentArgID);
+		Lock oldChildLock = Lock.getNodeLock(removePropID);
+		Lock newChildLock = Lock.getNodeLock(linkPropID);
 		try {
 			parentLock.lock();
 			oldChildLock.lock();
@@ -929,6 +934,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		return nodes;
 	}
 
+	@Override
 	public LoginInfo getLoginInfo(String requestUri) {
 		UserService userService = UserServiceFactory.getUserService();
 		User user = userService.getCurrentUser();
