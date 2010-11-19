@@ -965,4 +965,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	public void doUnexpectedFailure(java.lang.Throwable e) {
 		log.log(Level.SEVERE, "Uncaught exception", e);
 	}
+
+	@Override
+	public Integer getVote(Long propID) {
+		return Vote.getVote(propID);
+	}
 }

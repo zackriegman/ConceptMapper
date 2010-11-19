@@ -111,6 +111,21 @@ public class Vote implements Serializable {
 		}
 	}
 
+	public static Integer getVote(Long propID) {
+		User user = UserServiceFactory.getUserService().getCurrentUser();
+		if (user == null) {
+			return null;
+		}
+		String userID = user.getUserId();
+
+		Vote vote = ofy.find(Vote.class, buildID(userID, propID));
+		if (vote != null) {
+			return vote.eval;
+		} else {
+			return null;
+		}
+	}
+
 	/*
 	 * casts a vote by a user for a particular node, overwriting the existing
 	 * vote if it exists

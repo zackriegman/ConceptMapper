@@ -391,6 +391,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				 * to load it--it will be loaded by the client in good time...
 				 */
 				getEditMode().loadFromServer(this, 2, 0);
+				ServerComm.getVote(getNodeID(), new LocalCallback<Integer>() {
+					@Override
+					public void call(Integer t) {
+						// TODO load up the vote!!!
+					}
+				});
 			}
 		}
 

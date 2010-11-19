@@ -27,8 +27,8 @@ public class Proposition extends Node implements Serializable {
 	/* not sent to client, but saved */
 	transient public Set<String> tokens;
 
-	transient public long voteSum;
-	transient public long voteCount;
+	transient public long voteSum = 0;
+	transient public long voteCount = 0;
 
 	// public @Transient List<Argument> args = new LinkedList<Argument>();
 

@@ -163,6 +163,8 @@ public interface ArgMapService extends RemoteService {
 	public PartialTrees continueSearchProps(String searchName)
 			throws ServiceException;
 
+	public Integer getVote(Long propID);
+
 	public LoginInfo getLoginInfo(String requestURI) throws ServiceException;
 
 }

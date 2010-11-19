@@ -179,6 +179,11 @@ public class ServerComm {
 						"finished loading"));
 	}
 
+	public static void getVote(Long propID, LocalCallback<Integer> localCallback) {
+		argMapService.getVote(propID, new ServerCallback<Integer>(
+				localCallback, "loading vote", "finish loading vote"));
+	}
+
 	public static void getNodesChildren(List<Long> nodeIDs, int depth,
 			LocalCallback<PartialTrees> localCallback) {
 		argMapService.getNodesChildren(nodeIDs, depth,
