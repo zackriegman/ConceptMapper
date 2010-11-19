@@ -1,14 +1,7 @@
 package org.argmap.client;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.logical.shared.AttachEvent;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public abstract class ViewProp extends ViewNode {
@@ -157,121 +150,6 @@ public abstract class ViewProp extends ViewNode {
 
 	public void resize() {
 		textArea.resize();
-	}
-
-	protected static class TextAreaAutoResize extends TextArea {
-		private final Element element;
-
-		@Override
-		public void setText(String text) {
-			super.setText(text);
-			if (isAttached()) {
-				resize();
-			}
-		}
-
-		// tried to copy this link but ran into problem that I can't get padding
-		// as
-		// pixels and I can't do math with pixel results in EM
-		// https://github.com/jaz303/jquery-grab-bag/blob/f1a3cc1e86cbb248bcb41391d6eff115b1be6d89/javascripts/jquery.autogrow-textarea.js
-		private void resize() {
-			Element shadow = DOM.createDiv();
-			Element areaElement = getElement();
-
-			// Style style = areaElement.getStyle();
-			// GWT.log( style.getWidth() + " ||| " +
-			// areaElement.getAttribute("width") + "]]" );
-			int areaWidth = Integer.parseInt(areaElement.getAttribute("width"));
-			// int areaWidth = areaElement.getClientWidth();
-
-			int areaPaddingLeft = Integer.parseInt(areaElement
-					.getAttribute("paddingLeft"));
-			int areaPaddingRight = Integer.parseInt(areaElement
-					.getAttribute("paddingRight"));
-			int ghostWidth = areaWidth - areaPaddingLeft - areaPaddingRight;
-
-			DOM.setStyleAttribute(shadow, "position", "absolute");
-			DOM.setStyleAttribute(shadow, "top", "-1000");
-			DOM.setStyleAttribute(shadow, "left", "-1000");
-			DOM.setStyleAttribute(shadow, "width", "" + ghostWidth);
-			DOM.setStyleAttribute(shadow, "fontSize",
-					areaElement.getAttribute("fontSize"));
-			DOM.setStyleAttribute(shadow, "fontFamily",
-					areaElement.getAttribute("fontFamily"));
-			DOM.setStyleAttribute(shadow, "lineHeight",
-					areaElement.getAttribute("lineHeight"));
-			DOM.setStyleAttribute(shadow, "resize",
-					areaElement.getAttribute("none"));
-
-			shadow.setInnerText(getText());
-			com.google.gwt.dom.client.Element body = Document.get().getBody();
-			body.appendChild(shadow);
-			areaElement.setAttribute("height", shadow.getAttribute("height"));
-		}
-
-		public TextAreaAutoResize() {
-			element = getElement();
-			setWidth(PROP_WIDTH);
-			DOM.setStyleAttribute(element, "overflow", "hidden");
-			addKeyUpHandler(new KeyUpHandler() {
-
-				@Override
-				public void onKeyUp(KeyUpEvent event) {
-					resize();
-				}
-			});
-
-			addAttachHandler(new AttachEvent.Handler() {
-
-				@Override
-				public void onAttachOrDetach(AttachEvent event) {
-					if (event.isAttached()) {
-						resize();
-					}
-				}
-			});
-		}
-	}
-
-	protected static class TextAreaGrow extends TextArea {
-		private final Element element;
-
-		@Override
-		public void setText(String text) {
-			super.setText(text);
-			if (isAttached()) {
-				resize();
-			}
-		}
-
-		private void resize() {
-			DOM.setStyleAttribute(element, "height", "1em");
-			DOM.setStyleAttribute(element, "height",
-					"" + element.getScrollHeight() + "px");
-		}
-
-		public TextAreaGrow() {
-			element = getElement();
-			setWidth(PROP_WIDTH);
-			DOM.setStyleAttribute(element, "overflow", "hidden");
-			addKeyUpHandler(new KeyUpHandler() {
-
-				@Override
-				public void onKeyUp(KeyUpEvent event) {
-					resize();
-				}
-			});
-
-			addAttachHandler(new AttachEvent.Handler() {
-
-				@Override
-				public void onAttachOrDetach(AttachEvent event) {
-					if (isAttached()) {
-						resize();
-					}
-				}
-			});
-		}
 	}
 
 	@Override

@@ -24,9 +24,6 @@ public interface ArgMapServiceAsync {
 	void unlinkProp(Long parentArgID, Long propositionID,
 			AsyncCallback<Void> callback);
 
-	void replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
-			Long removePropID, AsyncCallback<Map<Long, Node>> callback);
-
 	void updateArg(Long argID, String content, AsyncCallback<Void> callback);
 
 	void getChanges(List<Long> propIDs, List<Long> argIDs,
@@ -41,9 +38,6 @@ public interface ArgMapServiceAsync {
 
 	void getArgsWithChanges(List<Long> argIDs,
 			AsyncCallback<Map<Long, NodeWithChanges>> callback);
-
-	void getNodesChildren(List<Long> nodeIDs, int depth,
-			AsyncCallback<Map<Long, Node>> callback);
 
 	void getLoginInfo(String requestURI, AsyncCallback<LoginInfo> callback);
 
@@ -63,5 +57,11 @@ public interface ArgMapServiceAsync {
 			AsyncCallback<PartialTrees> callback);
 
 	void getRootProps(int depthLimit, AsyncCallback<PartialTrees> callback);
+
+	void getNodesChildren(List<Long> nodeIDs, int depth,
+			AsyncCallback<PartialTrees> callback);
+
+	void replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
+			Long removePropID, AsyncCallback<PartialTrees> callback);
 
 }

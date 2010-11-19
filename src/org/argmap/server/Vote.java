@@ -2,15 +2,17 @@ package org.argmap.server;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.persistence.Id;
 
+import org.argmap.client.ArgMapService.PartialTrees;
+import org.argmap.client.Node;
 import org.argmap.client.Proposition;
 
+import com.google.appengine.api.users.User;
+import com.google.appengine.api.users.UserServiceFactory;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.annotation.Cached;
@@ -71,11 +73,28 @@ public class Vote implements Serializable {
 		return userID + String.format(format, propID);
 	}
 
-	/* returns the integer votes associated with each propID */
-	public static Map<Long, Integer> getVotes(Set<Long> propIDs, String userID) {
-		// UserService userService = UserServiceFactory.getUserService();
-		// User user = userService.getCurrentUser();
-		// String userID = user.getUserId();
+	public static void prepWithVotes(PartialTrees trees) {
+		// TODO think about how to make sure there is a valid user in the other
+		// methods too if necessary...
+		User user = UserServiceFactory.getUserService().getCurrentUser();
+		if (user == null) {
+			return;
+		}
+		String userID = user.getUserId();
+
+		List<Long> propIDs = new ArrayList<Long>();
+
+		for (Node node : trees.nodes.values()) {
+			if (node instanceof Proposition) {
+				propIDs.add(node.id);
+			}
+		}
+		getVotes(propIDs, userID, trees.votes);
+	}
+
+	/* puts into the provided map the integer votes associated with each propID */
+	public static void getVotes(List<Long> propIDs, String userID,
+			Map<Long, Integer> results) {
 
 		// first build a list of vote ids based on the userID and the propID
 		List<String> voteIDs = new ArrayList<String>(propIDs.size());
@@ -87,12 +106,9 @@ public class Vote implements Serializable {
 		Map<String, Vote> votes = ofy.get(Vote.class, voteIDs);
 
 		// then build a return map of the integer vote and the proposition id
-		Map<Long, Integer> results = new HashMap<Long, Integer>();
 		for (Vote vote : votes.values()) {
 			results.put(vote.propID, vote.eval);
 		}
-
-		return results;
 	}
 
 	/*

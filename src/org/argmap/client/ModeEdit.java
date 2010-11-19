@@ -637,20 +637,24 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			ViewPropEdit propViewToRemove = ViewPropEdit
 					.getLastPropositionWithFocus();
 			if (propViewToRemove.getChildCount() == 0) {
-				class ThisCallback implements LocalCallback<Map<Long, Node>> {
+				/*
+				 * TODO finalize these variables and replace this with an
+				 * anonymous inner class referencing finalized variables
+				 */
+				class ThisCallback implements LocalCallback<PartialTrees> {
 					ViewArgEdit parentArgView;
 					ViewPropEdit propViewToRemove;
 					int propIndex;
 					Long linkPropID;
 
 					@Override
-					public void call(Map<Long, Node> nodes) {
+					public void call(PartialTrees trees) {
 						parentArgView.removeItem(propViewToRemove);
-						Proposition proposition = (Proposition) nodes
+						Proposition proposition = (Proposition) trees.nodes
 								.get(linkPropID);
 						ViewProp newViewProp = new ViewPropEdit();
-						newViewProp.recursiveBuildViewNode(proposition, nodes,
-								5);
+						newViewProp.recursiveBuildViewNode(proposition,
+								trees.nodes, 5);
 
 						parentArgView.insertItem(propIndex, newViewProp);
 					}
@@ -1172,26 +1176,25 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		loadFromServer(list, loadDepth, openDepth);
 	}
 
-	public void loadFromServer(List<ViewNode> viewNodes, int loadDepth,
-			int openDepth) {
+	public void loadFromServer(final List<ViewNode> viewNodes, int loadDepth,
+			final int openDepth) {
 		List<Long> viewNodeIDs = new ArrayList<Long>(viewNodes.size());
 		for (ViewNode viewNode : viewNodes) {
 			assert !viewNode.isLoaded();
 			viewNodeIDs.add(viewNode.getNodeID());
 		}
 
-		final int openDepthCB = openDepth;
-		final List<ViewNode> viewNodesCB = viewNodes;
 		ServerComm.getNodesChildren(viewNodeIDs, loadDepth,
-				new LocalCallback<Map<Long, Node>>() {
+				new LocalCallback<PartialTrees>() {
 					@Override
-					public void call(Map<Long, Node> nodes) {
-						for (ViewNode source : viewNodesCB) {
-							while (source.getChildCount() > 0) {
-								source.getChild(0).remove();
-							}
+					public void call(PartialTrees trees) {
+						for (ViewNode source : viewNodes) {
+							source.removeItems();
+							// while (source.getChildCount() > 0) {
+							// source.getChild(0).remove();
+							// }
 							source.recursiveBuildViewNode(source.getNode(),
-									nodes, openDepthCB);
+									trees.nodes, openDepth);
 							source.setLoaded(true);
 						}
 						tree.resetState();

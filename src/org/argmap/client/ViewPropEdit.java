@@ -383,6 +383,15 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		if (source == textArea) {
 			updateButtons();
 			getEditMode().sideSearchTimer.setViewProp(this);
+
+			if (!isLoaded() && hasID()) {
+				/*
+				 * have to check hasID() too because this might be a new node
+				 * that does not yet have an ID. In that case we shouldn't try
+				 * to load it--it will be loaded by the client in good time...
+				 */
+				getEditMode().loadFromServer(this, 2, 0);
+			}
 		}
 
 		/*

@@ -43,6 +43,7 @@ public interface ArgMapService extends RemoteService {
 		private static final long serialVersionUID = 1L;
 		public List<Long> rootIDs = new ArrayList<Long>();
 		public Map<Long, Node> nodes = new HashMap<Long, Node>();
+		public Map<Long, Integer> votes = new HashMap<Long, Integer>();
 
 		@Override
 		public String toString() {
@@ -70,7 +71,7 @@ public interface ArgMapService extends RemoteService {
 
 	public PartialTrees getRootProps(int depthLimit);
 
-	public Map<Long, Node> replaceWithLinkAndGet(Long parentArgID,
+	public PartialTrees replaceWithLinkAndGet(Long parentArgID,
 			Long linkPropID, Long removePropID) throws ServiceException;
 
 	public class NodesWithHistory implements Serializable {
@@ -87,7 +88,7 @@ public interface ArgMapService extends RemoteService {
 		public Map<Long, Proposition> unlinkedLinks = new HashMap<Long, Proposition>();
 	}
 
-	public Map<Long, Node> getNodesChildren(List<Long> nodeIDs, int depth)
+	public PartialTrees getNodesChildren(List<Long> nodeIDs, int depth)
 			throws ServiceException;
 
 	public Map<Long, NodeWithChanges> getPropsWithChanges(List<Long> propIDs)

@@ -572,6 +572,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		// log.severe("returning these nodes:" + Log.mapToString(results.nodes)
 		// + "\nfor these updated root ids:"
 		// + Log.listToString(results.rootIDs));
+		Vote.prepWithVotes(results);
+
 		return results;
 	}
 
@@ -812,7 +814,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	 * the two steps of deleting and linking.
 	 */
 	@Override
-	public Map<Long, Node> replaceWithLinkAndGet(Long parentArgID,
+	public PartialTrees replaceWithLinkAndGet(Long parentArgID,
 			Long linkPropID, Long removePropID) throws ServiceException {
 		Lock parentLock = Lock.getNodeLock(parentArgID);
 		Lock oldChildLock = Lock.getNodeLock(removePropID);
@@ -902,10 +904,11 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			putNode(linkProp);
 			saveVersionInfo(change);
 
-			Map<Long, Node> nodes = new HashMap<Long, Node>();
-			nodes.put(linkProp.id, linkProp);
-			recursiveGetProps(linkProp, nodes, 2);
-			return nodes;
+			PartialTrees trees = new PartialTrees();
+			// Map<Long, Node> nodes = new HashMap<Long, Node>();
+			trees.nodes.put(linkProp.id, linkProp);
+			recursiveGetProps(linkProp, trees.nodes, 2);
+			return trees;
 		} finally {
 			parentLock.unlock();
 			oldChildLock.unlock();
@@ -919,19 +922,23 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Map<Long, Node> getNodesChildren(List<Long> nodeIDs, int depth)
+	public PartialTrees getNodesChildren(List<Long> nodeIDs, int depth)
 			throws ServiceException {
-		Map<Long, Node> nodes = new HashMap<Long, Node>();
+		// Map<Long, Node> nodes = new HashMap<Long, Node>();
+		PartialTrees trees = new PartialTrees();
 		for (Long id : nodeIDs) {
 			try {
 				Argument arg = ofy.get(Argument.class, id);
-				recursiveGetArgs(arg, nodes, depth);
+				recursiveGetArgs(arg, trees.nodes, depth);
 			} catch (NotFoundException e) {
 				Proposition prop = ofy.get(Proposition.class, id);
-				recursiveGetProps(prop, nodes, depth);
+				recursiveGetProps(prop, trees.nodes, depth);
 			}
 		}
-		return nodes;
+
+		// Vote.prepWithVotes(nodes);
+
+		return trees;
 	}
 
 	@Override

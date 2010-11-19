@@ -180,9 +180,9 @@ public class ServerComm {
 	}
 
 	public static void getNodesChildren(List<Long> nodeIDs, int depth,
-			LocalCallback<Map<Long, Node>> localCallback) {
+			LocalCallback<PartialTrees> localCallback) {
 		argMapService.getNodesChildren(nodeIDs, depth,
-				new ServerCallback<Map<Long, Node>>(localCallback,
+				new ServerCallback<PartialTrees>(localCallback,
 						"pre-loading...", "finished pre-loading"));
 	}
 
@@ -348,9 +348,9 @@ public class ServerComm {
 
 	public static void replaceWithLinkAndGet(final Argument parentArg,
 			final Proposition linkProp, final Proposition removeProp,
-			final LocalCallback<Map<Long, Node>> localCallback) {
-		queueCommand(new ServerCallbackWithDispatch<Map<Long, Node>>(
-				"saving...", "saved") {
+			final LocalCallback<PartialTrees> localCallback) {
+		queueCommand(new ServerCallbackWithDispatch<PartialTrees>("saving...",
+				"saved") {
 			@Override
 			public void execute() {
 				argMapService.replaceWithLinkAndGet(parentArg.id, linkProp.id,
@@ -358,7 +358,7 @@ public class ServerComm {
 			}
 
 			@Override
-			public void doOnSuccess(Map<Long, Node> result) {
+			public void doOnSuccess(PartialTrees result) {
 				localCallback.call(result);
 			}
 		});
