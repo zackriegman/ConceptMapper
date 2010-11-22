@@ -4,8 +4,7 @@
 }
 
 .propositionTextArea { /*border: 1px dotted #00f;*/
-	/*border-color: #B2B2FF;*/
-	/*border-style: dotted;*/
+	/*border-color: #B2B2FF;*/ /*border-style: dotted;*/
 	border-color: #DADAFF;
 	border-style: solid;
 	border-width: 1px;
@@ -113,7 +112,6 @@
 .infoMessage {
 	text-align: center;
 	background-color: #FFF1A8;
-	
 	-moz-border-radius: 8px;
 	-webkit-border-radius: 8px;
 	-khtml-border-radius: 8px;
@@ -159,4 +157,62 @@
 
 .loginPanel {
 	padding: .4em;
+}
+
+/*******************************
+ * styles for the star ratings *
+ *******************************/
+ 
+.star-rating-control{
+	/*margin-top: .2em;*/
+	}
+ 
+div.rating-cancel,div.star-rating {
+	float: left;
+	width: 17px;
+	height: 15px;
+	text-indent: -999em;
+	cursor: pointer;
+	display: block;
+	background: transparent;
+	overflow: hidden
+}
+
+div.start-rating-end {
+	float: none;
+}
+
+div.rating-cancel,div.rating-cancel a {
+	background: url(delete.gif) no-repeat 0 -16px
+}
+
+div.star-rating,div.star-rating a {
+	background: url(star.gif) no-repeat 0 0px
+}
+
+div.rating-cancel a,div.star-rating a {
+	display: block;
+	width: 16px;
+	height: 100%;
+	background-position: 0 0px;
+	border: 0
+}
+
+div.star-rating-on a {
+	background-position: 0 -16px !important
+}
+
+div.star-rating-hover a {
+	background-position: 0 -32px
+}
+
+/* Read Only CSS */
+div.star-rating-readonly a {
+	cursor: default !important
+}
+
+/* Partial Star CSS */
+div.star-rating {
+	background: transparent !important;
+	overflow: hidden !important
 }

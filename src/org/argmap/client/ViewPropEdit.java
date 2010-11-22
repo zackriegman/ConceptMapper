@@ -20,7 +20,7 @@ import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.TextArea;
 
 public class ViewPropEdit extends ViewProp implements ClickHandler,
@@ -31,9 +31,14 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	private final Button proButton;
 	private final Button conButton;
 	private final Button expandButton;
+	private final StarRating rating;
 	private Button linkRemoveButton;
 	private Button linkEditButton;
-	private final HorizontalPanel buttonsPanel;
+	// private final HorizontalPanel buttonsPanel;
+	private final FlexTable buttonsPanel;
+	private static final String[] ratingMessages = { "definitely not true",
+			"probably not true", "as likely to be true as not true",
+			"probably true", "definitely true" };
 
 	boolean deleted = false;
 
@@ -48,24 +53,27 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	public ViewPropEdit(Proposition prop) {
 		super(prop);
 
-		buttonsPanel = new HorizontalPanel();
-		mainPanel.add(buttonsPanel);
+		// buttonsPanel = new HorizontalPanel();
+		// buttonsPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+		buttonsPanel = new FlexTable();
+
+		// mainPanel.add(buttonsPanel);
 		proButton = new Button("For");
 		conButton = new Button("Against");
-		buttonsPanel.add(proButton);
-		buttonsPanel.add(conButton);
+		buttonsPanel.setWidget(0, 0, proButton);
+		buttonsPanel.setWidget(0, 1, conButton);
 
 		proButton.addClickHandler(this);
 		proButton.setStylePrimaryName("button");
 		conButton.addClickHandler(this);
 		conButton.setStylePrimaryName("button");
 
-		proButton.setVisible(false);
-		conButton.setVisible(false);
+		// proButton.setVisible(false);
+		// conButton.setVisible(false);
 
 		expandButton = new Button("+");
 		expandButton.addClickHandler(this);
-		expandButton.setVisible(false);
+		// expandButton.setVisible(false);
 		expandButton.setStylePrimaryName("expandButton");
 		// expandButton.setStylePrimaryName("button");
 
@@ -74,6 +82,11 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		} else {
 			setNodeLink(false);
 		}
+
+		rating = new StarRating(ratingMessages);
+		buttonsPanel.getColumnFormatter().setWidth(3, "15em");
+		buttonsPanel.setWidget(0, 5, rating);
+		// rating.setVisible(false);
 
 		textArea.addKeyDownHandler(this);
 		textArea.addKeyUpHandler(this);
@@ -90,18 +103,20 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		if (link && linkRemoveButton == null) {
 			linkRemoveButton = new Button("Unlink");
 			linkEditButton = new Button("Edit");
-			buttonsPanel.add(linkRemoveButton);
-			buttonsPanel.add(linkEditButton);
+			buttonsPanel.setWidget(0, 2, linkRemoveButton);
+			buttonsPanel.setWidget(0, 3, linkEditButton);
 			linkRemoveButton.addClickHandler(this);
 			linkEditButton.addClickHandler(this);
 			linkRemoveButton.setStylePrimaryName("button");
 			linkEditButton.setStylePrimaryName("button");
-			linkRemoveButton.setVisible(false);
-			linkEditButton.setVisible(false);
+			// linkRemoveButton.setVisible(false);
+			// linkEditButton.setVisible(false);
 			textArea.setReadOnly(true);
 		} else if (!link && linkRemoveButton != null) {
-			buttonsPanel.remove(linkRemoveButton);
-			buttonsPanel.remove(linkEditButton);
+			// buttonsPanel.remove(linkRemoveButton);
+			// buttonsPanel.remove(linkEditButton);
+			buttonsPanel.clearCell(0, 2);
+			buttonsPanel.clearCell(0, 3);
 			linkRemoveButton = null;
 			linkEditButton = null;
 			textArea.setReadOnly(false);
@@ -416,12 +431,24 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	}
 
 	private void updateButtons() {
+		if (lastPropositionWithFocus != this
+				&& lastPropositionWithFocus != null) {
+			lastPropositionWithFocus.mainPanel
+					.remove(lastPropositionWithFocus.buttonsPanel);
+		}
+		mainPanel.add(buttonsPanel);
+		lastPropositionWithFocus = this;
+	}
+
+	private void updateButtons_DELETE_ME() {
 		// if another Proposition's buttons are visible hide them
 		if (lastPropositionWithFocus != this
 				&& lastPropositionWithFocus != null) {
 			lastPropositionWithFocus.proButton.setVisible(false);
 			lastPropositionWithFocus.conButton.setVisible(false);
 			lastPropositionWithFocus.expandButton.setVisible(false);
+			lastPropositionWithFocus.rating.setVisible(false);
+			lastPropositionWithFocus.buttonsPanel.setVisible(false);
 			if (lastPropositionWithFocus.linkEditButton != null) {
 				lastPropositionWithFocus.linkEditButton.setVisible(false);
 				lastPropositionWithFocus.linkRemoveButton.setVisible(false);
@@ -431,6 +458,8 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		proButton.setVisible(true);
 		conButton.setVisible(true);
 		expandButton.setVisible(true);
+		rating.setVisible(true);
+		buttonsPanel.setVisible(true);
 		// expandButton.setEnabled( false );
 		if (linkEditButton != null) {
 			linkEditButton.setVisible(true);
