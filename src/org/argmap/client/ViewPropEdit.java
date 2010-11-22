@@ -57,7 +57,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		// buttonsPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
 		buttonsPanel = new FlexTable();
 
+		/*
+		 * commented out because only attaching the panel when the text area
+		 * gets focus
+		 */
 		// mainPanel.add(buttonsPanel);
+
 		proButton = new Button("For");
 		conButton = new Button("Against");
 		buttonsPanel.setWidget(0, 0, proButton);
@@ -68,12 +73,8 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		conButton.addClickHandler(this);
 		conButton.setStylePrimaryName("button");
 
-		// proButton.setVisible(false);
-		// conButton.setVisible(false);
-
 		expandButton = new Button("+");
 		expandButton.addClickHandler(this);
-		// expandButton.setVisible(false);
 		expandButton.setStylePrimaryName("expandButton");
 		// expandButton.setStylePrimaryName("button");
 
@@ -84,9 +85,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		}
 
 		rating = new StarRating(ratingMessages);
-		buttonsPanel.getColumnFormatter().setWidth(3, "15em");
 		buttonsPanel.setWidget(0, 5, rating);
-		// rating.setVisible(false);
 
 		textArea.addKeyDownHandler(this);
 		textArea.addKeyUpHandler(this);
@@ -109,12 +108,8 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			linkEditButton.addClickHandler(this);
 			linkRemoveButton.setStylePrimaryName("button");
 			linkEditButton.setStylePrimaryName("button");
-			// linkRemoveButton.setVisible(false);
-			// linkEditButton.setVisible(false);
 			textArea.setReadOnly(true);
 		} else if (!link && linkRemoveButton != null) {
-			// buttonsPanel.remove(linkRemoveButton);
-			// buttonsPanel.remove(linkEditButton);
 			buttonsPanel.clearCell(0, 2);
 			buttonsPanel.clearCell(0, 3);
 			linkRemoveButton = null;
@@ -437,34 +432,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 					.remove(lastPropositionWithFocus.buttonsPanel);
 		}
 		mainPanel.add(buttonsPanel);
-		lastPropositionWithFocus = this;
-	}
-
-	private void updateButtons_DELETE_ME() {
-		// if another Proposition's buttons are visible hide them
-		if (lastPropositionWithFocus != this
-				&& lastPropositionWithFocus != null) {
-			lastPropositionWithFocus.proButton.setVisible(false);
-			lastPropositionWithFocus.conButton.setVisible(false);
-			lastPropositionWithFocus.expandButton.setVisible(false);
-			lastPropositionWithFocus.rating.setVisible(false);
-			lastPropositionWithFocus.buttonsPanel.setVisible(false);
-			if (lastPropositionWithFocus.linkEditButton != null) {
-				lastPropositionWithFocus.linkEditButton.setVisible(false);
-				lastPropositionWithFocus.linkRemoveButton.setVisible(false);
-			}
-		}
-		// make this proposition's button's visible
-		proButton.setVisible(true);
-		conButton.setVisible(true);
-		expandButton.setVisible(true);
-		rating.setVisible(true);
-		buttonsPanel.setVisible(true);
-		// expandButton.setEnabled( false );
-		if (linkEditButton != null) {
-			linkEditButton.setVisible(true);
-			linkRemoveButton.setVisible(true);
-		}
 		lastPropositionWithFocus = this;
 	}
 
