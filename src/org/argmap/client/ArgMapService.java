@@ -43,7 +43,7 @@ public interface ArgMapService extends RemoteService {
 		private static final long serialVersionUID = 1L;
 		public List<Long> rootIDs = new ArrayList<Long>();
 		public Map<Long, Node> nodes = new HashMap<Long, Node>();
-		public Map<Long, Integer> votes = new HashMap<Long, Integer>();
+		public Map<Long, Integer> ratings = new HashMap<Long, Integer>();
 
 		@Override
 		public String toString() {
@@ -163,7 +163,7 @@ public interface ArgMapService extends RemoteService {
 	public PartialTrees continueSearchProps(String searchName)
 			throws ServiceException;
 
-	public Integer getVote(Long propID);
+	public Integer getRating(Long propID);
 
 	public LoginInfo getLoginInfo(String requestURI) throws ServiceException;
 

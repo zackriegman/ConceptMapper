@@ -510,8 +510,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		/*
 		 * every time a node is saved on the server this method should be called
 		 * to update the 'updated' field, unless of course we don't want to
-		 * update the 'updated' field for instance when updating the voteSum.
-		 * See Vote class for an example. So remember, if anything is added to
+		 * update the 'updated' field for instance when updating the ratingSum.
+		 * See Rating class for an example. So remember, if anything is added to
 		 * this method in at least one place Nodes are updated without calling
 		 * this method.
 		 */
@@ -572,7 +572,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		// log.severe("returning these nodes:" + Log.mapToString(results.nodes)
 		// + "\nfor these updated root ids:"
 		// + Log.listToString(results.rootIDs));
-		Vote.prepWithVotes(results);
+		Rating.prepWithRatings(results);
 
 		return results;
 	}
@@ -967,7 +967,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public Integer getVote(Long propID) {
-		return Vote.getVote(propID);
+	public Integer getRating(Long propID) {
+		return Rating.getRating(propID);
 	}
 }

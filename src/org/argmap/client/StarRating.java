@@ -23,15 +23,15 @@ import com.google.gwt.user.client.ui.Widget;
 public class StarRating extends Widget implements MouseOverHandler,
 		MouseOutHandler, MouseMoveHandler, MouseDownHandler {
 
-	public static interface VoteHandler {
-		public void vote(int index);
+	public static interface RatingHandler {
+		public void rate(int index);
 	}
 
 	List<Element> stars = new ArrayList<Element>();
 	Element cancel;
 	int selectedIndex = -1;
 	int hoverIndex = -1;
-	VoteHandler voteHandler;
+	RatingHandler ratingHandler;
 
 	public StarRating(String[] messages) {
 
@@ -78,16 +78,16 @@ public class StarRating extends Widget implements MouseOverHandler,
 		addDomHandler(this, MouseDownEvent.getType());
 	}
 
-	public void setVoteHandler(VoteHandler voteHandler) {
-		this.voteHandler = voteHandler;
+	public void setRatingHandler(RatingHandler ratingHandler) {
+		this.ratingHandler = ratingHandler;
 	}
 
-	public int getVote() {
+	public int getRating() {
 		return selectedIndex;
 	}
 
-	public void setVote(int vote) {
-		selectedIndex = vote;
+	public void setRating(int rating) {
+		selectedIndex = rating;
 		fill(selectedIndex, "star-rating-on");
 	}
 
@@ -150,8 +150,8 @@ public class StarRating extends Widget implements MouseOverHandler,
 	public void onMouseDown(MouseDownEvent event) {
 		selectedIndex = calculateStarIndex(event);
 		fill(selectedIndex, "star-rating-on");
-		if (voteHandler != null) {
-			voteHandler.vote(selectedIndex);
+		if (ratingHandler != null) {
+			ratingHandler.rate(selectedIndex);
 		}
 	}
 }

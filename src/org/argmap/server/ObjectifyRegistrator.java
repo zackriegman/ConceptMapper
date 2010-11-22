@@ -19,7 +19,7 @@ public class ObjectifyRegistrator {
 			ObjectifyService.register(Search.class);
 			ObjectifyService.register(CombinationGenerator.class);
 			ObjectifyService.register(Property.class);
-			ObjectifyService.register(Vote.class);
+			ObjectifyService.register(Rating.class);
 			registered = true;
 		}
 	}

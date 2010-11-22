@@ -179,9 +179,10 @@ public class ServerComm {
 						"finished loading"));
 	}
 
-	public static void getVote(Long propID, LocalCallback<Integer> localCallback) {
-		argMapService.getVote(propID, new ServerCallback<Integer>(
-				localCallback, "loading vote", "finish loading vote"));
+	public static void getRating(Long propID,
+			LocalCallback<Integer> localCallback) {
+		argMapService.getRating(propID, new ServerCallback<Integer>(
+				localCallback, "loading rating", "finish loading rating"));
 	}
 
 	public static void getNodesChildren(List<Long> nodeIDs, int depth,

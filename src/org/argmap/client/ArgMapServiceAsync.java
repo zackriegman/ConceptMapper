@@ -64,6 +64,6 @@ public interface ArgMapServiceAsync {
 	void replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
 			Long removePropID, AsyncCallback<PartialTrees> callback);
 
-	void getVote(Long propID, AsyncCallback<Integer> callback);
+	void getRating(Long propID, AsyncCallback<Integer> callback);
 
 }

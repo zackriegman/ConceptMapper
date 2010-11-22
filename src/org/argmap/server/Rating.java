@@ -18,7 +18,7 @@ import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.annotation.Cached;
 
 @Cached
-public class Vote implements Serializable {
+public class Rating implements Serializable {
 
 	static {
 		ObjectifyRegistrator.register();
@@ -35,9 +35,9 @@ public class Vote implements Serializable {
 	 * and the node's id. That way I can construct the id without having the
 	 * object and I can avoid what the Objectify people say are expensive
 	 * queries and instead just do batch gets when I know both the user and
-	 * proposition. (Of course, when I want to get all the votes by a particular
-	 * user or all the votes for a particular proposition, I'll still need to
-	 * query on those fields...)
+	 * proposition. (Of course, when I want to get all the ratings by a
+	 * particular user or all the ratings for a particular proposition, I'll
+	 * still need to query on those fields...)
 	 */
 	@Id
 	public String id;
@@ -73,7 +73,7 @@ public class Vote implements Serializable {
 		return userID + String.format(format, propID);
 	}
 
-	public static void prepWithVotes(PartialTrees trees) {
+	public static void prepWithRatings(PartialTrees trees) {
 		// TODO think about how to make sure there is a valid user in the other
 		// methods too if necessary...
 		User user = UserServiceFactory.getUserService().getCurrentUser();
@@ -89,78 +89,81 @@ public class Vote implements Serializable {
 				propIDs.add(node.id);
 			}
 		}
-		getVotes(propIDs, userID, trees.votes);
+		getRatings(propIDs, userID, trees.ratings);
 	}
 
-	/* puts into the provided map the integer votes associated with each propID */
-	public static void getVotes(List<Long> propIDs, String userID,
+	/*
+	 * puts into the provided map the integer ratings associated with each
+	 * propID
+	 */
+	public static void getRatings(List<Long> propIDs, String userID,
 			Map<Long, Integer> results) {
 
-		// first build a list of vote ids based on the userID and the propID
-		List<String> voteIDs = new ArrayList<String>(propIDs.size());
+		// first build a list of rating ids based on the userID and the propID
+		List<String> ratingIDs = new ArrayList<String>(propIDs.size());
 		for (Long id : propIDs) {
-			voteIDs.add(buildID(userID, id));
+			ratingIDs.add(buildID(userID, id));
 		}
 
-		// then batch get the vote objects
-		Map<String, Vote> votes = ofy.get(Vote.class, voteIDs);
+		// then batch get the rating objects
+		Map<String, Rating> ratings = ofy.get(Rating.class, ratingIDs);
 
-		// then build a return map of the integer vote and the proposition id
-		for (Vote vote : votes.values()) {
-			results.put(vote.propID, vote.eval);
+		// then build a return map of the integer rating and the proposition id
+		for (Rating rating : ratings.values()) {
+			results.put(rating.propID, rating.eval);
 		}
 	}
 
-	public static Integer getVote(Long propID) {
+	public static Integer getRating(Long propID) {
 		User user = UserServiceFactory.getUserService().getCurrentUser();
 		if (user == null) {
 			return null;
 		}
 		String userID = user.getUserId();
 
-		Vote vote = ofy.find(Vote.class, buildID(userID, propID));
-		if (vote != null) {
-			return vote.eval;
+		Rating rating = ofy.find(Rating.class, buildID(userID, propID));
+		if (rating != null) {
+			return rating.eval;
 		} else {
 			return null;
 		}
 	}
 
 	/*
-	 * casts a vote by a user for a particular node, overwriting the existing
-	 * vote if it exists
+	 * casts a rating by a user for a particular node, overwriting the existing
+	 * rating if it exists
 	 */
-	public static void castVote(Long propID, String userID, int eval) {
+	public static void rate(Long propID, String userID, int eval) {
 
 		Lock lock = Lock.getNodeLock(propID);
 		try {
 			lock.lock();
 
-			Vote vote = ofy.find(Vote.class, buildID(userID, propID));
+			Rating rating = ofy.find(Rating.class, buildID(userID, propID));
 			Proposition prop = ofy.get(Proposition.class, propID);
 
-			/* if the user has previously voted back out previous vote */
-			if (vote != null) {
-				prop.voteSum -= vote.eval;
-				prop.voteCount--;
+			/* if the user has previously rated back out previous rating */
+			if (rating != null) {
+				prop.ratingSum -= rating.eval;
+				prop.ratingCount--;
 			}
-			/* otherwise create a new vote object to hold this vote */
+			/* otherwise create a new rating object to hold this rating */
 			else {
-				vote = new Vote();
-				vote.setID(userID, propID);
+				rating = new Rating();
+				rating.setID(userID, propID);
 			}
 
 			/* update the proposition with the new evaluation */
-			prop.voteSum += eval;
-			prop.voteCount++;
+			prop.ratingSum += eval;
+			prop.ratingCount++;
 
 			/*
 			 * TODO need to queue a task to recalculate the scores for all the
-			 * nodes that depend on this node's score or average vote.
+			 * nodes that depend on this node's score or average rating.
 			 */
 
-			vote.eval = eval;
-			ofy.put(vote);
+			rating.eval = eval;
+			ofy.put(rating);
 
 			/*
 			 * notice that I do not call the ArgMapServiceImpl.updateNode()
@@ -168,7 +171,7 @@ public class Vote implements Serializable {
 			 * change. The updated time is used by the live refresh system to
 			 * determine when a client refresh is needed, and I don't want to
 			 * trigger a client refresh because, at the moment I'm not even
-			 * sending the voteSum to the client (and don't plan to) (it's
+			 * sending the ratingSum to the client (and don't plan to) (it's
 			 * marked 'transient', so it doesn't get sent.)
 			 */
 			ofy.put(prop);
