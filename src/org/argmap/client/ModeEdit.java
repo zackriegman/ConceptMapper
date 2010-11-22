@@ -253,7 +253,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 							.get(id);
 					ViewProp propView = new ViewPropEdit();
 					propView.recursiveBuildViewNode(proposition,
-							allNodes.nodes, 5);
+							allNodes.nodes, 5, allNodes.ratings);
 
 					tree.addItem(propView);
 					// propView.logNodeRecursive(0, "em.em.cb", true);
@@ -421,7 +421,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					ViewNode child = viewNode.createChild();
 					viewNode.addItem(child);
 					child.recursiveBuildViewNode(results.nodes.get(id),
-							results.nodes, 0);
+							results.nodes, 0, results.ratings);
 				} else {
 					/*
 					 * either the child node should already exist on the client
@@ -654,7 +654,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 								.get(linkPropID);
 						ViewProp newViewProp = new ViewPropEdit();
 						newViewProp.recursiveBuildViewNode(proposition,
-								trees.nodes, 5);
+								trees.nodes, 5, trees.ratings);
 
 						parentArgView.insertItem(propIndex, newViewProp);
 					}
@@ -1163,7 +1163,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		for (Long id : results.rootIDs) {
 			Proposition proposition = (Proposition) results.nodes.get(id);
 			ViewProp propView = new ViewPropEdit();
-			propView.recursiveBuildViewNode(proposition, results.nodes, 1);
+			propView.recursiveBuildViewNode(proposition, results.nodes, 1,
+					results.ratings);
 
 			tree.addItem(propView);
 		}
@@ -1194,7 +1195,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 							// source.getChild(0).remove();
 							// }
 							source.recursiveBuildViewNode(source.getNode(),
-									trees.nodes, openDepth);
+									trees.nodes, openDepth, trees.ratings);
 							source.setLoaded(true);
 						}
 						tree.resetState();

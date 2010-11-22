@@ -103,6 +103,9 @@ public abstract class ViewNode extends TreeItem {
 
 	public abstract void setTextAreaContent(String content);
 
+	public void setRating(Long id, Map<Long, Integer> ratings) {
+	}
+
 	public String getNodeContent() {
 		return getNode().content;
 	}
@@ -111,8 +114,11 @@ public abstract class ViewNode extends TreeItem {
 	 * As far as I can tell this is currently only used in EditMode.
 	 */
 	public void recursiveBuildViewNode(Node node, Map<Long, Node> nodes,
-			int openDepth) {
+			int openDepth, Map<Long, Integer> ratings) {
 		setNode(node);
+
+		setRating(node.id, ratings);
+
 		boolean circularLink = linkExistsInAncestorPath(node.id);
 		if (circularLink) {
 			getParent().setAsCircularLink();
@@ -126,7 +132,7 @@ public abstract class ViewNode extends TreeItem {
 				}
 				addItem(childView);
 				childView.recursiveBuildViewNode(childNode, nodes,
-						openDepth - 1);
+						openDepth - 1, ratings);
 				setLoaded(true);
 			} else if (circularLink) {
 				setAsCircularLink();

@@ -66,4 +66,5 @@ public interface ArgMapServiceAsync {
 
 	void getRating(Long propID, AsyncCallback<Integer> callback);
 
+	void setRating(Long propID, Integer rating, AsyncCallback<Void> callback);
 }

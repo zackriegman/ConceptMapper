@@ -165,6 +165,8 @@ public interface ArgMapService extends RemoteService {
 
 	public Integer getRating(Long propID);
 
+	public void setRating(Long propID, Integer rating) throws ServiceException;
+
 	public LoginInfo getLoginInfo(String requestURI) throws ServiceException;
 
 }

@@ -176,13 +176,13 @@ public class ServerComm {
 			LocalCallback<PartialTrees> localCallback) {
 		argMapService.getRootProps(depthLimit,
 				new ServerCallback<PartialTrees>(localCallback, "loading...",
-						"finished loading"));
+						"loaded"));
 	}
 
 	public static void getRating(Long propID,
 			LocalCallback<Integer> localCallback) {
 		argMapService.getRating(propID, new ServerCallback<Integer>(
-				localCallback, "loading rating", "finish loading rating"));
+				localCallback, "loading rating...", "rating loaded"));
 	}
 
 	public static void getNodesChildren(List<Long> nodeIDs, int depth,
@@ -348,6 +348,16 @@ public class ServerComm {
 				newProposition.id = proposition.id;
 				newProposition.updated = proposition.updated;
 				localCallback.call(null);
+			}
+		});
+	}
+
+	public static void setRating(final Long propID, final Integer rating) {
+		queueCommand(new ServerCallbackWithDispatch<Void>("saving rating...",
+				"rating saved") {
+			@Override
+			public void execute() {
+				argMapService.setRating(propID, rating, this);
 			}
 		});
 	}

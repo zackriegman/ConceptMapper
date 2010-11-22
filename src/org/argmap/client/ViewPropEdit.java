@@ -1,8 +1,11 @@
 package org.argmap.client;
 
+import java.util.Map;
+
 import org.argmap.client.ModeEdit.EditModeTree;
 import org.argmap.client.ModeEdit.SavableNode;
 import org.argmap.client.ServerComm.LocalCallback;
+import org.argmap.client.StarRating.RatingHandler;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -25,13 +28,13 @@ import com.google.gwt.user.client.ui.TextArea;
 
 public class ViewPropEdit extends ViewProp implements ClickHandler,
 		KeyDownHandler, KeyUpHandler, FocusHandler, ChangeHandler,
-		MouseOverHandler, MouseOutHandler, SavableNode {
+		MouseOverHandler, MouseOutHandler, SavableNode, RatingHandler {
 
 	private static ViewPropEdit lastPropositionWithFocus = null;
 	private final Button proButton;
 	private final Button conButton;
 	private final Button expandButton;
-	private final StarRating rating;
+	private final StarRating ratingView;
 	private Button linkRemoveButton;
 	private Button linkEditButton;
 	// private final HorizontalPanel buttonsPanel;
@@ -84,8 +87,9 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			setNodeLink(false);
 		}
 
-		rating = new StarRating(ratingMessages);
-		buttonsPanel.setWidget(0, 5, rating);
+		ratingView = new StarRating(ratingMessages);
+		ratingView.setRatingHandler(this);
+		buttonsPanel.setWidget(0, 5, ratingView);
 
 		textArea.addKeyDownHandler(this);
 		textArea.addKeyUpHandler(this);
@@ -404,7 +408,9 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				ServerComm.getRating(getNodeID(), new LocalCallback<Integer>() {
 					@Override
 					public void call(Integer t) {
-						rating.setRating(t);
+						if (t != null) {
+							ratingView.setRating(t);
+						}
 					}
 				});
 			}
@@ -415,6 +421,14 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		 * throttle live updates
 		 */
 		getEditMode().updateTimer.userAction();
+	}
+
+	@Override
+	public void setRating(Long id, Map<Long, Integer> ratings) {
+		Integer rating = ratings.get(id);
+		if (rating != null) {
+			ratingView.setRating(rating);
+		}
 	}
 
 	private ModeEdit getEditMode() {
@@ -481,5 +495,10 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			topPanel.add(expandButton);
 			expandButton.setVisible(true);
 		}
+	}
+
+	@Override
+	public void rate(int rating) {
+		ServerComm.setRating(getNodeID(), rating);
 	}
 }

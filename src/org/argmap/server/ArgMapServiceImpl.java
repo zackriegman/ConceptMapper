@@ -908,6 +908,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			// Map<Long, Node> nodes = new HashMap<Long, Node>();
 			trees.nodes.put(linkProp.id, linkProp);
 			recursiveGetProps(linkProp, trees.nodes, 2);
+
+			Rating.prepWithRatings(trees);
+
 			return trees;
 		} finally {
 			parentLock.unlock();
@@ -937,6 +940,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 
 		// Vote.prepWithVotes(nodes);
+
+		Rating.prepWithRatings(trees);
 
 		return trees;
 	}
@@ -969,5 +974,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public Integer getRating(Long propID) {
 		return Rating.getRating(propID);
+	}
+
+	public void setRating(Long propID, Integer rating) throws ServiceException {
+		Rating.setRating(propID, rating.intValue());
 	}
 }

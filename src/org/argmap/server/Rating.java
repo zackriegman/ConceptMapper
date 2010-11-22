@@ -10,6 +10,7 @@ import javax.persistence.Id;
 import org.argmap.client.ArgMapService.PartialTrees;
 import org.argmap.client.Node;
 import org.argmap.client.Proposition;
+import org.argmap.client.ServiceException;
 
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserServiceFactory;
@@ -127,6 +128,17 @@ public class Rating implements Serializable {
 		} else {
 			return null;
 		}
+	}
+
+	public static void setRating(Long propID, int rating)
+			throws ServiceException {
+		User user = UserServiceFactory.getUserService().getCurrentUser();
+		if (user == null) {
+			throw new ServiceException(
+					"user not logged in: only logged in users can rate propositions");
+		}
+		String userID = user.getUserId();
+		Rating.rate(propID, userID, rating);
 	}
 
 	/*
