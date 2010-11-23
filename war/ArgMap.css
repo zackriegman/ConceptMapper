@@ -1,99 +1,17 @@
 /** Add css rules here for your application. */
+
+/********
+ * MISC *
+ ********/
+ 
+ /* is this used anywhere? */
 .floatLeft {
 	float: left;
 }
 
-.propositionTextArea { /*border: 1px dotted #00f;*/
-	/*border-color: #B2B2FF;*/ /*border-style: dotted;*/
-	border-color: #DADAFF;
-	border-style: solid;
-	border-width: 1px;
-	padding: .5em;
-	-moz-border-radius: 6px;
-	-webkit-border-radius: 6px;
-	-khtml-border-radius: 6px;
-	border-radius: 6px;
-}
-
-.circularLink {
-	border-color: #FF0000;
-	border-style: dotted;
-	border-width: 2px;
-}
-
-.searchBoxPanel {
-	background-color: #D0E4F6; /*#92C1F0;*/
-	padding: .5em;
-}
-
-.searchTextBox {
-	margin-top: .5em;
-	height: 1.2em;
-	/*margin-left: .5em;*/ /*margin-right: 5em;*/ /*margin:1em;*/
-	/*padding:5em;*/ /*width: 100%;*/
-}
-
-.sideSearchRow {
-	border-bottom-width: thin;
-	border-bottom-color: gray;
-	border-bottom-style: solid;
-	padding: .5em;
-}
-
-.addPropButton {
-	margin-top: .5em;
-	margin-left: .7em;
-}
-
-.searchLabel {
-	margin-top: .65em;
-	margin-right: 1em;
-	margin-left: .5em;
-}
-
-.sideSearchLabel {
-	background-color: #92C1F0;
-	padding: .5em;
-}
-
-.linkedPropositionTextArea { /*background-color: #FFF1A8;*/
-	/*background-color: #FFFF8B;*/
-	background-color: #FFFFCC;
-}
-
-.argTextBox {
-	border-style: none;
-	padding: 0px;
-	margin: 0px;
-}
-
-.argLabel {
-	padding-left: .2em;
-	padding-top: .07em;
-}
-
-.argBox {
-	border-style: solid;
-	border-color: #C9C9C9;
-	border-width: 1px;
-	-moz-border-radius: 6px;
-	-webkit-border-radius: 6px;
-	-khtml-border-radius: 6px;
-	border-radius: 6px;
-}
-
-.nodeText {
-	font-family: arial, sans-serif;
-	font-size: 12.8px;
-}
-
-.proArg {
-	background-color: #D7FDD7;
-}
-
-.conArg {
-	background-color: #FDD7D7;
-}
+/**********************
+ * Application Layout *
+ **********************/
 
 .title {
 	font-size: 2em;
@@ -131,20 +49,6 @@
 	text-align: center;
 }
 
-.mozOneLineFix {
-	height: 1.3em;
-}
-
-.expandButton {
-	background: transparent;
-	margin-left: .5em;
-	border-color: #00f;
-	border-width: 1px;
-	border-style: solid;
-	/*height: 1.5em;
-	width: 1.5em;*/
-}
-
 .loginText {
 	font-family: arial, sans-serif;
 	font-size: 12.8px;
@@ -159,14 +63,128 @@
 	padding: .4em;
 }
 
+/********************
+ * Edit mode layout *
+ ********************/
+ 
+.searchBoxPanel {
+	background-color: #D0E4F6; /*#92C1F0;*/
+	padding: .5em;
+}
+
+.searchTextBox {
+	margin-top: .5em;
+	height: 1.2em;
+	/*margin-left: .5em;*/ /*margin-right: 5em;*/ /*margin:1em;*/
+	/*padding:5em;*/ /*width: 100%;*/
+}
+
+.sideSearchRow {
+	border-bottom-width: thin;
+	border-bottom-color: gray;
+	border-bottom-style: solid;
+	padding: .5em;
+}
+
+.sideSearchAltRow{
+	background-color: #DAE2EB;
+}
+
+.addPropButton {
+	margin-top: .5em;
+	margin-left: .7em;
+}
+
+.searchLabel {
+	margin-top: .65em;
+	margin-right: 1em;
+	margin-left: .5em;
+}
+
+.sideSearchLabel {
+	background-color: #92C1F0;
+	padding: .5em;
+}
+
+/********************
+ * View Node Layout *
+ ********************/
+ 
+.nodeText {
+	font-family: arial, sans-serif;
+	font-size: 12.8px;
+}
+
+.propositionTextArea { /*border: 1px dotted #00f;*/
+	/*border-color: #B2B2FF;*/ /*border-style: dotted;*/
+	border-color: #DADAFF;
+	border-style: solid;
+	border-width: 1px;
+	padding: .5em;
+	-moz-border-radius: 6px;
+	-webkit-border-radius: 6px;
+	-khtml-border-radius: 6px;
+	border-radius: 6px;
+}
+
+.circularLink {
+	border-color: #FF0000;
+	border-style: dotted;
+	border-width: 2px;
+}
+
+.linkedPropositionTextArea { /*background-color: #FFF1A8;*/
+	/*background-color: #FFFF8B;*/
+	background-color: #FFFFCC;
+}
+
+.argTextBox {
+	border-style: none;
+	padding: 0px;
+	margin: 0px;
+}
+
+.argLabel {
+	padding-left: .2em;
+	padding-top: .07em;
+}
+
+.argBox {
+	border-style: solid;
+	border-color: #C9C9C9;
+	border-width: 1px;
+	-moz-border-radius: 6px;
+	-webkit-border-radius: 6px;
+	-khtml-border-radius: 6px;
+	border-radius: 6px;
+}
+
+.proArg {
+	background-color: #D7FDD7;
+}
+
+.conArg {
+	background-color: #FDD7D7;
+}
+
+.expandButton {
+	background: transparent;
+	margin-left: .5em;
+	border-color: #00f;
+	border-width: 1px;
+	border-style: solid;
+	/*height: 1.5em;
+	width: 1.5em;*/
+}
+
 /*******************************
  * styles for the star ratings *
  *******************************/
  
-.star-rating-control{
-	/*margin-top: .2em;*/
-	}
- 
+.star-rating-control { /*margin-top: .2em;*/
+	
+}
+
 div.rating-cancel,div.star-rating {
 	float: left;
 	width: 17px;

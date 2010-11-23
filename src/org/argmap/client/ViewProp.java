@@ -6,7 +6,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 public abstract class ViewProp extends ViewNode {
 
-	private static final int PROP_WIDTH_NUMBER = 47;
+	private static final int PROP_WIDTH_NUMBER = 41;
 	private static final String PROP_WIDTH = "" + PROP_WIDTH_NUMBER + "em";
 
 	protected final TextAreaAutoHeight textArea = new TextAreaAutoHeight() {

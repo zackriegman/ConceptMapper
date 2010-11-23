@@ -977,6 +977,6 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	public void setRating(Long propID, Integer rating) throws ServiceException {
-		Rating.setRating(propID, rating.intValue());
+		Rating.setRating(propID, rating);
 	}
 }

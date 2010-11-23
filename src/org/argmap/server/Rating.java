@@ -130,7 +130,7 @@ public class Rating implements Serializable {
 		}
 	}
 
-	public static void setRating(Long propID, int rating)
+	public static void setRating(Long propID, Integer rating)
 			throws ServiceException {
 		User user = UserServiceFactory.getUserService().getCurrentUser();
 		if (user == null) {
@@ -142,16 +142,34 @@ public class Rating implements Serializable {
 	}
 
 	/*
-	 * casts a rating by a user for a particular node, overwriting the existing
-	 * rating if it exists
+	 * if newRatingValue != null this method saves the rating for a particular
+	 * node and user, overwriting the existing rating if it exists, and updating
+	 * the average rating for the proposition. If newRatingValue == null this
+	 * method deletes the existing rating. If newRatingValue is the same as the
+	 * existing rating this method throws an exception.
 	 */
-	public static void rate(Long propID, String userID, int eval) {
+	public static void rate(Long propID, String userID, Integer newRatingValue)
+			throws ServiceException {
+		Rating rating = ofy.find(Rating.class, buildID(userID, propID));
+
+		/*
+		 * if there was no previous rating and the new value indicates a rating
+		 * deletion, or if the previous rating and the new rating are the same,
+		 * then there is nothing to do. So, notify the client that it sent a
+		 * pointless update.
+		 */
+		if ((rating == null && newRatingValue == null)
+				|| ((rating != null && newRatingValue != null) && rating.eval == newRatingValue
+						.intValue())) {
+			throw new ServiceException("cannot update rating:  old rating ("
+					+ rating.eval + ") is the same as new rating ("
+					+ newRatingValue + ")");
+		}
 
 		Lock lock = Lock.getNodeLock(propID);
 		try {
 			lock.lock();
 
-			Rating rating = ofy.find(Rating.class, buildID(userID, propID));
 			Proposition prop = ofy.get(Proposition.class, propID);
 
 			/* if the user has previously rated back out previous rating */
@@ -159,24 +177,36 @@ public class Rating implements Serializable {
 				prop.ratingSum -= rating.eval;
 				prop.ratingCount--;
 			}
-			/* otherwise create a new rating object to hold this rating */
+			/*
+			 * otherwise create a new rating object to hold new rating (note
+			 * that in the case where rating == null we always need a new rating
+			 * object here because we have ruled out the case where both rating
+			 * == null and newRatingValue == null by throwing the exception
+			 * above)
+			 */
 			else {
 				rating = new Rating();
 				rating.setID(userID, propID);
 			}
 
-			/* update the proposition with the new evaluation */
-			prop.ratingSum += eval;
-			prop.ratingCount++;
+			if (newRatingValue != null) {
+				/* update the proposition with the new evaluation */
+				prop.ratingSum += newRatingValue;
+				prop.ratingCount++;
 
-			/*
-			 * TODO need to queue a task to recalculate the scores for all the
-			 * nodes that depend on this node's score or average rating.
-			 */
-
-			rating.eval = eval;
-			ofy.put(rating);
-
+				/* save the new evaluation */
+				rating.eval = newRatingValue;
+				ofy.put(rating);
+			} else {
+				/*
+				 * if newRatingValue == null we need to delete the rating object
+				 * (note this will only happen when there was already a rating
+				 * object in the database because we ruled out the possibility
+				 * of (rating == null && newRating == null) by throwing
+				 * exception above)
+				 */
+				ofy.delete(rating);
+			}
 			/*
 			 * notice that I do not call the ArgMapServiceImpl.updateNode()
 			 * function here because I do not want to have the updated time
@@ -187,9 +217,13 @@ public class Rating implements Serializable {
 			 * marked 'transient', so it doesn't get sent.)
 			 */
 			ofy.put(prop);
+
+			/*
+			 * TODO need to queue a task to recalculate the scores for all the
+			 * nodes that depend on this node's score or average rating.
+			 */
 		} finally {
 			lock.unlock();
 		}
 	}
-
 }

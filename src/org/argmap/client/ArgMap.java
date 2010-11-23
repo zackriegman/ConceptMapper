@@ -23,8 +23,7 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 //TODO: implement scoring algorithm
-//TODO: Proposition.ratingCount is not decremented when someone cancels their vote
-//TODO: ratings are not loaded for rootprops when they are first loaded via the open branch icon instead of via a focus event
+//TODO: implement negative linking: linking to the negation of an existing proposition...
 
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
 /*TODO: track down exceptions in ModeVersion (unrelated to circular linking)*/

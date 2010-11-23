@@ -39,9 +39,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	private Button linkEditButton;
 	// private final HorizontalPanel buttonsPanel;
 	private final FlexTable buttonsPanel;
-	private static final String[] ratingMessages = { "definitely not true",
-			"probably not true", "as likely to be true as not true",
-			"probably true", "definitely true" };
+	private static final String[] ratingMessages = {
+			"definitely not true (~0% chance of being true)",
+			"probably not true (~25% chance of being true)",
+			"as likely to be true as not true (~50% chance of being true)",
+			"probably true (~75% chance of being true)",
+			"definitely true (~100% chance of being true)" };
 
 	boolean deleted = false;
 
@@ -405,6 +408,10 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				 * to load it--it will be loaded by the client in good time...
 				 */
 				getEditMode().loadFromServer(this, 2, 0);
+
+			}
+
+			if (!ratingView.hasBeenSet()) {
 				ServerComm.getRating(getNodeID(), new LocalCallback<Integer>() {
 					@Override
 					public void call(Integer t) {
@@ -498,7 +505,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	}
 
 	@Override
-	public void rate(int rating) {
+	public void rate(Integer rating) {
 		ServerComm.setRating(getNodeID(), rating);
 	}
 }

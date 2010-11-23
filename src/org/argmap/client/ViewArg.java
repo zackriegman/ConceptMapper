@@ -6,7 +6,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 
 public abstract class ViewArg extends ViewNode {
-	private static final String ARG_WIDTH = "48.5em";
+	private static final String ARG_WIDTH = "42.7em";
 	public Argument argument;
 	protected Label label;
 	protected TextBox textBox;
@@ -101,12 +101,14 @@ public abstract class ViewArg extends ViewNode {
 				}
 			}
 		};
-		textBox.setVisibleLength(Argument.MAX_LENGTH);
+		// textBox.setVisibleLength(Argument.MAX_LENGTH);
+		// textBox.getElement().getStyle().setWidth(100, Unit.PCT);
 		textBox.setMaxLength(Argument.MAX_LENGTH);
 		textBox.addStyleName("argTextBox");
 		textBox.addStyleName("nodeText");
 		horizontalPanel = new HorizontalPanel();
 		horizontalPanel.setWidth(ARG_WIDTH);
+		horizontalPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_LEFT);
 		horizontalPanel.add(label);
 		horizontalPanel.add(textBox);
 		horizontalPanel.addStyleName("argBox");

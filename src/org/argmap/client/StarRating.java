@@ -24,14 +24,15 @@ public class StarRating extends Widget implements MouseOverHandler,
 		MouseOutHandler, MouseMoveHandler, MouseDownHandler {
 
 	public static interface RatingHandler {
-		public void rate(int index);
+		public void rate(Integer rating);
 	}
 
-	List<Element> stars = new ArrayList<Element>();
-	Element cancel;
-	int selectedIndex = -1;
-	int hoverIndex = -1;
-	RatingHandler ratingHandler;
+	private final List<Element> stars = new ArrayList<Element>();
+	private final Element cancel;
+	private int selectedIndex = -1;
+	private int hoverIndex = -1;
+	private RatingHandler ratingHandler;
+	private boolean hasBeenSet = false;
 
 	public StarRating(String[] messages) {
 
@@ -82,13 +83,28 @@ public class StarRating extends Widget implements MouseOverHandler,
 		this.ratingHandler = ratingHandler;
 	}
 
-	public int getRating() {
-		return selectedIndex;
+	public Integer getRating() {
+		if (selectedIndex == 0) {
+			return null;
+		} else {
+			return selectedIndex - 1;
+		}
+
 	}
 
-	public void setRating(int rating) {
-		selectedIndex = rating;
+	public void setRating(Integer rating) {
+		hasBeenSet = true;
+
+		if (rating == null) {
+			selectedIndex = 0;
+		} else {
+			selectedIndex = rating + 1;
+		}
 		fill(selectedIndex, "star-rating-on");
+	}
+
+	public boolean hasBeenSet() {
+		return hasBeenSet;
 	}
 
 	private void drain() {
@@ -139,6 +155,7 @@ public class StarRating extends Widget implements MouseOverHandler,
 	public void onMouseOut(MouseOutEvent event) {
 		hoverIndex = -1;
 		fill(selectedIndex, "star-rating-on");
+		cancel.removeClassName("star-rating-hover");
 	}
 
 	@Override
@@ -148,10 +165,13 @@ public class StarRating extends Widget implements MouseOverHandler,
 
 	@Override
 	public void onMouseDown(MouseDownEvent event) {
-		selectedIndex = calculateStarIndex(event);
-		fill(selectedIndex, "star-rating-on");
-		if (ratingHandler != null) {
-			ratingHandler.rate(selectedIndex);
+		int newSelectedIndex = calculateStarIndex(event);
+		if (newSelectedIndex != selectedIndex) {
+			selectedIndex = newSelectedIndex;
+			if (ratingHandler != null) {
+				ratingHandler.rate(getRating());
+			}
 		}
+		fill(selectedIndex, "star-rating-on");
 	}
 }

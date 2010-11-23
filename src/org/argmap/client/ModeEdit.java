@@ -738,6 +738,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					propMatches));
 			// rowFormatter.addStyle(i, "sideSearchRow");
 			rowFormatter.setStylePrimaryName(i, "sideSearchRow");
+			if (i % 2 != 0) {
+				rowFormatter.addStyleName(i, "sideSearchAltRow");
+			}
 			i++;
 		}
 	}
