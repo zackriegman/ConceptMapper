@@ -169,4 +169,6 @@ public interface ArgMapService extends RemoteService {
 
 	public LoginInfo getLoginInfo(String requestURI) throws ServiceException;
 
+	public String getTextPage(String pageName) throws ServiceException;
+
 }

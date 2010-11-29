@@ -1,5 +1,7 @@
 package org.argmap.server;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -22,12 +24,12 @@ import org.apache.lucene.analysis.tokenattributes.TermAttribute;
 import org.argmap.client.ArgMapService;
 import org.argmap.client.Argument;
 import org.argmap.client.Change;
-import org.argmap.client.Change.ChangeType;
 import org.argmap.client.LoginInfo;
 import org.argmap.client.Node;
 import org.argmap.client.NodeChanges;
 import org.argmap.client.Proposition;
 import org.argmap.client.ServiceException;
+import org.argmap.client.Change.ChangeType;
 
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
@@ -86,8 +88,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	public PartialTrees getRootProps(int depthLimit) {
 
 		PartialTrees propsAndArgs = new PartialTrees();
-		Query<Proposition> propQuery = ofy.query(Proposition.class)
-				.filter("linkCount =", 0).order("-created").limit(30);
+		Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
+				"linkCount =", 0).order("-created").limit(30);
 
 		List<Proposition> rootProps = propQuery.list();
 		Map<Long, Node> nodes = new HashMap<Long, Node>();
@@ -479,7 +481,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		try {
 			change.sessionID = request.getSession().getId();
 		} catch (java.lang.IllegalStateException e) {
-			log.fine("no session information saved in Change object because there was no session found");
+			log
+					.fine("no session information saved in Change object because there was no session found");
 		}
 
 		// logln("Change Logged -- " + change.toString());
@@ -533,8 +536,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		// + Log.mapToString(propsInfo) + "\nargs:"
 		// + Log.mapToString(argsInfo));
 
-		Map<Long, Proposition> props = ofy.get(Proposition.class,
-				propsInfo.keySet());
+		Map<Long, Proposition> props = ofy.get(Proposition.class, propsInfo
+				.keySet());
 		Map<Long, Argument> args = ofy.get(Argument.class, argsInfo.keySet());
 
 		for (Proposition prop : props.values()) {
@@ -681,8 +684,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			switch (change.changeType) {
 			case PROP_UNLINK:
 				if (!unlinkedLinks.containsKey(change.propID)) {
-					unlinkedLinks.put(change.propID,
-							ofy.get(Proposition.class, change.propID));
+					unlinkedLinks.put(change.propID, ofy.get(Proposition.class,
+							change.propID));
 				}
 			case PROP_DELETION:
 				nodeChanges.deletedChildIDs.add(change.propID);
@@ -759,7 +762,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 					searchName) == null) {
 				sb.append(" with id '"
 						+ getHttpServletRequest().getSession().getId() + "'");
-				sb.append("\ngetHttpServletRequest().getSession().getAttribute(searchName) == null");
+				sb
+						.append("\ngetHttpServletRequest().getSession().getAttribute(searchName) == null");
 			}
 			log.severe(sb.toString());
 			throw new ServiceException(sb.toString());
@@ -978,5 +982,48 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	public void setRating(Long propID, Integer rating) throws ServiceException {
 		Rating.setRating(propID, rating);
+	}
+
+	public String getTextPage(String pageName) throws ServiceException {
+		for (int i = 0; i < pageName.length(); i++) {
+			if (!Character.isLetter(pageName.charAt(i))) {
+				throw new ServiceException(
+						"not a valid page name:  page names can consist of letters only");
+			}
+		}
+
+		try {
+			String fileName = "text_pages/" + pageName;
+			if (Cache.contains(fileName)) {
+				return (String) Cache.get(fileName);
+			} else {
+				String fileText = textFileToString(fileName);
+				/*
+				 * put it in the cache to expire in 6 hours (so when text is
+				 * updated old text will be served for only 6 hours
+				 */
+				// int textPageExpirationTime = 60 * 60 * 6;
+				int textPageExpirationTime = 1;
+				Cache.putOnlyIfNotPresent(fileName, fileText,
+						textPageExpirationTime);
+				return fileText;
+			}
+		} catch (IOException e) {
+			log.log(Level.SEVERE, "IOException during getTextPage(\""
+					+ pageName + "\")", e);
+			throw new ServiceException("IOException prevented page load");
+		}
+	}
+
+	private String textFileToString(String file) throws IOException {
+		BufferedReader reader = new BufferedReader(new FileReader(file));
+		String line = null;
+		StringBuilder stringBuilder = new StringBuilder();
+		String ls = System.getProperty("line.separator");
+		while ((line = reader.readLine()) != null) {
+			stringBuilder.append(line);
+			stringBuilder.append(ls);
+		}
+		return stringBuilder.toString();
 	}
 }

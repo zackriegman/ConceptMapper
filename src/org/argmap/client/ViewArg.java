@@ -121,11 +121,11 @@ public abstract class ViewArg extends ViewNode {
 			argument.pro = pro;
 		}
 		if (pro) {
-			label.setText("Argument For: ");
+			label.setText("Reasoning For: ");
 			horizontalPanel.addStyleName("proArg");
 			textBox.addStyleName("proArg");
 		} else {
-			label.setText("Argument Against: ");
+			label.setText("Reasoning Against: ");
 			horizontalPanel.addStyleName("conArg");
 			textBox.addStyleName("conArg");
 		}

@@ -185,6 +185,12 @@ public class ServerComm {
 				localCallback, "loading rating...", "rating loaded"));
 	}
 
+	public static void getTextPage(String pageName,
+			LocalCallback<String> localCallback) {
+		argMapService.getTextPage(pageName, new ServerCallback<String>(
+				localCallback, "loading page...", "page loaded"));
+	}
+
 	public static void getNodesChildren(List<Long> nodeIDs, int depth,
 			LocalCallback<PartialTrees> localCallback) {
 		argMapService.getNodesChildren(nodeIDs, depth,

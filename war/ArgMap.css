@@ -90,6 +90,16 @@
 	background-color: #DAE2EB;
 }
 
+.sideMessageArea{
+	padding: 1em;
+	padding-top: .01em;
+	padding-bottom: 20em;
+	border-color: #92C1F0;
+	border-style: solid;
+	border-top-style: none;
+	font-size: 13.5px;
+	}
+
 .addPropButton {
 	margin-top: .5em;
 	margin-left: .7em;
@@ -112,7 +122,7 @@
  
 .nodeText {
 	font-family: arial, sans-serif;
-	font-size: 12.8px;
+	font-size: 13.5px;
 }
 
 .propositionTextArea { /*border: 1px dotted #00f;*/
@@ -147,6 +157,7 @@
 .argLabel {
 	padding-left: .2em;
 	padding-top: .07em;
+	font-size: 13.5px;
 }
 
 .argBox {

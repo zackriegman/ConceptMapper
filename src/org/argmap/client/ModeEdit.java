@@ -77,6 +77,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	private Button mainSearchContinueButton;
 	private Button sideSearchContinueButton;
 	private final ArgMap argMap;
+	private final Map<String, String> loadedPages = new HashMap<String, String>();
 
 	public final UpdateTimer updateTimer;
 	private Search mainSearch;
@@ -135,6 +136,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				 * setup side bar *
 				 ******************/
 				sideMessageArea = new HTML();
+				sideMessageArea.addStyleName("sideMessageArea");
 				sideSearchLabel = new Label(
 						"Would you like to use one of these already existing propositions?");
 				sideSearchLabel.addStyleName("sideSearchLabel");
@@ -227,6 +229,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				SplitLayoutPanel mainSplit = new SplitLayoutPanel();
 				mainSplit.addEast(sideSplit, 300);
 				mainSplit.add(mainPanel);
+				setSideBarText("welcome");
 				initWidget(mainSplit);
 			}
 
@@ -259,7 +262,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					// propView.logNodeRecursive(0, "em.em.cb", true);
 				}
 				tree.resetState();
-				if (Log.on) tree.logTree(log);
+				if (Log.on)
+					tree.logTree(log);
 
 				updateTimer.start();
 				log.finish();
@@ -368,7 +372,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 								List<ViewProp> viewProps = new ArrayList<ViewProp>(
 										loadedProps.get(node.id));
 								for (ViewProp viewProp : viewProps) {
-									log.logln("prossesing ViewProp:" + viewProp);
+									log
+											.logln("prossesing ViewProp:"
+													+ viewProp);
 									updateNode(viewProp, node, results);
 								}
 							} else if (node instanceof Argument) {
@@ -672,9 +678,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				ServerComm.replaceWithLinkAndGet(parentArgView.argument,
 						propToLinkTo, propViewToRemove.proposition, callback);
 			} else {
-				ArgMap.messageTimed(
-						"Cannot link to existing proposition when proposition currently being edited has children",
-						MessageType.ERROR);
+				ArgMap
+						.messageTimed(
+								"Cannot link to existing proposition when proposition currently being edited has children",
+								MessageType.ERROR);
 			}
 
 		}
@@ -951,7 +958,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			}
 
 			schedule(currentFrequency);
-			if (on) getUpdatesAndApply();
+			if (on)
+				getUpdatesAndApply();
 		}
 
 		public void start() {
@@ -1214,8 +1222,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			if (!source.isLoaded()) {
 				loadFromServer(source, 2, 1);
 			} else {
-				List<ViewNode> list = new ArrayList<ViewNode>(
-						source.getChildCount());
+				List<ViewNode> list = new ArrayList<ViewNode>(source
+						.getChildCount());
 				for (int i = 0; i < source.getChildCount(); i++) {
 					if (!source.getChild(i).isLoaded()) {
 						list.add(source.getChild(i));
@@ -1262,6 +1270,20 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		} else if (source == addPropButton) {
 			addRootProp();
 		}
+	}
 
+	public void setSideBarText(final String pageName) {
+		if (loadedPages.containsKey(pageName)) {
+			sideMessageArea.setHTML(loadedPages.get(pageName));
+		} else {
+			ServerComm.getTextPage(pageName, new LocalCallback<String>() {
+
+				@Override
+				public void call(String pageContent) {
+					loadedPages.put(pageName, pageContent);
+					sideMessageArea.setHTML(pageContent);
+				}
+			});
+		}
 	}
 }
