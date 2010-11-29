@@ -516,7 +516,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 							+ "your user account.  Please sign in by clicking on the 'Sign in' link "
 							+ "in the upper right hand corner and try again.  If you do not have a user "
 							+ "account you can create one for free by clicking on the 'Sign in' link "
-							+ "in the upper right hand corner.  <a target=\"_blank\" href=\"pages/ratings\">Read more.</a>");
+							+ "in the upper right hand corner.  <a target=\"_blank\" href=\"http://pages.coreason.org/ratings\">Read more.</a>");
 			message.center();
 			message.show();
 		}
