@@ -7,7 +7,7 @@ import com.googlecode.objectify.annotation.Cached;
 @Cached
 public class Argument extends Node implements Serializable {
 	private static final long serialVersionUID = 1L; // to suppress warnings
-	public static final int MAX_LENGTH = 30;
+	public static final int MAX_LENGTH = 40;
 
 	/*
 	 * remember if you change the name of a field you have to update the server

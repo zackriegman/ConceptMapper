@@ -1,12 +1,16 @@
 package org.argmap.client;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 
 public abstract class ViewArg extends ViewNode {
-	private static final String ARG_WIDTH = "42.7em";
+	private static final String PRO_LABEL_WIDTH = "7.5em";
+	private static final String CON_LABEL_WIDTH = "9.3em";
+	private static final String PRO_TEXT_BOX_WIDTH = "34.2em";
+	private static final String CON_TEXT_BOX_WIDTH = "32.4em";
 	public Argument argument;
 	protected Label label;
 	protected TextBox textBox;
@@ -101,14 +105,12 @@ public abstract class ViewArg extends ViewNode {
 				}
 			}
 		};
-		// textBox.setVisibleLength(Argument.MAX_LENGTH);
-		// textBox.getElement().getStyle().setWidth(100, Unit.PCT);
+		textBox.setVisibleLength(80);
 		textBox.setMaxLength(Argument.MAX_LENGTH);
 		textBox.addStyleName("argTextBox");
 		textBox.addStyleName("nodeText");
+		textBox.getElement().getStyle().setMarginRight(1, Unit.EM);
 		horizontalPanel = new HorizontalPanel();
-		horizontalPanel.setWidth(ARG_WIDTH);
-		horizontalPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_LEFT);
 		horizontalPanel.add(label);
 		horizontalPanel.add(textBox);
 		horizontalPanel.addStyleName("argBox");
@@ -122,12 +124,16 @@ public abstract class ViewArg extends ViewNode {
 		}
 		if (pro) {
 			label.setText("Reasoning For: ");
+			label.setWidth(PRO_LABEL_WIDTH);
 			horizontalPanel.addStyleName("proArg");
 			textBox.addStyleName("proArg");
+			textBox.setWidth(PRO_TEXT_BOX_WIDTH);
 		} else {
 			label.setText("Reasoning Against: ");
+			label.setWidth(CON_LABEL_WIDTH);
 			horizontalPanel.addStyleName("conArg");
 			textBox.addStyleName("conArg");
+			textBox.setWidth(CON_TEXT_BOX_WIDTH);
 		}
 	}
 
