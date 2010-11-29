@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-//TODO: better formating for explanatory pages
 //TODO: message area is truncated by side search:  fix: make suggestions pop-up over side message instead?
 //TODO: compose help tips
 //TODO: fix side bar border formatting on Chrome
