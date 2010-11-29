@@ -22,6 +22,15 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+//TODO: fix argument formating
+//TODO: better formating for explanatory pages
+//TODO: compose help tips
+//TODO: add 'real' example arguments for demonstration (for instance my argument about legalizing unauthorized access)
+
+//TODO: research semenatic reasoning (OWL, etc.)
+
+//TODO: follow up on IP email (re meeting with Kim/JP)
+//TODO: deferred binding for textAreaAutoHeight to fix IE problem
 //TODO: implement scoring algorithm
 //TODO: implement negative linking: linking to the negation of an existing proposition...
 
@@ -30,8 +39,6 @@ import com.google.gwt.user.client.ui.Widget;
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
 
-//TODO: add helpful message along the side (tips box)
-//TODO: add 'real' example arguments for demonstration (for instance my argument about legalizing unauthorized access)
 //TODO: implement user accounts, email updates of changes, inviting friends
 
 /* TODO limit argument text length on client and server */
@@ -120,6 +127,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 	private MultiMap<String, Message> messageMap;
 	private ModeVersions versionsMode;
 	private static ArgMap argMap;
+	private boolean loggedIn;
 
 	public void onModuleLoad() {
 		argMap = this;
@@ -192,6 +200,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 					log.finish();
 				}
 				if (loginInfo.loggedIn) {
+					loggedIn = true;
 					Anchor signOutLink = new Anchor("Sign out");
 					signOutLink.addStyleName("loginText");
 					signOutLink.setHref(loginInfo.logOutURL);
@@ -219,6 +228,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 						});
 					}
 				} else {
+					loggedIn = false;
 					Anchor signInLink = new Anchor("Sign in");
 					signInLink.addStyleName("loginText");
 					signInLink.setHref(loginInfo.logInURL);
@@ -226,6 +236,10 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 				}
 			}
 		});
+	}
+
+	public static boolean loggedIn() {
+		return argMap.loggedIn;
 	}
 
 	public void showVersions() {

@@ -506,6 +506,19 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	@Override
 	public void rate(Integer rating) {
-		ServerComm.setRating(getNodeID(), rating);
+		if (ArgMap.loggedIn()) {
+			ServerComm.setRating(getNodeID(), rating);
+		} else {
+			ratingView.setRating(null);
+			MessageDialog message = new MessageDialog(
+					"Must be signed in to rate propositions",
+					"In order to contribute your ratings of propositions you must be signed in to "
+							+ "your user account.  Please sign in by clicking on the 'Sign in' link "
+							+ "in the upper right hand corner and try again.  If you do not have a user "
+							+ "account you can create one for free by clicking on the 'Sign in' link "
+							+ "in the upper right hand corner.  <a target=\"_blank\" href=\"pages/ratings\">Read more.</a>");
+			message.center();
+			message.show();
+		}
 	}
 }

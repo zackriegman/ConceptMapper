@@ -262,8 +262,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					// propView.logNodeRecursive(0, "em.em.cb", true);
 				}
 				tree.resetState();
-				if (Log.on)
-					tree.logTree(log);
+				if (Log.on) tree.logTree(log);
 
 				updateTimer.start();
 				log.finish();
@@ -372,9 +371,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 								List<ViewProp> viewProps = new ArrayList<ViewProp>(
 										loadedProps.get(node.id));
 								for (ViewProp viewProp : viewProps) {
-									log
-											.logln("prossesing ViewProp:"
-													+ viewProp);
+									log.logln("prossesing ViewProp:" + viewProp);
 									updateNode(viewProp, node, results);
 								}
 							} else if (node instanceof Argument) {
@@ -537,6 +534,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			setText("Resolve Conflicting Change");
 
 			VerticalPanel dialogContents = new VerticalPanel();
+			dialogContents.setWidth("60em");
 			dialogContents.setSpacing(4);
 			setWidget(dialogContents);
 
@@ -678,10 +676,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				ServerComm.replaceWithLinkAndGet(parentArgView.argument,
 						propToLinkTo, propViewToRemove.proposition, callback);
 			} else {
-				ArgMap
-						.messageTimed(
-								"Cannot link to existing proposition when proposition currently being edited has children",
-								MessageType.ERROR);
+				ArgMap.messageTimed(
+						"Cannot link to existing proposition when proposition currently being edited has children",
+						MessageType.ERROR);
 			}
 
 		}
@@ -958,8 +955,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			}
 
 			schedule(currentFrequency);
-			if (on)
-				getUpdatesAndApply();
+			if (on) getUpdatesAndApply();
 		}
 
 		public void start() {
@@ -1222,8 +1218,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			if (!source.isLoaded()) {
 				loadFromServer(source, 2, 1);
 			} else {
-				List<ViewNode> list = new ArrayList<ViewNode>(source
-						.getChildCount());
+				List<ViewNode> list = new ArrayList<ViewNode>(
+						source.getChildCount());
 				for (int i = 0; i < source.getChildCount(); i++) {
 					if (!source.getChild(i).isLoaded()) {
 						list.add(source.getChild(i));
