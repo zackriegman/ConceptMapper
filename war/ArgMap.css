@@ -156,7 +156,8 @@
 
 .argLabel {
 	padding-left: .2em;
-	padding-top: .07em;
+	padding-top: .15em;
+	font-family: arial, sans-serif;
 	font-size: 13.5px;
 }
 

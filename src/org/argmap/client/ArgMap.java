@@ -22,8 +22,8 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-//TODO: fix argument formating
 //TODO: better formating for explanatory pages
+//TODO: message area is truncated by side search:  fix: make suggestions pop-up over side message instead?
 //TODO: compose help tips
 //TODO: add 'real' example arguments for demonstration (for instance my argument about legalizing unauthorized access)
 
