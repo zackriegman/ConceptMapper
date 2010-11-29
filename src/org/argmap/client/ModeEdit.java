@@ -34,6 +34,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -42,6 +43,8 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLTable;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
@@ -63,10 +66,11 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	private static HTML sideMessageArea;
 	private Label sideSearchLabel;
 	private FlexTable sideSearchResults;
+	private PopupPanel sideSearchPopupPanel;
 	private ScrollPanel sideSearchScroll;
 	private ScrollPanel sideMessageScroll;
 	public ScrollPanel treeScrollPanel;
-	private SplitLayoutPanel sideSplit;
+	// private SplitLayoutPanel sideSplit;
 
 	private TextBox searchTextBox;
 	private final EditModeTree tree;
@@ -141,24 +145,39 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 						"Would you like to use one of these already existing propositions?");
 				sideSearchLabel.addStyleName("sideSearchLabel");
 				sideSearchResults = new FlexTable();
-				sideSplit = new SplitLayoutPanel();
+				// sideSplit = new SplitLayoutPanel();
 				sideSearchTimer = new SideSearchTimer();
 
-				sideSearchContinueButton = new Button("loadMoreResults");
+				sideSearchContinueButton = new Button("load more results");
 				sideSearchContinueButton.setStylePrimaryName("addPropButton");
 				sideSearchContinueButton.addClickHandler(ModeEdit.this);
 				sideSearchContinueButton.addClickHandler(updateTimer);
 				sideSearchContinueButton.setVisible(false);
-				sideSearchLabel.setVisible(false);
+
+				Button sideSearchCloseButton = new Button("x");
+				sideSearchCloseButton.addClickHandler(new ClickHandler() {
+
+					@Override
+					public void onClick(ClickEvent event) {
+						sideSearchPopupPanel.hide();
+					}
+				});
+				// sideSearchLabel.setVisible(false);
 				FlowPanel sideSearchArea = new FlowPanel();
+				sideSearchArea.add(sideSearchCloseButton);
 				sideSearchArea.add(sideSearchLabel);
 				sideSearchArea.add(sideSearchResults);
 				sideSearchArea.add(sideSearchContinueButton);
 
 				sideSearchScroll = new ScrollPanel(sideSearchArea);
 				sideMessageScroll = new ScrollPanel(sideMessageArea);
+				sideSearchPopupPanel = new PopupPanel();
+				sideSearchPopupPanel.setAnimationEnabled(true);
+				sideSearchPopupPanel.setWidget(sideSearchScroll);
+				sideSearchPopupPanel.setWidth("20em");
+				sideSearchPopupPanel.setHeight("30em");
 
-				sideSplit.add(sideMessageScroll);
+				// sideSplit.add(sideMessageScroll);
 				/*
 				 * sideSearchScroll is not added here. Instead it is
 				 * added/removed as necessary depending on whether there are
@@ -227,7 +246,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				 *************************/
 
 				SplitLayoutPanel mainSplit = new SplitLayoutPanel();
-				mainSplit.addEast(sideSplit, 300);
+				mainSplit.addEast(sideMessageScroll, 300);
 				mainSplit.add(mainPanel);
 				setSideBarText("welcome");
 				initWidget(mainSplit);
@@ -750,18 +769,36 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	}
 
 	public void displaySearchBox() {
-		if (!sideSearchScroll.isAttached()) {
-			sideSplit.remove(sideMessageScroll);
-			sideSplit.addSouth(sideSearchScroll, 400);
-			sideSplit.add(sideMessageScroll);
-		}
-		sideSearchLabel.setVisible(true);
+		sideSearchPopupPanel.setPopupPositionAndShow(new PositionCallback() {
+
+			@Override
+			public void setPosition(int offsetWidth, int offsetHeight) {
+				// GWT.log("offsetWidth: " + offsetWidth);
+				// GWT.log("Window.getclientWidth()
+				sideSearchPopupPanel.setPopupPosition(Window.getClientWidth()
+						- offsetWidth, Window.getClientHeight() - offsetHeight);
+
+			}
+		});
 	}
 
 	public void hideSearchBox() {
-		sideSplit.remove(sideSearchScroll);
-		sideSearchLabel.setVisible(false);
+		sideSearchPopupPanel.hide();
 	}
+
+	// public void displaySearchBox() {
+	// if (!sideSearchScroll.isAttached()) {
+	// sideSplit.remove(sideMessageScroll);
+	// sideSplit.addSouth(sideSearchScroll, 400);
+	// sideSplit.add(sideMessageScroll);
+	// }
+	// sideSearchLabel.setVisible(true);
+	// }
+	//
+	// public void hideSearchBox() {
+	// sideSplit.remove(sideSearchScroll);
+	// sideSearchLabel.setVisible(false);
+	// }
 
 	/**
 	 * annoyingly, by default the Tree eats the arrow key events so they can't
