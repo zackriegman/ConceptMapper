@@ -136,11 +136,10 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 			@Override
 			public void onSuccess() {
-				/******************
-				 * setup side bar *
-				 ******************/
-				sideMessageArea = new HTML();
-				sideMessageArea.addStyleName("sideMessageArea");
+				/***********************
+				 * setup search pop up *
+				 ***********************/
+
 				sideSearchLabel = new Label(
 						"Would you like to use one of these already existing propositions?");
 				sideSearchLabel.addStyleName("sideSearchLabel");
@@ -170,19 +169,19 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				sideSearchArea.add(sideSearchContinueButton);
 
 				sideSearchScroll = new ScrollPanel(sideSearchArea);
-				sideMessageScroll = new ScrollPanel(sideMessageArea);
 				sideSearchPopupPanel = new PopupPanel();
 				sideSearchPopupPanel.setAnimationEnabled(true);
 				sideSearchPopupPanel.setWidget(sideSearchScroll);
 				sideSearchPopupPanel.setWidth("20em");
 				sideSearchPopupPanel.setHeight("30em");
 
-				// sideSplit.add(sideMessageScroll);
-				/*
-				 * sideSearchScroll is not added here. Instead it is
-				 * added/removed as necessary depending on whether there are
-				 * search results
-				 */
+				/******************
+				 * setup side bar *
+				 ******************/
+				sideMessageArea = new HTML();
+				// sideMessageArea.addStyleName("sideMessageArea");
+				sideMessageScroll = new ScrollPanel(sideMessageArea);
+				sideMessageScroll.setStyleName("sideMessageArea");
 
 				/*******************
 				 * setup main area *
