@@ -421,6 +421,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 					}
 				});
 			}
+
+			if (proposition.linkCount > 1) {
+				getEditModeTree().getEditMode().setSideBarText("links");
+			} else {
+				getEditModeTree().getEditMode().setSideBarText("propositions");
+			}
 		}
 
 		/*

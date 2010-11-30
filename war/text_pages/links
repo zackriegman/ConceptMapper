@@ -1,0 +1,9 @@
+<h1>Editing Links</h1>
+<p/>
+When editing linked propositions it is important to keep in mind that the proposition is used elsewhere.
+  For that reason the meaning of the proposition should never be changed, because if the meaning is changed
+   to conform to one argument, it may no longer make sense in the other arguments where the proposition is used.  
+   If an argument evolves so that a proposition with a different meaning is needed in place of a linked proposition, 
+   rather than change meaning, the proposition should be unlinked, and a new proposition with a different 
+   meaning should be created.  Editing linked propositions should only be done to improve the wording and 
+   clarity for the current meaning of the proposition.

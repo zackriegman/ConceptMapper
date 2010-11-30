@@ -159,6 +159,7 @@ public class ViewArgEdit extends ViewArg implements ChangeHandler,
 	@Override
 	public void onFocus(FocusEvent event) {
 		getEditModeTree().getEditMode().hideSearchBox();
+		getEditModeTree().getEditMode().setSideBarText("arguments");
 
 		/*
 		 * tell edit mode that there has been a user action so it doesn't
