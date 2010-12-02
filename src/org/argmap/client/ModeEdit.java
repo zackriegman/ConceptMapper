@@ -561,7 +561,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 							+ "Please review the text below and choose a version to keep.  "
 							+ "If you would like to merge text from both versions, copy the text you"
 							+ " would like to merge, and paste it after choosing a version to work from.  "
-							+ "If you continue getting these message wait a short time for the other user"
+							+ "If you continue getting this message wait a short time for the other user"
 							+ " to finish editing and try again.");
 			details.getElement().getStyle().setMarginBottom(2, Unit.EM);
 			dialogContents.add(details);
@@ -655,50 +655,87 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		}
 
 		public void onClick(ClickEvent event) {
+			UseNegationDialog useNegationDialog = new UseNegationDialog(this);
 
-			ViewPropEdit propViewToRemove = ViewPropEdit
-					.getLastPropositionWithFocus();
-			if (propViewToRemove.getChildCount() == 0) {
-				/*
-				 * TODO finalize these variables and replace this with an
-				 * anonymous inner class referencing finalized variables
-				 */
-				class ThisCallback implements LocalCallback<PartialTrees> {
-					ViewArgEdit parentArgView;
-					ViewPropEdit propViewToRemove;
-					int propIndex;
-					Long linkPropID;
+			useNegationDialog.center();
+			useNegationDialog.show();
+		}
+	}
 
-					@Override
-					public void call(PartialTrees trees) {
-						parentArgView.removeItem(propViewToRemove);
-						Proposition proposition = (Proposition) trees.nodes
-								.get(linkPropID);
-						ViewProp newViewProp = new ViewPropEdit();
-						newViewProp.recursiveBuildViewNode(proposition,
-								trees.nodes, 5, trees.ratings);
+	private class UseNegationDialog extends DialogBox {
+		public UseNegationDialog(final SideSearchButton sideSearchButton) {
+			super();
+			setGlassEnabled(true);
+			setAnimationEnabled(true);
 
-						parentArgView.insertItem(propIndex, newViewProp);
-					}
-				}
-				;
-				ThisCallback callback = new ThisCallback();
-				ViewArgEdit parentArgView = propViewToRemove.parentArgView();
-				callback.parentArgView = parentArgView;
-				callback.propViewToRemove = propViewToRemove;
-				callback.propIndex = parentArgView
-						.getChildIndex(propViewToRemove);
-				Proposition propToLinkTo = (Proposition) propMatches.nodes
-						.get(propMatches.rootIDs.get(resultIndex));
-				callback.linkPropID = propToLinkTo.id;
-				ServerComm.replaceWithLinkAndGet(parentArgView.argument,
-						propToLinkTo, propViewToRemove.proposition, callback);
-			} else {
-				ArgMap.messageTimed(
-						"Cannot link to existing proposition when proposition currently being edited has children",
-						MessageType.ERROR);
-			}
+			setText("Use Negation Of Proposition?");
 
+			VerticalPanel dialogContents = new VerticalPanel();
+			dialogContents.setWidth("40em");
+			dialogContents.setSpacing(4);
+			setWidget(dialogContents);
+
+			HTML details = new HTML(
+					"Would you like to assert this proposition"
+							+ "as is in your argument, or would you like to assert the opposite?");
+			dialogContents.add(details);
+
+			Button asIsButton = new Button("Use Proposition",
+					new ClickHandler() {
+						public void onClick(ClickEvent event) {
+							hide();
+							replacePropositionWithLink(
+									sideSearchButton.resultIndex,
+									sideSearchButton.propMatches, false);
+						}
+					});
+			dialogContents.add(asIsButton);
+
+			Button asNegationButton = new Button("Use Negation",
+					new ClickHandler() {
+
+						@Override
+						public void onClick(ClickEvent event) {
+							hide();
+							replacePropositionWithLink(
+									sideSearchButton.resultIndex,
+									sideSearchButton.propMatches, true);
+						}
+					});
+			dialogContents.add(asNegationButton);
+		}
+	}
+
+	public void replacePropositionWithLink(int resultIndex,
+			PartialTrees propMatches, final boolean negated) {
+		final ViewPropEdit propViewToRemove = ViewPropEdit
+				.getLastPropositionWithFocus();
+		if (propViewToRemove.getChildCount() == 0) {
+			final ViewArgEdit parentArgView = propViewToRemove.parentArgView();
+			final Proposition propToLinkTo = (Proposition) propMatches.nodes
+					.get(propMatches.rootIDs.get(resultIndex));
+			ServerComm.replaceWithLinkAndGet(parentArgView.argument,
+					propToLinkTo, propViewToRemove.proposition, negated,
+					new LocalCallback<ArgMapService.PartialTrees>() {
+
+						@Override
+						public void call(PartialTrees trees) {
+							int propIndex = parentArgView
+									.getChildIndex(propViewToRemove);
+							parentArgView.removeItem(propViewToRemove);
+							Proposition proposition = (Proposition) trees.nodes
+									.get(propToLinkTo.id);
+							ViewProp newViewProp = new ViewPropEdit();
+							parentArgView.insertItem(propIndex, newViewProp);
+							newViewProp.recursiveBuildViewNode(proposition,
+									trees.nodes, 5, trees.ratings);
+							newViewProp.setNegated(negated);
+						}
+					});
+		} else {
+			ArgMap.messageTimed(
+					"Cannot link to existing proposition when proposition currently being edited has children",
+					MessageType.ERROR);
 		}
 	}
 

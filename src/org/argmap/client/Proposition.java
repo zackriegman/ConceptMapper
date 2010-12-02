@@ -17,6 +17,7 @@ public class Proposition extends Node implements Serializable {
 	 */
 
 	public int linkCount;
+	public boolean root;
 
 	/*
 	 * note the difference between 'transient' and '@Transient' 'transient' will

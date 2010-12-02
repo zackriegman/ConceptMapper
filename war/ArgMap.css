@@ -125,17 +125,26 @@
 	font-size: 13.5px;
 }
 
-.propositionTextArea { /*border: 1px dotted #00f;*/
+.propositionTextArea{
+	border-style: none;
+	}
+
+.propositionArea { /*border: 1px dotted #00f;*/
 	/*border-color: #B2B2FF;*/ /*border-style: dotted;*/
 	border-color: #DADAFF;
 	border-style: solid;
 	border-width: 1px;
-	padding: .5em;
+	padding: .3em;
 	-moz-border-radius: 6px;
 	-webkit-border-radius: 6px;
 	-khtml-border-radius: 6px;
 	border-radius: 6px;
 }
+
+.negatedPropLabel{
+	margin-right: .5em;
+	color: blue;
+} 
 
 .circularLink {
 	border-color: #FF0000;

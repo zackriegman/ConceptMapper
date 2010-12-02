@@ -2,6 +2,7 @@ package org.argmap.client;
 
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public abstract class ViewProp extends ViewNode {
@@ -31,12 +32,14 @@ public abstract class ViewProp extends ViewNode {
 	protected HorizontalPanel topPanel = new HorizontalPanel();
 	protected FocusPanel focusPanel;
 	public Proposition proposition;
+	private Label negatedLabel = null;
 
 	public ViewProp(Proposition proposition) {
 		super();
 		setNode(proposition);
 		mainPanel.add(topPanel);
 		topPanel.add(textArea);
+		topPanel.setStylePrimaryName("propositionArea");
 		textArea.setStylePrimaryName("propositionTextArea");
 		textArea.addStyleName("nodeText");
 		textArea.setWidth(PROP_WIDTH);
@@ -64,11 +67,29 @@ public abstract class ViewProp extends ViewNode {
 		proposition = (Proposition) node;
 
 		if (proposition.linkCount <= 1) {
+			topPanel.removeStyleName("linkedPropositionTextArea");
 			textArea.removeStyleName("linkedPropositionTextArea");
 			setNodeLink(false);
 		} else if (proposition.linkCount > 1) {
+			topPanel.addStyleName("linkedPropositionTextArea");
 			textArea.addStyleName("linkedPropositionTextArea");
 			setNodeLink(true);
+		}
+	}
+
+	public void setNegated(boolean negated) {
+		if (negated == true) {
+			if (negatedLabel == null) {
+				negatedLabel = new Label("Not:");
+				negatedLabel.addStyleName("negatedPropLabel");
+
+				topPanel.insert(negatedLabel, 0);
+			}
+		} else {
+			if (negatedLabel != null) {
+				topPanel.remove(negatedLabel);
+				negatedLabel = null;
+			}
 		}
 	}
 
@@ -76,6 +97,15 @@ public abstract class ViewProp extends ViewNode {
 	public void setNode(Node node) {
 		setNodeButNotTextAreaContent(node);
 		setContent(proposition.getContent());
+	}
+
+	@Override
+	public void setNegation() {
+		ViewNode parent = getParent();
+		if (parent != null) {
+			setNegated(((Argument) parent.getNode()).negatedChildIDs
+					.contains(getNodeID()));
+		}
 	}
 
 	@Override

@@ -24,12 +24,12 @@ import org.apache.lucene.analysis.tokenattributes.TermAttribute;
 import org.argmap.client.ArgMapService;
 import org.argmap.client.Argument;
 import org.argmap.client.Change;
+import org.argmap.client.Change.ChangeType;
 import org.argmap.client.LoginInfo;
 import org.argmap.client.Node;
 import org.argmap.client.NodeChanges;
 import org.argmap.client.Proposition;
 import org.argmap.client.ServiceException;
-import org.argmap.client.Change.ChangeType;
 
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
@@ -88,8 +88,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	public PartialTrees getRootProps(int depthLimit) {
 
 		PartialTrees propsAndArgs = new PartialTrees();
-		Query<Proposition> propQuery = ofy.query(Proposition.class).filter(
-				"linkCount =", 0).order("-created").limit(30);
+		Query<Proposition> propQuery = ofy.query(Proposition.class)
+				.filter("linkCount =", 0).order("-created").limit(30);
 
 		List<Proposition> rootProps = propQuery.list();
 		Map<Long, Node> nodes = new HashMap<Long, Node>();
@@ -263,6 +263,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 				/* remove the proposition from the argument */
 				argument.childIDs.remove(propID);
+				argument.negatedChildIDs.remove(propID);
 				putNode(argument);
 			} finally {
 				lock.unlock();
@@ -298,6 +299,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			}
 
 			argument.childIDs.remove(propositionID);
+			argument.negatedChildIDs.remove(propositionID);
 			putNode(argument);
 
 			proposition.linkCount--;
@@ -481,8 +483,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		try {
 			change.sessionID = request.getSession().getId();
 		} catch (java.lang.IllegalStateException e) {
-			log
-					.fine("no session information saved in Change object because there was no session found");
+			log.fine("no session information saved in Change object because there was no session found");
 		}
 
 		// logln("Change Logged -- " + change.toString());
@@ -536,8 +537,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		// + Log.mapToString(propsInfo) + "\nargs:"
 		// + Log.mapToString(argsInfo));
 
-		Map<Long, Proposition> props = ofy.get(Proposition.class, propsInfo
-				.keySet());
+		Map<Long, Proposition> props = ofy.get(Proposition.class,
+				propsInfo.keySet());
 		Map<Long, Argument> args = ofy.get(Argument.class, argsInfo.keySet());
 
 		for (Proposition prop : props.values()) {
@@ -684,8 +685,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			switch (change.changeType) {
 			case PROP_UNLINK:
 				if (!unlinkedLinks.containsKey(change.propID)) {
-					unlinkedLinks.put(change.propID, ofy.get(Proposition.class,
-							change.propID));
+					unlinkedLinks.put(change.propID,
+							ofy.get(Proposition.class, change.propID));
 				}
 			case PROP_DELETION:
 				nodeChanges.deletedChildIDs.add(change.propID);
@@ -762,8 +763,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 					searchName) == null) {
 				sb.append(" with id '"
 						+ getHttpServletRequest().getSession().getId() + "'");
-				sb
-						.append("\ngetHttpServletRequest().getSession().getAttribute(searchName) == null");
+				sb.append("\ngetHttpServletRequest().getSession().getAttribute(searchName) == null");
 			}
 			log.severe(sb.toString());
 			throw new ServiceException(sb.toString());
@@ -819,7 +819,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	 */
 	@Override
 	public PartialTrees replaceWithLinkAndGet(Long parentArgID,
-			Long linkPropID, Long removePropID) throws ServiceException {
+			Long linkPropID, Long removePropID, boolean negated)
+			throws ServiceException {
 		Lock parentLock = Lock.getNodeLock(parentArgID);
 		Lock oldChildLock = Lock.getNodeLock(removePropID);
 		Lock newChildLock = Lock.getNodeLock(linkPropID);
@@ -903,6 +904,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			change.propID = linkPropID;
 
 			parentArg.childIDs.add(index, linkPropID);
+			if (negated) {
+				parentArg.negatedChildIDs.add(linkPropID);
+			}
 			putNode(parentArg);
 			linkProp.linkCount++;
 			putNode(linkProp);

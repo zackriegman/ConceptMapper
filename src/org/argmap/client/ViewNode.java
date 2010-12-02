@@ -106,6 +106,9 @@ public abstract class ViewNode extends TreeItem {
 	public void setRating(Long id, Map<Long, Integer> ratings) {
 	}
 
+	public void setNegation() {
+	}
+
 	public String getNodeContent() {
 		return getNode().content;
 	}
@@ -118,6 +121,7 @@ public abstract class ViewNode extends TreeItem {
 		setNode(node);
 
 		setRating(node.id, ratings);
+		setNegation();
 
 		boolean circularLink = linkExistsInAncestorPath(node.id);
 		if (circularLink) {

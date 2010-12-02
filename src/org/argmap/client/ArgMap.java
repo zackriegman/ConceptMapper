@@ -22,25 +22,12 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-//TODO: compose help tips
-//TODO: fix side bar border formatting on Chrome
-//TODO: add 'real' example arguments for demonstration (for instance my argument about legalizing unauthorized access)
-
-//TODO: research semenatic reasoning (OWL, etc.)
-
-//TODO: follow up on IP email (re meeting with Kim/JP)
-//TODO: deferred binding for textAreaAutoHeight to fix IE problem
-//TODO: implement scoring algorithm
-//TODO: implement negative linking: linking to the negation of an existing proposition...
-
-/*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
-/*TODO: track down exceptions in ModeVersion (unrelated to circular linking)*/
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
 
-//TODO: implement user accounts, email updates of changes, inviting friends
-
-/* TODO limit argument text length on client and server */
+//TODO: test negated links in versions mode (probably won't work!!!)
+/*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
+/*TODO: track down exceptions in ModeVersion (unrelated to circular linking)*/
 /*TODO: a proposition tree begins at time A.  At time C a pre-existing node is linked into the proposition tree.
  * The user browses to a time B between times A and C.  At that time the linked node is not present.
  * However the linked node is open in the tree(as a deleted node, so its changes are displayed in the change list).
@@ -48,6 +35,22 @@ import com.google.gwt.user.client.ui.Widget;
  * very confusing... so only a the changes post dating the linked nodes linking should be added to the change list?
  */
 //TODO: comment the hell out of versions mode!!!!!!! someday I'll need to change it...
+
+
+
+//TODO: add 'real' example arguments for demonstration (for instance my argument about legalizing unauthorized access)
+
+//TODO: implement user accounts, email updates of changes, inviting friends
+//TODO: implement scoring algorithm
+//TODO: often times conflict dialog is not displayed and edits are silently overwritten...
+/* TODO limit argument text length on client and server */
+//TODO: compose more/edit help tips
+//TODO: fix side bar border formatting on Chrome
+
+//TODO: research semenatic reasoning (OWL, etc.)
+
+//TODO: deferred binding for textAreaAutoHeight to fix IE problem
+
 //TODO: try running speed tracer
 
 //TODO: make batch open icon visible, and open tree a few layers deep regardless of whether mouse over node is already loaded
@@ -97,11 +100,6 @@ import com.google.gwt.user.client.ui.Widget;
  * results so that the user doesn't start editing a deleted item. This
  * should be easy, just supply the server with a list of root items, and
  * return add/remove changes for them...
- */
-/* TODO live updates: currently root nodes returned from a call to
- * getRootProps() are not live updated, but a user can start editing them,
- * increasing the chances that the user will overwrite someone else's
- * changes without know it
  */
 
 // TO DO: test in IE8, chrome, safari, opera, etc.

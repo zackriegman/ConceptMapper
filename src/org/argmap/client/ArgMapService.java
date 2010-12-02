@@ -72,7 +72,8 @@ public interface ArgMapService extends RemoteService {
 	public PartialTrees getRootProps(int depthLimit);
 
 	public PartialTrees replaceWithLinkAndGet(Long parentArgID,
-			Long linkPropID, Long removePropID) throws ServiceException;
+			Long linkPropID, Long removePropID, boolean negated)
+			throws ServiceException;
 
 	public class NodesWithHistory implements Serializable {
 		/* added to suppress warnings */

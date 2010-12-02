@@ -1,6 +1,8 @@
 package org.argmap.client;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.googlecode.objectify.annotation.Cached;
 
@@ -15,6 +17,12 @@ public class Argument extends Node implements Serializable {
 	 * at compile time.
 	 */
 	public boolean pro;
+
+	/*
+	 * if a proposition's negation is being used in an argument (instead of the
+	 * proposition itself) then it's id should be added to this list.
+	 */
+	public Set<Long> negatedChildIDs = new HashSet<Long>();
 
 	@Override
 	public String toString() {

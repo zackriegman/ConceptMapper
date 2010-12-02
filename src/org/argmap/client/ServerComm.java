@@ -370,13 +370,14 @@ public class ServerComm {
 
 	public static void replaceWithLinkAndGet(final Argument parentArg,
 			final Proposition linkProp, final Proposition removeProp,
+			final boolean negated,
 			final LocalCallback<PartialTrees> localCallback) {
 		queueCommand(new ServerCallbackWithDispatch<PartialTrees>("saving...",
 				"saved") {
 			@Override
 			public void execute() {
 				argMapService.replaceWithLinkAndGet(parentArg.id, linkProp.id,
-						removeProp.id, this);
+						removeProp.id, negated, this);
 			}
 
 			@Override

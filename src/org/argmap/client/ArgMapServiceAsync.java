@@ -61,12 +61,13 @@ public interface ArgMapServiceAsync {
 	void getNodesChildren(List<Long> nodeIDs, int depth,
 			AsyncCallback<PartialTrees> callback);
 
-	void replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
-			Long removePropID, AsyncCallback<PartialTrees> callback);
-
 	void getRating(Long propID, AsyncCallback<Integer> callback);
 
 	void setRating(Long propID, Integer rating, AsyncCallback<Void> callback);
 
 	void getTextPage(String pageName, AsyncCallback<String> callback);
+
+	void replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
+			Long removePropID, boolean negated,
+			AsyncCallback<PartialTrees> callback);
 }
