@@ -89,7 +89,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 		PartialTrees propsAndArgs = new PartialTrees();
 		Query<Proposition> propQuery = ofy.query(Proposition.class)
-				.filter("linkCount =", 0).order("-created").limit(30);
+				.filter("root", true).order("-created").limit(30);
 
 		List<Proposition> rootProps = propQuery.list();
 		Map<Long, Node> nodes = new HashMap<Long, Node>();
@@ -173,7 +173,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				lock.unlock();
 			}
 		} else {
-			newProposition.linkCount = 0;
+			newProposition.linkCount = 1;
+			newProposition.root = true;
 			putNode(newProposition);
 		}
 

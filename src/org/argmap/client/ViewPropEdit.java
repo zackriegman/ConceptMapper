@@ -107,15 +107,18 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	@Override
 	public void setNodeLink(boolean link) {
 		if (link && linkRemoveButton == null) {
-			linkRemoveButton = new Button("Unlink");
 			linkEditButton = new Button("Edit");
-			buttonsPanel.setWidget(0, 2, linkRemoveButton);
 			buttonsPanel.setWidget(0, 3, linkEditButton);
-			linkRemoveButton.addClickHandler(this);
 			linkEditButton.addClickHandler(this);
-			linkRemoveButton.setStylePrimaryName("button");
 			linkEditButton.setStylePrimaryName("button");
 			textArea.setReadOnly(true);
+
+			if (getParent() != null) {
+				linkRemoveButton = new Button("Unlink");
+				buttonsPanel.setWidget(0, 2, linkRemoveButton);
+				linkRemoveButton.addClickHandler(this);
+				linkRemoveButton.setStylePrimaryName("button");
+			}
 		} else if (!link && linkRemoveButton != null) {
 			buttonsPanel.clearCell(0, 2);
 			buttonsPanel.clearCell(0, 3);

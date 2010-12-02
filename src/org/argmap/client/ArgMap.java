@@ -24,6 +24,8 @@ import com.google.gwt.user.client.ui.Widget;
 
 //TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
+//TODO: should not show unlink button for root level links
+//TODO: possible to delete a node sandwiched between a link sibling and a sibling with children?
 
 //TODO: test negated links in versions mode (probably won't work!!!)
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
@@ -35,8 +37,6 @@ import com.google.gwt.user.client.ui.Widget;
  * very confusing... so only a the changes post dating the linked nodes linking should be added to the change list?
  */
 //TODO: comment the hell out of versions mode!!!!!!! someday I'll need to change it...
-
-
 
 //TODO: add 'real' example arguments for demonstration (for instance my argument about legalizing unauthorized access)
 
@@ -85,6 +85,11 @@ import com.google.gwt.user.client.ui.Widget;
 /* TODO: deploy with big database (~40 root nodes) and test speed of search */
 //TODO: read more about: http://domino.research.ibm.com/cambridge/research.nsf/0/66fb7b9f526da69c852570fa00753e93?OpenDocument
 //TODO: continue research on "collaborative reasoning" and other possible similar projects (argument mapping)
+
+/*TODO: what to do with ratings of deleted propositions?  might be worth keeping them around for a while in case the 
+ * proposition is undeleted (but of course the facility to undelete a proposition does not yet exists).  eventually
+ * I'll probably want to clean them up...
+ */
 
 //TODO: setup backups on home computer
 //TODO: highlight last change node after time travel

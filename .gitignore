@@ -9,4 +9,5 @@ war/WEB-INF/appengine-generated/local_db.bin
 war/genfilesforspeedtracer/
 war/symbolmanifest.json
 war/symbolsforspeedtracer/
+*.BAK
 
