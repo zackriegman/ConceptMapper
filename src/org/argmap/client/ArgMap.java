@@ -22,6 +22,14 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+/*TODO: TextAreaAutoHeight doesn't always resize childless nodes properly... its a bit of a mystery...
+ * because they are generally partially resize... i.e. I think they are rarely just a single line...
+ * but they are not completely resized.  It probably has something to do with the way I'm doing pre-loading
+ * Childless nodes are sized when they are first loaded, but all their siblings seem to be sized
+ * when their parent is opened... but the childless node is not... investigate further...
+ * Maybe also make a TextAreaAutoHeight implementation for IE with deferred binding while I'm fidling with this?
+ */
+
 //TODO: provide a way to see deleted top level nodes
 //TODO: impossible to delete a node sandwiched between a link sibling and a sibling with children?
 
@@ -50,7 +58,6 @@ import com.google.gwt.user.client.ui.Widget;
 //TODO: deferred binding for textAreaAutoHeight to fix IE problem
 
 //TODO: try running speed tracer
-
 //TODO: make batch open icon visible, and open tree a few layers deep regardless of whether mouse over node is already loaded
 //TODO: batch open icon not visible/clickable on props that reach right screen edge
 /*TODO: ModeVersions:  undoing unlinks does not restore the link's yellow color if the link *currently* is not  

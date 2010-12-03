@@ -10,7 +10,8 @@ public abstract class ViewProp extends ViewNode {
 	private static final int PROP_WIDTH_NUMBER = 41;
 	private static final String PROP_WIDTH = "" + PROP_WIDTH_NUMBER + "em";
 
-	protected final TextAreaAutoHeight textArea = new TextAreaAutoHeight() {
+	protected final TextAreaAutoHeight textArea = new TextAreaAutoHeight(
+			"ViewProp") {
 		@Override
 		public void onLoad() {
 			super.onLoad();
@@ -178,9 +179,9 @@ public abstract class ViewProp extends ViewNode {
 		return (ViewArg) getChild(index);
 	}
 
-	public void resize() {
-		textArea.resize();
-	}
+	// public void resizeZ() {
+	// textArea.resizeZ();
+	// }
 
 	@Override
 	public void setAsCircularLink() {

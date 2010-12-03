@@ -2,6 +2,7 @@ package org.argmap.client;
 
 import static com.google.gwt.query.client.GQuery.$;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.query.client.GQuery;
@@ -14,13 +15,37 @@ import com.google.gwt.user.client.ui.TextArea;
 public class TextAreaAutoHeight extends TextArea {
 	private static GQuery shadow;
 
-	public TextAreaAutoHeight() {
+	/*
+	 * keeps track of the last TextAreaAutoHeight that was resized. If the
+	 * StyleContext or style name was different from that of the last one then
+	 * the shadow div needs to be updated with the CSS values from the current
+	 * TextAreaAutoHeight. The StyleContext is simply a string that is given to
+	 * each TextAreaAutoHeight when it is created, that identifies what context
+	 * it is being used in, to ensure that two TextAreaAutHeights used in
+	 * different contexts and thus inheriting different styles will update the
+	 * style info between their resizes. It's not a perfect solution but I think
+	 * it will work... and speed up the resize which is currently a bit slow due
+	 * in part to updating this info.
+	 */
+	private static String lastStyleContext;
+	private static String lastStyleName;
+	private static int lastPaddingLeft;
+	private static int lastPaddingRight;
+
+	private final String styleContext;
+
+	public TextAreaAutoHeight(String styleContext) {
+		super();
+		this.styleContext = styleContext;
 		DOM.setStyleAttribute(getElement(), "overflow", "hidden");
 		if (shadow == null) {
 			shadow = $(DOM.createDiv());
 			shadow.appendTo(GQuery.body);
-			shadow.css("position", "absolute").css("top", "-1000px")
-					.css("left", "-1000px").css("resize", "none")
+			// shadow.css("position", "absolute").css("top", "-1000px")
+			// .css("left", "-1000px").css("resize", "none")
+			// .appendTo(GQuery.body);
+			shadow.css("position", "absolute").css("top", "0px")
+					.css("left", "0px").css("resize", "none")
 					.appendTo(GQuery.body);
 		}
 
@@ -32,18 +57,6 @@ public class TextAreaAutoHeight extends TextArea {
 			}
 		});
 	}
-
-	// private long lastTime;
-	//
-	// private void timerStart() {
-	// lastTime = System.currentTimeMillis();
-	// }
-	//
-	// private void timerLap(String string) {
-	// long thisTime = System.currentTimeMillis();
-	// GWT.log(string + " " + (thisTime - lastTime));
-	// lastTime = thisTime;
-	// }
 
 	@Override
 	public void onLoad() {
@@ -59,31 +72,36 @@ public class TextAreaAutoHeight extends TextArea {
 	}
 
 	public void resize() {
-		// timerStart();
-		// timerLap("a");
 		GQuery elem = $(getElement());
 
-		// timerLap("b");
-		int shadowWidth = elem.width() - cssAsInt(elem, "paddingLeft")
-				- cssAsInt(elem, "paddingRight");
-		shadowWidth = shadowWidth > 0 ? shadowWidth : 700;
-		// GWT.log(elem.width() + " - " + cssAsInt(elem, "paddingLeft") + " - "
-		// + cssAsInt(elem, "paddingRight") + " - " + shadowWidth);
-		// timerLap("c");
-		shadow.css("width", "" + shadowWidth + "px");
-		// timerLap("1");
-		shadow.css("fontSize", elem.css("fontSize", true));
-		// timerLap("2");
-		shadow.css("fontFamily", elem.css("fontFamily", true));
-		// timerLap("3");
-		shadow.css("lineHeight", elem.css("lineHeight", true));
-		// timerLap("4");
+		String styleName = getStyleName();
+		int paddingLeft;
+		int paddingRight;
+		if (styleContext != lastStyleContext
+				|| !styleName.equals(lastStyleName)) {
+			paddingLeft = cssAsInt(elem, "paddingLeft");
+			paddingRight = cssAsInt(elem, "paddingRight");
 
-		// timerLap("e");
+			shadow.css("fontSize", elem.css("fontSize", true));
+			shadow.css("fontFamily", elem.css("fontFamily", true));
+			shadow.css("lineHeight", elem.css("lineHeight", true));
+
+			lastStyleContext = styleContext;
+			lastStyleName = styleName;
+			lastPaddingLeft = paddingLeft;
+			lastPaddingRight = paddingRight;
+		} else {
+			paddingLeft = lastPaddingLeft;
+			paddingRight = lastPaddingRight;
+		}
+
+		int shadowWidth = elem.width() - paddingLeft - paddingRight;
+		shadowWidth = shadowWidth > 0 ? shadowWidth : 700;
+		shadow.css("width", "" + shadowWidth + "px");
+
+		GWT.log("resize node with text: " + getText());
 		shadow.html(toHTML(getText()));
-		// timerLap("f");
 		$(getElement()).css("height", shadow.height() + "px");
-		// timerLap("g");
 	}
 
 	private String toHTML(String text) {

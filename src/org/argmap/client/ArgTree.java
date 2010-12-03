@@ -121,9 +121,9 @@ public class ArgTree extends Tree {
 			for (int i = 0; i < item.getChildCount(); i++) {
 				ViewNode child = item.getChild(i);
 				recursiveResetState(child);
-				if (child instanceof ViewProp) {
-					((ViewProp) child).resize();
-				}
+				// if (child instanceof ViewProp) {
+				// ((ViewProp) child).resize();
+				// }
 			}
 		}
 	}
