@@ -22,10 +22,8 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-//TODO: fix linking of root level nodes automatically incorporating the node into another tree...(and therefore not color the node appropriately)
 //TODO: provide a way to see deleted top level nodes
-//TODO: should not show unlink button for root level links
-//TODO: possible to delete a node sandwiched between a link sibling and a sibling with children?
+//TODO: impossible to delete a node sandwiched between a link sibling and a sibling with children?
 
 //TODO: test negated links in versions mode (probably won't work!!!)
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
