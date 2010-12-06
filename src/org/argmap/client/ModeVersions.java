@@ -12,6 +12,7 @@ import java.util.Map;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeWithChanges;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -22,14 +23,87 @@ import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
 public class ModeVersions extends ResizeComposite implements
 		CloseHandler<TreeItem>, OpenHandler<TreeItem>, ChangeHandler {
+	/*
+	 * This class contains the widget and logic for a program mode that allows
+	 * the user to browse versions of an argument tree at different points in
+	 * time based on history stored in the form of Change objects which are
+	 * generated and stored on the server after every change.
+	 * 
+	 * The user is presented with a change list on the left, and a tree on the
+	 * right that corresponds to the state of the tree at the date selected in
+	 * change list.
+	 * 
+	 * As users open and close ViewNodes in the tree, the change lists is
+	 * updated to only show changes relevant to opened nodes, or nodes that
+	 * would be opened if they had not been deleted at the point in time
+	 * currently selected.
+	 * 
+	 * When the user selects a new change from the change list the program
+	 * applies the intermediate changes to the tree to move the tree either
+	 * forwards or backwards in time till it is the same as it was at the time
+	 * that the user selected.
+	 * 
+	 * In order to do this the program keeps a list of all the relevant changes,
+	 * in the timeMachineMap field, ordered by the date of the change. Each date
+	 * corresponds to a single change, but may correspond to multiple ViewNodes
+	 * because the same Node can exist in multiple points in a tree if the Node
+	 * has been linked to by different Arguments within a tree. Thus the
+	 * timeMachineMap is a SortedMultiMap, sorted and keyed by the date of each
+	 * change, with a list of ViewNodes that represent the Node changed by the
+	 * Change object.
+	 * 
+	 * The timeMachineMap contains changes only of nodes that are currently
+	 * visible or those that would be visible, except that they have been
+	 * deleted or have yet to be added at the current point in time. When the
+	 * user closes or opens a node the timeMachineMap is updated.
+	 * 
+	 * When a user closes a ViewNode all the changes for all the descendants of
+	 * that ViewNode are removed from the timeMachineMap. The add/remove changes
+	 * for the closed ViewNode are NOT removed from the map however but are
+	 * instead marked as 'hidden' (and the textual modifications of the close
+	 * ViewNode are left in the map and left un-hidden). Such changes are either
+	 * hidden from the user or displayed as dashed lines, whereas the un-hidden
+	 * changes have their dates displayed for the user. Hidden changes are kept
+	 * in the change list so that as the program moves the tree either forwards
+	 * or backwards in time, closed nodes can have their children added/removed
+	 * and their open/close icons can be updated to reflect whether they have
+	 * children at that point in time or not. In general it is not necessary to
+	 * show hidden changes to the user at all, they are processed by the program
+	 * silently, and the open/close icon is updated as the user traverses the
+	 * tree. However, in some cases, the open/close icon would never be visible
+	 * because there are no intervening changes between the time when all of a
+	 * Node's children are added and then deleted. In those cases, the hidden
+	 * change must be displayed to the user so that the user has a way to select
+	 * a moment in time when the Node had children, so that the user can open
+	 * the node and browse the children. In those cases, a hidden ViewChange is
+	 * displayed in the change list as a dashed line.
+	 * 
+	 * When a user opens a ViewNode all the changes for all the descendants that
+	 * are themselves open are added to the timeMachineMap, and the ViewNode's
+	 * changes are marked as un-hidden.
+	 * 
+	 * That is the general idea. To make all that work, each node keeps track
+	 * not only of its current children but also of children that have yet to be
+	 * added or that have been deleted at the current time. This allows the
+	 * program to collect changes not only from existing nodes but also from
+	 * non-existing nodes. This is important because we want to show the changes
+	 * for non-existing nodes that are open. For instance, we want to show the
+	 * change in the change list that corresponds to adding a node, as well as
+	 * the change that corresponds to editing its text. But if the node's parent
+	 * is close, we do not want to show those changes, because then when the
+	 * user clicks on the change, he/she will see no apparent effect which will
+	 * be confusing.
+	 */
 
 	private final ListBox versionList = new ListBox();
 	private final ModeEdit editMode;
@@ -42,33 +116,86 @@ public class ModeVersions extends ResizeComposite implements
 	private HandlerRegistration listBoxChangeHandlerRegistration;
 
 	/*
-	 * variables related to moving the tree forwards and backwards in time
+	 * variables related to moving the tree forwards and backwards in time. Each
+	 * map holds some information that is lost from the tree when moving
+	 * backwards in time that will be needed to later move forwards in time. For
+	 * instance when undoing a prop modification, the current prop content is
+	 * lost and replaced with the previous prop content that is stored in the
+	 * Change object. Because the Change only stores enough information to move
+	 * backwards, it does not store the current prop content needed to move back
+	 * to this time. Therefore that information is saved for later use in
+	 * mapPropContent.
 	 */
 	private Map<ViewChange, String> mapPropContent;
 	private Map<ViewChange, String> mapArgTitle;
 	private Map<ViewChange, Integer> mapPropIndex;
 	private Map<ViewChange, Integer> mapArgIndex;
+
+	/*
+	 * A ViewChange contains a pointer to a ViewNodeVer and a Change object, as
+	 * well as a flag indicated whether the ViewChange is 'hidden' or not. The
+	 * timeMachineMap keeps track of each change, and each ViewNode for which
+	 * the change is applicable. It is sorted by the date of the change. This
+	 * allows the program to replay (or undo) changes sequentially, and if there
+	 * is more than one copy of the ViewNodeVer that needs to be updated, to
+	 * have a link to each one.
+	 */
 	private SortedMultiMap<Date, ViewChange> timeMachineMap;
+
+	/*
+	 * The Date represented by the current tree state. After modifying the tree
+	 * to reflect a tree state at a certain time this is updated to reflect what
+	 * time, so the program knows the date of the current tree state.
+	 */
 	private Date currentDate;
 
 	public ModeVersions(ModeEdit editModePair) {
 		super();
+
+		/************************************
+		 * setup the history browsing panel *
+		 ************************************/
 		this.editMode = editModePair;
-		DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.EM);
-		// mainPanel = new SplitLayoutPanel();
+		DockLayoutPanel historyPanel = new DockLayoutPanel(Unit.EM);
 
-		// add(versionList);
-		mainPanel.addWest(versionList, LIST_WIDTH);
-		mainPanel.add(treePanel);
-		// mainPanel.add(new Label("HEELO"));
+		historyPanel.addWest(versionList, LIST_WIDTH);
+		historyPanel.add(treePanel);
 
-		versionList.setVisibleItemCount(2);
+		versionList.setVisibleItemCount(20);
 		versionList.setWidth(LIST_WIDTH + "em");
 
 		listBoxChangeHandlerRegistration = versionList.addChangeHandler(this);
+
+		/**************************
+		 * setup the button panel *
+		 **************************/
+		DockLayoutPanel buttonPanel = new DockLayoutPanel(Unit.EM);
+		ToggleButton deletedRootPropsToggle = new ToggleButton(
+				"browse deleted root propositions instead");
+		deletedRootPropsToggle.addStyleName("deletedRootPropsToggle");
+
+		FlowPanel buttonsFlow = new FlowPanel();
+		buttonsFlow.addStyleName("buttonsFlow");
+		buttonsFlow.add(deletedRootPropsToggle);
+
+		buttonPanel.addEast(buttonsFlow, 20);
+		buttonPanel.addStyleName("searchBoxPanel");
+
+		/****************************
+		 * setup the overall layout *
+		 ****************************/
+
+		DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.EM);
+		mainPanel.addNorth(buttonPanel, 2.7);
+		mainPanel.add(historyPanel);
+
 		initWidget(mainPanel);
 	}
 
+	/*
+	 * this method takes care of down-loading the changes from the server and
+	 * setting up a clone of the edit tree to work with.
+	 */
 	public void displayVersions() {
 		versionList.clear();
 		versionList.addItem("Loading Revision History From Server...");
@@ -92,10 +219,10 @@ public class ModeVersions extends ResizeComposite implements
 						treeClone.addCloseHandlerTracked(ModeVersions.this);
 						treeClone.addOpenHandlerTracked(ModeVersions.this);
 						/*
-						 * TODO this could be done outside of the callback to
+						 * TODO this could be done outside of the call back to
 						 * reduce the user's wait time, but would need to ensure
-						 * that it finishing before the callback proceeds. can
-						 * the callback just keep calling something like wait()
+						 * that it finishing before the call back proceeds. can
+						 * the call back just keep calling something like wait()
 						 * until it finds that the clone is finished?
 						 */
 						editMode.buildTreeCloneOfOpenNodes(treeClone);
@@ -149,16 +276,27 @@ public class ModeVersions extends ResizeComposite implements
 		log.indent();
 		NodeChanges nodeChanges = viewNode.chooseNodeChanges(changesMaps);
 		if (viewNode.isOpen()) {
+			/*
+			 * first setup the deleted nodes, these will not be in the tree
+			 * cloned from EditMode, so these nodes need to be created or (in
+			 * the case of unlinked propositions) added from the info sent from
+			 * the server. The deleted nodes are added and kept track of because
+			 * the changes list must be updated depending on which nodes are
+			 * open in order to make for intuitive browsing of nodes. This means
+			 * that each node needs to know who its children are, including its
+			 * deleted children, so that it can add/remove changes from the
+			 * changes list shown to the user.
+			 */
 			for (Long id : nodeChanges.deletedChildIDs) {
 
 				/*
 				 * if the deletedChild is actually an unlinked proposition then
 				 * we create an unloaded proposition (with dummy child nodes)
 				 * and do not recurse on the children. this is necessary because
-				 * unlike a deleted proposition/argument and unlinked
-				 * proposition may have been unlinked while still having
-				 * children which means that when we undo the unlinking we need
-				 * to show the children at the time of unlinking.
+				 * unlike a deleted proposition/argument an unlinked proposition
+				 * may have been unlinked while still having children which
+				 * means that when we undo the unlinking we need to show the
+				 * children at the time of unlinking.
 				 */
 				if (viewNode instanceof ViewArgVer
 						&& changesMaps.unlinkedLinks.containsKey(id)) {
@@ -181,6 +319,10 @@ public class ModeVersions extends ResizeComposite implements
 							changesMaps, log);
 				}
 			}
+			/*
+			 * after processing deleted nodes we process nodes that currently
+			 * exist in the tree.
+			 */
 			for (int i = 0; i < viewNode.getChildCount(); i++) {
 				ViewNodeVer child = viewNode.getChildViewNode(i);
 				recursivePrepAndBuild(child, timeMachineMap, changesMaps, log);
@@ -199,6 +341,11 @@ public class ModeVersions extends ResizeComposite implements
 			}
 		}
 
+		/*
+		 * this is the line that actually loads up the changes for the node and
+		 * adds it to the timeMachineMap. (Whereas the lines above are creating/
+		 * crawling through the tree.)
+		 */
 		loadChangesIntoNodeAndMap(viewNode, nodeChanges.changes, timeMachineMap);
 
 		log.unindent();
@@ -208,12 +355,35 @@ public class ModeVersions extends ResizeComposite implements
 			List<Change> changes,
 			SortedMultiMap<Date, ViewChange> timeMachineMap) {
 		for (Change change : changes) {
+			/*
+			 * for each Change create a ViewChange mapping the Change to the
+			 * ViewNode
+			 */
 			ViewChange viewChange = new ViewChange();
 			viewChange.change = change;
 			viewChange.viewNode = viewNode;
+
+			/*
+			 * load the ViewChange into the ViewNode so that the Node can
+			 * quickly/easily generate a list of Changes to be hidden/shown
+			 * based on whether the ViewNode is closed/open
+			 */
 			viewNode.getViewChangeList().add(viewChange);
+
+			/*
+			 * load the ViewChange into the timeMachineMap so that when moving
+			 * forward or backwards in time there is an quick/easy way to know
+			 * which ViewNode needs to be updated.
+			 */
 			timeMachineMap.put(change.date, viewChange);
 		}
+
+		/*
+		 * if the ViewNode is not open that means that all of its add/remove
+		 * Changes should be hidden from the user so that there are not changes
+		 * in the Change list which don't seem to have any effect on the visible
+		 * tree (which would be confusing)...
+		 */
 		if (!viewNode.isOpen()) {
 			for (ViewChange viewChange : viewNode.getViewChangeHideList()) {
 				viewChange.hidden = true;
@@ -383,6 +553,16 @@ public class ModeVersions extends ResizeComposite implements
 		return child;
 	}
 
+	/*
+	 * called in the call back in onOpen(); when a node is opened the program
+	 * asks the server for the node and when it gets a response it uses this
+	 * method to merge the node into the tree. The basic idea is that closed
+	 * nodes initially have dummy nodes for children (corresponding to both
+	 * existing and non-existing (i.e. deleted or not yet added) nodes for the
+	 * current point in time), and when the node is opened, the client converts
+	 * the dummy nodes into real nodes with actual content which the user can
+	 * view.
+	 */
 	public void mergeLoadedNodes(ViewNodeVer viewNodeVer,
 			Map<Long, NodeWithChanges> nodesWithChanges) {
 
@@ -465,6 +645,7 @@ public class ModeVersions extends ResizeComposite implements
 			} else if (viewNodeVer instanceof ViewPropVer) {
 				ServerComm.getArgsWithChanges(childIDs, new Callback());
 			}
+
 		} else {
 
 			log.log("Adding View Changes: ");
@@ -482,9 +663,9 @@ public class ModeVersions extends ResizeComposite implements
 	public void zoomToCurrentDateAndReloadChangeList(ViewNodeVer viewNodeVer,
 			SortedMultiMap<Date, ViewChange> subTreeChanges, Date startDate) {
 		/*
-		 * this line must come before travelFromDateToDate() becuase that method
+		 * this line must come before travelFromDateToDate() because that method
 		 * resets the tree to open of added nodes that should be open. But this
-		 * line must come after recursiveGetViewChanges I think because that
+		 * line must come after recursiveGetViewChanges, I think, because that
 		 * method depends on the opened node not yet have a positive isOpen()
 		 * value... actually that doesn't seem to be true anymore...so this
 		 * could probably be moved to the beginning.
@@ -527,11 +708,11 @@ public class ModeVersions extends ResizeComposite implements
 	 * this function gets all the changes of all the open descendants of the
 	 * ViewNodeVer passed to it. It does not return the changes of the
 	 * ViewNodeVer actually passed to it as those changes are dealt with
-	 * different (hidden instead of removed from the change list). It also does
-	 * not return the changes of closed descendants because those changes have
-	 * already been remove or do not need to be added upon the closing/opening
-	 * of the ViewNodeVer passed. (Dummy nodes have no changes so it skips dummy
-	 * nodes when collecting changes).
+	 * differently (hidden instead of removed from the change list). It also
+	 * does not return the changes of closed descendants because those changes
+	 * have already been remove or do not need to be added upon the
+	 * closing/opening of the ViewNodeVer passed. (Dummy nodes have no changes
+	 * so it skips dummy nodes when collecting changes).
 	 */
 	public void recursiveGetViewChanges(ViewNodeVer viewNodeVer,
 			SortedMultiMap<Date, ViewChange> forAddOrRemove, boolean firstNode,
@@ -539,7 +720,7 @@ public class ModeVersions extends ResizeComposite implements
 		/*
 		 * if it is the first node then we don't want to remove any changes, as
 		 * add/remove changes are merely hidden, and modification changes are
-		 * left entirely intact.
+		 * left entirely intact. Otherwise we want to add this nodes changes.
 		 */
 		if (!firstNode) {
 			log.log("nodeID: " + viewNodeVer.getNodeID() + "; State: "
@@ -589,8 +770,8 @@ public class ModeVersions extends ResizeComposite implements
 		// how do we know which one to make visible?
 
 		/*
-		 * must check to make sure a change exists for destinationDate becuase
-		 * destination date may be a placeholder to allow the user to walk past
+		 * must check to make sure a change exists for destinationDate because
+		 * destination date may be a place holder to allow the user to walk past
 		 * the earliest change.
 		 */
 		if (timeMachineMap.get(destinationDate) != null) {

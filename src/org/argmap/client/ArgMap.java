@@ -22,11 +22,10 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/* TODO: make a TextAreaAutoHeight implementation for IE with deferred binding (maybe using the old method of setting scrollTop?
- */
-
+//TODO: send email to professors whose classes I want to audit and start learning prerequisite materials?
 //TODO: provide a way to see deleted top level nodes
 //TODO: impossible to delete a node sandwiched between a link sibling and a sibling with children?
+//TODO: the text of linked propositions and their children does not automatically update when edited elsewhere within the same window...
 
 //TODO: test negated links in versions mode (probably won't work!!!)
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
@@ -90,6 +89,8 @@ import com.google.gwt.user.client.ui.Widget;
  * proposition is undeleted (but of course the facility to undelete a proposition does not yet exists).  eventually
  * I'll probably want to clean them up...
  */
+/* TODO: make a TextAreaAutoHeight implementation for IE with deferred binding? */
+/* TODO: fix TextAreaAutoHeight Chrome problem where some of the root props don't resize fulls and leaves the text clipped... */
 
 //TODO: setup backups on home computer
 //TODO: highlight last change node after time travel

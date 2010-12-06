@@ -53,7 +53,7 @@ public class Change implements Serializable {
 	// addition or modification
 
 	public enum ChangeType {
-		PROP_DELETION, PROP_ADDITION, PROP_MODIFICATION, ARG_ADDITION, ARG_DELETION, ARG_MODIFICATION, PROP_UNLINK, PROP_LINK
+		ROOT_PROP_DELETION, PROP_DELETION, PROP_ADDITION, PROP_MODIFICATION, ARG_ADDITION, ARG_DELETION, ARG_MODIFICATION, PROP_UNLINK, PROP_LINK
 	}
 
 	public String remoteAddr;
@@ -127,6 +127,7 @@ public class Change implements Serializable {
 		switch (changeType) {
 		case ARG_DELETION:
 			return argID;
+		case ROOT_PROP_DELETION:
 		case PROP_DELETION:
 		case PROP_UNLINK:
 			return propID;
@@ -150,6 +151,7 @@ public class Change implements Serializable {
 	public boolean isDeletion() {
 		switch (changeType) {
 		case ARG_DELETION:
+		case ROOT_PROP_DELETION:
 		case PROP_DELETION:
 		case PROP_UNLINK:
 			return true;

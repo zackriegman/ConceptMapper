@@ -98,6 +98,11 @@ public interface ArgMapService extends RemoteService {
 	public Map<Long, NodeWithChanges> getArgsWithChanges(List<Long> argIDs)
 			throws ServiceException;
 
+	public class NodeChangesMapsAndRootChanges implements Serializable {
+		public NodeChangesMaps nodeChangesMaps = new NodeChangesMaps();
+		public List<Change> rootChanges = new ArrayList<Change>();
+	}
+
 	public class NodeChangesMaps implements Serializable {
 		private static final long serialVersionUID = 1L;
 		public Map<Long, NodeChanges> argChanges = new HashMap<Long, NodeChanges>();

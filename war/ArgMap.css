@@ -1,10 +1,6 @@
-/** Add css rules here for your application. */
-
-/********
+/** Add css rules here for your application. */ /********
  * MISC *
- ********/
- 
- /* is this used anywhere? */
+ ********/ /* is this used anywhere? */
 .floatLeft {
 	float: left;
 }
@@ -12,7 +8,6 @@
 /**********************
  * Application Layout *
  **********************/
-
 .title {
 	font-size: 2em;
 	font-weight: bold;
@@ -66,7 +61,6 @@
 /********************
  * Edit mode layout *
  ********************/
- 
 .searchBoxPanel {
 	background-color: #D0E4F6; /*#92C1F0;*/
 	padding: .5em;
@@ -86,11 +80,11 @@
 	padding: .5em;
 }
 
-.sideSearchAltRow{
+.sideSearchAltRow {
 	background-color: #DAE2EB;
 }
 
-.sideMessageArea{
+.sideMessageArea {
 	padding: 1em;
 	padding-top: .01em;
 	padding-bottom: 20em;
@@ -98,7 +92,7 @@
 	border-style: solid;
 	border-top-style: none;
 	font-size: 13.5px;
-	}
+}
 
 .addPropButton {
 	margin-top: .5em;
@@ -116,18 +110,31 @@
 	padding: .5em;
 }
 
+/*****************
+ * Versions Mode *
+ *****************/
+.deletedRootPropsToggle {
+	height: 1.2em;
+	margin-top: 2em;
+	margin-left: .7em;
+	text-align: center;
+}
+
+.buttonsFlow {
+	padding-top: .3em;
+}
+
 /********************
  * View Node Layout *
  ********************/
- 
 .nodeText {
 	font-family: arial, sans-serif;
 	font-size: 13.5px;
 }
 
-.propositionTextArea{
+.propositionTextArea {
 	border-style: none;
-	}
+}
 
 .propositionArea { /*border: 1px dotted #00f;*/
 	/*border-color: #B2B2FF;*/ /*border-style: dotted;*/
@@ -141,10 +148,10 @@
 	border-radius: 6px;
 }
 
-.negatedPropLabel{
+.negatedPropLabel {
 	margin-right: .5em;
 	color: blue;
-} 
+}
 
 .circularLink {
 	border-color: #FF0000;
@@ -169,7 +176,6 @@
 	font-family: arial, sans-serif;
 	font-size: 13.5px;
 }
-
 
 .argBox {
 	border-style: solid;
@@ -202,7 +208,6 @@
 /*******************************
  * styles for the star ratings *
  *******************************/
- 
 .star-rating-control { /*margin-top: .2em;*/
 	
 }

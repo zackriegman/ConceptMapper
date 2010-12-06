@@ -229,11 +229,17 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public void deleteProp(Long propID) throws ServiceException {
 		/* first get the stuff that we'll need for version control */
-		Change change = new Change(ChangeType.PROP_DELETION);
+
 		Proposition prop = ofy.get(Proposition.class, propID);
 		if (!prop.childIDs.isEmpty()) {
 			throw new ServiceException(
 					"cannot delete proposition with arguments; delete arguments first");
+		}
+		Change change;
+		if (prop.root) {
+			change = new Change(ChangeType.ROOT_PROP_DELETION);
+		} else {
+			change = new Change(ChangeType.PROP_DELETION);
 		}
 		change.propID = prop.id;
 		change.oldContent = prop.content;
@@ -246,7 +252,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		/* only delete a proposition that is used in 1 or fewer arguments */
 		if (query.count() > 1) {
 			throw new ServiceException(
-					"cannot delete a proposition used by more than one argument; delink from other arguments before deleting");
+					"cannot delete a proposition used by more than one argument; unlink from other arguments before deleting");
 		}
 
 		/* if the proposition is used in an argument */
@@ -509,6 +515,18 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 
 		return nodesChanges;
+	}
+
+	public NodeChangesMapsAndRootChanges getChangesForDeletedRootProps() {
+		NodeChangesMapsAndRootChanges nodeChanges = new NodeChangesMapsAndRootChanges();
+
+		for (Change change : ofy.query(Change.class).filter("changeType",
+				"ROOT_PROP_DELETION")) {
+			recursiveGetPropChanges(change.propID, nodeChanges.nodeChangesMaps);
+			nodeChanges.rootChanges.add(change);
+		}
+
+		return nodeChanges;
 	}
 
 	private void putNode(Node node) {
@@ -863,8 +881,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			}
 			/*
 			 * can't reuse the removeProposition function because don't want to
-			 * delete the argument where it is empty. [just add the link before
-			 * deleting then...]
+			 * delete the argument where it is empty. [could fix this by just
+			 * adding the link before deleting...]
 			 */
 			else if (query.count() == 1) {
 				Change change = new Change(ChangeType.PROP_DELETION);
