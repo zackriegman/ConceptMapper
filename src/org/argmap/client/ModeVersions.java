@@ -10,12 +10,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.argmap.client.ArgMapService.NodeChangesMaps;
+import org.argmap.client.ArgMapService.NodeChangesMapsAndRootChanges;
 import org.argmap.client.ArgMapService.NodeWithChanges;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.OpenEvent;
@@ -170,8 +173,20 @@ public class ModeVersions extends ResizeComposite implements
 		 * setup the button panel *
 		 **************************/
 		DockLayoutPanel buttonPanel = new DockLayoutPanel(Unit.EM);
-		ToggleButton deletedRootPropsToggle = new ToggleButton(
+		final ToggleButton deletedRootPropsToggle = new ToggleButton(
 				"browse deleted root propositions instead");
+		deletedRootPropsToggle.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				if (deletedRootPropsToggle.isDown()) {
+					displayDeletedRootPropsVersions();
+				} else {
+					displayVersions();
+				}
+
+			}
+		});
 		deletedRootPropsToggle.addStyleName("deletedRootPropsToggle");
 
 		FlowPanel buttonsFlow = new FlowPanel();
@@ -229,7 +244,7 @@ public class ModeVersions extends ResizeComposite implements
 
 						treePanel.add(treeClone);
 
-						timeMachineMap = prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
+						timeMachineMap = prepTreeWithDeletedNodesAndChangesAndBuildTimeMachineMap(
 								treeClone, changesMaps);
 
 						if (Log.on) {
@@ -249,6 +264,10 @@ public class ModeVersions extends ResizeComposite implements
 
 						versionList.setSelectedIndex(0);
 
+						/*
+						 * TODO what is this onChange() called for? get rid of
+						 * it?
+						 */
 						onChange(null);
 						treeClone.resetState();
 						logTreeWithChanges();
@@ -258,7 +277,66 @@ public class ModeVersions extends ResizeComposite implements
 
 	}
 
-	private SortedMultiMap<Date, ViewChange> prepTreeWithDeletedNodesAndChangseAndBuildTimeMachineMap(
+	/*
+	 * this method takes care of down-loading the changes from the server and
+	 * setting up a clone of the edit tree to work with.
+	 */
+	public void displayDeletedRootPropsVersions() {
+		versionList.clear();
+		versionList.addItem("Loading Revision History From Server...");
+		if (treeClone != null) {
+			treePanel.remove(treeClone);
+		}
+
+		ServerComm
+				.getChangesForDeletedRootProps(new ServerComm.LocalCallback<NodeChangesMapsAndRootChanges>() {
+
+					@Override
+					public void call(NodeChangesMapsAndRootChanges changes) {
+
+						treeClone = new ArgTree();
+						treeClone.addCloseHandlerTracked(ModeVersions.this);
+						treeClone.addOpenHandlerTracked(ModeVersions.this);
+
+						treePanel.add(treeClone);
+
+						/*
+						 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+						 * TODO: must setup the tree with root nodes returned
+						 * from server
+						 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+						 */
+						for (Change change : changes.rootChanges) {
+							Proposition proposition = new Proposition();
+							proposition.content = change.oldContent;
+							proposition.linkCount = change.propLinkCount;
+							proposition.id = change.propID;
+							ViewPropVer viewProp = new ViewPropVer(proposition);
+							treeClone.addItem(viewProp);
+						}
+
+						timeMachineMap = prepTreeWithDeletedNodesAndChangesAndBuildTimeMachineMap(
+								treeClone, changes.nodeChangesMaps);
+
+						mapPropContent = new HashMap<ViewChange, String>();
+						mapArgTitle = new HashMap<ViewChange, String>();
+						mapArgIndex = new HashMap<ViewChange, Integer>();
+						mapPropIndex = new HashMap<ViewChange, Integer>();
+						currentDate = timeMachineMap.lastKey();
+						// mainTM = new TimeMachine(timeMachineMap, treeClone);
+
+						loadVersionListFromTimeMachine();
+
+						versionList.setSelectedIndex(0);
+
+						// onChange(null);
+						treeClone.resetState();
+					}
+				});
+
+	}
+
+	private SortedMultiMap<Date, ViewChange> prepTreeWithDeletedNodesAndChangesAndBuildTimeMachineMap(
 			Tree treeClone, NodeChangesMaps changesMaps) {
 		Log log = Log.getLog("vm.ptwdnacab");
 		SortedMultiMap<Date, ViewChange> timeMachineMap = new SortedMultiMap<Date, ViewChange>();
@@ -343,8 +421,8 @@ public class ModeVersions extends ResizeComposite implements
 
 		/*
 		 * this is the line that actually loads up the changes for the node and
-		 * adds it to the timeMachineMap. (Whereas the lines above are creating/
-		 * crawling through the tree.)
+		 * adds it to the timeMachineMap. (Whereas the lines above are creating
+		 * the tree and crawling through it.)
 		 */
 		loadChangesIntoNodeAndMap(viewNode, nodeChanges.changes, timeMachineMap);
 

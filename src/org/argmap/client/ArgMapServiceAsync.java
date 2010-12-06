@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.argmap.client.ArgMapService.DateAndChildIDs;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
+import org.argmap.client.ArgMapService.NodeChangesMapsAndRootChanges;
 import org.argmap.client.ArgMapService.NodeWithChanges;
 import org.argmap.client.ArgMapService.PartialTrees;
 
@@ -70,4 +71,7 @@ public interface ArgMapServiceAsync {
 	void replaceWithLinkAndGet(Long parentArgID, Long linkPropID,
 			Long removePropID, boolean negated,
 			AsyncCallback<PartialTrees> callback);
+
+	void getChangesForDeletedRootProps(
+			AsyncCallback<NodeChangesMapsAndRootChanges> callback);
 }

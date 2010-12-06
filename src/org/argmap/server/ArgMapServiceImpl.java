@@ -517,6 +517,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		return nodesChanges;
 	}
 
+	@Override
 	public NodeChangesMapsAndRootChanges getChangesForDeletedRootProps() {
 		NodeChangesMapsAndRootChanges nodeChanges = new NodeChangesMapsAndRootChanges();
 

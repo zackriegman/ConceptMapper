@@ -163,6 +163,9 @@ public interface ArgMapService extends RemoteService {
 	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs)
 			throws ServiceException;
 
+	public NodeChangesMapsAndRootChanges getChangesForDeletedRootProps()
+			throws ServiceException;
+
 	public PartialTrees searchProps(String searchString, String searchName,
 			int resultLimit, List<Long> filerNodeIDs) throws ServiceException;
 

@@ -8,6 +8,7 @@ import java.util.Queue;
 import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.DateAndChildIDs;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
+import org.argmap.client.ArgMapService.NodeChangesMapsAndRootChanges;
 import org.argmap.client.ArgMapService.NodeWithChanges;
 import org.argmap.client.ArgMapService.PartialTrees;
 
@@ -230,6 +231,13 @@ public class ServerComm {
 		argMapService.getChanges(propIDs, argIDs,
 				new ServerCallback<NodeChangesMaps>(localCallback,
 						"loading history...", "history loaded"));
+	}
+
+	public static void getChangesForDeletedRootProps(
+			LocalCallback<NodeChangesMapsAndRootChanges> localCallback) {
+		argMapService
+				.getChangesForDeletedRootProps(new ServerCallback<NodeChangesMapsAndRootChanges>(
+						localCallback, "loading history...", "history loaded"));
 	}
 
 	public static void getPropsWithChanges(List<Long> propIDs,
