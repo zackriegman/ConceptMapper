@@ -23,7 +23,7 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 //TODO: send email to professors whose classes I want to audit and start learning prerequisite materials?
-//TODO: provide a way to see deleted top level nodes
+//TODO: do some basic testing of versioning of deleted top level nodes
 //TODO: versioning root node with no modifications/adds throws exception because of empty change list
 //TODO: impossible to delete a node sandwiched between a link sibling and a sibling with children?
 //TODO: the text of linked propositions and their children does not automatically update when edited elsewhere within the same window...
