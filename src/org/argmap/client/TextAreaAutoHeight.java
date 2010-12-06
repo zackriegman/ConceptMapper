@@ -2,7 +2,6 @@ package org.argmap.client;
 
 import static com.google.gwt.query.client.GQuery.$;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.query.client.GQuery;
@@ -31,6 +30,7 @@ public class TextAreaAutoHeight extends TextArea {
 	private static String lastStyleName;
 	private static int lastPaddingLeft;
 	private static int lastPaddingRight;
+	private static int lastElemWidth;
 
 	private final String styleContext;
 
@@ -41,12 +41,12 @@ public class TextAreaAutoHeight extends TextArea {
 		if (shadow == null) {
 			shadow = $(DOM.createDiv());
 			shadow.appendTo(GQuery.body);
-			// shadow.css("position", "absolute").css("top", "-1000px")
-			// .css("left", "-1000px").css("resize", "none")
-			// .appendTo(GQuery.body);
-			shadow.css("position", "absolute").css("top", "0px")
-					.css("left", "0px").css("resize", "none")
+			shadow.css("position", "absolute").css("top", "-1000px")
+					.css("left", "-1000px").css("resize", "none")
 					.appendTo(GQuery.body);
+			// shadow.css("position", "absolute").css("top", "0px")
+			// .css("left", "0px").css("resize", "none")
+			// .appendTo(GQuery.body);
 		}
 
 		addKeyUpHandler(new KeyUpHandler() {
@@ -66,15 +66,25 @@ public class TextAreaAutoHeight extends TextArea {
 	@Override
 	public void setText(String text) {
 		super.setText(text);
-		if (isAttached()) {
-			resize();
-		}
+		resize();
 	}
 
 	public void resize() {
 		GQuery elem = $(getElement());
 
 		String styleName = getStyleName();
+
+		Log log;
+		if (Log.on) {
+			log = Log.getLog("taah.r");
+			log.log("resizing node:" + getText());
+			log.log("; hash:" + hashCode());
+			log.logln("styleContext:" + styleContext + "; lastStyleContext:"
+					+ lastStyleContext);
+			log.logln("styleName:" + styleName + "; lastStyleName:"
+					+ lastStyleName);
+		}
+
 		int paddingLeft;
 		int paddingRight;
 		if (styleContext != lastStyleContext
@@ -90,18 +100,40 @@ public class TextAreaAutoHeight extends TextArea {
 			lastStyleName = styleName;
 			lastPaddingLeft = paddingLeft;
 			lastPaddingRight = paddingRight;
+
+			if (Log.on) log.logln("DID reset div");
 		} else {
 			paddingLeft = lastPaddingLeft;
 			paddingRight = lastPaddingRight;
+			if (Log.on) log.logln("did NOT reset div");
 		}
 
-		int shadowWidth = elem.width() - paddingLeft - paddingRight;
+		int elemWidth = elem.width();
+
+		/*
+		 * for some bizarre reason it seems that elem.width() returns zero
+		 * immediately after a setText(), even if it returned the correct width
+		 * before the setText() and even though it will return the correct width
+		 * a little later. Happens in both FireFox and Chrome. So, if it
+		 * returned 0 then I set the width to what the last non-zero width was
+		 * and hope for the best...
+		 */
+		if (elemWidth == 0) {
+			elemWidth = lastElemWidth;
+		} else {
+			lastElemWidth = elemWidth;
+		}
+		int shadowWidth = elemWidth - paddingLeft - paddingRight;
+		if (Log.on) {
+			log.logln("elem.width():" + elem.width());
+		}
 		shadowWidth = shadowWidth > 0 ? shadowWidth : 700;
 		shadow.css("width", "" + shadowWidth + "px");
 
-		GWT.log("resize node with text: " + getText());
 		shadow.html(toHTML(getText()));
 		$(getElement()).css("height", shadow.height() + "px");
+
+		if (Log.on) log.finish();
 	}
 
 	private String toHTML(String text) {
@@ -143,10 +175,15 @@ public class TextAreaAutoHeight extends TextArea {
 	}
 
 	private int cssAsInt(GQuery element, String property) {
-		return extractInt(element.css(property, true));
+		try {
+			return extractInt(element.css(property, true));
+		} catch (NumberFormatException e) {
+			return 0;
+		}
 	}
 
 	private int extractInt(String string) {
+		// Log.log("taah.ei", "extracting int from: \"" + string + "\"");
 		int start = 0;
 		int end = 0;
 		for (int i = 0; i < string.length(); i++) {

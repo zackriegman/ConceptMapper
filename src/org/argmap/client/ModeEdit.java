@@ -428,6 +428,15 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			log.log(node.childIDs);
 			log.logln("viewNode.getNode().childIDs:");
 			log.log(viewNode.getNode().childIDs);
+
+			/*
+			 * basic idea here is to make sure we have the correct children in
+			 * the correct order we remove all the children, and then add them
+			 * back according to the new order, and get any missing ones (i.e.
+			 * new ones that didn't exist in the copy of the parent that we
+			 * already had) from the map the server sent.
+			 */
+
 			Map<Long, ViewNode> removed = new HashMap<Long, ViewNode>();
 			while (viewNode.getChildCount() != 0) {
 				ViewNode child = viewNode.getChild(0);

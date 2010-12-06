@@ -154,7 +154,6 @@ public abstract class ViewProp extends ViewNode {
 
 	public boolean isTopLevel() {
 		return getParentItem() == null;
-		// return getTree().equals( getParentItem() );
 	}
 
 	public void setContent(String content) {
@@ -178,10 +177,6 @@ public abstract class ViewProp extends ViewNode {
 	public ViewArg getArgView(int index) {
 		return (ViewArg) getChild(index);
 	}
-
-	// public void resizeZ() {
-	// textArea.resizeZ();
-	// }
 
 	@Override
 	public void setAsCircularLink() {

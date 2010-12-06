@@ -22,12 +22,7 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/*TODO: TextAreaAutoHeight doesn't always resize childless nodes properly... its a bit of a mystery...
- * because they are generally partially resize... i.e. I think they are rarely just a single line...
- * but they are not completely resized.  It probably has something to do with the way I'm doing pre-loading
- * Childless nodes are sized when they are first loaded, but all their siblings seem to be sized
- * when their parent is opened... but the childless node is not... investigate further...
- * Maybe also make a TextAreaAutoHeight implementation for IE with deferred binding while I'm fidling with this?
+/* TODO: make a TextAreaAutoHeight implementation for IE with deferred binding (maybe using the old method of setting scrollTop?
  */
 
 //TODO: provide a way to see deleted top level nodes
