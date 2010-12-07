@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 //TODO: send email to professors whose classes I want to audit and start learning prerequisite materials?
+//TODO: when pressing delete within a proposition (not in the first space) it copies the text to the previous prop and refocuses there
 //TODO: do some basic testing of versioning of deleted top level nodes
 //TODO: versioning root node with no modifications/adds throws exception because of empty change list
 //TODO: impossible to delete a node sandwiched between a link sibling and a sibling with children?
@@ -47,6 +48,10 @@ import com.google.gwt.user.client.ui.Widget;
 /* TODO limit argument text length on client and server */
 //TODO: compose more/edit help tips
 //TODO: fix side bar border formatting on Chrome
+/*TODO: side searches (and maybe main searches) should only show searches that
+ *  match at least 50% of terms... irrelevant matches are distracting and will tend to 
+ *  train people to ignore the match suggestions
+ */
 
 //TODO: research semenatic reasoning (OWL, etc.)
 

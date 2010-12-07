@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.argmap.client.Argument;
 import org.argmap.client.Change;
-import org.argmap.client.Node;
 import org.argmap.client.Proposition;
 
 import com.google.appengine.api.labs.taskqueue.QueueFactory;
@@ -27,22 +26,19 @@ public class TaskWipe extends HttpServlet {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	
-	private static final Logger log = Logger.getLogger(TaskWipe.class
-			.getName());
-	
+
+	private static final Logger log = Logger
+			.getLogger(TaskWipe.class.getName());
+
 	static {
-		ObjectifyService.register(Node.class);
-		ObjectifyService.register(Proposition.class);
-		ObjectifyService.register(Argument.class);
-		ObjectifyService.register(Change.class);
+		ObjectifyRegistrator.register();
 	}
-	
+
 	private final Objectify ofy = ObjectifyService.begin();
 	private long startMillis;
-	
-	private boolean timeLeft(){
-		return System.currentTimeMillis() - startMillis  < 20000 ? true : false;
+
+	private boolean timeLeft() {
+		return System.currentTimeMillis() - startMillis < 20000 ? true : false;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -60,40 +56,44 @@ public class TaskWipe extends HttpServlet {
 			timer.lap("4");
 			classesForDelete.add(Proposition.class);
 			classesForDelete.add(Change.class);
+			classesForDelete.add(Rating.class);
 			int i = 0;
-			while( timeLeft() && i < classesForDelete.size() ){
+			while (timeLeft() && i < classesForDelete.size()) {
 				timer.lap("5 " + i);
-				List<Key> keys = ofy.query( classesForDelete.get(i) ).limit(50).listKeys();
+				List<Key> keys = ofy.query(classesForDelete.get(i)).limit(50)
+						.listKeys();
 				timer.lap("5.1 " + i);
-				while( timeLeft() && keys.size() > 0 ){
+				while (timeLeft() && keys.size() > 0) {
 					timer.lap("6");
 					ofy.delete(keys);
 					timer.lap("6.1");
-					keys = ofy.query( classesForDelete.get(i) ).limit(50).listKeys();
+					keys = ofy.query(classesForDelete.get(i)).limit(50)
+							.listKeys();
 				}
 				i++;
 			}
 			timer.lap("7");
-			if( !timeLeft() ){
+			if (!timeLeft()) {
 				queueTaskWipe();
 			}
 			log.fine(timer.getRecord());
-		}catch (Exception ex) {
+		} catch (Exception ex) {
 			timer.lap("8");
-			String strCallResult = "FAIL: TaskWipe: " + ex.getMessage() + "\n" + timer.getRecord();
+			String strCallResult = "FAIL: TaskWipe: " + ex.getMessage() + "\n"
+					+ timer.getRecord();
 			log.severe(strCallResult);
 			resp.getWriter().println(strCallResult);
 		}
 	}
-	
+
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		doGet(req, resp);
 	}
-	
+
 	public static void queueTaskWipe() {
 		TaskOptions taskOptions = TaskOptions.Builder.url("/tasks/wipe");
-		QueueFactory.getQueue("wipe").add( taskOptions );
+		QueueFactory.getQueue("wipe").add(taskOptions);
 	}
 }
