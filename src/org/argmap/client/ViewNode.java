@@ -106,6 +106,8 @@ public abstract class ViewNode extends TreeItem {
 	public void setRating(Long id, Map<Long, Integer> ratings) {
 	}
 
+	public abstract String getDisplayText();
+
 	public void setNegation() {
 	}
 

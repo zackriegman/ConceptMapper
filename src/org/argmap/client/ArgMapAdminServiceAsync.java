@@ -2,7 +2,6 @@ package org.argmap.client;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-
 public interface ArgMapAdminServiceAsync {
 
 	void clearDatastore(AsyncCallback<Void> callback);
@@ -10,5 +9,8 @@ public interface ArgMapAdminServiceAsync {
 	void populateDatastore(AsyncCallback<Void> callback);
 
 	void getPopulateDatastoreCount(AsyncCallback<Integer> callback);
+
+	void emailFromToCurrentUser(String subject, String contentHTML,
+			String contentPlain, AsyncCallback<Void> callback);
 
 }

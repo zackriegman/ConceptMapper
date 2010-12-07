@@ -95,6 +95,15 @@ public abstract class ViewProp extends ViewNode {
 	}
 
 	@Override
+	public String getDisplayText() {
+		if (negatedLabel == null) {
+			return getTextAreaContent();
+		} else {
+			return "Not: " + getTextAreaContent();
+		}
+	}
+
+	@Override
 	public void setNode(Node node) {
 		setNodeButNotTextAreaContent(node);
 		setContent(proposition.getContent());

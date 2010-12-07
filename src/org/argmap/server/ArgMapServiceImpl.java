@@ -54,7 +54,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	private final Objectify ofy = ObjectifyService.begin();
 
 	private void logln(String message) {
-		log.severe(message);
+		log.info(message);
 	}
 
 	@SuppressWarnings("unused")
@@ -553,7 +553,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		// Map<Long, Node> results = new HashMap<Long, Node>();
 		PartialTrees results = new PartialTrees();
 
-		// log.severe("got request for these-\nprops:"
+		// logln("got request for these-\nprops:"
 		// + Log.mapToString(propsInfo) + "\nargs:"
 		// + Log.mapToString(argsInfo));
 
@@ -562,7 +562,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		Map<Long, Argument> args = ofy.get(Argument.class, argsInfo.keySet());
 
 		for (Proposition prop : props.values()) {
-			// log.severe("propID:" + prop.id + "; DateAndChildIDs:" +
+			// logln("propID:" + prop.id + "; DateAndChildIDs:" +
 			// propsInfo.get( prop.id ).toString() );
 			if (!prop.updated.equals(propsInfo.get(prop.id).date)) {
 				results.nodes.put(prop.id, prop);
@@ -593,7 +593,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			}
 		}
 
-		// log.severe("returning these nodes:" + Log.mapToString(results.nodes)
+		// logln("returning these nodes:" + Log.mapToString(results.nodes)
 		// + "\nfor these updated root ids:"
 		// + Log.listToString(results.rootIDs));
 		Rating.prepWithRatings(results);
@@ -736,7 +736,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public PartialTrees searchProps(String searchString, String searchName,
 			int resultLimit, List<Long> filterNodeIDs) {
-		log.severe("recieved request for search '" + searchName + "'");
+		logln("recieved request for search '" + searchName + "'");
 		Set<String> tokenSet = getTokensForIndexingOrQuery(searchString, 6);
 		if (tokenSet.isEmpty()) {
 			PartialTrees result = new PartialTrees();
@@ -754,7 +754,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		Search search = new Search(ofy, tokenSet, resultLimit, filterNodeIDs);
 		PartialTrees propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
-		log.severe("saved search '" + searchName + "' in session '"
+		logln("saved search '" + searchName + "' in session '"
 				+ getHttpServletRequest().getSession().getId() + "'");
 		return propsAndArgs;
 	}
@@ -769,7 +769,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			PartialTrees propsAndArgs = search.getBatch(ofy);
 			getHttpServletRequest().getSession().setAttribute(searchName,
 					search);
-			log.severe("re-saved search '" + searchName + "' in session '"
+			logln("re-saved search '" + searchName + "' in session '"
 					+ getHttpServletRequest().getSession().getId() + "'");
 			return propsAndArgs;
 		} catch (NullPointerException e) {

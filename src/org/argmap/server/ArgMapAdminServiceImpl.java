@@ -25,7 +25,7 @@ public class ArgMapAdminServiceImpl extends RemoteServiceServlet implements
 		ObjectifyService.register(Change.class);
 	}
 
-	//private final Objectify ofy = ObjectifyService.begin();
+	// private final Objectify ofy = ObjectifyService.begin();
 
 	/** add to suppress warnings... */
 	private static final long serialVersionUID = 1L;
@@ -49,15 +49,21 @@ public class ArgMapAdminServiceImpl extends RemoteServiceServlet implements
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Override
-	public int getPopulateDatastoreCount(){
+	public int getPopulateDatastoreCount() {
 		return TaskPopulate.getRandomSentenceCount();
+
 	}
-	
 
 	@Override
 	public void doUnexpectedFailure(java.lang.Throwable e) {
 		log.log(Level.SEVERE, "Uncaught exception", e);
+	}
+
+	@Override
+	public void emailFromToCurrentUser(String subject, String contentHTML,
+			String contentPlain) throws ServiceException {
+		Email.sendFromAndToCurrentUser(subject, contentHTML, contentPlain);
 	}
 }

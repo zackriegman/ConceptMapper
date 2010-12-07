@@ -5,12 +5,23 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class MessageDialog extends DialogBox {
 
-	/* user should call setText() to set title */
 	public MessageDialog(String title, String content) {
+		this(title, content, "40em", "");
+	}
+
+	/*
+	 * when set in "em" height seems to work as a minimum height, whereas width
+	 * seems to work as a minimum and maximum width.
+	 * 
+	 * when set in "%" doesn't seem to work much at all...
+	 */
+	public MessageDialog(String title, String content, String width,
+			String height) {
 		super();
 		setGlassEnabled(true);
 		setAnimationEnabled(true);
@@ -18,12 +29,13 @@ public class MessageDialog extends DialogBox {
 		setText(title);
 
 		VerticalPanel dialogContents = new VerticalPanel();
-		dialogContents.setWidth("40em");
+		dialogContents.setWidth(width);
+		dialogContents.setHeight(height);
 		dialogContents.setSpacing(4);
 		setWidget(dialogContents);
 
 		HTML details = new HTML(content);
-		dialogContents.add(details);
+		dialogContents.add(new ScrollPanel(details));
 
 		Button closeButton = new Button("close", new ClickHandler() {
 			public void onClick(ClickEvent event) {

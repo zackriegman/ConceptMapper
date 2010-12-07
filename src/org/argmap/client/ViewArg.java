@@ -69,6 +69,11 @@ public abstract class ViewArg extends ViewNode {
 	}
 
 	@Override
+	public String getDisplayText() {
+		return label.getText() + getTextAreaContent();
+	}
+
+	@Override
 	public void setTextAreaContent(String content) {
 		textBox.setText(content);
 	}

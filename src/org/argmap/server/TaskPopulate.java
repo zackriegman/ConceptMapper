@@ -209,7 +209,7 @@ public class TaskPopulate extends HttpServlet {
 			throws IOException {
 		LapTimer timer = new LapTimer();
 		try {
-			// log.severe("AAAA");
+			// log.info("AAAA");
 			timer.lap("AAAAA");
 			argMapService.setCurrentRequest(req);
 			timer.lap("BBBB");

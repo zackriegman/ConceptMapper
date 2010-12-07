@@ -130,7 +130,7 @@ public class Search implements Serializable {
 		 */
 		while (currentQuery != null) {
 			if (getUpToLimitMatches(results, currentQuery, ofy)) {
-				log.severe("returning " + results.rootIDs.size()
+				log.info("returning " + results.rootIDs.size()
 						+ " results after reaching limit (" + queryCount
 						+ " queries)");
 				return results;
@@ -147,7 +147,7 @@ public class Search implements Serializable {
 		 * if all possible combinations of all possible number of terms has been
 		 * searched we fall out of the while loop and return whatever we got
 		 */
-		log.severe("returning " + results.rootIDs.size()
+		log.info("returning " + results.rootIDs.size()
 				+ " results after exchausting search combinations ("
 				+ queryCount + " queries)");
 		return results;
@@ -233,7 +233,7 @@ public class Search implements Serializable {
 			query.filter("tokens", token);
 			// sb.append(token + " ");
 		}
-		// log.severe(sb.toString());
+		// log.info(sb.toString());
 		return query;
 	}
 }
