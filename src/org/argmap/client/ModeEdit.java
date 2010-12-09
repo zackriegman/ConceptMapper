@@ -10,7 +10,6 @@ import org.argmap.client.ArgMap.Message;
 import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.DateAndChildIDs;
 import org.argmap.client.ArgMapService.PartialTrees;
-import org.argmap.client.Search.SearchResultsHandler;
 import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.core.client.GWT;
@@ -766,30 +765,28 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				filterIDs.addAll(viewProp.getParent().getChildIDs());
 			}
 			sideSearch = new Search(searchString, "SIDE_SEARCH",
-					ModeEdit.SIDE_SEARCH_LIMIT, filterIDs,
-					new SearchResultsHandler() {
+					ModeEdit.SIDE_SEARCH_LIMIT, filterIDs) {
 
-						@Override
-						public void searchExhausted() {
-							sideSearchContinueButton.setVisible(false);
-						}
+				@Override
+				public void searchExhausted() {
+					sideSearchContinueButton.setVisible(false);
+				}
 
-						@Override
-						public void searchCompleted() {
-							sideSearchContinueButton.setVisible(true);
-						}
+				@Override
+				public void searchCompleted() {
+					sideSearchContinueButton.setVisible(true);
+				}
 
-						@Override
-						public void processSearchResults(
-								PartialTrees propMatches) {
-							sideSearchAppendResults(propMatches);
-							if (sideSearchResults.getRowCount() > 0) {
-								displaySearchBox();
-							} else {
-								hideSearchBox();
-							}
-						}
-					});
+				@Override
+				public void processSearchResults(PartialTrees propMatches) {
+					sideSearchAppendResults(propMatches);
+					if (sideSearchResults.getRowCount() > 0) {
+						displaySearchBox();
+					} else {
+						hideSearchBox();
+					}
+				}
+			};
 			sideSearch.startSearch();
 		} else {
 			hideSearchBox();
@@ -1208,40 +1205,39 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 		if (!searchString.equals("")) {
 			mainSearch = new Search(searchString, "MAIN_SEARCH",
-					MAIN_SEARCH_LIMIT, null, new SearchResultsHandler() {
-						@Override
-						public void processSearchResults(
-								PartialTrees propsAndArgs) {
-							mainSearchAppendResultsToTree(propsAndArgs);
-						}
+					MAIN_SEARCH_LIMIT, null) {
+				@Override
+				public void processSearchResults(PartialTrees propsAndArgs) {
+					mainSearchAppendResultsToTree(propsAndArgs);
+				}
 
-						@Override
-						public void searchCompleted() {
-							mainSearchContinueButton.setVisible(true);
-							updateTimer.start();
-						}
+				@Override
+				public void searchCompleted() {
+					mainSearchContinueButton.setVisible(true);
+					updateTimer.start();
+				}
 
-						@Override
-						public void searchExhausted() {
-							mainSearchContinueButton.setVisible(false);
-							updateTimer.start();
-						}
+				@Override
+				public void searchExhausted() {
+					mainSearchContinueButton.setVisible(false);
+					updateTimer.start();
+				}
 
-						@Override
-						public void searchStarted() {
-							updateTimer.cancelTimer();
-						}
+				@Override
+				public void searchStarted() {
+					updateTimer.cancelTimer();
+				}
 
-						@Override
-						public void searchContinued() {
-							updateTimer.cancelTimer();
-						}
+				@Override
+				public void searchContinued() {
+					updateTimer.cancelTimer();
+				}
 
-						@Override
-						public void searchCancelled() {
-							updateTimer.start();
-						}
-					});
+				@Override
+				public void searchCancelled() {
+					updateTimer.start();
+				}
+			};
 			mainSearch.startSearch();
 		} else {
 			updateTimer.cancelTimer();

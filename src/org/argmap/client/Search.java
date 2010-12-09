@@ -5,10 +5,9 @@ import java.util.List;
 import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.PartialTrees;
 
-public class Search implements ServerComm.LocalCallback<PartialTrees> {
+public abstract class Search implements ServerComm.LocalCallback<PartialTrees> {
 
 	private final String searchString;
-	private final SearchResultsHandler handler;
 	private final int resultLimit;
 	private final List<Long> filterNodeIDs;
 	private final String searchName;
@@ -16,27 +15,9 @@ public class Search implements ServerComm.LocalCallback<PartialTrees> {
 	private int resultCount;
 	private ArgMap.Message userMessage;
 
-	public static abstract class SearchResultsHandler {
-		public abstract void processSearchResults(PartialTrees propsAndArgs);
-
-		public abstract void searchExhausted();
-
-		public abstract void searchCompleted();
-
-		public void searchStarted() {
-		};
-
-		public void searchContinued() {
-		};
-
-		public void searchCancelled() {
-		};
-	}
-
 	public Search(String searchString, String searchName, int resultLimit,
-			List<Long> filterNodeIDs, SearchResultsHandler handler) {
+			List<Long> filterNodeIDs) {
 		this.searchString = searchString.trim();
-		this.handler = handler;
 		this.resultLimit = resultLimit;
 		this.filterNodeIDs = filterNodeIDs;
 
@@ -44,7 +25,7 @@ public class Search implements ServerComm.LocalCallback<PartialTrees> {
 	}
 
 	public void startSearch() {
-		handler.searchStarted();
+		searchStarted();
 		if (!searchString.equals("")) {
 			resultCount = 0;
 			ServerComm.searchProps(searchString, searchName, resultLimit,
@@ -54,7 +35,7 @@ public class Search implements ServerComm.LocalCallback<PartialTrees> {
 	}
 
 	public void continueSearch() {
-		handler.searchContinued();
+		searchContinued();
 		resultCount = 0;
 		ServerComm.continueSearchProps(searchName, this);
 		userMessage.setMessage("searching for more...");
@@ -62,7 +43,7 @@ public class Search implements ServerComm.LocalCallback<PartialTrees> {
 	}
 
 	public void cancelSearch() {
-		handler.searchCancelled();
+		searchCancelled();
 		cancelled = true;
 		userMessage.hide();
 	}
@@ -83,16 +64,16 @@ public class Search implements ServerComm.LocalCallback<PartialTrees> {
 				} else {
 					userMessage.setMessage("search completed");
 					userMessage.hideAfter(3000);
-					handler.searchCompleted();
+					searchCompleted();
 				}
 
 				if (propsAndArgs.rootIDs.size() > 0) {
-					handler.processSearchResults(propsAndArgs);
+					processSearchResults(propsAndArgs);
 				}
 			} else {
 				userMessage.setMessage("search completed: no more results");
 				userMessage.hideAfter(3000);
-				handler.searchExhausted();
+				searchExhausted();
 			}
 		}
 	}
@@ -114,4 +95,24 @@ public class Search implements ServerComm.LocalCallback<PartialTrees> {
 		length = length > 150 ? 150 : length;
 		return !oldString.regionMatches(true, 0, newString, 0, length);
 	}
+
+	/***********************
+	 * The Handler Methods *
+	 ***********************/
+
+	public abstract void processSearchResults(PartialTrees propsAndArgs);
+
+	public abstract void searchExhausted();
+
+	public abstract void searchCompleted();
+
+	public void searchStarted() {
+	};
+
+	public void searchContinued() {
+	};
+
+	public void searchCancelled() {
+	};
+
 }
