@@ -2,6 +2,7 @@ package org.argmap.server;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -22,7 +23,9 @@ import com.google.appengine.api.datastore.QueryResultIterator;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.Query;
+import com.googlecode.objectify.annotation.Cached;
 
+@Cached
 public class Search implements Serializable {
 	/**
 	 * added to suppress warnings
@@ -33,7 +36,7 @@ public class Search implements Serializable {
 			.getName());
 
 	@Id
-	private Long id;
+	private String id;
 	private List<String> tokens;
 
 	@Embedded
@@ -44,7 +47,8 @@ public class Search implements Serializable {
 	private int combinationSetSize;
 	private int minimumSetSize;
 	private int limit;
-	private final Set<Long> filterIDs = new HashSet<Long>();
+	private Set<Long> filterIDs = new HashSet<Long>();
+	private Date created = new Date();
 
 	/*
 	 * setup a search that filters for three types of unwanted matches. Based on
@@ -55,7 +59,10 @@ public class Search implements Serializable {
 	 * examined when the search is being performed for a proposition edit.
 	 */
 	public Search(Objectify ofy, Set<String> tokenSet, int limit,
-			List<Long> filterNodeIDs, Double percentTokensMatching) {
+			List<Long> filterNodeIDs, Double percentTokensMatching,
+			String sessionID, String searchName) {
+		this.id = buildID(sessionID, searchName);
+
 		if (filterNodeIDs != null) {
 			filterIDs.addAll(filterNodeIDs);
 		}
@@ -245,5 +252,9 @@ public class Search implements Serializable {
 		}
 		// log.info(sb.toString());
 		return query;
+	}
+
+	public static String buildID(String sessionID, String searchName) {
+		return sessionID + searchName;
 	}
 }

@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+//TODO: periodically remove searches...
 //TODO: send email to professors whose classes I want to audit and start learning prerequisite materials?
 /*TODO: light use quickly filled my "total data stored" quota: I think this might be because of all the searches
  * that I'm saving and not bothering to clean up.  So delete a search from the session when I'm done with it!!!

@@ -753,11 +753,14 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 
 		Search search = new Search(ofy, tokenSet, resultLimit, filterNodeIDs,
-				percentTermsMatching);
+				percentTermsMatching, getHttpServletRequest().getSession()
+						.getId(), searchName);
 		PartialTrees propsAndArgs = search.getBatch(ofy);
-		getHttpServletRequest().getSession().setAttribute(searchName, search);
-		logln("saved search '" + searchName + "' in session '"
-				+ getHttpServletRequest().getSession().getId() + "'");
+		// getHttpServletRequest().getSession().setAttribute(searchName,
+		// search);
+		// logln("saved search '" + searchName + "' in session '"
+		// + getHttpServletRequest().getSession().getId() + "'");
+		ofy.put(search);
 		return propsAndArgs;
 	}
 
@@ -766,12 +769,15 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			throws ServiceException {
 		Search search;
 		try {
-			search = (Search) getHttpServletRequest().getSession()
-					.getAttribute(searchName);
+			// search = (Search) getHttpServletRequest().getSession()
+			// .getAttribute(searchName);
+			search = ofy.get(Search.class, Search.buildID(
+					getHttpServletRequest().getSession().getId(), searchName));
 			PartialTrees propsAndArgs = search.getBatch(ofy);
-			getHttpServletRequest().getSession().setAttribute(searchName,
-					search);
-			logln("re-saved search '" + searchName + "' in session '"
+			// getHttpServletRequest().getSession().setAttribute(searchName,
+			// search);
+			ofy.put(search);
+			logln("re-saved search '" + searchName + "' for session '"
 					+ getHttpServletRequest().getSession().getId() + "'");
 			return propsAndArgs;
 		} catch (NullPointerException e) {
