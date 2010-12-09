@@ -33,14 +33,14 @@ public class Search implements ServerComm.LocalCallback<PartialTrees> {
 		};
 	}
 
-	public Search(String searchString, int resultLimit,
+	public Search(String searchString, String searchName, int resultLimit,
 			List<Long> filterNodeIDs, SearchResultsHandler handler) {
 		this.searchString = searchString.trim();
 		this.handler = handler;
 		this.resultLimit = resultLimit;
 		this.filterNodeIDs = filterNodeIDs;
 
-		searchName = "" + hashCode();
+		this.searchName = searchName;
 	}
 
 	public void startSearch() {

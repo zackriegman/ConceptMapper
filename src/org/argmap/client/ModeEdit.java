@@ -765,8 +765,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			if (viewProp.getParent() != null) {
 				filterIDs.addAll(viewProp.getParent().getChildIDs());
 			}
-			sideSearch = new Search(searchString, ModeEdit.SIDE_SEARCH_LIMIT,
-					filterIDs, new SearchResultsHandler() {
+			sideSearch = new Search(searchString, "SIDE_SEARCH",
+					ModeEdit.SIDE_SEARCH_LIMIT, filterIDs,
+					new SearchResultsHandler() {
 
 						@Override
 						public void searchExhausted() {
@@ -1206,8 +1207,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		String searchString = searchTextBox.getText().trim();
 
 		if (!searchString.equals("")) {
-			mainSearch = new Search(searchString, MAIN_SEARCH_LIMIT, null,
-					new SearchResultsHandler() {
+			mainSearch = new Search(searchString, "MAIN_SEARCH",
+					MAIN_SEARCH_LIMIT, null, new SearchResultsHandler() {
 						@Override
 						public void processSearchResults(
 								PartialTrees propsAndArgs) {
