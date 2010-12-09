@@ -61,6 +61,17 @@ version="2.5">
 		<url-pattern>/tasks/wipe</url-pattern>
 	</servlet-mapping>
 	
+	<!-- TaskWipe configuration -->
+	<servlet>
+		<servlet-name>TaskSessionCleanup</servlet-name>
+		<servlet-class>org.argmap.server.TaskSessionCleanup</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>TaskSessionCleanup</servlet-name>
+		<url-pattern>/tasks/sessionCleanup</url-pattern>
+	</servlet-mapping>
+	
 	<!-- general security limitation for tasks all urls in /tasks/ -->
 	<security-constraint>
         <web-resource-collection>

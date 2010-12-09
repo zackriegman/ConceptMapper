@@ -23,12 +23,10 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 //TODO: periodically remove searches...
+
 //TODO: send email to professors whose classes I want to audit and start learning prerequisite materials?
-/*TODO: light use quickly filled my "total data stored" quota: I think this might be because of all the searches
- * that I'm saving and not bothering to clean up.  So delete a search from the session when I'm done with it!!!
- * And look into what else could be causing this!!! (Very annoying as it is disabling my application right before
- * I intend to show it).
- */
+
+//TODO: cleanup deprecated stuff from SDK upgrade
 //TODO: rating an item seems to scroll it out of scope!
 //TODO: after splitting a proposition by pressing enter somewhere in the middle of it, the top part tends to be restored to its original content
 //TODO: when pressing delete within a proposition (not in the first space) it copies the text to the previous prop and refocuses there

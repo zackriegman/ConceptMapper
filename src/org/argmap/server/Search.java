@@ -2,7 +2,6 @@ package org.argmap.server;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -48,7 +47,7 @@ public class Search implements Serializable {
 	private int minimumSetSize;
 	private int limit;
 	private Set<Long> filterIDs = new HashSet<Long>();
-	private Date created = new Date();
+	private long created = System.currentTimeMillis();
 
 	/*
 	 * setup a search that filters for three types of unwanted matches. Based on

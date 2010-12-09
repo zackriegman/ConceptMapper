@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cronentries>
+  <cron>
+    <url>/tasks/sessionCleanup</url>
+    <description>cleanup data manually stored in datastore that is related to sessions</description>
+    <schedule>every day</schedule>
+  </cron>
+</cronentries>
