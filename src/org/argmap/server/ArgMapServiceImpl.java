@@ -735,7 +735,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public PartialTrees searchProps(String searchString, String searchName,
-			int resultLimit, List<Long> filterNodeIDs) {
+			int resultLimit, List<Long> filterNodeIDs,
+			Double percentTermsMatching) {
 		logln("recieved request for search '" + searchName + "'");
 		Set<String> tokenSet = getTokensForIndexingOrQuery(searchString, 6);
 		if (tokenSet.isEmpty()) {
@@ -752,7 +753,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 
 		Search search = new Search(ofy, tokenSet, resultLimit, filterNodeIDs,
-				.50);
+				percentTermsMatching);
 		PartialTrees propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
 		logln("saved search '" + searchName + "' in session '"

@@ -167,7 +167,8 @@ public interface ArgMapService extends RemoteService {
 			throws ServiceException;
 
 	public PartialTrees searchProps(String searchString, String searchName,
-			int resultLimit, List<Long> filerNodeIDs) throws ServiceException;
+			int resultLimit, List<Long> filerNodeIDs,
+			Double percentTermsMatching) throws ServiceException;
 
 	public PartialTrees continueSearchProps(String searchName)
 			throws ServiceException;

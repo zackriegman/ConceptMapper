@@ -50,9 +50,6 @@ public interface ArgMapServiceAsync {
 	void continueSearchProps(String searchName,
 			AsyncCallback<PartialTrees> callback);
 
-	void searchProps(String searchString, String searchName, int resultLimit,
-			List<Long> filerNodeIDs, AsyncCallback<PartialTrees> callback);
-
 	void getUpToDateNodes(Map<Long, DateAndChildIDs> propInfo,
 			Map<Long, DateAndChildIDs> argInfo,
 			AsyncCallback<PartialTrees> callback);
@@ -74,4 +71,8 @@ public interface ArgMapServiceAsync {
 
 	void getChangesForDeletedRootProps(
 			AsyncCallback<NodeChangesMapsAndRootChanges> callback);
+
+	void searchProps(String searchString, String searchName, int resultLimit,
+			List<Long> filerNodeIDs, Double percentTermsMatching,
+			AsyncCallback<PartialTrees> callback);
 }

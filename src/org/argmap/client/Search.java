@@ -13,15 +13,16 @@ public abstract class Search implements ServerComm.LocalCallback<PartialTrees> {
 	private final String searchName;
 	private boolean cancelled = false;
 	private int resultCount;
+	private final Double percentTermsMatching;
 	private ArgMap.Message userMessage;
 
 	public Search(String searchString, String searchName, int resultLimit,
-			List<Long> filterNodeIDs) {
+			List<Long> filterNodeIDs, Double percentTermsMatching) {
 		this.searchString = searchString.trim();
 		this.resultLimit = resultLimit;
 		this.filterNodeIDs = filterNodeIDs;
-
 		this.searchName = searchName;
+		this.percentTermsMatching = percentTermsMatching;
 	}
 
 	public void startSearch() {
@@ -29,7 +30,7 @@ public abstract class Search implements ServerComm.LocalCallback<PartialTrees> {
 		if (!searchString.equals("")) {
 			resultCount = 0;
 			ServerComm.searchProps(searchString, searchName, resultLimit,
-					filterNodeIDs, this);
+					filterNodeIDs, percentTermsMatching, this);
 			userMessage = ArgMap.message("searching...", MessageType.INFO);
 		}
 	}
