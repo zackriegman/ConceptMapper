@@ -751,7 +751,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			return result;
 		}
 
-		Search search = new Search(ofy, tokenSet, resultLimit, filterNodeIDs);
+		Search search = new Search(ofy, tokenSet, resultLimit, filterNodeIDs,
+				.50);
 		PartialTrees propsAndArgs = search.getBatch(ofy);
 		getHttpServletRequest().getSession().setAttribute(searchName, search);
 		logln("saved search '" + searchName + "' in session '"

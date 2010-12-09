@@ -770,6 +770,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				@Override
 				public void searchExhausted() {
 					sideSearchContinueButton.setVisible(false);
+					hideSearchBox();
 				}
 
 				@Override
@@ -780,11 +781,11 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				@Override
 				public void processSearchResults(PartialTrees propMatches) {
 					sideSearchAppendResults(propMatches);
-					if (sideSearchResults.getRowCount() > 0) {
-						displaySearchBox();
-					} else {
-						hideSearchBox();
-					}
+					// if (sideSearchResults.getRowCount() > 0) {
+					displaySearchBox();
+					// } else {
+					// hideSearchBox();
+					// }
 				}
 			};
 			sideSearch.startSearch();

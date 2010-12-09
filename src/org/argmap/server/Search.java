@@ -42,6 +42,7 @@ public class Search implements Serializable {
 
 	private String cursorString;
 	private int combinationSetSize;
+	private int minimumSetSize;
 	private int limit;
 	private final Set<Long> filterIDs = new HashSet<Long>();
 
@@ -54,12 +55,21 @@ public class Search implements Serializable {
 	 * examined when the search is being performed for a proposition edit.
 	 */
 	public Search(Objectify ofy, Set<String> tokenSet, int limit,
-			List<Long> filterNodeIDs) {
+			List<Long> filterNodeIDs, Double percentTokensMatching) {
 		if (filterNodeIDs != null) {
 			filterIDs.addAll(filterNodeIDs);
 		}
 		tokens = new ArrayList<String>(tokenSet);
+
 		combinationSetSize = tokens.size();
+
+		if (percentTokensMatching == null) {
+			minimumSetSize = 1;
+		} else {
+			minimumSetSize = (int) (percentTokensMatching * tokens.size());
+			minimumSetSize = minimumSetSize >= 1 ? minimumSetSize : 1;
+		}
+
 		this.limit = limit;
 	}
 
@@ -214,7 +224,7 @@ public class Search implements Serializable {
 		 * if there are no more combinations with the current number of terms
 		 * but there are more combinations with fewer terms
 		 */
-		else if (combinationSetSize > 0) {
+		else if (combinationSetSize >= minimumSetSize) {
 			currentCombinationGenerator = new CombinationGenerator(
 					tokens.size(), combinationSetSize);
 			currentCombination = currentCombinationGenerator.getNext();

@@ -107,12 +107,12 @@ public abstract class Search implements ServerComm.LocalCallback<PartialTrees> {
 	public abstract void searchCompleted();
 
 	public void searchStarted() {
-	};
+	}
 
 	public void searchContinued() {
-	};
+	}
 
 	public void searchCancelled() {
-	};
+	}
 
 }
