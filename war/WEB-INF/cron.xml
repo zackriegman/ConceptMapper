@@ -2,7 +2,12 @@
 <cronentries>
   <cron>
     <url>/tasks/sessionCleanup</url>
-    <description>cleanup data manually stored in datastore that is related to sessions</description>
-    <schedule>every day</schedule>
+    <description>cleanup certain data manually stored in datastore that is keyed to sessions</description>
+    <schedule>every day 00:00</schedule>
+  </cron>
+  <cron>
+    <url>/_ah/sessioncleanup?clear</url>
+    <description>clear expired sessions and data stored in them</description>
+    <schedule>every 1 hours</schedule>
   </cron>
 </cronentries>
