@@ -21,7 +21,7 @@ public class TaskSessionCleanup extends HttpServlet {
 	/*
 	 * expire session data after 24 hours
 	 */
-	private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24;
+	private static final long EXPIRE_AFTER_TIME = 1000 * 60 * 60 * 24;
 
 	private static final Logger log = Logger.getLogger(TaskSessionCleanup.class
 			.getName());
@@ -37,7 +37,6 @@ public class TaskSessionCleanup extends HttpServlet {
 		return System.currentTimeMillis() - startMillis < 20000 ? true : false;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
@@ -46,8 +45,7 @@ public class TaskSessionCleanup extends HttpServlet {
 			long expirationCutoff = System.currentTimeMillis()
 					- EXPIRE_AFTER_TIME;
 
-			int i = 0;
-			for (Key key : ofy.query(Search.class)
+			for (Key<Search> key : ofy.query(Search.class)
 					.filter("created <", expirationCutoff).fetchKeys()) {
 				if (timeLeft()) {
 					ofy.delete(key);
