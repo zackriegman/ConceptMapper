@@ -22,17 +22,13 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/*TODO: after splitting a proposition by pressing enter somewhere in the middle of it,
- *  the top part tends to be restored to its original content.  It is easy to replicate this problem
- *  by copying and pasting some text into a node and then immediately splitting the node.
- */
 //TODO: when pressing delete within a proposition (not in the first space) it copies the text to the previous prop and refocuses there
-//TODO: rating an item seems to scroll it out of scope!
-//TODO: do some basic testing of versioning of deleted top level nodes
-//TODO: versioning root node with no modifications/adds throws exception because of empty change list
 //TODO: impossible to delete a node sandwiched between a link sibling and a sibling with children?
+//TODO: rating an item seems to scroll it out of scope!
 //TODO: the text of linked propositions and their children does not automatically update when edited elsewhere within the same window...
 
+//TODO: do some basic testing of versioning of deleted top level nodes
+//TODO: versioning root node with no modifications/adds throws exception because of empty change list
 //TODO: test negated links in versions mode (probably won't work!!!)
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
 /*TODO: track down exceptions in ModeVersion (unrelated to circular linking)*/
@@ -52,10 +48,6 @@ import com.google.gwt.user.client.ui.Widget;
 //TODO: cleanup deprecated stuff from SDK upgrade (at the moment there is no documentation about this so I'll have to wait)
 //TODO: compose more/edit help tips
 //TODO: fix side bar border formatting on Chrome
-/*TODO: side searches (and maybe main searches) should only show searches that
- *  match at least 50% of terms... irrelevant matches are distracting and will tend to 
- *  train people to ignore the match suggestions
- */
 
 //TODO: research semenatic reasoning (OWL, etc.)
 
@@ -81,7 +73,7 @@ import com.google.gwt.user.client.ui.Widget;
  * change on the server to return the coloring events for a proposition, and would require changes on the client
  * to insert the coloring events into the timeMachineMap and so forth.
  */
-//TODO: figure out how to make server log more than warn and severe while in hosted mode...
+//TODO: figure out how to make server log more than info, warn and severe while in hosted mode...
 
 /*TODO: move changes from propID/argID to parentID/childID (this will make querying more efficient:  want
  * all the changes having to do with a particular node?  Just query on parentID with that node's ID.
