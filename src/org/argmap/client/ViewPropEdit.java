@@ -198,12 +198,20 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		int charCode = event.getNativeKeyCode();
 		Object source = event.getSource();
 		if (source == textArea) {
+			/*
+			 * if it's a root proposition add an argument when user presses
+			 * enter
+			 */
 			if (charCode == KeyCodes.KEY_ENTER && parentArgView() == null) {
 				onChange(null);
 				addArgument(true);
 				event.preventDefault();
-			} else if (charCode == KeyCodes.KEY_ENTER
-					&& parentArgView() != null) {
+			}
+			/*
+			 * if it is not a root proposition, add a sibling proposition when
+			 * user presses enter
+			 */
+			else if (charCode == KeyCodes.KEY_ENTER && parentArgView() != null) {
 				onChange(null);
 				addProposition();
 				event.preventDefault();
@@ -377,13 +385,26 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			String secondContent = content.substring(cursorPosition);
 
 			textArea.setText(firstContent);
-			proposition.setContent(firstContent);
+
+			/*
+			 * The line below commented out because it doesn't work with
+			 * saveContentToServiceIfChanged()... the way that
+			 * saveContentToServerIfChanged() knows to update the content if it
+			 * has changed is because the content is different from what is in
+			 * the proposition... this doesn't work if the proposition has been
+			 * set to the same thing. saveContentToServerIfChanged() will update
+			 * the proposition. (See also, ModeEdit.updateNode() for more code
+			 * that relies on the behavoir of saveContentToServerIfChanged()
+			 */
+			// proposition.setContent(firstContent);
 
 			newPropView.textArea.setText(secondContent);
 			newPropView.proposition.setContent(secondContent);
 
 			newPropView.textArea.setCursorPos(0);
 			newPropView.textArea.setFocus(true);
+
+			saveContentToServerIfChanged();
 
 			ServerComm.addProp(newPropView.proposition,
 					parentArgView().argument, treePosition + 1,
@@ -393,7 +414,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 							newPropView.setLoaded(true);
 						}
 					});
-			saveContentToServerIfChanged();
 		}
 
 	}

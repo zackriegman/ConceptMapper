@@ -471,8 +471,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		 * whenever they save to the server so they can compare their
 		 * TextArea/Box content with their Node content to see if their is
 		 * anything worth saving the next time. This means that
-		 * ModeEdit.updateNode() can compare the new Nodes content with the old
-		 * nodes content to determine if the TextArea/Box content needs to be
+		 * ModeEdit.updateNode() can compare the new Node's content with the old
+		 * Node's content to determine if the TextArea/Box content needs to be
 		 * updated.
 		 * 
 		 * If the old Node and new Node are different and the TextArea/Box
@@ -483,7 +483,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		 * 
 		 * If the old Node and new Node are the same (and the TextArea/Box
 		 * content is either different from the old Node's content or the same)
-		 * then the TextArea/Box does not need to be updated.
+		 * then the TextArea/Box does not need to be updated. (The case where
+		 * the TextArea/Box content is different is where the user is in the
+		 * midst of an update that has yet to be saved.)
 		 * 
 		 * If the two are different and the TextArea/Box content is different
 		 * from the old Node's content, then I think that means we have a

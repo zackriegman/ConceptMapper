@@ -22,12 +22,12 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-//TODO: send email to professors whose classes I want to audit and start learning prerequisite materials?
-
-//TODO: cleanup deprecated stuff from SDK upgrade
-//TODO: rating an item seems to scroll it out of scope!
-//TODO: after splitting a proposition by pressing enter somewhere in the middle of it, the top part tends to be restored to its original content
+/*TODO: after splitting a proposition by pressing enter somewhere in the middle of it,
+ *  the top part tends to be restored to its original content.  It is easy to replicate this problem
+ *  by copying and pasting some text into a node and then immediately splitting the node.
+ */
 //TODO: when pressing delete within a proposition (not in the first space) it copies the text to the previous prop and refocuses there
+//TODO: rating an item seems to scroll it out of scope!
 //TODO: do some basic testing of versioning of deleted top level nodes
 //TODO: versioning root node with no modifications/adds throws exception because of empty change list
 //TODO: impossible to delete a node sandwiched between a link sibling and a sibling with children?
@@ -49,7 +49,7 @@ import com.google.gwt.user.client.ui.Widget;
 //TODO: implement user accounts, email updates of changes, inviting friends
 //TODO: implement scoring algorithm
 //TODO: often times conflict dialog is not displayed and edits are silently overwritten...
-/* TODO limit argument text length on client and server */
+//TODO: cleanup deprecated stuff from SDK upgrade (at the moment there is no documentation about this so I'll have to wait)
 //TODO: compose more/edit help tips
 //TODO: fix side bar border formatting on Chrome
 /*TODO: side searches (and maybe main searches) should only show searches that
