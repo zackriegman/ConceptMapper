@@ -24,7 +24,8 @@ import com.google.gwt.user.client.ui.Widget;
 
 //TODO: when pressing delete within a proposition (not in the first space) it copies the text to the previous prop and refocuses there
 //TODO: impossible to delete a node sandwiched between a link sibling and a sibling with children?
-//TODO: rating an item seems to scroll it out of scope!
+//TODO: rating an item seems to scroll it out of view!
+//TODO: deleting an items sometimes causes view to scroll to seemingly unrelated place...
 //TODO: the text of linked propositions and their children does not automatically update when edited elsewhere within the same window...
 
 //TODO: do some basic testing of versioning of deleted top level nodes
