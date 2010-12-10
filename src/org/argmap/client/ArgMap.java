@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-//TODO: when pressing delete within a proposition (not in the first space) it copies the text to the previous prop and refocuses there
 //TODO: impossible to delete a node sandwiched between a link sibling and a sibling with children?
 //TODO: rating an item seems to scroll it out of view!
 //TODO: deleting an items sometimes causes view to scroll to seemingly unrelated place...

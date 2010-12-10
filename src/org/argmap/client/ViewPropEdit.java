@@ -186,8 +186,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				});
 	}
 
-	@Override
-	public void onKeyDown(KeyDownEvent event) {
+	public void onKeyDown_DELETE_ME(KeyDownEvent event) {
 		/*
 		 * tell edit mode that there has been a user action so it doesn't
 		 * throttle live updates (do it first in case the key press results in a
@@ -221,16 +220,16 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				if (charCode == KeyCodes.KEY_BACKSPACE
 						&& textArea.getCursorPos() == 0
 						&& textArea.getSelectionLength() == 0) {
-					removePropositionAndMaybeParentArgument();
+					removePropositionAndMaybeParentArgument_DELETE_ME();
 					event.preventDefault();
 				} else if (charCode == KeyCodes.KEY_DELETE
 						&& textArea.getText().equals("")) {
-					removePropositionAndMaybeParentArgument();
+					removePropositionAndMaybeParentArgument_DELETE_ME();
 					event.preventDefault();
 				} else if (charCode == KeyCodes.KEY_DELETE
 						&& textArea.getCursorPos() == textArea.getText()
 								.length() && textArea.getSelectionLength() == 0) {
-					removeNextProposition();
+					removeNextProposition_DELETE_ME();
 					event.preventDefault();
 				} else {
 					getEditMode().editContentSaveTimer
@@ -242,7 +241,133 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		}
 	}
 
-	public void removeNextProposition() {
+	@Override
+	public void onKeyDown(KeyDownEvent event) {
+		/*
+		 * tell edit mode that there has been a user action so it doesn't
+		 * throttle live updates (do it first in case the key press results in a
+		 * deletion in which case the getEditMode() will return null)
+		 */
+		getEditMode().updateTimer.userAction();
+
+		int charCode = event.getNativeKeyCode();
+		Object source = event.getSource();
+		if (source == textArea) {
+			/*
+			 * if it's a root proposition add an argument when user presses
+			 * enter
+			 */
+			if (charCode == KeyCodes.KEY_ENTER && parentArgView() == null) {
+				onChange(null);
+				addArgument(true);
+				event.preventDefault();
+			}
+			/*
+			 * if it is not a root proposition, add a sibling proposition when
+			 * user presses enter
+			 */
+			else if (charCode == KeyCodes.KEY_ENTER && parentArgView() != null) {
+				onChange(null);
+				addProposition();
+				event.preventDefault();
+			} else if ((charCode == KeyCodes.KEY_BACKSPACE || charCode == KeyCodes.KEY_DELETE)
+					&& handleKeyBackspaceOrDelete(charCode)) {
+				event.preventDefault();
+			} else {
+				getEditMode().editContentSaveTimer.setNodeForTimedSave(this);
+			}
+		}
+	}
+
+	private boolean handleKeyBackspaceOrDelete(int charCode) {
+		if (SelectionLengthDoesNotEqualZero()) {
+			/* do normal key stroke */
+			return false;
+		} else if (KeyIsBackspace() && isFirstCharacter()) {
+			if (thereIsPreviousSibling() && previousNodeIsNotLink()
+					&& thisNodeIsNotLink() && notTopLevel()) {
+				if (thisNodeHasNoChildren()) {
+					/* merge With Previous Sibling */
+					setFocusOnPreviousSibling();
+					combineText();
+					positionCursorAtStartOfWhatWasThisPropsText();
+					deleteThisNode();
+
+				} else if (previousSiblingHasNoChildren()) {
+					/* merge Previous Sibling With This */
+					combineText();
+					positionCursorAtStartOfWhatWasThisPropsText();
+					deletePreviousSibling();
+				} else {
+					/* do nothing */
+					return true;
+				}
+			} else if (isEmpty() && thisNodeHasNoChildren()
+					&& thisNodeIsNotLink()) {
+				if (isTopLevel() || thereIsSubsequentSibling()
+						|| parentArgumentHasTitle()) {
+					deleteThisNode();
+					/*
+					 * can't set on parent argument because in case where there
+					 * is *a previous sibling that was a link that will cause a
+					 * jump
+					 */
+					setFocusOnLastOpenPreviousNode();
+				} else {
+					deleteThisNode();
+					deleteParentArgument();
+					setFocusOnLastOpenPreviousNode();
+				}
+			} else {
+				/* do nothing */
+				return true;
+			}
+		} else if (KeyIsDelete() && isLastCharacter()) {
+			if (thereIsSubsequentSibling() && subsequentSiblingIsNotLink()
+					&& thisNodeIsNotLink() && notTopLevel()) {
+				if (thisNodeHasNoChildren()) {
+					/* merge With Subsequent Sibling */
+					setFocusOnSubsequentSibling();
+					combineText();
+					positionCursorAtEndOfWhatWasThisPropsText();
+					deleteThisNode();
+				} else if (subsequentSiblingHasNoChildren()) {
+					/* merge Subsequent Sibling With This */
+					combineText();
+					positionCursorAtEndOfWhatWasThisPropsText();
+					deleteSubsequentSibling();
+				} else {
+					/* do nothing */
+					return true;
+				}
+			} else if (isEmpty() && thisNodeHasNoChildren()
+					&& thisNodeIsNotLink()) {
+				if (isTopLevel() || thereIsPreviousSibling()
+						|| parentArgumentHasTitle()) {
+					deleteThisNode();
+					setFocusOnNextOpenSubsequentElement();
+				} else {
+					deleteThisNode();
+					deleteParentArgument();
+					setFocusOnNexOpenSubsequentElement();
+				}
+			} else {
+				/* do nothing */
+				return true;
+			}
+		} else {
+			/* do normal keystroke */
+			return false;
+		}
+
+		/*
+		 * TODO: setFocusOnLastOpenPreviousElement() and
+		 * setFocusOnNextOpenSubsequentElement() should be able to competently
+		 * handle the case where the is not such element.
+		 */
+	}
+
+	public void removeNextProposition_DELETE_ME() {
 		ViewArgEdit parentArgView = parentArgView();
 		int thisIndex = parentArgView.getChildIndex(this);
 		ViewPropEdit nextPropView = ((ViewPropEdit) parentArgView
@@ -259,7 +384,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 	}
 
-	public void removePropositionAndMaybeParentArgument() {
+	public void removePropositionAndMaybeParentArgument_DELETE_ME() {
 		if (this.getChildCount() != 0) // cannot delete a proposition with
 			// children...must delete children first
 			return;
