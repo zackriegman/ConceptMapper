@@ -167,4 +167,9 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 		assert false;
 		return null;
 	}
+
+	@Override
+	public void haveFocus() {
+		assert false;
+	}
 }

@@ -74,6 +74,11 @@ public abstract class ViewArg extends ViewNode {
 	}
 
 	@Override
+	public void haveFocus() {
+		textBox.setFocus(true);
+	}
+
+	@Override
 	public void setTextAreaContent(String content) {
 		textBox.setText(content);
 	}

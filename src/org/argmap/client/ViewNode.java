@@ -241,7 +241,59 @@ public abstract class ViewNode extends TreeItem {
 		return (ArgTree) super.getTree();
 	}
 
+	public abstract void haveFocus();
+
 	public boolean isAttachedToTree() {
 		return getArgTree() != null;
+	}
+
+	public ViewNode getPreceedingSibling() {
+		if (getParent() == null) {
+			ArgTree tree = getArgTree();
+			int thisIndex = 0;
+			for (; thisIndex < tree.getItemCount(); thisIndex++) {
+				if (tree.getItem(thisIndex) == this) {
+					break;
+				}
+			}
+			if (thisIndex == 0) {
+				return null;
+			} else {
+				return tree.getViewNode(thisIndex - 1);
+			}
+		} else {
+			ViewNode parent = getParent();
+			int thisIndex = parent.getChildIndex(this);
+			if (thisIndex == 0) {
+				return null;
+			} else {
+				return parent.getChild(thisIndex - 1);
+			}
+		}
+	}
+
+	public ViewNode getFollowingSibling() {
+		if (getParent() == null) {
+			ArgTree tree = getArgTree();
+			int thisIndex = 0;
+			for (; thisIndex < tree.getItemCount(); thisIndex++) {
+				if (tree.getItem(thisIndex) == this) {
+					break;
+				}
+			}
+			if (thisIndex == tree.getItemCount() - 1) {
+				return null;
+			} else {
+				return tree.getViewNode(thisIndex + 1);
+			}
+		} else {
+			ViewNode parent = getParent();
+			int thisIndex = parent.getChildIndex(this);
+			if (thisIndex == parent.getChildCount() - 1) {
+				return null;
+			} else {
+				return parent.getChild(thisIndex + 1);
+			}
+		}
 	}
 }

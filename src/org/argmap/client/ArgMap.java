@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-//TODO: impossible to delete a node sandwiched between a link sibling and a sibling with children?
 //TODO: rating an item seems to scroll it out of view!
 //TODO: deleting an items sometimes causes view to scroll to seemingly unrelated place...
 //TODO: the text of linked propositions and their children does not automatically update when edited elsewhere within the same window...
@@ -44,14 +43,13 @@ import com.google.gwt.user.client.ui.Widget;
 
 //TODO: implement user accounts, email updates of changes, inviting friends
 //TODO: implement scoring algorithm
+//TODO: implement reversions and batch reversions
 //TODO: often times conflict dialog is not displayed and edits are silently overwritten...
 //TODO: cleanup deprecated stuff from SDK upgrade (at the moment there is no documentation about this so I'll have to wait)
 //TODO: compose more/edit help tips
 //TODO: fix side bar border formatting on Chrome
 
 //TODO: research semenatic reasoning (OWL, etc.)
-
-//TODO: deferred binding for textAreaAutoHeight to fix IE problem
 
 //TODO: try running speed tracer
 //TODO: make batch open icon visible, and open tree a few layers deep regardless of whether mouse over node is already loaded
@@ -263,8 +261,8 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 				public void onFailure(Throwable reason) {
 					ArgMap.messageTimed("Code download failed",
 							MessageType.ERROR);
-					Log.log("am.sv.a.of",
-							"Code download failed" + reason.toString());
+					Log.log("am.sv.a.of", "Code download failed"
+							+ reason.toString());
 				}
 			});
 		}
@@ -403,7 +401,8 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 		} catch (Exception handlerException) {
 		}
 		GWT.log("Uncaught Exception", e);
-		if (Log.on) Log.finishOpenLogs();
+		if (Log.on)
+			Log.finishOpenLogs();
 	}
 
 	public ModeEdit getModeEdit() {

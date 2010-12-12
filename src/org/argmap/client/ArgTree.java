@@ -160,6 +160,64 @@ public class ArgTree extends Tree {
 		}
 	}
 
+	public ViewNode getLastVisibleRelative(ViewNode viewNode) {
+		ViewNode relative = viewNode.getParent();
+		ViewNode previous = viewNode;
+		while (relative != null && !relative.isOpen()) {
+			previous = relative;
+			relative = relative.getParent();
+		}
+
+		/* relative will equal null where previous was a root node */
+		if (relative == null) {
+			relative = previous.getPreceedingSibling();
+			if (relative == null) {
+				return null;
+			}
+		}
+
+		// TODO here and below; this will return viewNode where viewNode is
+		// first child of an open parent, won't it?
+
+		while (relative.isOpen() && relative.getChildCount() != 0) {
+			ViewNode nextChild = relative
+					.getChild(relative.getChildCount() - 1);
+			if (nextChild == viewNode) {
+				return relative;
+			} else {
+				relative = nextChild;
+			}
+		}
+		return relative;
+	}
+
+	public ViewNode getNextVisibleRelative(ViewNode viewNode) {
+		ViewNode relative = viewNode.getParent();
+		ViewNode previous = viewNode;
+		while (relative != null && !relative.isOpen()) {
+			previous = relative;
+			relative = relative.getParent();
+		}
+
+		/* relative will equal null where previous was a root node */
+		if (relative == null) {
+			relative = previous.getFollowingSibling();
+			if (relative == null) {
+				return null;
+			}
+		}
+
+		while (relative.isOpen() && relative.getChildCount() != 0) {
+			ViewNode nextChild = relative.getChild(0);
+			if (nextChild == viewNode) {
+				return relative;
+			} else {
+				relative = nextChild;
+			}
+		}
+		return relative;
+	}
+
 	/*
 	 * ViewNode, ViewArg and ViewProp make calls to these methods when a node is
 	 * loaded/unloaded so these empty methods need to be here instead of in

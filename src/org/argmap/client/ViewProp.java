@@ -67,15 +67,19 @@ public abstract class ViewProp extends ViewNode {
 
 		proposition = (Proposition) node;
 
-		if (proposition.linkCount <= 1) {
-			topPanel.removeStyleName("linkedPropositionTextArea");
-			textArea.removeStyleName("linkedPropositionTextArea");
-			setNodeLink(false);
-		} else if (proposition.linkCount > 1) {
+		if (isLink()) {
 			topPanel.addStyleName("linkedPropositionTextArea");
 			textArea.addStyleName("linkedPropositionTextArea");
 			setNodeLink(true);
+		} else {
+			topPanel.removeStyleName("linkedPropositionTextArea");
+			textArea.removeStyleName("linkedPropositionTextArea");
+			setNodeLink(false);
 		}
+	}
+
+	public boolean isLink() {
+		return proposition.linkCount > 1;
 	}
 
 	public void setNegated(boolean negated) {
@@ -163,6 +167,11 @@ public abstract class ViewProp extends ViewNode {
 
 	public boolean isTopLevel() {
 		return getParentItem() == null;
+	}
+
+	@Override
+	public void haveFocus() {
+		textArea.setFocus(true);
 	}
 
 	public void setContent(String content) {
