@@ -7,6 +7,8 @@ import org.argmap.client.ModeEdit.SavableNode;
 import org.argmap.client.ServerComm.LocalCallback;
 import org.argmap.client.StarRating.RatingHandler;
 
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -27,7 +29,7 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.TextArea;
 
 public class ViewPropEdit extends ViewProp implements ClickHandler,
-		KeyDownHandler, KeyUpHandler, FocusHandler, ChangeHandler,
+		KeyDownHandler, KeyUpHandler, FocusHandler, BlurHandler, ChangeHandler,
 		MouseOverHandler, MouseOutHandler, SavableNode, RatingHandler {
 
 	private static ViewPropEdit lastPropositionWithFocus = null;
@@ -46,7 +48,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			"probably true (~75% chance of being true)",
 			"definitely true (~100% chance of being true)" };
 
-	boolean deleted = false;
+	// boolean deleted = false;
 
 	public static ViewPropEdit getLastPropositionWithFocus() {
 		return lastPropositionWithFocus;
@@ -97,6 +99,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		textArea.addKeyDownHandler(this);
 		textArea.addKeyUpHandler(this);
 		textArea.addFocusHandler(this);
+		textArea.addBlurHandler(this);
 		textArea.addChangeHandler(this);
 		focusPanel.addFocusHandler(this);
 		focusPanel.addMouseOverHandler(this);
@@ -344,7 +347,13 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 						}
 					});
 		}
+	}
 
+	@Override
+	public void onBlur(BlurEvent event) {
+		if (event.getSource() == textArea) {
+			getEditMode().sideSearchTimer.cancelSearch();
+		}
 	}
 
 	public void onFocus(FocusEvent event) {
@@ -710,7 +719,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			// parent arguments if this proposition is top level.
 			getTree().removeItem(this);
 			ServerComm.deleteProp(this.proposition);
-			deleted = true;
+			// deleted = true;
 			return;
 		}
 
@@ -775,7 +784,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		}
 		ServerComm.deleteProp(this.proposition);
 
-		deleted = true;
+		// deleted = true;
 
 		/*
 		 * this must come after the ServerComm.removeProposition() otherwise it

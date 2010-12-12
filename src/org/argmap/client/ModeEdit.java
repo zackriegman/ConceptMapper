@@ -43,7 +43,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLTable;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
@@ -51,6 +50,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		OpenHandler<TreeItem>, CloseHandler<TreeItem>,
@@ -279,7 +279,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 					// propView.logNodeRecursive(0, "em.em.cb", true);
 				}
 				tree.resetState();
-				if (Log.on) tree.logTree(log);
+				if (Log.on)
+					tree.logTree(log);
 
 				updateTimer.start();
 				log.finish();
@@ -388,7 +389,9 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 								List<ViewProp> viewProps = new ArrayList<ViewProp>(
 										loadedProps.get(node.id));
 								for (ViewProp viewProp : viewProps) {
-									log.logln("prossesing ViewProp:" + viewProp);
+									log
+											.logln("prossesing ViewProp:"
+													+ viewProp);
 									updateNode(viewProp, node, results);
 								}
 							} else if (node instanceof Argument) {
@@ -743,24 +746,30 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 						}
 					});
 		} else {
-			ArgMap.messageTimed(
-					"Cannot link to existing proposition when proposition currently being edited has children",
-					MessageType.ERROR);
+			ArgMap
+					.messageTimed(
+							"Cannot link to existing proposition when proposition currently being edited has children",
+							MessageType.ERROR);
 		}
 	}
 
-	public void sideSearch(ViewPropEdit viewProp) {
+	private void cancelSideSearch() {
 		if (sideSearch != null) {
 			sideSearch.cancelSearch();
 			sideSearch = null;
 		}
+		hideSearchBox();
+	}
+
+	public void sideSearch(ViewPropEdit viewProp) {
+		cancelSideSearch();
 
 		sideSearchResults.removeAllRows();
 		sideSearchContinueButton.setVisible(false);
 
 		String searchString = viewProp.getTextAreaContent().trim();
 		if (!searchString.equals("") && viewProp.getChildCount() == 0
-				&& !viewProp.deleted) {
+		/* && !viewProp.deleted */) {
 			List<Long> filterIDs = new ArrayList<Long>();
 			filterIDs.addAll(viewProp.getAncestorIDs());
 			if (viewProp.getParent() != null) {
@@ -1040,7 +1049,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			}
 
 			schedule(currentFrequency);
-			if (on) getUpdatesAndApply();
+			if (on)
+				getUpdatesAndApply();
 		}
 
 		public void start() {
@@ -1129,9 +1139,17 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			}
 		}
 
+		public void cancelSearch() {
+			viewProp = null;
+			cancelSideSearch();
+			cancel();
+		}
+
 		@Override
 		public void run() {
-			sideSearch(viewProp);
+			if (viewProp != null) {
+				sideSearch(viewProp);
+			}
 		}
 
 		@Override
@@ -1302,8 +1320,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			if (!source.isLoaded()) {
 				loadFromServer(source, 2, 1);
 			} else {
-				List<ViewNode> list = new ArrayList<ViewNode>(
-						source.getChildCount());
+				List<ViewNode> list = new ArrayList<ViewNode>(source
+						.getChildCount());
 				for (int i = 0; i < source.getChildCount(); i++) {
 					if (!source.getChild(i).isLoaded()) {
 						list.add(source.getChild(i));
