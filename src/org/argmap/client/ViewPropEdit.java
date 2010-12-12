@@ -26,7 +26,6 @@ import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.TextArea;
 
 public class ViewPropEdit extends ViewProp implements ClickHandler,
 		KeyDownHandler, KeyUpHandler, FocusHandler, BlurHandler, ChangeHandler,
@@ -183,61 +182,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 						newPropView.setLoaded(true);
 					}
 				});
-	}
-
-	public void onKeyDown_DELETE_ME(KeyDownEvent event) {
-		/*
-		 * tell edit mode that there has been a user action so it doesn't
-		 * throttle live updates (do it first in case the key press results in a
-		 * deletion in which case the getEditMode() will return null)
-		 */
-		getEditMode().updateTimer.userAction();
-
-		int charCode = event.getNativeKeyCode();
-		Object source = event.getSource();
-		if (source == textArea) {
-			/*
-			 * if it's a root proposition add an argument when user presses
-			 * enter
-			 */
-			if (charCode == KeyCodes.KEY_ENTER && parentArgView() == null) {
-				onChange(null);
-				addArgument(true);
-				event.preventDefault();
-			}
-			/*
-			 * if it is not a root proposition, add a sibling proposition when
-			 * user presses enter
-			 */
-			else if (charCode == KeyCodes.KEY_ENTER && parentArgView() != null) {
-				onChange(null);
-				addProposition();
-				event.preventDefault();
-			}
-			/* only do the following key actions if this is not a link */
-			else if (proposition.linkCount <= 1) {
-				if (charCode == KeyCodes.KEY_BACKSPACE
-						&& textArea.getCursorPos() == 0
-						&& textArea.getSelectionLength() == 0) {
-					removePropositionAndMaybeParentArgument_DELETE_ME();
-					event.preventDefault();
-				} else if (charCode == KeyCodes.KEY_DELETE
-						&& textArea.getText().equals("")) {
-					removePropositionAndMaybeParentArgument_DELETE_ME();
-					event.preventDefault();
-				} else if (charCode == KeyCodes.KEY_DELETE
-						&& textArea.getCursorPos() == textArea.getText()
-								.length() && textArea.getSelectionLength() == 0) {
-					removeNextProposition_DELETE_ME();
-					event.preventDefault();
-				} else {
-					getEditMode().editContentSaveTimer
-							.setNodeForTimedSave(this);
-				}
-			} else {
-				getEditMode().editContentSaveTimer.setNodeForTimedSave(this);
-			}
-		}
 	}
 
 	@Override
@@ -575,9 +519,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		}
 	}
 
-	/*
-	 * TODO: what is deleted = true used for?
-	 */
 	private boolean handleKeyBackspaceOrDelete(int charCode) {
 		/* if the user has selected any text */
 		if (textArea.getSelectionLength() != 0) {
@@ -650,7 +591,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				if (isTopLevel() || getParent().getChildCount() > 1
 						|| parentArgumentHasTitle()) {
 					refocusFollowing(this);
-					// TODO set cursor position here, below and above
 					remove();
 					ServerComm.deleteProp(this.proposition);
 				} else {
@@ -690,110 +630,5 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 
 		deleteProp.remove();
 		ServerComm.deleteProp(deleteProp.proposition);
-	}
-
-	public void removeNextProposition_DELETE_ME() {
-		ViewArgEdit parentArgView = parentArgView();
-		int thisIndex = parentArgView.getChildIndex(this);
-		ViewPropEdit nextPropView = ((ViewPropEdit) parentArgView
-				.getChild(thisIndex + 1));
-		if (nextPropView != null && nextPropView.getChildCount() == 0
-				&& nextPropView.proposition.linkCount <= 1) {
-			int cursorPosition = textArea.getCursorPos();
-			textArea.setText(textArea.getText()
-					+ nextPropView.textArea.getText());
-			textArea.setCursorPos(cursorPosition);
-			ServerComm.deleteProp(nextPropView.proposition);
-			nextPropView.remove();
-		}
-
-	}
-
-	public void removePropositionAndMaybeParentArgument_DELETE_ME() {
-		if (this.getChildCount() != 0) // cannot delete a proposition with
-			// children...must delete children first
-			return;
-
-		if (isTopLevel()) { // don't worry about setting the focus or dealing
-			// with subsequent or preceeding propositions or
-			// parent arguments if this proposition is top level.
-			getTree().removeItem(this);
-			ServerComm.deleteProp(this.proposition);
-			// deleted = true;
-			return;
-		}
-
-		boolean parentArgViewRemoved = false;
-		ViewArgEdit parentArgView = parentArgView();
-		int thisIndex = parentArgView.getChildIndex(this);
-
-		/* if this is the parent argument's first proposition */
-		if (thisIndex == 0) {
-			/*
-			 * do nothing if textarea is not empty, user must first delete the
-			 * text to delete a proposition when not combining propositions.
-			 */
-			if (!textArea.getText().equals(""))
-				return;
-
-			/* if this is the only proposition of the argument */
-			if (parentArgView.getChildCount() == 1) {
-				/* set the focus on the parent argument's proposition */
-				((ViewPropEdit) parentArgView.getParentItem()).textArea
-						.setFocus(true);
-
-				/*
-				 * remove the argument (which includes the proposition) from the
-				 * tree
-				 */
-				parentArgView.remove();
-				parentArgViewRemoved = true;
-			}
-			/* if there are other children */
-			else {
-				/* set focus on the next proposition */
-				((ViewPropEdit) parentArgView.getChild(thisIndex + 1)).textArea
-						.setFocus(true);
-				/* just remove this proposition */
-				parentArgView.removeItem(this);
-			}
-			/*
-			 * if this is not the parent argument's first proposition we want to
-			 * combine propositions
-			 */
-		} else if (thisIndex != 0) {
-			ViewPropEdit prePropView = ((ViewPropEdit) parentArgView
-					.getChild(thisIndex - 1));
-
-			/*
-			 * cannot combine contents with a preceeding proposition that is a
-			 * link
-			 */
-			if (prePropView.proposition.linkCount > 1) {
-				return;
-			}
-			TextArea preTextArea = prePropView.textArea;
-			int newCursorPosition = preTextArea.getText().length();
-			String combinedText = preTextArea.getText() + textArea.getText();
-			preTextArea.setText(combinedText);
-			preTextArea.setFocus(true);
-			preTextArea.setCursorPos(newCursorPosition);
-			prePropView.proposition.setContent(combinedText);
-			remove();
-			prePropView.saveContentToServerIfChanged();
-		}
-		ServerComm.deleteProp(this.proposition);
-
-		// deleted = true;
-
-		/*
-		 * this must come after the ServerComm.removeProposition() otherwise it
-		 * will fail on the server because the argumentView will still have
-		 * children... (also the deleteProposition() probably wouldn't work out
-		 * to well...)
-		 */
-		if (parentArgViewRemoved == true) {
-			ServerComm.deleteArg(parentArgView.argument);
-		}
 	}
 }
