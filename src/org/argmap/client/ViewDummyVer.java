@@ -172,4 +172,9 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	public void haveFocus() {
 		assert false;
 	}
+
+	@Override
+	public void setTextAreaCursorPosition(int index) {
+		assert false;
+	}
 }

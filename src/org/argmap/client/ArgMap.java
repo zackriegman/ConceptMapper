@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+//TODO: on backspace delete of node skips preceeding link sibling and focuses on parent arg
 //TODO: rating an item seems to scroll it out of view!
 //TODO: deleting an items sometimes causes view to scroll to seemingly unrelated place...
 //TODO: the text of linked propositions and their children does not automatically update when edited elsewhere within the same window...

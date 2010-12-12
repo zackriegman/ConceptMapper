@@ -160,63 +160,128 @@ public class ArgTree extends Tree {
 		}
 	}
 
-	public ViewNode getLastVisibleRelative(ViewNode viewNode) {
-		ViewNode relative = viewNode.getParent();
-		ViewNode previous = viewNode;
-		while (relative != null && !relative.isOpen()) {
-			previous = relative;
-			relative = relative.getParent();
-		}
-
-		/* relative will equal null where previous was a root node */
-		if (relative == null) {
-			relative = previous.getPreceedingSibling();
-			if (relative == null) {
-				return null;
-			}
-		}
-
-		// TODO here and below; this will return viewNode where viewNode is
-		// first child of an open parent, won't it?
-
-		while (relative.isOpen() && relative.getChildCount() != 0) {
-			ViewNode nextChild = relative
-					.getChild(relative.getChildCount() - 1);
-			if (nextChild == viewNode) {
-				return relative;
-			} else {
-				relative = nextChild;
-			}
-		}
-		return relative;
-	}
-
-	public ViewNode getNextVisibleRelative(ViewNode viewNode) {
-		ViewNode relative = viewNode.getParent();
-		ViewNode previous = viewNode;
-		while (relative != null && !relative.isOpen()) {
-			previous = relative;
-			relative = relative.getParent();
-		}
-
-		/* relative will equal null where previous was a root node */
-		if (relative == null) {
-			relative = previous.getFollowingSibling();
-			if (relative == null) {
-				return null;
-			}
-		}
-
-		while (relative.isOpen() && relative.getChildCount() != 0) {
-			ViewNode nextChild = relative.getChild(0);
-			if (nextChild == viewNode) {
-				return relative;
-			} else {
-				relative = nextChild;
-			}
-		}
-		return relative;
-	}
+	// public ViewNode getLastVisibleNodeInAncestorPath(ViewNode viewNode) {
+	// ViewNode parent = viewNode.getParent();
+	// if (parent == null) {
+	// return viewNode;
+	// } else {
+	// ViewNode lastVisibleAncestor = getLastVisibleNodeInAncestorPath(parent);
+	// if (lastVisibleAncestor == viewNode.getParent()
+	// && lastVisibleAncestor.isOpen()) {
+	// return viewNode;
+	// } else {
+	// return lastVisibleAncestor;
+	// }
+	// }
+	// }
+	//
+	// private class Stack<T> extends ArrayList<T> {
+	// public void push(T object) {
+	// add(object);
+	// }
+	//
+	// public T pop() {
+	// return get(size() - 1);
+	// }
+	// }
+	//
+	// public ViewNode getVisiblyPreceedingNode(ViewNode viewNode) {
+	// ViewNode parent = viewNode.getParent();
+	// ViewNode candidate = parent;
+	// ViewNode preCandidate = viewNode;
+	// while (parent != null) {
+	// if (!parent.isOpen()) {
+	// preCandidate = candidate;
+	// candidate = parent;
+	// }
+	// parent = parent.getParent();
+	// }
+	// }
+	//
+	// /*
+	// * hmmm... these methods won't actually work to make sure that the node is
+	// * visible because the parent node might be open even while an ancestor is
+	// * not, thereby make it invisible. So maybe I should simplify these
+	// methods
+	// * and make them less general, and use the assumption that the parent is
+	// * open and visible, because it must be if the user is deleting a
+	// child....
+	// */
+	// /*
+	// * get the node that visually precedes this one given according to what
+	// the
+	// * user sees on his screen (i.e. the node directly above this one on the
+	// * screen).
+	// */
+	// public ViewNode getVisiblyPreceedingNode_DELETE_ME(ViewNode viewNode) {
+	// ViewNode relative = viewNode.getParent();
+	// ViewNode previous = viewNode;
+	// while (relative != null && !relative.isOpen()) {
+	// previous = relative;
+	// relative = relative.getParent();
+	// }
+	//
+	// /* relative will equal null where previous was a root node */
+	// if (relative == null) {
+	// relative = previous.getPreceedingSibling();
+	// if (relative == null) {
+	// return null;
+	// }
+	// }
+	// /*
+	// * where relative is parent we want to get preceeding sibling of
+	// * viewNode instead of last child of relative
+	// */
+	// else if (relative == viewNode.getParent()) {
+	// ViewNode preceedingSibling = viewNode.getPreceedingSibling();
+	// if (preceedingSibling == null) {
+	// return relative;
+	// } else {
+	// relative = preceedingSibling;
+	// }
+	// }
+	//
+	// while (relative.isOpen() && relative.getChildCount() != 0) {
+	// relative = relative.getChild(relative.getChildCount() - 1);
+	// }
+	// return relative;
+	// }
+	//
+	// /*
+	// * get the node that visually follows the one given according to what the
+	// * user sees on his screen, but that is not a child of the given node
+	// (i.e.
+	// * the node that would be directly below this one on the screen if this
+	// node
+	// * was closed.).
+	// */
+	// public ViewNode getVisiblyFollowingNodeNotInSubTree_DELETE_ME(
+	// ViewNode viewNode) {
+	// if (viewNode.getParent().isOpen()
+	// && viewNode.getFollowingSibling() != null) {
+	// return viewNode.getFollowingSibling();
+	// }
+	//
+	// ViewNode relative = viewNode.getParent();
+	// ViewNode previous = viewNode;
+	// while (relative != null && !relative.isOpen()) {
+	// previous = relative;
+	// relative = relative.getParent();
+	// }
+	//
+	// /* relative will equal null where previous was a root node */
+	// if (relative == null) {
+	// relative = previous.getFollowingSibling();
+	// if (relative == null) {
+	// return null;
+	// }
+	// }
+	//
+	// while (relative.isOpen() && relative.getChildCount() != 0) {
+	// relative = relative.getChild(0);
+	// }
+	// return relative;
+	// }
 
 	/*
 	 * ViewNode, ViewArg and ViewProp make calls to these methods when a node is

@@ -83,6 +83,11 @@ public abstract class ViewArg extends ViewNode {
 		textBox.setText(content);
 	}
 
+	@Override
+	public void setTextAreaCursorPosition(int index) {
+		textBox.setCursorPos(index);
+	}
+
 	/*
 	 * TODO: move this method from ViewArg and the equivalent from ViewProp into
 	 * ViewArgVer and ViewPropVer.

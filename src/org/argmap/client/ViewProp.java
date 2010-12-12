@@ -188,6 +188,12 @@ public abstract class ViewProp extends ViewNode {
 		textArea.setText(content);
 	}
 
+	@Override
+	public void setTextAreaCursorPosition(int index) {
+		textArea.setCursorPos(index);
+
+	}
+
 	public Proposition getProposition() {
 		return proposition;
 	}

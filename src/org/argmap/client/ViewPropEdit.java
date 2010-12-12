@@ -503,6 +503,72 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		}
 	}
 
+	/*
+	 * gets the node that preceeds the given node on the users screen; will only
+	 * work reliably if the given node is itself visible (i.e. a descendant of
+	 * only open nodes).
+	 */
+	private ViewNode getVisiblyPreceedingNode(ViewNode node) {
+		ViewNode candidate = node.getPreceedingSibling();
+		if (candidate != null) {
+			while (candidate.isOpen() && candidate.getChildCount() > 0) {
+				candidate = candidate.getChild(candidate.getChildCount() - 1);
+			}
+			return candidate;
+		} else {
+			return node.getParent();
+		}
+	}
+
+	/*
+	 * gets the node (not including children of the given node) that follows the
+	 * given node on the users screen; will only work reliably if the given node
+	 * is itself visible (i.e. a descendant of only open nodes).
+	 */
+	private ViewNode getVisiblyFollowingNode(ViewNode node) {
+		ViewNode followingSibling = node.getFollowingSibling();
+		if (followingSibling != null) {
+			return followingSibling;
+		} else if (node.getParent() != null) {
+			return getVisiblyFollowingNode(node.getParent());
+		} else {
+			return null;
+		}
+	}
+
+	private void refocusPreceeding(ViewNode node) {
+		ViewNode preceeding = getVisiblyPreceedingNode(node);
+		if (preceeding != null) {
+			preceeding.haveFocus();
+			preceeding.setTextAreaCursorPosition(preceeding
+					.getTextAreaContent().length());
+		} else {
+			ViewNode following = getVisiblyFollowingNode(node);
+			if (following != null) {
+				following.haveFocus();
+				following.setTextAreaCursorPosition(0);
+			}
+		}
+	}
+
+	private void refocusFollowing(ViewNode node) {
+		ViewNode following = getVisiblyFollowingNode(node);
+		if (following != null) {
+			following.haveFocus();
+			following.setTextAreaCursorPosition(0);
+		} else {
+			ViewNode preceeding = getVisiblyPreceedingNode(node);
+			if (preceeding != null) {
+				preceeding.haveFocus();
+				preceeding.setTextAreaCursorPosition(preceeding
+						.getTextAreaContent().length());
+			}
+		}
+	}
+
+	/*
+	 * TODO: what is deleted = true used for?
+	 */
 	private boolean handleKeyBackspaceOrDelete(int charCode) {
 		/* if the user has selected any text */
 		if (textArea.getSelectionLength() != 0) {
@@ -531,18 +597,17 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 					&& !isLink()) {
 				if (isTopLevel() || getParent().getChildCount() > 1
 						|| parentArgumentHasTitle()) {
-					// TODO fix getLastVisibleRelative() method; see note there.
 					/*
 					 * can't set on parent argument (as opposed to parent node)
 					 * because in case where there is a previous sibling that
 					 * was a link that will cause a jump
 					 */
-					getArgTree().getLastVisibleRelative(this).haveFocus();
+					refocusPreceeding(this);
 					remove();
 					ServerComm.deleteProp(this.proposition);
 				} else {
 					ViewArg parent = parentArgView();
-					getArgTree().getLastVisibleRelative(parent).haveFocus();
+					refocusPreceeding(parent);
 					remove();
 					ServerComm.deleteProp(this.proposition);
 					parent.remove();
@@ -575,13 +640,13 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 					&& !isLink()) {
 				if (isTopLevel() || getParent().getChildCount() > 1
 						|| parentArgumentHasTitle()) {
-					getArgTree().getNextVisibleRelative(this).haveFocus();
+					refocusFollowing(this);
 					// TODO set cursor position here, below and above
 					remove();
 					ServerComm.deleteProp(this.proposition);
 				} else {
 					ViewArg parent = parentArgView();
-					getArgTree().getNextVisibleRelative(parent).haveFocus();
+					refocusFollowing(parent);
 					remove();
 					ServerComm.deleteProp(this.proposition);
 					parent.remove();
@@ -595,15 +660,6 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			/* do normal keystroke */
 			return false;
 		}
-
-		/*
-		 * TODO: setFocusOnLastOpenPreviousElement() and
-		 * setFocusOnNextOpenSubsequentElement() should be able to competently
-		 * handle the case where the is no such element.
-		 */
-		/*
-		 * TODO: what is deleted = true used for?
-		 */
 	}
 
 	private void mergePropsAndDeleteOne(ViewPropEdit firstProp,
@@ -731,5 +787,4 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			ServerComm.deleteArg(parentArgView.argument);
 		}
 	}
-
 }

@@ -103,6 +103,8 @@ public abstract class ViewNode extends TreeItem {
 
 	public abstract void setTextAreaContent(String content);
 
+	public abstract void setTextAreaCursorPosition(int index);
+
 	public void setRating(Long id, Map<Long, Integer> ratings) {
 	}
 
