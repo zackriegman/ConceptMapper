@@ -536,10 +536,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 					&& !isLink() && !isTopLevel()) {
 				if (getChildCount() == 0) {
 					/* merge With Previous Sibling */
-					mergePropsAndDeleteOne(preceedingSibling, this, true);
+					mergePropsAndDeleteOne(preceedingSibling, this,
+							preceedingSibling, this);
 				} else if (preceedingSibling.getChildCount() == 0) {
 					/* merge Previous Sibling With This */
-					mergePropsAndDeleteOne(preceedingSibling, this, false);
+					mergePropsAndDeleteOne(preceedingSibling, this, this,
+							preceedingSibling);
 				} else {
 					/* do nothing; ignore keystroke */
 				}
@@ -579,10 +581,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 					&& !isLink() && !isTopLevel()) {
 				if (getChildCount() == 0) {
 					/* merge With Subsequent Sibling */
-					mergePropsAndDeleteOne(this, followingSibling, false);
+					mergePropsAndDeleteOne(this, followingSibling,
+							followingSibling, this);
 				} else if (followingSibling.getChildCount() == 0) {
 					/* merge Subsequent Sibling With This */
-					mergePropsAndDeleteOne(this, followingSibling, true);
+					mergePropsAndDeleteOne(this, followingSibling, this,
+							followingSibling);
 				} else {
 					/* do nothing; ignore keystroke */
 				}
@@ -612,16 +616,8 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 	}
 
 	private void mergePropsAndDeleteOne(ViewPropEdit firstProp,
-			ViewPropEdit secondProp, boolean keepFirst) {
-		ViewPropEdit keepProp;
-		ViewPropEdit deleteProp;
-		if (keepFirst) {
-			keepProp = firstProp;
-			deleteProp = secondProp;
-		} else {
-			keepProp = secondProp;
-			deleteProp = firstProp;
-		}
+			ViewPropEdit secondProp, ViewPropEdit keepProp,
+			ViewPropEdit deleteProp) {
 		String firstText = firstProp.textArea.getText();
 		keepProp.textArea.setText(firstText + secondProp.textArea.getText());
 		keepProp.textArea.setCursorPos(firstText.length());
