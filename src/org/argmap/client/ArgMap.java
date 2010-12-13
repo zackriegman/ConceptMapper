@@ -22,10 +22,6 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-//TODO: rating an item seems to scroll it out of view!
-//TODO: deleting an items sometimes causes view to scroll to seemingly unrelated place...
-//TODO: the text of linked propositions and their children does not automatically update when edited elsewhere within the same window...
-
 //TODO: do some basic testing of versioning of deleted top level nodes
 //TODO: versioning root node with no modifications/adds throws exception because of empty change list
 //TODO: test negated links in versions mode (probably won't work!!!)
@@ -41,12 +37,17 @@ import com.google.gwt.user.client.ui.Widget;
 
 //TODO: add 'real' example arguments for demonstration (for instance my argument about legalizing unauthorized access)
 
-//TODO: implement user accounts, email updates of changes, inviting friends
+//TODO: implement email updates of changes
+//TODO: implement email invitations to participate in an particular argument
 //TODO: implement scoring algorithm
 //TODO: implement reversions and batch reversions
-//TODO: often times conflict dialog is not displayed and edits are silently overwritten...
-//TODO: cleanup deprecated stuff from SDK upgrade (at the moment there is no documentation about this so I'll have to wait)
 //TODO: compose more/edit help tips
+
+//TODO: often times conflict dialog is not displayed and edits are silently overwritten...
+//TODO: rating an item seems to scroll it out of view!
+//TODO: deleting an items sometimes causes view to scroll to seemingly unrelated place...
+//TODO: the text of linked propositions and their children does not automatically update when edited elsewhere within the same window...
+//TODO: cleanup deprecated stuff from SDK upgrade (at the moment there is no documentation about this so I'll have to wait)
 //TODO: fix side bar border formatting on Chrome
 
 //TODO: research semenatic reasoning (OWL, etc.)
