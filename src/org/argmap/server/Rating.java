@@ -75,8 +75,6 @@ public class Rating implements Serializable {
 	}
 
 	public static void prepWithRatings(PartialTrees trees) {
-		// TODO think about how to make sure there is a valid user in the other
-		// methods too if necessary...
 		User user = UserServiceFactory.getUserService().getCurrentUser();
 		if (user == null) {
 			return;
