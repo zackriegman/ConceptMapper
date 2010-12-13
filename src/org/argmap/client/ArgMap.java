@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-//TODO: on backspace delete of node skips preceeding link sibling and focuses on parent arg
 //TODO: rating an item seems to scroll it out of view!
 //TODO: deleting an items sometimes causes view to scroll to seemingly unrelated place...
 //TODO: the text of linked propositions and their children does not automatically update when edited elsewhere within the same window...
@@ -262,8 +261,8 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 				public void onFailure(Throwable reason) {
 					ArgMap.messageTimed("Code download failed",
 							MessageType.ERROR);
-					Log.log("am.sv.a.of", "Code download failed"
-							+ reason.toString());
+					Log.log("am.sv.a.of",
+							"Code download failed" + reason.toString());
 				}
 			});
 		}
@@ -402,8 +401,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 		} catch (Exception handlerException) {
 		}
 		GWT.log("Uncaught Exception", e);
-		if (Log.on)
-			Log.finishOpenLogs();
+		if (Log.on) Log.finishOpenLogs();
 	}
 
 	public ModeEdit getModeEdit() {

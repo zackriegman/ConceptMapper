@@ -533,7 +533,8 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				&& textArea.getCursorPos() == 0) {
 			ViewPropEdit preceedingSibling = getPreceedingSibling();
 			if (preceedingSibling != null && !preceedingSibling.isLink()
-					&& !isLink() && !isTopLevel()) {
+					&& !isLink() && !isTopLevel()
+					&& !textArea.getText().equals("")) {
 				if (getChildCount() == 0) {
 					/* merge With Previous Sibling */
 					mergePropsAndDeleteOne(preceedingSibling, this,
