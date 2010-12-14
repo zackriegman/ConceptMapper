@@ -138,6 +138,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 			@Override
 			public void onSuccess() {
+				initTree();
+
 				/***********************
 				 * setup search pop up *
 				 ***********************/
