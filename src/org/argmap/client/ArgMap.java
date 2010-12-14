@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -39,6 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 //TODO: implement email updates of changes
 //TODO: implement email invitations to participate in an particular argument
+//TODO: implement facebook integration?  see [http://code.google.com/p/batchfb/] and the facebook API
 //TODO: implement scoring algorithm
 //TODO: implement reversions and batch reversions
 //TODO: compose more/edit help tips
@@ -262,8 +263,8 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 				public void onFailure(Throwable reason) {
 					ArgMap.messageTimed("Code download failed",
 							MessageType.ERROR);
-					Log.log("am.sv.a.of",
-							"Code download failed" + reason.toString());
+					Log.log("am.sv.a.of", "Code download failed"
+							+ reason.toString());
 				}
 			});
 		}
@@ -402,7 +403,8 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 		} catch (Exception handlerException) {
 		}
 		GWT.log("Uncaught Exception", e);
-		if (Log.on) Log.finishOpenLogs();
+		if (Log.on)
+			Log.finishOpenLogs();
 	}
 
 	public ModeEdit getModeEdit() {
