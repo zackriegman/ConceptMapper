@@ -1,6 +1,6 @@
 package org.argmap.client;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -9,7 +9,7 @@ import com.google.gwt.core.client.GWT;
 
 public class Log {
 	public static final boolean on = true;
-	private static final List<Log> openLogs = new LinkedList<Log>();
+	private static final List<Log> openLogs = new ArrayList<Log>();
 
 	private boolean immediatePrint;
 	private int indent;

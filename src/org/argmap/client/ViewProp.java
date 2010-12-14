@@ -82,6 +82,14 @@ public abstract class ViewProp extends ViewNode {
 		return proposition.linkCount > 1;
 	}
 
+	public boolean getNegated() {
+		if (negatedLabel == null) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+
 	public void setNegated(boolean negated) {
 		if (negated == true) {
 			if (negatedLabel == null) {
@@ -162,6 +170,7 @@ public abstract class ViewProp extends ViewNode {
 		cloneView.textArea.setText(textArea.getText());
 		cloneView.setOpen(getModifiedState());
 		cloneView.setLoaded(getModifiedState());
+		cloneView.setNegated(getNegated());
 		return cloneView;
 	}
 

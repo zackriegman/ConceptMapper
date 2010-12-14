@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -116,7 +115,7 @@ public class Search implements Serializable {
 	}
 
 	public PartialTrees setUpResults() {
-		List<Long> results = new LinkedList<Long>();
+		ArrayList<Long> results = new ArrayList<Long>();
 		PartialTrees propsAndArgs = new PartialTrees();
 		propsAndArgs.rootIDs = results;
 		propsAndArgs.nodes = new HashMap<Long, Node>();

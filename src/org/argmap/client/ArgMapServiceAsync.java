@@ -1,5 +1,7 @@
 package org.argmap.client;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,9 +29,6 @@ public interface ArgMapServiceAsync {
 
 	void updateArg(Long argID, String content, AsyncCallback<Void> callback);
 
-	void getChanges(List<Long> propIDs, List<Long> argIDs,
-			AsyncCallback<NodeChangesMaps> callback);
-
 	void deleteArg(Long argID, AsyncCallback<Void> callback);
 
 	void logClientException(String exceptionStr, AsyncCallback<Void> callback);
@@ -50,10 +49,6 @@ public interface ArgMapServiceAsync {
 	void continueSearchProps(String searchName,
 			AsyncCallback<PartialTrees> callback);
 
-	void getUpToDateNodes(Map<Long, DateAndChildIDs> propInfo,
-			Map<Long, DateAndChildIDs> argInfo,
-			AsyncCallback<PartialTrees> callback);
-
 	void getRootProps(int depthLimit, AsyncCallback<PartialTrees> callback);
 
 	void getNodesChildren(List<Long> nodeIDs, int depth,
@@ -72,7 +67,14 @@ public interface ArgMapServiceAsync {
 	void getChangesForDeletedRootProps(
 			AsyncCallback<NodeChangesMapsAndRootChanges> callback);
 
+	void getUpToDateNodes(HashMap<Long, DateAndChildIDs> propInfo,
+			HashMap<Long, DateAndChildIDs> argInfo,
+			AsyncCallback<PartialTrees> callback);
+
+	void getChanges(ArrayList<Long> propIDs, ArrayList<Long> argIDs,
+			AsyncCallback<NodeChangesMaps> callback);
+
 	void searchProps(String searchString, String searchName, int resultLimit,
-			List<Long> filerNodeIDs, Double percentTermsMatching,
+			ArrayList<Long> filerNodeIDs, Double percentTermsMatching,
 			AsyncCallback<PartialTrees> callback);
 }

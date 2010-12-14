@@ -1,6 +1,6 @@
 package org.argmap.client;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import org.argmap.client.ArgMap.MessageType;
 import org.argmap.client.ArgMapService.PartialTrees;
@@ -9,7 +9,7 @@ public abstract class Search implements ServerComm.LocalCallback<PartialTrees> {
 
 	private final String searchString;
 	private final int resultLimit;
-	private final List<Long> filterNodeIDs;
+	private final ArrayList<Long> filterNodeIDs;
 	private final String searchName;
 	private boolean cancelled = false;
 	private int resultCount;
@@ -17,7 +17,7 @@ public abstract class Search implements ServerComm.LocalCallback<PartialTrees> {
 	private ArgMap.Message userMessage;
 
 	public Search(String searchString, String searchName, int resultLimit,
-			List<Long> filterNodeIDs, Double percentTermsMatching) {
+			ArrayList<Long> filterNodeIDs, Double percentTermsMatching) {
 		this.searchString = searchString.trim();
 		this.resultLimit = resultLimit;
 		this.filterNodeIDs = filterNodeIDs;

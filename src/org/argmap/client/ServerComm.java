@@ -1,5 +1,7 @@
 package org.argmap.client;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -210,8 +212,8 @@ public class ServerComm {
 				localCallback, "authenticating...", null));
 	}
 
-	public static void getUpdates(Map<Long, DateAndChildIDs> propsInfo,
-			Map<Long, DateAndChildIDs> argsInfo,
+	public static void getUpdates(HashMap<Long, DateAndChildIDs> propsInfo,
+			HashMap<Long, DateAndChildIDs> argsInfo,
 			LocalCallback<PartialTrees> localCallback) {
 		argMapService.getUpToDateNodes(propsInfo, argsInfo,
 				new ServerCallback<PartialTrees>(localCallback,
@@ -220,11 +222,11 @@ public class ServerComm {
 
 	public static void getChanges(List<Proposition> props, List<Argument> args,
 			LocalCallback<NodeChangesMaps> localCallback) {
-		List<Long> propIDs = new LinkedList<Long>();
+		ArrayList<Long> propIDs = new ArrayList<Long>();
 		for (Proposition prop : props) {
 			propIDs.add(prop.id);
 		}
-		List<Long> argIDs = new LinkedList<Long>();
+		ArrayList<Long> argIDs = new ArrayList<Long>();
 		for (Argument arg : args) {
 			argIDs.add(arg.id);
 		}
@@ -255,7 +257,7 @@ public class ServerComm {
 	}
 
 	public static void searchProps(String searchString, String searchName,
-			int resultLimit, List<Long> filterNodeIDs,
+			int resultLimit, ArrayList<Long> filterNodeIDs,
 			Double percentTermsMatching,
 			LocalCallback<PartialTrees> localCallback) {
 		Log.log("sc.csp", "starting search '" + searchName + "'");

@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -22,9 +22,10 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+//TODO: test opening negated links in versions mode (probably won't work!!!)
+//TODO: fix versions mode formating
 //TODO: do some basic testing of versioning of deleted top level nodes
 //TODO: versioning root node with no modifications/adds throws exception because of empty change list
-//TODO: test negated links in versions mode (probably won't work!!!)
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
 /*TODO: track down exceptions in ModeVersion (unrelated to circular linking)*/
 /*TODO: a proposition tree begins at time A.  At time C a pre-existing node is linked into the proposition tree.
@@ -263,8 +264,8 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 				public void onFailure(Throwable reason) {
 					ArgMap.messageTimed("Code download failed",
 							MessageType.ERROR);
-					Log.log("am.sv.a.of", "Code download failed"
-							+ reason.toString());
+					Log.log("am.sv.a.of",
+							"Code download failed" + reason.toString());
 				}
 			});
 		}
@@ -403,8 +404,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 		} catch (Exception handlerException) {
 		}
 		GWT.log("Uncaught Exception", e);
-		if (Log.on)
-			Log.finishOpenLogs();
+		if (Log.on) Log.finishOpenLogs();
 	}
 
 	public ModeEdit getModeEdit() {

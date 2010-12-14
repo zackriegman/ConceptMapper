@@ -58,12 +58,6 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@SuppressWarnings("unused")
-	private void deleteAllArgsAndProps() {
-		ofy.delete(ofy.query(Argument.class));
-		ofy.delete(ofy.query(Proposition.class));
-	}
-
-	@SuppressWarnings("unused")
 	private void printAllPropsAndArgs() {
 		logln("Arguments: ");
 		for (Argument arg : ofy.query(Argument.class)) {
@@ -92,9 +86,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				.filter("root", true).order("-created").limit(30);
 
 		List<Proposition> rootProps = propQuery.list();
-		Map<Long, Node> nodes = new HashMap<Long, Node>();
+		HashMap<Long, Node> nodes = new HashMap<Long, Node>();
 
-		List<Long> rootIDs = new ArrayList<Long>();
+		ArrayList<Long> rootIDs = new ArrayList<Long>();
 		for (Proposition prop : rootProps) {
 			rootIDs.add(prop.id);
 			nodes.put(prop.id, prop);
@@ -270,7 +264,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 				/* remove the proposition from the argument */
 				argument.childIDs.remove(propID);
-				argument.negatedChildIDs.remove(propID);
+				boolean negated = argument.negatedChildIDs.remove(propID);
+				change.propNegated = negated;
 				putNode(argument);
 			} finally {
 				lock.unlock();
@@ -306,7 +301,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			}
 
 			argument.childIDs.remove(propositionID);
-			argument.negatedChildIDs.remove(propositionID);
+			boolean negated = argument.negatedChildIDs.remove(propositionID);
 			putNode(argument);
 
 			proposition.linkCount--;
@@ -317,6 +312,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			change.propID = proposition.id;
 			change.argPropIndex = propIndex;
 			change.oldContent = proposition.content;
+			change.propNegated = negated;
 			saveVersionInfo(change);
 		} finally {
 			parentLock.unlock();
@@ -503,7 +499,8 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs) {
+	public NodeChangesMaps getChanges(ArrayList<Long> propIDs,
+			ArrayList<Long> argIDs) {
 
 		NodeChangesMaps nodesChanges = new NodeChangesMaps();
 
@@ -548,8 +545,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 	 * TODO make sure lastUpdate is saved whenever a node is changed
 	 */
 	@Override
-	public PartialTrees getUpToDateNodes(Map<Long, DateAndChildIDs> propsInfo,
-			Map<Long, DateAndChildIDs> argsInfo) {
+	public PartialTrees getUpToDateNodes(
+			HashMap<Long, DateAndChildIDs> propsInfo,
+			HashMap<Long, DateAndChildIDs> argsInfo) {
 		// Map<Long, Node> results = new HashMap<Long, Node>();
 		PartialTrees results = new PartialTrees();
 
@@ -735,7 +733,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public PartialTrees searchProps(String searchString, String searchName,
-			int resultLimit, List<Long> filterNodeIDs,
+			int resultLimit, ArrayList<Long> filterNodeIDs,
 			Double percentTermsMatching) {
 		logln("recieved request for search '" + searchName + "'");
 		Set<String> tokenSet = getTokensForIndexingOrQuery(searchString, 6);

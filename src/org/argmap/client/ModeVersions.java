@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -217,8 +216,8 @@ public class ModeVersions extends ResizeComposite implements
 		if (treeClone != null) {
 			treePanel.remove(treeClone);
 		}
-		List<Proposition> props = new LinkedList<Proposition>();
-		List<Argument> args = new LinkedList<Argument>();
+		List<Proposition> props = new ArrayList<Proposition>();
+		List<Argument> args = new ArrayList<Argument>();
 		editMode.getOpenPropsAndArgs(props, args);
 		ServerComm.getChanges(props, args,
 				new ServerComm.LocalCallback<NodeChangesMaps>() {

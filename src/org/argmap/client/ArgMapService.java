@@ -41,9 +41,9 @@ public interface ArgMapService extends RemoteService {
 	public class PartialTrees implements Serializable {
 		/* added to suppress warnings */
 		private static final long serialVersionUID = 1L;
-		public List<Long> rootIDs = new ArrayList<Long>();
-		public Map<Long, Node> nodes = new HashMap<Long, Node>();
-		public Map<Long, Integer> ratings = new HashMap<Long, Integer>();
+		public ArrayList<Long> rootIDs = new ArrayList<Long>();
+		public HashMap<Long, Node> nodes = new HashMap<Long, Node>();
+		public HashMap<Long, Integer> ratings = new HashMap<Long, Integer>();
 
 		@Override
 		public String toString() {
@@ -78,7 +78,7 @@ public interface ArgMapService extends RemoteService {
 	public class NodesWithHistory implements Serializable {
 		/* added to suppress warnings */
 		private static final long serialVersionUID = 1L;
-		public Map<Long, Node> nodes;
+		public HashMap<Long, Node> nodes;
 		public SortedMap<Date, Change> changes;
 	}
 
@@ -86,7 +86,7 @@ public interface ArgMapService extends RemoteService {
 		private static final long serialVersionUID = 1L;
 		public Node node;
 		public NodeChanges nodeChanges;
-		public Map<Long, Proposition> unlinkedLinks = new HashMap<Long, Proposition>();
+		public HashMap<Long, Proposition> unlinkedLinks = new HashMap<Long, Proposition>();
 	}
 
 	public PartialTrees getNodesChildren(List<Long> nodeIDs, int depth)
@@ -100,14 +100,14 @@ public interface ArgMapService extends RemoteService {
 
 	public class NodeChangesMapsAndRootChanges implements Serializable {
 		public NodeChangesMaps nodeChangesMaps = new NodeChangesMaps();
-		public List<Change> rootChanges = new ArrayList<Change>();
+		public ArrayList<Change> rootChanges = new ArrayList<Change>();
 	}
 
 	public class NodeChangesMaps implements Serializable {
 		private static final long serialVersionUID = 1L;
-		public Map<Long, NodeChanges> argChanges = new HashMap<Long, NodeChanges>();
-		public Map<Long, NodeChanges> propChanges = new HashMap<Long, NodeChanges>();
-		public Map<Long, Proposition> unlinkedLinks = new HashMap<Long, Proposition>();
+		public HashMap<Long, NodeChanges> argChanges = new HashMap<Long, NodeChanges>();
+		public HashMap<Long, NodeChanges> propChanges = new HashMap<Long, NodeChanges>();
+		public HashMap<Long, Proposition> unlinkedLinks = new HashMap<Long, Proposition>();
 
 		@Override
 		public String toString() {
@@ -134,7 +134,7 @@ public interface ArgMapService extends RemoteService {
 	public class DateAndChildIDs implements Serializable {
 		private static final long serialVersionUID = 1L;
 		public Date date;
-		public Set<Long> childIDs;
+		public HashSet<Long> childIDs;
 
 		@Override
 		public String toString() {
@@ -157,17 +157,18 @@ public interface ArgMapService extends RemoteService {
 		}
 	}
 
-	public PartialTrees getUpToDateNodes(Map<Long, DateAndChildIDs> propInfo,
-			Map<Long, DateAndChildIDs> argInfo);
+	public PartialTrees getUpToDateNodes(
+			HashMap<Long, DateAndChildIDs> propInfo,
+			HashMap<Long, DateAndChildIDs> argInfo);
 
-	public NodeChangesMaps getChanges(List<Long> propIDs, List<Long> argIDs)
-			throws ServiceException;
+	public NodeChangesMaps getChanges(ArrayList<Long> propIDs,
+			ArrayList<Long> argIDs) throws ServiceException;
 
 	public NodeChangesMapsAndRootChanges getChangesForDeletedRootProps()
 			throws ServiceException;
 
 	public PartialTrees searchProps(String searchString, String searchName,
-			int resultLimit, List<Long> filerNodeIDs,
+			int resultLimit, ArrayList<Long> filerNodeIDs,
 			Double percentTermsMatching) throws ServiceException;
 
 	public PartialTrees continueSearchProps(String searchName)

@@ -43,12 +43,6 @@ public class Argument extends Node implements Serializable {
 		return buffer.toString();
 	}
 
-	/* transient public Long aboutPropID; */
-	/*
-	 * @Transient public List<Proposition> props = new
-	 * LinkedList<Proposition>();
-	 */
-
 	public Argument() {
 	}
 

@@ -31,8 +31,6 @@ public class Proposition extends Node implements Serializable {
 	transient public long ratingSum = 0;
 	transient public long ratingCount = 0;
 
-	// public @Transient List<Argument> args = new LinkedList<Argument>();
-
 	public Proposition() {
 	}
 

@@ -83,6 +83,8 @@ public class Change implements Serializable {
 
 	public int propLinkCount;
 
+	public boolean propNegated;
+
 	/*
 	 * For change type: PROP_MODIFICATION content refers to the proposition
 	 * content
