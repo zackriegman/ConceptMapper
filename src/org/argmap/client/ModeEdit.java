@@ -13,7 +13,6 @@ import org.argmap.client.ArgMapService.PartialTrees;
 import org.argmap.client.ServerComm.LocalCallback;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -72,7 +71,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 	// private SplitLayoutPanel sideSplit;
 
 	private TextBox searchTextBox;
-	private final EditModeTree tree;
+	private EditModeTree tree;
 	private Button addPropButton;
 	private MainSearchTimer mainSearchTimer;
 	public SideSearchTimer sideSearchTimer;
@@ -108,22 +107,26 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		this.argMap = argMap;
 
 		/***********************************************************
-		 * first setup the tree and start loading the propositions * so that
-		 * they can be loading while everything else is * being setup *
+		 * first start loading the propositions so that they can be loading
+		 * while everything else is being setup
 		 ***********************************************************/
-		/*
-		 * setup the tree area
-		 */
-		tree = new EditModeTree();
-		tree.addOpenHandlerTracked(this);
-		tree.addCloseHandler(this);
-		tree.addSelectionHandler(this);
-		tree.setAnimationEnabled(false);
 
 		/*
 		 * get the props and preload the callback
 		 */
 		getRootProps();
+
+		/*
+		 * note that setting up the tree is done in getRootPropsCallback inside
+		 * a GWT.async() to delay loading all the code having to do with the
+		 * tree until after we've fired of a getRootProps() request to the
+		 * server...
+		 * 
+		 * below we call getRootPropsCallback with a null argument so that the
+		 * very next thing we do is start downloading the code fragment to
+		 * handle whatever the server returns from the getRootProps() call, even
+		 * before that call returns.
+		 */
 		getRootPropsCallback(null);
 
 		/*
@@ -131,7 +134,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 		 */
 		updateTimer = new UpdateTimer();
 
-		GWT.runAsync(new RunAsyncCallback() {
+		GWT.runAsync(new AsyncRunCallback() {
 
 			@Override
 			public void onSuccess() {
@@ -249,23 +252,33 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 				setSideBarText("welcome");
 				initWidget(mainSplit);
 			}
-
-			@Override
-			public void onFailure(Throwable reason) {
-				ArgMap.messageTimed("Code download failed", MessageType.ERROR);
-				Log.log("me.me", "Code download failed" + reason.toString());
-			}
 		});
 	}
 
+	private void initTree() {
+		/*
+		 * setup the tree area
+		 */
+		if (tree == null) {
+			tree = new EditModeTree();
+			tree.addOpenHandlerTracked(this);
+			tree.addCloseHandler(this);
+			tree.addSelectionHandler(this);
+			tree.setAnimationEnabled(false);
+		}
+	}
+
 	private void getRootPropsCallback(final PartialTrees allNodes) {
-		GWT.runAsync(new RunAsyncCallback() {
+		GWT.runAsync(new AsyncRunCallback() {
 
 			@Override
 			public void onSuccess() {
 				if (allNodes == null) {
 					return;
 				}
+
+				initTree();
+
 				Log log = Log.getLog("em.em.cb");
 				log.log("Prop Tree From Server");
 				for (Long id : allNodes.rootIDs) {
@@ -283,13 +296,6 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 				updateTimer.start();
 				log.finish();
-
-			}
-
-			@Override
-			public void onFailure(Throwable reason) {
-				ArgMap.messageTimed("Code download failed", MessageType.ERROR);
-				Log.log("me.me", "Code download failed" + reason.toString());
 
 			}
 		});
@@ -1029,23 +1035,30 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 		@Override
 		public void run() {
-			long timeSinceUserAction = System.currentTimeMillis()
-					- lastUserAction;
-			if (timeSinceUserAction < 10 * MINUTE) {
-				currentFrequency = INITIAL_FREQUENCY;
-			} else if (timeSinceUserAction < HOUR) {
-				currentFrequency = 30 * SECOND;
-				message("30 seconds");
-			} else if (timeSinceUserAction < DAY) {
-				currentFrequency = 30 * MINUTE;
-				message("30 minutes");
-			} else {
-				currentFrequency = DAY;
-				message("24 hours");
-			}
+			GWT.runAsync(new AsyncRunCallback() {
 
-			schedule(currentFrequency);
-			if (on) getUpdatesAndApply();
+				@Override
+				public void onSuccess() {
+					long timeSinceUserAction = System.currentTimeMillis()
+							- lastUserAction;
+					if (timeSinceUserAction < 10 * MINUTE) {
+						currentFrequency = INITIAL_FREQUENCY;
+					} else if (timeSinceUserAction < HOUR) {
+						currentFrequency = 30 * SECOND;
+						message("30 seconds");
+					} else if (timeSinceUserAction < DAY) {
+						currentFrequency = 30 * MINUTE;
+						message("30 minutes");
+					} else {
+						currentFrequency = DAY;
+						message("24 hours");
+					}
+
+					schedule(currentFrequency);
+					if (on) getUpdatesAndApply();
+				}
+			});
+
 		}
 
 		public void start() {

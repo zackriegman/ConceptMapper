@@ -5,7 +5,6 @@ import java.util.List;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
-import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -141,7 +140,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 		messageMap = new MultiMap<String, Message>();
 		editMode = new ModeEdit(this);
 
-		GWT.runAsync(new RunAsyncCallback() {
+		GWT.runAsync(new AsyncRunCallback() {
 
 			@Override
 			public void onSuccess() {
@@ -172,13 +171,6 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 				rp.add(mainPanel);
 
 				getLoginInfo();
-
-			}
-
-			@Override
-			public void onFailure(Throwable reason) {
-				ArgMap.messageTimed("Code download failed", MessageType.ERROR);
-				Log.log("am.oml", "Code download failed" + reason.toString());
 
 			}
 		});
@@ -216,20 +208,12 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 					loginPanel.add(nickName);
 					loginPanel.add(signOutLink);
 					if (loginInfo.isAdmin) {
-						GWT.runAsync(new RunAsyncCallback() {
+						GWT.runAsync(new AsyncRunCallback() {
 
 							@Override
 							public void onSuccess() {
 								modePanel.add(new ModeAdmin(ArgMap.this),
 										"Admin");
-							}
-
-							@Override
-							public void onFailure(Throwable reason) {
-								ArgMap.messageTimed("Code download failed",
-										MessageType.ERROR);
-								Log.log("am.sv.a.of", "Code download failed"
-										+ reason.toString());
 							}
 						});
 					}
@@ -250,7 +234,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 
 	public void showVersions() {
 		if (!versionsIsDisplayed()) {
-			GWT.runAsync(new RunAsyncCallback() {
+			GWT.runAsync(new AsyncRunCallback() {
 
 				@Override
 				public void onSuccess() {
@@ -258,14 +242,6 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 						versionsMode = new ModeVersions(editMode);
 					}
 					modePanel.insert(versionsMode, "History", 1);
-				}
-
-				@Override
-				public void onFailure(Throwable reason) {
-					ArgMap.messageTimed("Code download failed",
-							MessageType.ERROR);
-					Log.log("am.sv.a.of",
-							"Code download failed" + reason.toString());
 				}
 			});
 		}

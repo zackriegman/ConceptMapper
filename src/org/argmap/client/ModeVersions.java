@@ -132,6 +132,7 @@ public class ModeVersions extends ResizeComposite implements
 	private Map<ViewChange, String> mapArgTitle;
 	private Map<ViewChange, Integer> mapPropIndex;
 	private Map<ViewChange, Integer> mapArgIndex;
+	private Map<ViewChange, Boolean> mapPropNegated;
 
 	/*
 	 * A ViewChange contains a pointer to a ViewNodeVer and a Change object, as
