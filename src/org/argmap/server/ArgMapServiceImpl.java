@@ -605,15 +605,14 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		Map<Long, NodeWithChanges> map = new HashMap<Long, NodeWithChanges>();
 		for (Long propID : propIDs) {
 			NodeWithChanges propWithChanges = new NodeWithChanges();
-			// try {
-			propWithChanges.node = ofy.get(Proposition.class, propID);
-			// } catch (NotFoundException e) {
-			// /*
-			// * if the node doesn't currently exist because it has been
-			// * deleted, just return null
-			// */
-			// propWithChanges.node = null;
-			// }
+
+			/*
+			 * we find() instead of get() because the node in question might not
+			 * currently exist; it might have been deleted in which case
+			 * returning null should be fine
+			 */
+			propWithChanges.node = ofy.find(Proposition.class, propID);
+
 			propWithChanges.nodeChanges = getPropChanges(propID);
 			map.put(propID, propWithChanges);
 		}
@@ -625,15 +624,14 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		Map<Long, NodeWithChanges> map = new HashMap<Long, NodeWithChanges>();
 		for (Long argID : argIDs) {
 			NodeWithChanges argWithChanges = new NodeWithChanges();
-			// try {
-			argWithChanges.node = ofy.get(Argument.class, argID);
-			// } catch (NotFoundException e) {
-			// /*
-			// * if the node doesn't currently exist because it has been
-			// * deleted, just return null
-			// */
-			// argWithChanges.node = null;
-			// }
+
+			/*
+			 * we find() instead of get() because the node in question might not
+			 * currently exist; it might have been deleted in which case
+			 * returning null should be fine
+			 */
+			argWithChanges.node = ofy.find(Argument.class, argID);
+
 			argWithChanges.nodeChanges = getArgChanges(argID,
 					argWithChanges.unlinkedLinks);
 			map.put(argID, argWithChanges);
