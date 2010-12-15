@@ -23,8 +23,8 @@ import com.google.gwt.user.client.ui.Widget;
 
 //TODO: test opening negated links in versions mode (probably won't work!!!)
 //TODO: fix versions mode formating
-//TODO: do some basic testing of versioning of deleted top level nodes
 //TODO: versioning root node with no modifications/adds throws exception because of empty change list
+//TODO: do some basic testing of versioning of deleted top level nodes
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
 /*TODO: track down exceptions in ModeVersion (unrelated to circular linking)*/
 /*TODO: a proposition tree begins at time A.  At time C a pre-existing node is linked into the proposition tree.
@@ -32,6 +32,17 @@ import com.google.gwt.user.client.ui.Widget;
  * However the linked node is open in the tree(as a deleted node, so its changes are displayed in the change list).
  * The result is that there are changes that the user can scroll past that have no apparent effect on the tree
  * very confusing... so only a the changes post dating the linked nodes linking should be added to the change list?
+ */
+/*TODO: versions mode: update link coloring depending on whether a proposition is currently a link?
+ * to do this properly it seems like for each proposition, I need to included in the changes sent to the client
+ * unlinks which lower the link count to less than or equal to one, and links which raise the link
+ * count above one. (usually link events aren't considered events of the proposition being unlinked, 
+ * but rather of the argument link/unlinking to the proposition.)
+ * Then on the client those changes would be handled by forwards/backwards function.  Maybe the function
+ * would notice whether the ViewNode associated with the change was an argument or a proposition.  If it was a 
+ * proposition it would update the props link status.  If it was an argument it would just do what it currently does.
+ * This way the system would work for propositions whose link coloring is changed by a linking/unlinking not within
+ * the tree being viewed by the user...
  */
 //TODO: comment the hell out of versions mode!!!!!!! someday I'll need to change it...
 

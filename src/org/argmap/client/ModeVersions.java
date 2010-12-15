@@ -132,7 +132,6 @@ public class ModeVersions extends ResizeComposite implements
 	private Map<ViewChange, String> mapArgTitle;
 	private Map<ViewChange, Integer> mapPropIndex;
 	private Map<ViewChange, Integer> mapArgIndex;
-	private Map<ViewChange, Boolean> mapPropNegated;
 
 	/*
 	 * A ViewChange contains a pointer to a ViewNodeVer and a Change object, as
@@ -301,6 +300,8 @@ public class ModeVersions extends ResizeComposite implements
 						treePanel.add(treeClone);
 
 						/*
+						 * I think this is already done in the lines immediately
+						 * following? Remove this todo?
 						 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 						 * TODO: must setup the tree with root nodes returned
 						 * from server
@@ -336,6 +337,23 @@ public class ModeVersions extends ResizeComposite implements
 
 	}
 
+	/*
+	 * This method takes the tree cloned from edit mode and adds empty child
+	 * nodes to a parent's deleted nodes list (so that when going back in time
+	 * the deleted nodes can be revived by appending them to the tree). For each
+	 * node, deleted and not deleted, this method loads the node with its
+	 * changes. This allows the program to know which changes need to be trimmed
+	 * from the change list shown to the viewer, when a node is opened or closed
+	 * (by walking through the sub tree of the opened/closed node and asking
+	 * each subtree node what changes should be added/removed from the change
+	 * list).
+	 * 
+	 * This method also builds the timeMachineMap which is a sorted multimap,
+	 * sorted by the date of changes, that is used when time traveling to keep
+	 * track of each change that must be made to the tree (with a single changes
+	 * sometimes requiring multiple changes to the tree if it is a change to a
+	 * linked subtree).
+	 */
 	private SortedMultiMap<Date, ViewChange> prepTreeWithDeletedNodesAndChangesAndBuildTimeMachineMap(
 			Tree treeClone, NodeChangesMaps changesMaps) {
 		Log log = Log.getLog("vm.ptwdnacab");
@@ -939,12 +957,14 @@ public class ModeVersions extends ResizeComposite implements
 				}
 				case PROP_MODIFICATION: {
 					/*
-					 * NOTE: the same content might be put in the mapPropContent
-					 * multiple times if there are multiple links to the same
-					 * node, but it shouldn't be a problem, because the change
-					 * for each link should be processed one right after the
-					 * other, without a chance for the content to be changed by
-					 * a different change...
+					 * Remove this note? Now that changes are keyed to vC seems
+					 * like this note is no longer relevant... NOTE: the same
+					 * content might be put in the mapPropContent multiple times
+					 * if there are multiple links to the same node, but it
+					 * shouldn't be a problem, because the change for each link
+					 * should be processed one right after the other, without a
+					 * chance for the content to be changed by a different
+					 * change...
 					 */
 					ViewPropVer propView = (ViewPropVer) vC.viewNode;
 					propView.setContent(mapPropContent.get(vC));
@@ -994,6 +1014,13 @@ public class ModeVersions extends ResizeComposite implements
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
 					argView.reviveDeletedView(vC.change.propID,
 							vC.change.argPropIndex);
+
+					ViewNode viewNode = argView
+							.getChild(vC.change.argPropIndex);
+					if (viewNode instanceof ViewPropVer) {
+						((ViewPropVer) viewNode)
+								.setNegated(vC.change.propNegated);
+					}
 					break;
 				}
 				case PROP_DELETION: {
@@ -1009,6 +1036,8 @@ public class ModeVersions extends ResizeComposite implements
 					 */
 					if (viewNode instanceof ViewPropVer) {
 						((ViewPropVer) viewNode).proposition.content = vC.change.oldContent;
+						((ViewPropVer) viewNode)
+								.setNegated(vC.change.propNegated);
 					}
 					break;
 				}
