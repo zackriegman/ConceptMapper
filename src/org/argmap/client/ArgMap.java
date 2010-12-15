@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+//TODO: opening any tree with links doesn't seem to work
 //TODO: test opening negated links in versions mode (probably won't work!!!)
 //TODO: fix versions mode formating
 //TODO: versioning root node with no modifications/adds throws exception because of empty change list
