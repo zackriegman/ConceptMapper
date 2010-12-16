@@ -4,8 +4,11 @@ public class ViewChange {
 	Change change;
 	ViewNodeVer viewNode;
 	boolean hidden = false;
-	
-	public String toString(){
-		return "change: " + change + "; viewNode:" + viewNode + "; hidden:" + hidden;
+	boolean alwaysHidden = false;
+
+	@Override
+	public String toString() {
+		return "change: " + change + "; viewNode:" + viewNode + "; hidden:"
+				+ hidden + "; alwaysHidden:" + alwaysHidden;
 	}
 }

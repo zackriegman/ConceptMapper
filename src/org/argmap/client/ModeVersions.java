@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.tools.ant.types.Commandline.Marker;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeChangesMapsAndRootChanges;
 import org.argmap.client.ArgMapService.NodeWithChanges;
@@ -105,6 +106,17 @@ public class ModeVersions extends ResizeComposite implements
 	 * is close, we do not want to show those changes, because then when the
 	 * user clicks on the change, he/she will see no apparent effect which will
 	 * be confusing.
+	 * 
+	 * Further notes about how and why things work.
+	 * 
+	 * 1. When (1) an arg links to a prop; (2) prop is unlinked from the arg (3)
+	 * prop is modified or subtree is modified; (4) arg re-links to the node.
+	 * What happens? At any given time the user should see the correct version
+	 * of the link and its subtree, because all the relevant ViewChanges are
+	 * kept in the timeMachineMap and processed when moving forwards or
+	 * backwards regardless of whether the linked prop is currently part of the
+	 * existing tree or is rather being held in the deleted nodes list of the
+	 * arg. So it seems to work.
 	 */
 
 	private final ListBox versionList = new ListBox();
@@ -350,7 +362,7 @@ public class ModeVersions extends ResizeComposite implements
 	 * 
 	 * This method also builds the timeMachineMap which is a sorted multimap,
 	 * sorted by the date of changes, that is used when time traveling to keep
-	 * track of each change that must be made to the tree (with a single changes
+	 * track of each change that must be made to the tree (with a single Change
 	 * sometimes requiring multiple changes to the tree if it is a change to a
 	 * linked subtree).
 	 */
@@ -359,8 +371,9 @@ public class ModeVersions extends ResizeComposite implements
 		Log log = Log.getLog("vm.ptwdnacab");
 		SortedMultiMap<Date, ViewChange> timeMachineMap = new SortedMultiMap<Date, ViewChange>();
 		for (int i = 0; i < treeClone.getItemCount(); i++) {
-			recursivePrepAndBuild((ViewPropVer) treeClone.getItem(i),
-					timeMachineMap, changesMaps, log);
+			ViewPropVer viewPropVer = (ViewPropVer) treeClone.getItem(i);
+			recursivePrepAndBuild(viewPropVer, timeMachineMap, changesMaps, log);
+			recursiveHideLinkedSubtreesDuringUnlinkedPeriods(viewPropVer);
 		}
 		log.finish();
 		return timeMachineMap;
@@ -485,6 +498,79 @@ public class ModeVersions extends ResizeComposite implements
 				viewChange.hidden = true;
 			}
 		}
+	}
+
+	private class TimePeriods {
+		/*
+		 * maybe using markers is simpler after all. simply walk down the line
+		 * until newStart > currentMarker. Insert newStart before currentMarker.
+		 * 
+		 * Then walk down line until newEnd > currentMarker. If newEnd <
+		 * currentMarker delete current marker. if newEnd > currentMarker and
+		 * currentMarker is and 'end' don't do anything else. If newEnd >
+		 * currentMarker and currentmarker is a 'start' insert newEnd before
+		 * currentMarker. Done.
+		 * 
+		 * to test for inclusion walk down line until test > currentMarker. If
+		 * current marker is start return true; else return false.
+		 * 
+		 * to copy, make markers immutable and simply copy the list.
+		 */
+
+		private class Period {
+			public Period(Date start, Date end) {
+				this.start = start;
+				this.end = end;
+			}
+
+			public Date start;
+			public Date end;
+		}
+
+		private List<Period> periods = new ArrayList<Period>();
+
+		public void addPeriod(Date start, Date end) {
+			for (int i = 0; i < periods.size(); i++) {
+				if (start.after(periods.get(i).start)) {
+					Period current = periods.get(i);
+					Period previous = periods.get(i -1);
+					if (start.before(previous.end)) {
+						//this means new period overlaps with latter part of previous
+						
+						if( end.before(previous.end)){
+							//this means entire period is contained within previous
+							//period and nothing needs to be done
+						} else if (end.after(current.start))
+					} else {
+						//this means that new period overlaps with no part of previous period
+					}
+				}
+			}
+		}
+
+		public boolean inPeriod(Date date) {
+			return false;
+		}
+
+		public TimePeriods copy() {
+			return null;
+		}
+	}
+
+	public void recursiveHideLinkedSubtreesDuringUnlinkedPeriods(
+			ViewNodeVer viewPNodeVer, List list) {
+		// hide all changes of this node that occur within a period in list
+
+		// * for each child node
+
+		// * * if this is an argument and the child is a linked node
+		// * * * build a list of periods that the node is unlinked
+		// * * * build a newList of periods that the node is unlinked including
+		// * * * * those from the argument and those from the list just build
+
+		// * * recursiveHideLinkedSubtreesDuringUnlinkedPeriods( either list or
+		// * * * newList)
+
 	}
 
 	private void loadVersionListFromTimeMachine() {
@@ -802,14 +888,15 @@ public class ModeVersions extends ResizeComposite implements
 	}
 
 	/*
-	 * this function gets all the changes of all the open descendants of the
-	 * ViewNodeVer passed to it. It does not return the changes of the
-	 * ViewNodeVer actually passed to it as those changes are dealt with
-	 * differently (hidden instead of removed from the change list). It also
-	 * does not return the changes of closed descendants because those changes
-	 * have already been remove or do not need to be added upon the
-	 * closing/opening of the ViewNodeVer passed. (Dummy nodes have no changes
-	 * so it skips dummy nodes when collecting changes).
+	 * this function gets all the changes of all the descendants in an unbroken
+	 * chain of open decesdents from the ViewNodeVer passed to it. It does not
+	 * return the changes of the ViewNodeVer actually passed to it as those
+	 * changes are dealt with differently (hidden instead of removed from the
+	 * change list). It also does not return the changes of closed descendants
+	 * (and their subtrees) because those changes have already been remove or do
+	 * not need to be added upon the closing/opening of the ViewNodeVer passed.
+	 * (Dummy nodes have no changes so it skips dummy nodes when collecting
+	 * changes).
 	 */
 	public void recursiveGetViewChanges(ViewNodeVer viewNodeVer,
 			SortedMultiMap<Date, ViewChange> forAddOrRemove, boolean firstNode,
