@@ -690,6 +690,7 @@ public class ModeVersions extends ResizeComposite implements
 			dummyIDs.add(child.getNodeID());
 			child.remove();
 		}
+
 		/* for each dummy create a real and append it to the node */
 		for (Long id : dummyIDs) {
 			NodeWithChanges nodeWithChanges = nodesWithChanges.get(id);

@@ -21,8 +21,20 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+/*TODO: client throws an exception when removing a link and re-adding it (at least if you make a single change to the link in the interim
+ * I haven't tested other scenarios yet)
+ */
+/*TODO: what happens in ModeVersions if I first link to a node as negated, then delete it, then link to it as non-negated and delete that
+ * (or vice-versa)?  Nodes are stores by ID in the deletedNodes list. Since its stored in a hashmap, storing the same deleted node twice will
+ * result in only one copy.  Will that work for storing the history?  One thing I want to work out below is only storing the history for a
+ * link that is relevant to the time that it exists in the tree so there aren't a lot of extra changes in the change list.  Will having
+ * only one copy complicate that?  If so maybe I could save in a list or a hashmap keyed on date instead of ID (or ID and date, or something)...
+ * 
+ * Regardless, as far as negation is concerned, if there is only one copy, I can't depend on it to have the right negated value when
+ * it is re-added to the tree for the first time.
+ */
 //TODO: test opening negated links in versions mode (probably won't work!!!)
-//TODO: fix versions mode formating
+//TODO: fix versions mode formating of links
 //TODO: versioning root node with no modifications/adds throws exception because of empty change list
 //TODO: do some basic testing of versioning of deleted top level nodes
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
