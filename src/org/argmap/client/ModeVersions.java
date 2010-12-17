@@ -11,6 +11,7 @@ import java.util.Map;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeChangesMapsAndRootChanges;
 import org.argmap.client.ArgMapService.NodeWithChanges;
+import org.argmap.client.Change.ChangeType;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -372,7 +373,8 @@ public class ModeVersions extends ResizeComposite implements
 		for (int i = 0; i < treeClone.getItemCount(); i++) {
 			ViewPropVer viewPropVer = (ViewPropVer) treeClone.getItem(i);
 			recursivePrepAndBuild(viewPropVer, timeMachineMap, changesMaps, log);
-			recursiveHideLinkedSubtreesDuringUnlinkedPeriods(viewPropVer);
+			recursiveHideLinkedSubtreesDuringUnlinkedPeriods(viewPropVer,
+					new TimePeriods());
 		}
 		log.finish();
 		return timeMachineMap;
@@ -499,20 +501,109 @@ public class ModeVersions extends ResizeComposite implements
 		}
 	}
 
-	public void recursiveHideLinkedSubtreesDuringUnlinkedPeriods(
-			ViewNodeVer viewPNodeVer, List list) {
+	/*
+	 * TODO still need to make alwaysHidden Changes actually hidden when
+	 * building the change list.
+	 * 
+	 * TODO this just does the initial hide... need to redo this every time the
+	 * user opens and loads unloaded children for the first time... right?
+	 * 
+	 * TODO explain what this function does in a comment here
+	 */
+	private void recursiveHideLinkedSubtreesDuringUnlinkedPeriods(
+			ViewNodeVer viewNodeVer, TimePeriods hidePeriods) {
+		if (viewNodeVer instanceof ViewDummyVer) {
+			return;
+		}
+
+		List<ViewChange> viewChangeList = viewNodeVer.getViewChangeList();
+
 		// hide all changes of this node that occur within a period in list
+		for (ViewChange viewChange : viewChangeList) {
+			if (hidePeriods.covers(viewChange.change.date)) {
+				viewChange.alwaysHidden = true;
+			}
+		}
 
-		// * for each child node
+		if (viewNodeVer instanceof ViewArgVer) {
+			// sort the node's viewChangeList
+			Collections.sort(viewChangeList, ViewChange.DATE_COMPARATOR);
 
-		// * * if this is an argument and the child is a linked node
-		// * * * build a list of periods that the node is unlinked
-		// * * * build a newList of periods that the node is unlinked including
-		// * * * * those from the argument and those from the list just build
+			/*
+			 * start building more restrictive hidePeriods for the children that
+			 * need them
+			 */
+			Map<Long, TimePeriods> newPeriods = new HashMap<Long, TimePeriods>();
+			Map<Long, ViewChange> lastChanges = new HashMap<Long, ViewChange>();
+			for (ViewChange viewChange : viewChangeList) {
+				Long propID = viewChange.change.propID;
+				if (viewChange.change.changeType == ChangeType.PROP_LINK) {
 
-		// * * recursiveHideLinkedSubtreesDuringUnlinkedPeriods( either list or
-		// * * * newList)
+					TimePeriods newPeriod = newPeriods.get(propID);
+					if (newPeriod == null) {
+						newPeriod = hidePeriods.copy();
+						newPeriods.put(propID, newPeriod);
+					}
 
+					ViewChange lastViewChange = lastChanges.get(propID);
+					if (lastViewChange != null
+							&& lastViewChange.change.changeType == ChangeType.PROP_UNLINK) {
+						newPeriod.addPeriod(lastViewChange.change.date,
+								viewChange.change.date);
+					} else {
+						newPeriod.addPeriod(TimePeriods.THIRTY_YEARS_AGO,
+								viewChange.change.date);
+					}
+
+					lastChanges.put(propID, viewChange);
+				} else if (viewChange.change.changeType == ChangeType.PROP_UNLINK) {
+					lastChanges.put(propID, viewChange);
+				}
+			}
+
+			// for each child node
+			for (ViewNodeVer child : new ViewNodeVer.CombinedViewIterator(
+					viewNodeVer)) {
+				Long propID = child.getNodeID();
+
+				/*
+				 * finish building a more restrictive hide period if this child
+				 * needs it
+				 */
+				ViewChange lastViewChange = lastChanges.get(propID);
+				if (lastViewChange != null
+						&& lastViewChange.change.changeType == ChangeType.PROP_UNLINK) {
+					TimePeriods newPeriod = newPeriods.get(propID);
+					if (newPeriod == null) {
+						newPeriod = hidePeriods.copy();
+						newPeriods.put(propID, newPeriod);
+					}
+					/*
+					 * we got here because lastChanges for propID was never set
+					 * to a Change of type PROP_LINK, which means we had a
+					 * PROP_UNLINK with no following link, which means that all
+					 * subsequent changes should be hidden. So we add a hide
+					 * period from the last change to 100 years from now.
+					 */
+					newPeriod.addPeriod(lastViewChange.change.date,
+							TimePeriods.ONE_HUNDRED_YEARS_FROM_NOW);
+				}
+
+				if (newPeriods.containsKey(propID)) {
+					recursiveHideLinkedSubtreesDuringUnlinkedPeriods(child,
+							newPeriods.get(propID));
+				} else {
+					recursiveHideLinkedSubtreesDuringUnlinkedPeriods(child,
+							hidePeriods);
+				}
+			}
+		} else {
+			for (ViewNodeVer child : new ViewNodeVer.CombinedViewIterator(
+					viewNodeVer)) {
+				recursiveHideLinkedSubtreesDuringUnlinkedPeriods(child,
+						hidePeriods);
+			}
+		}
 	}
 
 	private void loadVersionListFromTimeMachine() {

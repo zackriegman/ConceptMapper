@@ -9,21 +9,20 @@ import java.util.Map;
 
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 
-
 public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	public List<ViewChange> viewChanges = new ArrayList<ViewChange>();
 	public Map<Long, ViewNodeVer> deletedViews = new HashMap<Long, ViewNodeVer>();
 	public Date closedDate;
-	
-	public Date getClosedDate(){
+
+	public Date getClosedDate() {
 		return closedDate;
 	}
-	
-	public void setClosedDate( Date closedDate ){
+
+	public void setClosedDate(Date closedDate) {
 		this.closedDate = closedDate;
 	}
-	
-	public ViewArgVer(){
+
+	public ViewArgVer() {
 		super();
 		textBox.setReadOnly(true);
 	}
@@ -45,59 +44,56 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 
 	public void reviveDeletedView(Long id, int index) {
 		ViewNode viewNode = (ViewNode) deletedViews.remove(id);
-		assert viewNode != null ;
+		assert viewNode != null;
 		insertItem(index, viewNode);
 	}
 
-//	public ViewPropVer createDeletedView(Long id) {
-//		/*
-//		 * this view is just empty; can set to false, because real value will be
-//		 * set before it is used when the time machine goes back in time...
-//		 */
-//		ViewPropVer deletedView = new ViewPropVer(id);
-//		deletedView.setState(true);
-//		deletedViews.put(id, deletedView);
-//		return deletedView;
-//	}
-	
+	// public ViewPropVer createDeletedView(Long id) {
+	// /*
+	// * this view is just empty; can set to false, because real value will be
+	// * set before it is used when the time machine goes back in time...
+	// */
+	// ViewPropVer deletedView = new ViewPropVer(id);
+	// deletedView.setState(true);
+	// deletedViews.put(id, deletedView);
+	// return deletedView;
+	// }
+
 	@Override
-	public ViewNode createChild(){
+	public ViewNode createChild() {
 		return new ViewPropVer();
 	}
-	
+
 	@Override
 	public ViewNodeVer createChild(Node node) {
-		return new ViewPropVer( (Proposition) node );
+		return new ViewPropVer((Proposition) node);
 	}
-	
+
 	@Override
 	public ViewNodeVer createChild(Long nodeID) {
-		return new ViewPropVer( nodeID );
+		return new ViewPropVer(nodeID);
 	}
-	
-	public void addDeletedItem( ViewNodeVer viewNodeVer ){
+
+	public void addDeletedItem(ViewNodeVer viewNodeVer) {
 		assert viewNodeVer.getNodeID() != null;
-		deletedViews.put( viewNodeVer.getNodeID(), viewNodeVer );
-		
+		deletedViews.put(viewNodeVer.getNodeID(), viewNodeVer);
+
 	}
-	
+
 	/*
-	@Override
-	public ViewNodeVer createDeletedDummyView(Long id) {
-		ViewDummyVer deletedView = new ViewDummyVer(id);
-		deletedViews.put(id, deletedView );
-		return deletedView;
-	}
-	*/
+	 * @Override public ViewNodeVer createDeletedDummyView(Long id) {
+	 * ViewDummyVer deletedView = new ViewDummyVer(id); deletedViews.put(id,
+	 * deletedView ); return deletedView; }
+	 */
 
 	public List<ViewChange> getViewChangeList() {
 		return viewChanges;
 	}
-	
-	public List<ViewChange> getViewChangeHideList(){
+
+	public List<ViewChange> getViewChangeHideList() {
 		List<ViewChange> list = new ArrayList<ViewChange>();
-		for( ViewChange viewChange : viewChanges ){
-			switch( viewChange.change.changeType ){
+		for (ViewChange viewChange : viewChanges) {
+			switch (viewChange.change.changeType) {
 			case PROP_ADDITION:
 			case PROP_DELETION:
 			case PROP_LINK:
@@ -110,7 +106,7 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 				assert false;
 				break;
 			case ARG_MODIFICATION:
-				//do nothing
+				// do nothing
 				break;
 			}
 		}
@@ -120,8 +116,8 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	public ViewNodeVer getChildViewNode(int i) {
 		return (ViewNodeVer) getChild(i);
 	}
-	
-	public Collection<ViewNodeVer> getDeletedViewList(){
+
+	public Collection<ViewNodeVer> getDeletedViewList() {
 		return deletedViews.values();
 	}
 
@@ -133,7 +129,5 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	@Override
 	public void clearDeletedViews() {
 		deletedViews.clear();
-		
 	}
-
 }

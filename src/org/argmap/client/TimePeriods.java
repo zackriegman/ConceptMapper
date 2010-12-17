@@ -156,7 +156,7 @@ public class TimePeriods {
 	 * because it comes after the previous start and before the marked end,
 	 * therefore return true.
 	 */
-	public boolean inPeriod(Date date) {
+	public boolean covers(Date date) {
 		for (Marker marker : periods) {
 			if (date.before(marker.date)) {
 				if (marker.start) {
@@ -178,6 +178,14 @@ public class TimePeriods {
 	public TimePeriods copy() {
 		return new TimePeriods(new ArrayList<Marker>(periods));
 	}
+
+	private static long YEAR_IN_MILLIS = 365 * 24 * 60 * 60 * 1000;
+
+	public static Date THIRTY_YEARS_AGO = new Date(System.currentTimeMillis()
+			- 30 * YEAR_IN_MILLIS);
+
+	public static Date ONE_HUNDRED_YEARS_FROM_NOW = new Date(
+			System.currentTimeMillis() + 100 * YEAR_IN_MILLIS);
 
 	/******************************************************
 	 * TEST METHODS (COMMENT THESE OUT WHEN NOT TESTING ) *
