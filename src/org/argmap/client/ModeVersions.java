@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.tools.ant.types.Commandline.Marker;
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 import org.argmap.client.ArgMapService.NodeChangesMapsAndRootChanges;
 import org.argmap.client.ArgMapService.NodeWithChanges;
@@ -497,63 +496,6 @@ public class ModeVersions extends ResizeComposite implements
 			for (ViewChange viewChange : viewNode.getViewChangeHideList()) {
 				viewChange.hidden = true;
 			}
-		}
-	}
-
-	private class TimePeriods {
-		/*
-		 * maybe using markers is simpler after all. simply walk down the line
-		 * until newStart > currentMarker. Insert newStart before currentMarker.
-		 * 
-		 * Then walk down line until newEnd > currentMarker. If newEnd <
-		 * currentMarker delete current marker. if newEnd > currentMarker and
-		 * currentMarker is and 'end' don't do anything else. If newEnd >
-		 * currentMarker and currentmarker is a 'start' insert newEnd before
-		 * currentMarker. Done.
-		 * 
-		 * to test for inclusion walk down line until test > currentMarker. If
-		 * current marker is start return true; else return false.
-		 * 
-		 * to copy, make markers immutable and simply copy the list.
-		 */
-
-		private class Period {
-			public Period(Date start, Date end) {
-				this.start = start;
-				this.end = end;
-			}
-
-			public Date start;
-			public Date end;
-		}
-
-		private List<Period> periods = new ArrayList<Period>();
-
-		public void addPeriod(Date start, Date end) {
-			for (int i = 0; i < periods.size(); i++) {
-				if (start.after(periods.get(i).start)) {
-					Period current = periods.get(i);
-					Period previous = periods.get(i -1);
-					if (start.before(previous.end)) {
-						//this means new period overlaps with latter part of previous
-						
-						if( end.before(previous.end)){
-							//this means entire period is contained within previous
-							//period and nothing needs to be done
-						} else if (end.after(current.start))
-					} else {
-						//this means that new period overlaps with no part of previous period
-					}
-				}
-			}
-		}
-
-		public boolean inPeriod(Date date) {
-			return false;
-		}
-
-		public TimePeriods copy() {
-			return null;
 		}
 	}
 
