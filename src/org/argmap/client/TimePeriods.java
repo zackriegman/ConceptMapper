@@ -183,152 +183,153 @@ public class TimePeriods {
 	 * TEST METHODS (COMMENT THESE OUT WHEN NOT TESTING ) *
 	 ******************************************************/
 
-	public void print() {
-		for (Marker marker : periods) {
-			System.out.println("marker -- date: " + marker.date + " "
-					+ (marker.start ? "START" : "END"));
-		}
-	}
-
-	public static void test(int testNumber, TimePeriods periods, Date testDate,
-			boolean shouldBeInPeriod) {
-		if (periods.inPeriod(testDate)) {
-			if (shouldBeInPeriod) {
-				System.out.println(testNumber + ": pass");
-			} else {
-				System.out.println(testNumber + ": fail");
-			}
-		} else {
-			if (shouldBeInPeriod) {
-				System.out.println(testNumber + ": fail");
-			} else {
-				System.out.println(testNumber + ": pass");
-			}
-		}
-	}
-
-	@SuppressWarnings("deprecation")
-	public static void main(String[] args) {
-		TimePeriods periods = new TimePeriods();
-		periods.addPeriod(new Date(80, 3, 2), new Date(80, 3, 5));
-		periods.addPeriod(new Date(80, 3, 7), new Date(80, 3, 9));
-		periods.print();
-
-		test(1, periods, new Date(80, 3, 1), false);
-		test(2, periods, new Date(80, 3, 6), false);
-		test(3, periods, new Date(80, 3, 4), true);
-		test(4, periods, new Date(80, 3, 8), true);
-		test(5, periods, new Date(80, 3, 10), false);
-
-		periods.addPeriod(new Date(80, 3, 2), new Date(80, 3, 9));
-		periods.print();
-
-		test(6, periods, new Date(80, 3, 1), false);
-		test(7, periods, new Date(80, 3, 6), true);
-		test(8, periods, new Date(80, 3, 4), true);
-		test(9, periods, new Date(80, 3, 8), true);
-		test(10, periods, new Date(80, 3, 10), false);
-
-		periods.addPeriod(new Date(80, 4, 2), new Date(80, 4, 9));
-		periods.addPeriod(new Date(80, 4, 4), new Date(80, 4, 7));
-		periods.print();
-
-		test(11, periods, new Date(80, 4, 3), true);
-		test(12, periods, new Date(80, 4, 5), true);
-		test(13, periods, new Date(80, 4, 8), true);
-		test(14, periods, new Date(80, 4, 1), false);
-		test(15, periods, new Date(80, 4, 10), false);
-
-		test(16, periods, new Date(80, 3, 1), false);
-		test(17, periods, new Date(80, 3, 6), true);
-		test(18, periods, new Date(80, 3, 4), true);
-		test(19, periods, new Date(80, 3, 8), true);
-
-		periods.addPeriod(new Date(80, 5, 2), new Date(80, 5, 9));
-		periods.addPeriod(new Date(80, 5, 7), new Date(80, 5, 12));
-		periods.print();
-
-		test(20, periods, new Date(80, 5, 1), false);
-		test(21, periods, new Date(80, 5, 3), true);
-		test(22, periods, new Date(80, 5, 8), true);
-		test(23, periods, new Date(80, 5, 11), true);
-		test(24, periods, new Date(80, 5, 13), false);
-
-		test(25, periods, new Date(80, 4, 3), true);
-		test(26, periods, new Date(80, 4, 5), true);
-		test(27, periods, new Date(80, 4, 8), true);
-		test(28, periods, new Date(80, 4, 1), false);
-		test(29, periods, new Date(80, 4, 10), false);
-
-		test(30, periods, new Date(80, 3, 1), false);
-		test(31, periods, new Date(80, 3, 6), true);
-		test(32, periods, new Date(80, 3, 4), true);
-		test(33, periods, new Date(80, 3, 8), true);
-
-		periods.addPeriod(new Date(70, 6, 2), new Date(70, 6, 9));
-		periods.addPeriod(new Date(70, 6, 20), new Date(70, 6, 28));
-		periods.addPeriod(new Date(70, 6, 7), new Date(70, 6, 22));
-		periods.print();
-
-		test(34, periods, new Date(70, 6, 1), false);
-		test(35, periods, new Date(70, 6, 3), true);
-		test(36, periods, new Date(70, 6, 21), true);
-		test(37, periods, new Date(70, 6, 15), true);
-		test(38, periods, new Date(70, 6, 8), true);
-		test(39, periods, new Date(70, 6, 21), true);
-		test(40, periods, new Date(70, 6, 29), false);
-
-		test(44, periods, new Date(80, 5, 1), false);
-		test(45, periods, new Date(80, 5, 3), true);
-		test(46, periods, new Date(80, 5, 8), true);
-		test(47, periods, new Date(80, 5, 11), true);
-		test(48, periods, new Date(80, 5, 13), false);
-
-		test(49, periods, new Date(80, 4, 3), true);
-		test(50, periods, new Date(80, 4, 5), true);
-		test(51, periods, new Date(80, 4, 8), true);
-		test(52, periods, new Date(80, 4, 1), false);
-		test(53, periods, new Date(80, 4, 10), false);
-
-		test(54, periods, new Date(80, 3, 1), false);
-		test(55, periods, new Date(80, 3, 6), true);
-		test(56, periods, new Date(80, 3, 4), true);
-		test(57, periods, new Date(80, 3, 8), true);
-
-		periods.addPeriod(new Date(71, 6, 2), new Date(71, 6, 9));
-		periods.addPeriod(new Date(71, 6, 9), new Date(71, 6, 28));
-		periods.print();
-
-		test(58, periods, new Date(71, 6, 1), false);
-		test(59, periods, new Date(71, 6, 3), true);
-		test(60, periods, new Date(71, 6, 9), true);
-		test(61, periods, new Date(71, 6, 11), true);
-		test(62, periods, new Date(71, 6, 29), false);
-
-		test(63, periods, new Date(70, 6, 1), false);
-		test(64, periods, new Date(70, 6, 3), true);
-		test(65, periods, new Date(70, 6, 21), true);
-		test(66, periods, new Date(70, 6, 15), true);
-		test(67, periods, new Date(70, 6, 8), true);
-		test(68, periods, new Date(70, 6, 21), true);
-		test(69, periods, new Date(70, 6, 29), false);
-
-		test(70, periods, new Date(80, 5, 1), false);
-		test(71, periods, new Date(80, 5, 3), true);
-		test(72, periods, new Date(80, 5, 8), true);
-		test(73, periods, new Date(80, 5, 11), true);
-		test(74, periods, new Date(80, 5, 13), false);
-
-		test(75, periods, new Date(80, 4, 3), true);
-		test(76, periods, new Date(80, 4, 5), true);
-		test(77, periods, new Date(80, 4, 8), true);
-		test(78, periods, new Date(80, 4, 1), false);
-		test(79, periods, new Date(80, 4, 10), false);
-
-		test(80, periods, new Date(80, 3, 1), false);
-		test(81, periods, new Date(80, 3, 6), true);
-		test(82, periods, new Date(80, 3, 4), true);
-		test(83, periods, new Date(80, 3, 8), true);
-
-	}
+	// public void print() {
+	// for (Marker marker : periods) {
+	// System.out.println("marker -- date: " + marker.date + " "
+	// + (marker.start ? "START" : "END"));
+	// }
+	// }
+	//
+	// public static void test(int testNumber, TimePeriods periods, Date
+	// testDate,
+	// boolean shouldBeInPeriod) {
+	// if (periods.inPeriod(testDate)) {
+	// if (shouldBeInPeriod) {
+	// System.out.println(testNumber + ": pass");
+	// } else {
+	// System.out.println(testNumber + ": fail");
+	// }
+	// } else {
+	// if (shouldBeInPeriod) {
+	// System.out.println(testNumber + ": fail");
+	// } else {
+	// System.out.println(testNumber + ": pass");
+	// }
+	// }
+	// }
+	//
+	// @SuppressWarnings("deprecation")
+	// public static void main(String[] args) {
+	// TimePeriods periods = new TimePeriods();
+	// periods.addPeriod(new Date(80, 3, 2), new Date(80, 3, 5));
+	// periods.addPeriod(new Date(80, 3, 7), new Date(80, 3, 9));
+	// periods.print();
+	//
+	// test(1, periods, new Date(80, 3, 1), false);
+	// test(2, periods, new Date(80, 3, 6), false);
+	// test(3, periods, new Date(80, 3, 4), true);
+	// test(4, periods, new Date(80, 3, 8), true);
+	// test(5, periods, new Date(80, 3, 10), false);
+	//
+	// periods.addPeriod(new Date(80, 3, 2), new Date(80, 3, 9));
+	// periods.print();
+	//
+	// test(6, periods, new Date(80, 3, 1), false);
+	// test(7, periods, new Date(80, 3, 6), true);
+	// test(8, periods, new Date(80, 3, 4), true);
+	// test(9, periods, new Date(80, 3, 8), true);
+	// test(10, periods, new Date(80, 3, 10), false);
+	//
+	// periods.addPeriod(new Date(80, 4, 2), new Date(80, 4, 9));
+	// periods.addPeriod(new Date(80, 4, 4), new Date(80, 4, 7));
+	// periods.print();
+	//
+	// test(11, periods, new Date(80, 4, 3), true);
+	// test(12, periods, new Date(80, 4, 5), true);
+	// test(13, periods, new Date(80, 4, 8), true);
+	// test(14, periods, new Date(80, 4, 1), false);
+	// test(15, periods, new Date(80, 4, 10), false);
+	//
+	// test(16, periods, new Date(80, 3, 1), false);
+	// test(17, periods, new Date(80, 3, 6), true);
+	// test(18, periods, new Date(80, 3, 4), true);
+	// test(19, periods, new Date(80, 3, 8), true);
+	//
+	// periods.addPeriod(new Date(80, 5, 2), new Date(80, 5, 9));
+	// periods.addPeriod(new Date(80, 5, 7), new Date(80, 5, 12));
+	// periods.print();
+	//
+	// test(20, periods, new Date(80, 5, 1), false);
+	// test(21, periods, new Date(80, 5, 3), true);
+	// test(22, periods, new Date(80, 5, 8), true);
+	// test(23, periods, new Date(80, 5, 11), true);
+	// test(24, periods, new Date(80, 5, 13), false);
+	//
+	// test(25, periods, new Date(80, 4, 3), true);
+	// test(26, periods, new Date(80, 4, 5), true);
+	// test(27, periods, new Date(80, 4, 8), true);
+	// test(28, periods, new Date(80, 4, 1), false);
+	// test(29, periods, new Date(80, 4, 10), false);
+	//
+	// test(30, periods, new Date(80, 3, 1), false);
+	// test(31, periods, new Date(80, 3, 6), true);
+	// test(32, periods, new Date(80, 3, 4), true);
+	// test(33, periods, new Date(80, 3, 8), true);
+	//
+	// periods.addPeriod(new Date(70, 6, 2), new Date(70, 6, 9));
+	// periods.addPeriod(new Date(70, 6, 20), new Date(70, 6, 28));
+	// periods.addPeriod(new Date(70, 6, 7), new Date(70, 6, 22));
+	// periods.print();
+	//
+	// test(34, periods, new Date(70, 6, 1), false);
+	// test(35, periods, new Date(70, 6, 3), true);
+	// test(36, periods, new Date(70, 6, 21), true);
+	// test(37, periods, new Date(70, 6, 15), true);
+	// test(38, periods, new Date(70, 6, 8), true);
+	// test(39, periods, new Date(70, 6, 21), true);
+	// test(40, periods, new Date(70, 6, 29), false);
+	//
+	// test(44, periods, new Date(80, 5, 1), false);
+	// test(45, periods, new Date(80, 5, 3), true);
+	// test(46, periods, new Date(80, 5, 8), true);
+	// test(47, periods, new Date(80, 5, 11), true);
+	// test(48, periods, new Date(80, 5, 13), false);
+	//
+	// test(49, periods, new Date(80, 4, 3), true);
+	// test(50, periods, new Date(80, 4, 5), true);
+	// test(51, periods, new Date(80, 4, 8), true);
+	// test(52, periods, new Date(80, 4, 1), false);
+	// test(53, periods, new Date(80, 4, 10), false);
+	//
+	// test(54, periods, new Date(80, 3, 1), false);
+	// test(55, periods, new Date(80, 3, 6), true);
+	// test(56, periods, new Date(80, 3, 4), true);
+	// test(57, periods, new Date(80, 3, 8), true);
+	//
+	// periods.addPeriod(new Date(71, 6, 2), new Date(71, 6, 9));
+	// periods.addPeriod(new Date(71, 6, 9), new Date(71, 6, 28));
+	// periods.print();
+	//
+	// test(58, periods, new Date(71, 6, 1), false);
+	// test(59, periods, new Date(71, 6, 3), true);
+	// test(60, periods, new Date(71, 6, 9), true);
+	// test(61, periods, new Date(71, 6, 11), true);
+	// test(62, periods, new Date(71, 6, 29), false);
+	//
+	// test(63, periods, new Date(70, 6, 1), false);
+	// test(64, periods, new Date(70, 6, 3), true);
+	// test(65, periods, new Date(70, 6, 21), true);
+	// test(66, periods, new Date(70, 6, 15), true);
+	// test(67, periods, new Date(70, 6, 8), true);
+	// test(68, periods, new Date(70, 6, 21), true);
+	// test(69, periods, new Date(70, 6, 29), false);
+	//
+	// test(70, periods, new Date(80, 5, 1), false);
+	// test(71, periods, new Date(80, 5, 3), true);
+	// test(72, periods, new Date(80, 5, 8), true);
+	// test(73, periods, new Date(80, 5, 11), true);
+	// test(74, periods, new Date(80, 5, 13), false);
+	//
+	// test(75, periods, new Date(80, 4, 3), true);
+	// test(76, periods, new Date(80, 4, 5), true);
+	// test(77, periods, new Date(80, 4, 8), true);
+	// test(78, periods, new Date(80, 4, 1), false);
+	// test(79, periods, new Date(80, 4, 10), false);
+	//
+	// test(80, periods, new Date(80, 3, 1), false);
+	// test(81, periods, new Date(80, 3, 6), true);
+	// test(82, periods, new Date(80, 3, 4), true);
+	// test(83, periods, new Date(80, 3, 8), true);
+	//
+	// }
 }
