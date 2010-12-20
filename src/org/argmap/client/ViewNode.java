@@ -66,6 +66,16 @@ public abstract class ViewNode extends TreeItem {
 		return (ViewNode) getParentItem();
 	}
 
+	public ViewNode getOldestAncestor() {
+		ViewNode currentNode = this;
+		ViewNode nextParent = currentNode.getParent();
+		while (nextParent != null) {
+			currentNode = nextParent;
+			nextParent = currentNode.getParent();
+		}
+		return currentNode;
+	}
+
 	public void logNodeRecursive(int level, Log log,
 			boolean includeChildrenOfClosedNodes) {
 		if (Log.on) {

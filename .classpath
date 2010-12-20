@@ -7,7 +7,7 @@
 	<classpathentry kind="lib" path="war/WEB-INF/lib/lucene-core-3.0.2.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/objectify-2.2.2.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/gwtquery-1.0.0-SNAPSHOT.jar"/>
-	<classpathentry kind="con" path="com.google.gwt.eclipse.core.GWT_CONTAINER/GWT (1)"/>
 	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER/App Engine (2)"/>
+	<classpathentry kind="con" path="com.google.gwt.eclipse.core.GWT_CONTAINER/GWT (2)"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

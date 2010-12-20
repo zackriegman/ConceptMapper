@@ -21,6 +21,10 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+/* TODO: ModeVersions: for some reason child nodes of a deleted and re-added link are not showing up in the first attachement of the node
+ * so you have to browse to a later point in time, and open up the link, and the go back in time, in order to open up the link node.  
+ * (Not sure if the problem is confined to links or not.)
+ */
 /*TODO: client throws an exception when removing a link and re-adding it (at least if you make a single change to the link in the interim
  * I haven't tested other scenarios yet)
  */
@@ -70,7 +74,7 @@ import com.google.gwt.user.client.ui.Widget;
 //TODO: often times conflict dialog is not displayed and edits are silently overwritten...
 //TODO: rating an item seems to scroll it out of view!
 //TODO: deleting an items sometimes causes view to scroll to seemingly unrelated place...
-//TODO: the text of linked propositions and their children does not automatically update when edited elsewhere within the same window...
+//TODO: the text of linked propositions and their children does not automatically update when edited elsewhere within the same window... (at least for links added in the current session)
 //TODO: cleanup deprecated stuff from SDK upgrade (at the moment there is no documentation about this so I'll have to wait)
 //TODO: fix side bar border formatting on Chrome
 

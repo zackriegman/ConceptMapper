@@ -163,6 +163,12 @@ public class ModeVersions extends ResizeComposite implements
 	 */
 	private Date currentDate;
 
+	/*
+	 * the date at the time ModeVersions starts displaying versions for the
+	 * current tree (used for formating dates in the change list)
+	 */
+	private static Date now = new Date();
+
 	public ModeVersions(ModeEdit editModePair) {
 		super();
 
@@ -241,6 +247,7 @@ public class ModeVersions extends ResizeComposite implements
 							log.log("Got back these changes:\n"
 									+ changesMaps.toString());
 
+						now = new Date();
 						treeClone = new ArgTree();
 						treeClone.addCloseHandlerTracked(ModeVersions.this);
 						treeClone.addOpenHandlerTracked(ModeVersions.this);
@@ -304,6 +311,7 @@ public class ModeVersions extends ResizeComposite implements
 
 					@Override
 					public void call(NodeChangesMapsAndRootChanges changes) {
+						now = new Date();
 
 						treeClone = new ArgTree();
 						treeClone.addCloseHandlerTracked(ModeVersions.this);
@@ -501,14 +509,30 @@ public class ModeVersions extends ResizeComposite implements
 		}
 	}
 
+	private TimePeriods getOrMakePeriods(Map<Long, TimePeriods> newPeriods,
+			TimePeriods baseTimePeriods, Long propID) {
+		TimePeriods newPeriod = newPeriods.get(propID);
+		if (newPeriod == null) {
+			newPeriod = baseTimePeriods.copy();
+			newPeriods.put(propID, newPeriod);
+		}
+		return newPeriod;
+	}
+
 	/*
-	 * TODO still need to make alwaysHidden Changes actually hidden when
-	 * building the change list.
-	 * 
 	 * TODO this just does the initial hide... need to redo this every time the
 	 * user opens and loads unloaded children for the first time... right?
 	 * 
-	 * TODO explain what this function does in a comment here
+	 * Subtrees might have changes listed for periods which they are not
+	 * attached to the tree, which can be confusing and distracting for a user
+	 * trying to browse a trees changes. This happens because a tree can link to
+	 * a pre-existing proposition. That link will incorporate a subtree, and all
+	 * the changes of that subtree, into the larger tree. Some of the changes
+	 * associated with the subtree will predate the linking. Thus, when a user
+	 * is browsing through the changes, some of the changes will correspond to
+	 * events that can not be seen in the tree, unless those irrelevant events
+	 * are hidden. This method walks through the tree, and hides changes for
+	 * times when they are not attached to the tree that the user is browsing.
 	 */
 	private void recursiveHideLinkedSubtreesDuringUnlinkedPeriods(
 			ViewNodeVer viewNodeVer, TimePeriods hidePeriods) {
@@ -525,69 +549,90 @@ public class ModeVersions extends ResizeComposite implements
 			}
 		}
 
+		/*
+		 * if this is an argument, we need to build new hide periods for any
+		 * linked children
+		 */
 		if (viewNodeVer instanceof ViewArgVer) {
-			// sort the node's viewChangeList
-			Collections.sort(viewChangeList, ViewChange.DATE_COMPARATOR);
-
 			/*
-			 * start building more restrictive hidePeriods for the children that
-			 * need them
+			 * Start building more restrictive hidePeriods for the children that
+			 * need them. There are two possibilities for the first link to a
+			 * child. A child could be created and then unlinked or linked and
+			 * then unlinked. In the case where the child is created, that child
+			 * can have no changes before its creation, so we don't need to have
+			 * a pre creation hide period (and note that although the child
+			 * might have linked descendants that existed well before its
+			 * creation date, the changes associated with those links will be
+			 * hidden based on when the link was created, so no hide periods
+			 * needs to be created based on the date of the child's creation).
+			 * In the case where a child is linked as its first link to the
+			 * parent, it might have changes that predate the linking and
+			 * therefore a hidePeriod needs to be created for all changes that
+			 * predate the linking. Next, it's possible for a node to be
+			 * unlinked and then re-linked later, in which case we need to hide
+			 * all the changes between unlinking and re-linking. And finally, we
+			 * need to change all of the changes to a child after it has been
+			 * unlinked. In summary we must hide all changes before the first
+			 * link, between each unlink-link pair, and after the last unlink.
+			 * The two for() loops below should do that.
 			 */
+			/*
+			 * sort the node's viewChangeList so because the for loops depend on
+			 * the list to be in date order.
+			 */
+			Collections.sort(viewChangeList, ViewChange.DATE_COMPARATOR);
 			Map<Long, TimePeriods> newPeriods = new HashMap<Long, TimePeriods>();
-			Map<Long, ViewChange> lastChanges = new HashMap<Long, ViewChange>();
+			Map<Long, ViewChange> lastUnlinks = new HashMap<Long, ViewChange>();
 			for (ViewChange viewChange : viewChangeList) {
 				Long propID = viewChange.change.propID;
 				if (viewChange.change.changeType == ChangeType.PROP_LINK) {
 
-					TimePeriods newPeriod = newPeriods.get(propID);
-					if (newPeriod == null) {
-						newPeriod = hidePeriods.copy();
-						newPeriods.put(propID, newPeriod);
-					}
+					TimePeriods newPeriod = getOrMakePeriods(newPeriods,
+							hidePeriods, propID);
 
-					ViewChange lastViewChange = lastChanges.get(propID);
-					if (lastViewChange != null
-							&& lastViewChange.change.changeType == ChangeType.PROP_UNLINK) {
-						newPeriod.addPeriod(lastViewChange.change.date,
+					ViewChange lastUnlink = lastUnlinks.remove(propID);
+					if (lastUnlink != null) {
+						newPeriod.addPeriod(lastUnlink.change.date,
 								viewChange.change.date);
 					} else {
 						newPeriod.addPeriod(TimePeriods.THIRTY_YEARS_AGO,
 								viewChange.change.date);
 					}
 
-					lastChanges.put(propID, viewChange);
 				} else if (viewChange.change.changeType == ChangeType.PROP_UNLINK) {
-					lastChanges.put(propID, viewChange);
+					lastUnlinks.put(propID, viewChange);
 				}
 			}
+			/*
+			 * finish building more restrictive hide period for children that
+			 * need it
+			 */
+			for (ViewChange viewChange : lastUnlinks.values()) {
+				TimePeriods newPeriod = getOrMakePeriods(newPeriods,
+						hidePeriods, viewChange.change.propID);
 
-			// for each child node
+				/*
+				 * we got here because there was a PROP_UNLINK which wasn't
+				 * removed from the map, which means we had a PROP_UNLINK with
+				 * no following link, which means that all subsequent changes
+				 * should be hidden. So we add a hide period from the last
+				 * change to 100 years from now (tomorrow would be enough, but
+				 * just to be safe...).
+				 */
+				newPeriod.addPeriod(viewChange.change.date,
+						TimePeriods.ONE_HUNDRED_YEARS_FROM_NOW);
+
+			}
+
+			/*
+			 * for each child node call this recursive function with either a
+			 * newly construction TimePeriods defining hide periods, or, if no
+			 * new hide periods was constructed for the child node, just pass on
+			 * the same hidePeriods that was used for this node.
+			 */
 			for (ViewNodeVer child : new ViewNodeVer.CombinedViewIterator(
 					viewNodeVer)) {
 				Long propID = child.getNodeID();
-
-				/*
-				 * finish building a more restrictive hide period if this child
-				 * needs it
-				 */
-				ViewChange lastViewChange = lastChanges.get(propID);
-				if (lastViewChange != null
-						&& lastViewChange.change.changeType == ChangeType.PROP_UNLINK) {
-					TimePeriods newPeriod = newPeriods.get(propID);
-					if (newPeriod == null) {
-						newPeriod = hidePeriods.copy();
-						newPeriods.put(propID, newPeriod);
-					}
-					/*
-					 * we got here because lastChanges for propID was never set
-					 * to a Change of type PROP_LINK, which means we had a
-					 * PROP_UNLINK with no following link, which means that all
-					 * subsequent changes should be hidden. So we add a hide
-					 * period from the last change to 100 years from now.
-					 */
-					newPeriod.addPeriod(lastViewChange.change.date,
-							TimePeriods.ONE_HUNDRED_YEARS_FROM_NOW);
-				}
 
 				if (newPeriods.containsKey(propID)) {
 					recursiveHideLinkedSubtreesDuringUnlinkedPeriods(child,
@@ -597,7 +642,13 @@ public class ModeVersions extends ResizeComposite implements
 							hidePeriods);
 				}
 			}
-		} else {
+		}
+		/*
+		 * if this is not an argument, it cannot have linked children, and thus
+		 * we can call the recursive function without building new hide periods
+		 * for linked children.
+		 */
+		else {
 			for (ViewNodeVer child : new ViewNodeVer.CombinedViewIterator(
 					viewNodeVer)) {
 				recursiveHideLinkedSubtreesDuringUnlinkedPeriods(child,
@@ -606,34 +657,86 @@ public class ModeVersions extends ResizeComposite implements
 		}
 	}
 
+	/* setup the date formats for the list */
+	private static final DateTimeFormat dateFormatYear = DateTimeFormat
+			.getFormat("hh:mm a, MMM d, yyyy [ss:SSS]");
+	private static final DateTimeFormat dateFormatMonth = DateTimeFormat
+			.getFormat("hh:mm a, MMM d [ss:SSS]");
+	private static final DateTimeFormat dateFormatDay = DateTimeFormat
+			.getFormat("hh:mm a, EEEE [ss:SSS]");
+	private static final DateTimeFormat dateFormatTime = DateTimeFormat
+			.getFormat("hh:mm a [ss:SSS]");
+
+	private static final long SIX_DAYS_IN_MILLIS = 1000 * 60 * 60 * 24 * 6;
+
+	@SuppressWarnings("deprecation")
+	private String formatDate(Date date) {
+		if (now.getYear() != date.getYear()) {
+			return dateFormatYear.format(date);
+		} else if (date.getDay() != now.getDay()
+				&& date.getTime() < now.getTime() + SIX_DAYS_IN_MILLIS) {
+			return dateFormatDay.format(date);
+		} else if (now.getMonth() != date.getMonth()) {
+			return dateFormatMonth.format(date);
+		} else {
+			return dateFormatTime.format(date);
+		}
+
+	}
+
 	private void loadVersionListFromTimeMachine() {
+		/* remove the handler so it doesn't fire events while we are working */
 		listBoxChangeHandlerRegistration.removeHandler();
+
+		/*
+		 * get the date of the tree at the time it is currently displayed at in
+		 * milliseconds
+		 */
 		Long currentDate = this.currentDate.getTime();
+
+		/* clear the list */
 		versionList.clear();
 		Log log = Log.getLog("vm.lvlftm");
-		DateTimeFormat dateFormat = DateTimeFormat
-				.getFormat("yyyy MMM d kk:mm:ss:SSS");
 
+		/* build the list */
 		List<ViewChange> reverseList = getChangeList();
+
+		/* reverse the list so youngest changes come first */
 		Collections.reverse(reverseList);
 		int i = 0;
 		int newSelectionIndex = -1;
 		for (ViewChange viewChange : reverseList) {
 			Change change = viewChange.change;
+
+			/* figure out which item should be selected in the list */
 			Long changeTime = change.date.getTime();
 			int comparison = currentDate.compareTo(changeTime);
+			/* if we have a change at the exact same date, we use that */
 			if (comparison == 0) {
 				log.log("###########   Selecting Item:" + i + "; changeTime:"
 						+ changeTime + "; currentDate:" + currentDate);
 				newSelectionIndex = i;
-			} else if (comparison > 0 && newSelectionIndex == -1) {
+			}
+			/*
+			 * if we reach a date that is younger than the current date of the
+			 * tree before we have reached a change with the same date (this
+			 * could happen for instance if the branch containing the node with
+			 * the currently selected change is closed, and that change has
+			 * become invisible), then we use the next change instead
+			 */
+			else if (comparison > 0 && newSelectionIndex == -1) {
 				log.log("###########   Selecting Item:" + i
 						+ " - 1; before item with changeTime:" + changeTime
 						+ "; currentDate:" + currentDate);
 				newSelectionIndex = i - 1;
 			}
+
+			/*
+			 * add the item, either with the date of the change or as place
+			 * holder for hidden changes
+			 */
 			if (!viewChange.hidden) {
-				versionList.addItem("" + dateFormat.format(change.date) + " ["
+				versionList.addItem("" + formatDate(change.date) + " ["
 						+ change.changeType + "]", "" + changeTime);
 			} else {
 				versionList.addItem("----------------------------------------",
@@ -656,10 +759,25 @@ public class ModeVersions extends ResizeComposite implements
 	}
 
 	public List<ViewChange> getChangeList() {
-		List<ViewChange> viewChangeList = timeMachineMap.firstValues();
+
+		/*
+		 * build a list of ViewChanges, with one change per date, which includes
+		 * only changes not marked alwaysHidden.
+		 */
+		Collection<List<ViewChange>> mapValues = timeMachineMap.values();
+		List<ViewChange> viewChangeList = new ArrayList<ViewChange>(
+				mapValues.size());
+		for (List<ViewChange> viewChanges : mapValues) {
+			for (ViewChange viewChange : viewChanges) {
+				if (!viewChange.alwaysHidden) {
+					viewChangeList.add(viewChange);
+					break;
+				}
+			}
+		}
+
 		List<ViewChange> returnList = new ArrayList<ViewChange>(
 				viewChangeList.size());
-
 		/*
 		 * this for loop adds all the non-hidden changes and also adds hidden
 		 * add changes that are contained in the same block of consecutive
@@ -820,6 +938,10 @@ public class ModeVersions extends ResizeComposite implements
 		}
 
 		viewNodeVer.setLoaded(true);
+
+		recursiveHideLinkedSubtreesDuringUnlinkedPeriods(
+				(ViewNodeVer) viewNodeVer.getOldestAncestor(),
+				new TimePeriods());
 
 		zoomToCurrentDateAndReloadChangeList(viewNodeVer, viewChanges,
 				viewChanges.lastKey());

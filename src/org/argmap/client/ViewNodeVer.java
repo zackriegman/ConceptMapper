@@ -50,6 +50,8 @@ public interface ViewNodeVer {
 
 	public void setLoaded(boolean isLoaded);
 
+	public ViewNode getOldestAncestor();
+
 	public class CombinedViewIterator implements Iterator<ViewNodeVer>,
 			Iterable<ViewNodeVer> {
 		private ViewNodeVer viewNodeVer;
