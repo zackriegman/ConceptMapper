@@ -24,6 +24,13 @@ import com.google.gwt.user.client.ui.Widget;
 /*
  * simple linking (create two root nodes, one linking to other's child) causes versions mode problems: link
  * change is not showing up, and the delete change that preceeds the link change causes an exception.
+ * I think I might have figured out part of the problem?  The timeMachineMap is keyed on date, which
+ * has brought up a problem I was always a little concerned about, namely the possibility of two different
+ * changes having the same date.  In this case, it seems that the prop deletion and the prop link changes
+ * have the same date, which makes some sense given that they are performed sequentially within a single function
+ * on the server.  As a result they are being lumped into the same changes list in the timeMachineMap.  This
+ * might also be responsible for the exception.
+ * Possible fix: keep a nanosecond value?
  */
 /* TODO: ModeVersions: for some reason child nodes of a deleted and re-added link are not showing up in the first attachement of the node
  * so you have to browse to a later point in time, and open up the link, and the go back in time, in order to open up the link node.  

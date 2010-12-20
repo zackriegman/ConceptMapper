@@ -759,6 +759,7 @@ public class ModeVersions extends ResizeComposite implements
 	}
 
 	public List<ViewChange> getChangeList() {
+		Log log = Log.getLog("mv.gcl");
 
 		/*
 		 * build a list of ViewChanges, with one change per date, which includes
@@ -767,7 +768,9 @@ public class ModeVersions extends ResizeComposite implements
 		Collection<List<ViewChange>> mapValues = timeMachineMap.values();
 		List<ViewChange> viewChangeList = new ArrayList<ViewChange>(
 				mapValues.size());
+		log.log("all changes in change list");
 		for (List<ViewChange> viewChanges : mapValues) {
+			log.logln(viewChanges, "\n");
 			for (ViewChange viewChange : viewChanges) {
 				if (!viewChange.alwaysHidden) {
 					viewChangeList.add(viewChange);
@@ -820,6 +823,7 @@ public class ModeVersions extends ResizeComposite implements
 		if (oldestChange.hidden) {
 			returnList.add(oldestChange);
 		}
+		log.finish();
 		return returnList;
 	}
 
