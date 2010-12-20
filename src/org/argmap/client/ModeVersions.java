@@ -1278,7 +1278,10 @@ public class ModeVersions extends ResizeComposite implements
 					 * anyway...)
 					 */
 					if (viewNode instanceof ViewPropVer) {
-						((ViewPropVer) viewNode).proposition.content = vC.change.oldContent;
+						log.logln("SETTING CONTENT ON UNDO OF PROP DELETION:"
+								+ vC.change.oldContent);
+						((ViewPropVer) viewNode)
+								.setContent(vC.change.oldContent);
 						((ViewPropVer) viewNode)
 								.setNegated(vC.change.propNegated);
 					}

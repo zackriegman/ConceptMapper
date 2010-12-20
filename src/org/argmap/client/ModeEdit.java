@@ -361,7 +361,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 
 					@Override
 					public void call(PartialTrees results) {
-						Log log = Log.getLog("me.guaa.cb", false);
+						Log log = Log.getLog("me.guaa.cb", false, true);
 						log.logln("loadedNodes:\npropViews:"
 								+ Log.multiMapToString(loadedProps)
 								+ "\nargViews:"
@@ -732,6 +732,7 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			final ViewArgEdit parentArgView = propViewToRemove.parentArgView();
 			final Proposition propToLinkTo = (Proposition) propMatches.nodes
 					.get(propMatches.rootIDs.get(resultIndex));
+			propViewToRemove.markAsToBeDeleted();
 			ServerComm.replaceWithLinkAndGet(parentArgView.argument,
 					propToLinkTo, propViewToRemove.proposition, negated,
 					new LocalCallback<ArgMapService.PartialTrees>() {

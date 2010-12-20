@@ -14,6 +14,7 @@ public class Log {
 	private boolean immediatePrint;
 	private int indent;
 	private final String logName;
+	private boolean suppress;
 	StringBuilder content;
 
 	/*
@@ -27,8 +28,14 @@ public class Log {
 	}
 
 	public static Log getLog(String logName, boolean immediatePrint) {
+		return getLog(logName, immediatePrint, false);
+	}
+
+	public static Log getLog(String logName, boolean immediatePrint,
+			boolean suppress) {
 		Log log = new Log(logName);
 		log.immediatePrint = immediatePrint;
+		log.suppress = suppress;
 		openLogs.add(log);
 		return log;
 	}
@@ -39,7 +46,7 @@ public class Log {
 	}
 
 	public void finish() {
-		if (on) {
+		if (on && !suppress) {
 			assert openLogs.contains(this);
 			if (!immediatePrint) {
 				GWT.log(logName + ": " + content.toString());
@@ -73,13 +80,12 @@ public class Log {
 	}
 
 	public void log(String string) {
-		if (on) {
+		if (on && !suppress) {
 			assert openLogs.contains(this);
-			String indentString = spaces(indent * 4);
 			if (immediatePrint) {
-				GWT.log(logName + ": " + indentString + string);
+				GWT.log(logName + ": " + string);
 			} else {
-				content.append(indentString + string);
+				content.append(string);
 			}
 		}
 	}
@@ -94,20 +100,20 @@ public class Log {
 	}
 
 	public void logln(String string) {
-		if (on) {
-			log("\n" + string);
+		if (on && !suppress) {
+			log("\n" + spaces(indent * 4) + string);
 		}
 	}
 
 	public void indent() {
-		if (on) {
+		if (on && !suppress) {
 			assert openLogs.contains(this);
 			indent++;
 		}
 	}
 
 	public void unindent() {
-		if (on) {
+		if (on && !suppress) {
 			assert openLogs.contains(this);
 			indent--;
 		}

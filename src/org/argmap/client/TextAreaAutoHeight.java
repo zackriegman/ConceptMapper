@@ -76,7 +76,7 @@ public class TextAreaAutoHeight extends TextArea {
 
 		Log log;
 		if (Log.on) {
-			log = Log.getLog("taah.r");
+			log = Log.getLog("taah.r", false, true);
 			log.log("resizing node:" + getText());
 			log.log("; hash:" + hashCode());
 			log.logln("styleContext:" + styleContext + "; lastStyleContext:"

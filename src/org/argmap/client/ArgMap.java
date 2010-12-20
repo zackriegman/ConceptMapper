@@ -21,6 +21,10 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+/*
+ * simple linking (create two root nodes, one linking to other's child) causes versions mode problems: link
+ * change is not showing up, and the delete change that preceeds the link change causes an exception.
+ */
 /* TODO: ModeVersions: for some reason child nodes of a deleted and re-added link are not showing up in the first attachement of the node
  * so you have to browse to a later point in time, and open up the link, and the go back in time, in order to open up the link node.  
  * (Not sure if the problem is confined to links or not.)

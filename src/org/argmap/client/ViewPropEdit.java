@@ -47,7 +47,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 			"probably true (~75% chance of being true)",
 			"definitely true (~100% chance of being true)" };
 
-	// boolean deleted = false;
+	private boolean toBeDeleted = false;
 
 	public static ViewPropEdit getLastPropositionWithFocus() {
 		return lastPropositionWithFocus;
@@ -382,8 +382,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		String trimmedPropositionContent = proposition.getContent() == null ? ""
 				: proposition.getContent().trim();
 		if (!trimmedPropositionContent.equals(trimmedTextAreaContent)) {
-			this.proposition.setContent(trimmedTextAreaContent);
-			ServerComm.updateProp(this.proposition);
+			if (toBeDeleted) {
+				Log.log("vpe.sctsic", "not saving because toBeDeleted flagged");
+			} else {
+				this.proposition.setContent(trimmedTextAreaContent);
+				ServerComm.updateProp(this.proposition);
+			}
 		}
 	}
 
@@ -519,6 +523,10 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 		}
 	}
 
+	public void markAsToBeDeleted() {
+		toBeDeleted = true;
+	}
+
 	private boolean handleKeyBackspaceOrDelete(int charCode) {
 		/* if the user has selected any text */
 		if (textArea.getSelectionLength() != 0) {
@@ -537,10 +545,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 					&& !textArea.getText().equals("")) {
 				if (getChildCount() == 0) {
 					/* merge With Previous Sibling */
+					this.toBeDeleted = true;
 					mergePropsAndDeleteOne(preceedingSibling, this,
 							preceedingSibling, this);
 				} else if (preceedingSibling.getChildCount() == 0) {
 					/* merge Previous Sibling With This */
+					preceedingSibling.toBeDeleted = true;
 					mergePropsAndDeleteOne(preceedingSibling, this, this,
 							preceedingSibling);
 				} else {
@@ -548,6 +558,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				}
 			} else if (textArea.getText().equals("") && getChildCount() == 0
 					&& !isLink()) {
+				toBeDeleted = true;
 				if (isTopLevel() || getParent().getChildCount() > 1
 						|| parentArgumentHasTitle()) {
 					/*
@@ -582,10 +593,12 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 					&& !isLink() && !isTopLevel()) {
 				if (getChildCount() == 0) {
 					/* merge With Subsequent Sibling */
+					this.toBeDeleted = true;
 					mergePropsAndDeleteOne(this, followingSibling,
 							followingSibling, this);
 				} else if (followingSibling.getChildCount() == 0) {
 					/* merge Subsequent Sibling With This */
+					followingSibling.toBeDeleted = true;
 					mergePropsAndDeleteOne(this, followingSibling, this,
 							followingSibling);
 				} else {
@@ -593,6 +606,7 @@ public class ViewPropEdit extends ViewProp implements ClickHandler,
 				}
 			} else if (textArea.getText().equals("") && getChildCount() == 0
 					&& !isLink()) {
+				toBeDeleted = true;
 				if (isTopLevel() || getParent().getChildCount() > 1
 						|| parentArgumentHasTitle()) {
 					refocusFollowing(this);
