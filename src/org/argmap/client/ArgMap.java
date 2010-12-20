@@ -31,6 +31,8 @@ import com.google.gwt.user.client.ui.Widget;
  * on the server.  As a result they are being lumped into the same changes list in the timeMachineMap.  This
  * might also be responsible for the exception.
  * Possible fix: keep a nanosecond value?
+ * but see: http://groups.google.com/group/google-appengine/browse_thread/thread/c0d16119a2149574?pli=1
+ * and: http://groups.google.com/group/google-appengine/browse_thread/thread/e263ed5bfc4f7efc/c2c2469ed9a31c7d
  */
 /* TODO: ModeVersions: for some reason child nodes of a deleted and re-added link are not showing up in the first attachement of the node
  * so you have to browse to a later point in time, and open up the link, and the go back in time, in order to open up the link node.  
