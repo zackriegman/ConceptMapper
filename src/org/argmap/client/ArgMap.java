@@ -21,63 +21,9 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/*
- * open root prop 'testing add' one level.  go to versions. go back in time one step. 
- * open up link children:  they are empty even though they should have text...
- * 
- * but if you open up reasoning for so the link show, and rather than open up the link at that point, you go to the point
- * in time of the re-link, and then you open of the link, and then you go back to the point in time of the original link, the
- * the children are shown correctly.
- * 
- * actually, if you do it the first way, so that the children are shown empty when they should have text, and then
- * you go forward in time to the point where the children have been deleted and different children have been added, and then you
- * go backwards in time back to where they should have text, they will at that point have text.
- * 
- * doesn't seem to be limited to links.  deleted nodes in general sometimes do not seem to be restored with their text.  See 'simple tree',
- * goto to versions mode with tree closed, open one level, goto latest change where first arg has child, open arg, child should have text but
- * doesn't.
- * 
- * OK, I have a theory about what is going on here.  When a node is opened (or when it is loaded) the
- * program zooms the node's children to the right time.  However (!) a child that was deleted has 
- * no content until the undelete is processed.  The undelete change lives in the parent that was just opened,
- * not in the child.  However, the program zooms the children of the open node, based on the children's
- * changes.  When I used to generate an extra modification change for each deletion, there was a modification
- * that belonged to the child that would give the child node its content at the time of deletion.  But
- * when I eliminated that modification (because it clutters up the change list without serving a purpose)
- * the deleted nodes were left contentless.  One simple way to address this would be to populate nodes
- * with their content at the time of deletion when they are added to the tree, based on their parent's delete
- * event.
- * 
- * Make sure to also think about other info contained in delete events such as negation for props and pro/con for args?
- * 
- * ok, so I decided that the best approach is to make dummy nodes actual nodes that merely display
- * "loading from server", and remove the ViewDummyVer class.  I've done this.
- * 
- * Now I have to remove the code that tests a node to make sure that it is not a dummy before before operating on it
- * when moving the tree backwards.  That way the negated, pro/con, content and all other info will already be loaded
- * into the dummy nodes.
- * 
- * I'll also want to convert dummy nodes into real nodes, thereby preserving the info that will not be loaded into them,
- * instead of replacing them with real nodes.
- * 
- * And while I'm at it, I'll want to make ModeVersions.mergeLoadedNode() use the integrated iterator in ViewNodeVer to clean things up
- * a little bit.
- * 
- * And I'll also want to transition ModeEdit to the new dummy node approach.
- */
-
-/*
- * get rid of ViewDummyVer
- */
-/*
- * when a root proposition is first added, program suggest using it instead (as a link) of itself!
- */
 /* TODO: ModeVersions: for some reason child nodes of a deleted and re-added link are not showing up in the first attachement of the node
  * so you have to browse to a later point in time, and open up the link, and the go back in time, in order to open up the link node.  
  * (Not sure if the problem is confined to links or not.)
- */
-/*TODO: client throws an exception when removing a link and re-adding it (at least if you make a single change to the link in the interim
- * I haven't tested other scenarios yet)
  */
 /*TODO: what happens in ModeVersions if I first link to a node as negated, then delete it, then link to it as non-negated and delete that
  * (or vice-versa)?  Nodes are stores by ID in the deletedNodes list. Since its stored in a hashmap, storing the same deleted node twice will
@@ -89,6 +35,11 @@ import com.google.gwt.user.client.ui.Widget;
  * it is re-added to the tree for the first time.
  */
 //TODO: test opening negated links in versions mode (probably won't work!!!)
+
+/*TODO: client throws an exception when removing a link and re-adding it (at least if you make a single change to the link in the interim
+ * I haven't tested other scenarios yet) */
+/* TODO transition ModeEdit to the new dummy node approach and get rid of ViewDummyVer */
+/* TODO when a root proposition is first added, program suggest using it instead (as a link) of itself! */
 //TODO: fix versions mode formating of links
 //TODO: versioning root node with no modifications/adds throws exception because of empty change list
 //TODO: do some basic testing of versioning of deleted top level nodes
