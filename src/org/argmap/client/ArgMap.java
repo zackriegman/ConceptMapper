@@ -22,6 +22,9 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /*
+ * when a root proposition is first added, program suggest using it instead (as a link) of itself!
+ */
+/*
  * simple linking (create two root nodes, one linking to other's child) causes versions mode problems: link
  * change is not showing up, and the delete change that preceeds the link change causes an exception.
  * I think I might have figured out part of the problem?  The timeMachineMap is keyed on date, which

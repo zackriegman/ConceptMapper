@@ -2,7 +2,6 @@ package org.argmap.client;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,15 +11,7 @@ import org.argmap.client.ArgMapService.NodeChangesMaps;
 public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	public List<ViewChange> viewChanges = new ArrayList<ViewChange>();
 	public Map<Long, ViewNodeVer> deletedViews = new HashMap<Long, ViewNodeVer>();
-	public Date closedDate;
-
-	public Date getClosedDate() {
-		return closedDate;
-	}
-
-	public void setClosedDate(Date closedDate) {
-		this.closedDate = closedDate;
-	}
+	public Long changeIDOnClose;
 
 	public ViewArgVer() {
 		super();
@@ -129,5 +120,16 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	@Override
 	public void clearDeletedViews() {
 		deletedViews.clear();
+	}
+
+	@Override
+	public Long getChangeIDOnClose() {
+		return changeIDOnClose;
+	}
+
+	@Override
+	public void setChangeIDOnClose(Long changeIDOnClose) {
+		this.changeIDOnClose = changeIDOnClose;
+
 	}
 }

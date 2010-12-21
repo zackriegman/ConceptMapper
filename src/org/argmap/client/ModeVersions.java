@@ -49,7 +49,11 @@ public class ModeVersions extends ResizeComposite implements
 	 * As users open and close ViewNodes in the tree, the change lists is
 	 * updated to only show changes relevant to opened nodes, or nodes that
 	 * would be opened if they had not been deleted at the point in time
-	 * currently selected.
+	 * currently selected. (The idea is that if a user closes a part of the tree
+	 * that means he does not want to see changes having to do with that part of
+	 * the tree; this is also important because when the user clicks on the
+	 * change, if the tree is closed he/she won't see any change in the tree
+	 * which will be confusing.)
 	 * 
 	 * When the user selects a new change from the change list the program
 	 * applies the intermediate changes to the tree to move the tree either
@@ -57,13 +61,15 @@ public class ModeVersions extends ResizeComposite implements
 	 * that the user selected.
 	 * 
 	 * In order to do this the program keeps a list of all the relevant changes,
-	 * in the timeMachineMap field, ordered by the date of the change. Each date
+	 * in the timeMachineMap field, ordered by the id of the change. Ids are set
+	 * monotonically incrementing on the server, so every change an id that is
+	 * greater than the id of a change that happened earlier. Each id
 	 * corresponds to a single change, but may correspond to multiple ViewNodes
-	 * because the same Node can exist in multiple points in a tree if the Node
-	 * has been linked to by different Arguments within a tree. Thus the
-	 * timeMachineMap is a SortedMultiMap, sorted and keyed by the date of each
-	 * change, with a list of ViewNodes that represent the Node changed by the
-	 * Change object.
+	 * because the same Proposition can exist in multiple points in a tree if
+	 * the Proposition has been linked to by different Arguments within a tree.
+	 * Thus the timeMachineMap is a SortedMultiMap, sorted and keyed by the id
+	 * of each change, with a list of ViewNodes that represent the Node changed
+	 * by the Change object.
 	 * 
 	 * The timeMachineMap contains changes only of nodes that are currently
 	 * visible or those that would be visible, except that they have been
@@ -117,6 +123,18 @@ public class ModeVersions extends ResizeComposite implements
 	 * backwards regardless of whether the linked prop is currently part of the
 	 * existing tree or is rather being held in the deleted nodes list of the
 	 * arg. So it seems to work.
+	 * 
+	 * 2. When a Proposition is linked to an argument, unlinked, edited (or its
+	 * descendants are edited), and relinked, there is a potential problem. The
+	 * changes for the linked proposition's subtree during the time when the
+	 * link was not attached to the tree will be visible, but will not
+	 * correspond to any visible change. This will be confusing to the user. To
+	 * avoid this the program keeps track of windows of time when a subtree's
+	 * changes should not be visible (because a link has been removed from a
+	 * tree) and marks those changes as 'alwaysHidden'. These changes are never
+	 * shown. Note however, that it is important that the changes exist on the
+	 * client so that when a link is added, removed, edited, and re-added, those
+	 * edits show up on the re-add.
 	 */
 
 	private final ListBox versionList = new ListBox();
@@ -147,25 +165,28 @@ public class ModeVersions extends ResizeComposite implements
 
 	/*
 	 * A ViewChange contains a pointer to a ViewNodeVer and a Change object, as
-	 * well as a flag indicated whether the ViewChange is 'hidden' or not. The
+	 * well as a flag indicating whether the ViewChange is 'hidden' or not. The
 	 * timeMachineMap keeps track of each change, and each ViewNode for which
-	 * the change is applicable. It is sorted by the date of the change. This
+	 * the change is applicable. It is sorted by the id of the change. This
 	 * allows the program to replay (or undo) changes sequentially, and if there
 	 * is more than one copy of the ViewNodeVer that needs to be updated, to
 	 * have a link to each one.
 	 */
-	private SortedMultiMap<Date, ViewChange> timeMachineMap;
+	private SortedMultiMap<Long, ViewChange> timeMachineMap;
 
 	/*
-	 * The Date represented by the current tree state. After modifying the tree
-	 * to reflect a tree state at a certain time this is updated to reflect what
-	 * time, so the program knows the date of the current tree state.
+	 * The 'id' of the change represented by the current tree state. After
+	 * modifying the tree to reflect a tree state up to a certain change this is
+	 * updated to reflect what change, so the program knows what change to start
+	 * from when performing further time transformations.
 	 */
-	private Date currentDate;
+	private Long currentChangeID;
 
 	/*
 	 * the date at the time ModeVersions starts displaying versions for the
-	 * current tree (used for formating dates in the change list)
+	 * current tree (used for formating dates in the change list (e.g. don't
+	 * bother displaying the year for changes in the current year, the month for
+	 * changes in the current month...)
 	 */
 	private static Date now = new Date();
 
@@ -275,7 +296,7 @@ public class ModeVersions extends ResizeComposite implements
 						mapArgTitle = new HashMap<ViewChange, String>();
 						mapArgIndex = new HashMap<ViewChange, Integer>();
 						mapPropIndex = new HashMap<ViewChange, Integer>();
-						currentDate = timeMachineMap.lastKey();
+						currentChangeID = timeMachineMap.lastKey();
 						// mainTM = new TimeMachine(timeMachineMap, treeClone);
 
 						loadVersionListFromTimeMachine();
@@ -343,7 +364,7 @@ public class ModeVersions extends ResizeComposite implements
 						mapArgTitle = new HashMap<ViewChange, String>();
 						mapArgIndex = new HashMap<ViewChange, Integer>();
 						mapPropIndex = new HashMap<ViewChange, Integer>();
-						currentDate = timeMachineMap.lastKey();
+						currentChangeID = timeMachineMap.lastKey();
 						// mainTM = new TimeMachine(timeMachineMap, treeClone);
 
 						loadVersionListFromTimeMachine();
@@ -369,15 +390,15 @@ public class ModeVersions extends ResizeComposite implements
 	 * list).
 	 * 
 	 * This method also builds the timeMachineMap which is a sorted multimap,
-	 * sorted by the date of changes, that is used when time traveling to keep
+	 * sorted by the id of changes, that is used when time traveling to keep
 	 * track of each change that must be made to the tree (with a single Change
 	 * sometimes requiring multiple changes to the tree if it is a change to a
 	 * linked subtree).
 	 */
-	private SortedMultiMap<Date, ViewChange> prepTreeWithDeletedNodesAndChangesAndBuildTimeMachineMap(
+	private SortedMultiMap<Long, ViewChange> prepTreeWithDeletedNodesAndChangesAndBuildTimeMachineMap(
 			Tree treeClone, NodeChangesMaps changesMaps) {
 		Log log = Log.getLog("vm.ptwdnacab");
-		SortedMultiMap<Date, ViewChange> timeMachineMap = new SortedMultiMap<Date, ViewChange>();
+		SortedMultiMap<Long, ViewChange> timeMachineMap = new SortedMultiMap<Long, ViewChange>();
 		for (int i = 0; i < treeClone.getItemCount(); i++) {
 			ViewPropVer viewPropVer = (ViewPropVer) treeClone.getItem(i);
 			recursivePrepAndBuild(viewPropVer, timeMachineMap, changesMaps, log);
@@ -389,7 +410,7 @@ public class ModeVersions extends ResizeComposite implements
 	}
 
 	public void recursivePrepAndBuild(ViewNodeVer viewNode,
-			SortedMultiMap<Date, ViewChange> timeMachineMap,
+			SortedMultiMap<Long, ViewChange> timeMachineMap,
 			NodeChangesMaps changesMaps, Log log) {
 		log.indent();
 		NodeChanges nodeChanges = viewNode.chooseNodeChanges(changesMaps);
@@ -471,7 +492,7 @@ public class ModeVersions extends ResizeComposite implements
 
 	private void loadChangesIntoNodeAndMap(ViewNodeVer viewNode,
 			List<Change> changes,
-			SortedMultiMap<Date, ViewChange> timeMachineMap) {
+			SortedMultiMap<Long, ViewChange> timeMachineMap) {
 		for (Change change : changes) {
 			/*
 			 * for each Change create a ViewChange mapping the Change to the
@@ -493,7 +514,7 @@ public class ModeVersions extends ResizeComposite implements
 			 * forward or backwards in time there is an quick/easy way to know
 			 * which ViewNode needs to be updated.
 			 */
-			timeMachineMap.put(change.date, viewChange);
+			timeMachineMap.put(change.id, viewChange);
 		}
 
 		/*
@@ -692,7 +713,7 @@ public class ModeVersions extends ResizeComposite implements
 		 * get the date of the tree at the time it is currently displayed at in
 		 * milliseconds
 		 */
-		Long currentDate = this.currentDate.getTime();
+		Long currentChangeID = this.currentChangeID;
 
 		/* clear the list */
 		versionList.clear();
@@ -709,12 +730,12 @@ public class ModeVersions extends ResizeComposite implements
 			Change change = viewChange.change;
 
 			/* figure out which item should be selected in the list */
-			Long changeTime = change.date.getTime();
-			int comparison = currentDate.compareTo(changeTime);
+			Long changeID = change.id;
+			int comparison = currentChangeID.compareTo(changeID);
 			/* if we have a change at the exact same date, we use that */
 			if (comparison == 0) {
-				log.log("###########   Selecting Item:" + i + "; changeTime:"
-						+ changeTime + "; currentDate:" + currentDate);
+				log.log("###########   Selecting Item:" + i + "; changeID:"
+						+ changeID + "; currentID:" + currentChangeID);
 				newSelectionIndex = i;
 			}
 			/*
@@ -726,8 +747,8 @@ public class ModeVersions extends ResizeComposite implements
 			 */
 			else if (comparison > 0 && newSelectionIndex == -1) {
 				log.log("###########   Selecting Item:" + i
-						+ " - 1; before item with changeTime:" + changeTime
-						+ "; currentDate:" + currentDate);
+						+ " - 1; before item with changeID:" + changeID
+						+ "; currentID:" + currentChangeID);
 				newSelectionIndex = i - 1;
 			}
 
@@ -737,19 +758,19 @@ public class ModeVersions extends ResizeComposite implements
 			 */
 			if (!viewChange.hidden) {
 				versionList.addItem("" + formatDate(change.date) + " ["
-						+ change.changeType + "]", "" + changeTime);
+						+ change.changeType + "]", "" + changeID);
 			} else {
 				versionList.addItem("----------------------------------------",
-						"" + changeTime);
+						"" + changeID);
 			}
 			log.log("\n" + change);
 			i++;
 		}
 
-		/* add an item older than all items so that last change can be shown */
-		Date oldest = timeMachineMap.get(timeMachineMap.firstKey()).get(0).change.date;
+		/* add an item younger than all items so that first change can be shown */
+		Long youngestID = timeMachineMap.get(timeMachineMap.firstKey()).get(0).change.id;
 		versionList.addItem("----------------------------------------", ""
-				+ (oldest.getTime() - 1000));
+				+ (youngestID - 1));
 
 		versionList.setSelectedIndex(newSelectionIndex);
 
@@ -815,7 +836,7 @@ public class ModeVersions extends ResizeComposite implements
 		/*
 		 * if the oldest change is hidden we need to include it anyway,
 		 * otherwise there is no way to replay that change, and potentially no
-		 * way to open up the closed node (because the open/close icon will not
+		 * way to open up a closed node (because the open/close icon will not
 		 * appear for a node with no children) whose closure resulted in hiding
 		 * the change... and thus no way to unhide the change...
 		 */
@@ -838,7 +859,7 @@ public class ModeVersions extends ResizeComposite implements
 	public ViewNodeVer createChildWithDummiesAndLoadChanges(
 			ViewNodeVer parentView, Node childNode, Long childID,
 			NodeChanges childChanges,
-			SortedMultiMap<Date, ViewChange> viewChanges) {
+			SortedMultiMap<Long, ViewChange> viewChanges) {
 
 		ViewNodeVer child = createChildWithDummies(parentView, childNode,
 				childID, childChanges.deletedChildIDs);
@@ -903,7 +924,7 @@ public class ModeVersions extends ResizeComposite implements
 	public void mergeLoadedNodes(ViewNodeVer viewNodeVer,
 			Map<Long, NodeWithChanges> nodesWithChanges) {
 
-		SortedMultiMap<Date, ViewChange> viewChanges = new SortedMultiMap<Date, ViewChange>();
+		SortedMultiMap<Long, ViewChange> viewChanges = new SortedMultiMap<Long, ViewChange>();
 
 		/*
 		 * for the deleted views: get the dummys to convert to reals
@@ -991,11 +1012,11 @@ public class ModeVersions extends ResizeComposite implements
 		} else {
 
 			log.log("Adding View Changes: ");
-			SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
+			SortedMultiMap<Long, ViewChange> subTreeChanges = new SortedMultiMap<Long, ViewChange>();
 			recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, log);
 
 			zoomToCurrentDateAndReloadChangeList(viewNodeVer, subTreeChanges,
-					viewNodeVer.getClosedDate());
+					viewNodeVer.getChangeIDOnClose());
 
 		}
 		log.finish();
@@ -1003,7 +1024,7 @@ public class ModeVersions extends ResizeComposite implements
 	}
 
 	public void zoomToCurrentDateAndReloadChangeList(ViewNodeVer viewNodeVer,
-			SortedMultiMap<Date, ViewChange> subTreeChanges, Date startDate) {
+			SortedMultiMap<Long, ViewChange> subTreeChanges, Long startChangeID) {
 		/*
 		 * this line must come before travelFromDateToDate() because that method
 		 * resets the tree to open of added nodes that should be open. But this
@@ -1014,7 +1035,7 @@ public class ModeVersions extends ResizeComposite implements
 		 */
 		viewNodeVer.setOpen(true);
 
-		travelFromDateToDate(startDate, currentDate, subTreeChanges);
+		travelFromChangeToChange(startChangeID, currentChangeID, subTreeChanges);
 
 		timeMachineMap.putAll(subTreeChanges);
 
@@ -1030,9 +1051,9 @@ public class ModeVersions extends ResizeComposite implements
 
 		Log log = Log.getLog("vm.oc");
 		ViewNodeVer viewNodeVer = (ViewNodeVer) event.getTarget();
-		viewNodeVer.setClosedDate(currentDate);
+		viewNodeVer.setChangeIDOnClose(currentChangeID);
 		log.log("Removing View Changes: ");
-		SortedMultiMap<Date, ViewChange> subTreeChanges = new SortedMultiMap<Date, ViewChange>();
+		SortedMultiMap<Long, ViewChange> subTreeChanges = new SortedMultiMap<Long, ViewChange>();
 		recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, log);
 		timeMachineMap.removeAll(subTreeChanges);
 
@@ -1058,7 +1079,7 @@ public class ModeVersions extends ResizeComposite implements
 	 * changes).
 	 */
 	public void recursiveGetViewChanges(ViewNodeVer viewNodeVer,
-			SortedMultiMap<Date, ViewChange> forAddOrRemove, boolean firstNode,
+			SortedMultiMap<Long, ViewChange> forAddOrRemove, boolean firstNode,
 			Log log) {
 		/*
 		 * if it is the first node then we don't want to remove any changes, as
@@ -1070,7 +1091,7 @@ public class ModeVersions extends ResizeComposite implements
 					+ viewNodeVer.isOpen());
 			for (ViewChange viewChange : viewNodeVer.getViewChangeList()) {
 				log.log("  viewChange: " + viewChange);
-				forAddOrRemove.put(viewChange.change.date, viewChange);
+				forAddOrRemove.put(viewChange.change.id, viewChange);
 			}
 		}
 
@@ -1103,10 +1124,11 @@ public class ModeVersions extends ResizeComposite implements
 	@Override
 	public void onChange(ChangeEvent event) {
 
-		String millisecondStr = versionList.getValue(versionList
+		String changeIDString = versionList.getValue(versionList
 				.getSelectedIndex());
-		Date destinationDate = new Date(Long.parseLong(millisecondStr));
-		travelFromDateToDate(currentDate, destinationDate, timeMachineMap);
+		Long destinationChangeID = Long.parseLong(changeIDString);
+		travelFromChangeToChange(currentChangeID, destinationChangeID,
+				timeMachineMap);
 
 		// TODO: if multiple copies of the same linked proposition are
 		// showing
@@ -1117,24 +1139,24 @@ public class ModeVersions extends ResizeComposite implements
 		 * destination date may be a place holder to allow the user to walk past
 		 * the earliest change.
 		 */
-		if (timeMachineMap.get(destinationDate) != null) {
+		if (timeMachineMap.get(destinationChangeID) != null) {
 			treePanel.ensureVisible((ViewNode) timeMachineMap.get(
-					destinationDate).get(0).viewNode);
+					destinationChangeID).get(0).viewNode);
 		}
 
 	}
 
-	public void travelFromDateToDate(Date currentDate, Date newDate,
-			SortedMultiMap<Date, ViewChange> changes) {
+	public void travelFromChangeToChange(Long currentChangeID,
+			Long newChangeID, SortedMultiMap<Long, ViewChange> changes) {
 		Log log = Log.getLog("tm.ttd");
-		if (newDate.before(currentDate)) {
-			log.log("traveling back to date:" + newDate);
+		if (newChangeID < currentChangeID) {
+			log.log("traveling back to date:" + newChangeID);
 			/*
-			 * here newDate is the date that the user clicked on, and is
-			 * highlighted. Therefore we do not want to process newDate, because
-			 * doing so would move the tree to a time before the date
-			 * highlighted by the user. But the user wants the tree at the date
-			 * highlighted, not before the date highlighted.
+			 * here newChangeID is the ID of teh change that the user clicked
+			 * on, and is highlighted. Therefore we do not want to process
+			 * newDate, because doing so would move the tree to a time before
+			 * the date highlighted by the user. But the user wants the tree at
+			 * the date highlighted, not before the date highlighted.
 			 * 
 			 * Similarly, currentDate is the date that the user had previously
 			 * highlighted, and it has not been processed. So we do want to
@@ -1151,11 +1173,11 @@ public class ModeVersions extends ResizeComposite implements
 			 * navigable map we have to put the selected changes in a list and
 			 * reverse them... ;
 			 */
-			List<List<ViewChange>> reverseList = changes.valuesSublist(newDate,
-					false, currentDate, true);
+			List<List<ViewChange>> reverseList = changes.valuesSublist(
+					newChangeID, false, currentChangeID, true);
 			Collections.reverse(reverseList);
 			moveTreeBackwards(reverseList, log);
-		} else if (newDate.after(currentDate)) {
+		} else if (newChangeID > currentChangeID) {
 			/*
 			 * the current tree shows the tree after the change highlighted was
 			 * made. currentDate corresponds to the change higlighted. To move
@@ -1172,12 +1194,11 @@ public class ModeVersions extends ResizeComposite implements
 			 * moveTreeForwards(changes.subMap(currentDate, false, newDate,
 			 * true).values());
 			 */
-			log.log("traveling forward to date:" + newDate);
-			moveTreeForwards(
-					changes.valuesSublist(currentDate, false, newDate, true),
-					log);
+			log.log("traveling forward to date:" + newChangeID);
+			moveTreeForwards(changes.valuesSublist(currentChangeID, false,
+					newChangeID, true), log);
 		}
-		this.currentDate = newDate;
+		this.currentChangeID = newChangeID;
 		treeClone.resetState();
 		log.finish();
 	}

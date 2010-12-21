@@ -106,6 +106,9 @@ public class Change implements Serializable {
 	public int argPropIndex = -1;
 	public boolean argPro;
 
+	/*
+	 * don't use this method; use ArgMapServiceImpl.getNewChange() instead.
+	 */
 	public Change() {
 
 	}
@@ -169,10 +172,6 @@ public class Change implements Serializable {
 			return true;
 		}
 		return false;
-	}
-
-	public Change(ChangeType changeType) {
-		this.changeType = changeType;
 	}
 
 	@Override

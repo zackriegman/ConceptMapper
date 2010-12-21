@@ -1,7 +1,6 @@
 package org.argmap.client;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -36,9 +35,9 @@ public interface ViewNodeVer {
 
 	public Long getNodeID();
 
-	public Date getClosedDate();
+	public Long getChangeIDOnClose();
 
-	public void setClosedDate(Date closedDate);
+	public void setChangeIDOnClose(Long changeIDOnClose);
 
 	public boolean isOpen();
 

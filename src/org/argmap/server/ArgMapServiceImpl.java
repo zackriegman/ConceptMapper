@@ -39,6 +39,7 @@ import com.googlecode.objectify.NotFoundException;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.Query;
+import com.googlecode.objectify.helper.Monotonic;
 
 public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		ArgMapService {
@@ -172,7 +173,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			putNode(newProposition);
 		}
 
-		Change change = new Change(ChangeType.PROP_ADDITION);
+		Change change = getNewChange(ChangeType.PROP_ADDITION);
 		change.propID = newProposition.id;
 		change.argID = parentArgID;
 		// TODO this line not needed any longer as we aren't doing forward
@@ -198,7 +199,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			putNode(argument);
 			proposition.linkCount++;
 			putNode(proposition);
-			Change change = new Change(ChangeType.PROP_LINK);
+			Change change = getNewChange(ChangeType.PROP_LINK);
 			change.argID = parentArgID;
 			change.propID = proposition.id;
 			// TODO this line not needed any longer as we aren't doing forward
@@ -231,9 +232,9 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		}
 		Change change;
 		if (prop.root) {
-			change = new Change(ChangeType.ROOT_PROP_DELETION);
+			change = getNewChange(ChangeType.ROOT_PROP_DELETION);
 		} else {
-			change = new Change(ChangeType.PROP_DELETION);
+			change = getNewChange(ChangeType.PROP_DELETION);
 		}
 		change.propID = prop.id;
 		change.oldContent = prop.content;
@@ -307,7 +308,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			proposition.linkCount--;
 			putNode(proposition);
 
-			Change change = new Change(ChangeType.PROP_UNLINK);
+			Change change = getNewChange(ChangeType.PROP_UNLINK);
 			change.argID = parentArgID;
 			change.propID = proposition.id;
 			change.argPropIndex = propIndex;
@@ -325,7 +326,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		content = content.trim();
 		logln("propID:" + propID + "; content:" + content);
 
-		Change change = new Change(ChangeType.PROP_MODIFICATION);
+		Change change = getNewChange(ChangeType.PROP_MODIFICATION);
 		Lock lock = Lock.getNodeLock(propID);
 		try {
 			lock.lock();
@@ -373,7 +374,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 			Proposition parentProp = propQuery.get();
 
-			Change argDeletionChange = new Change(ChangeType.ARG_DELETION);
+			Change argDeletionChange = getNewChange(ChangeType.ARG_DELETION);
 			argDeletionChange.propID = parentProp.id;
 			argDeletionChange.argID = argument.id;
 			argDeletionChange.argPro = argument.pro;
@@ -429,7 +430,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			timer.lap("\\\\");
 			putNode(parentProp);
 			timer.lap(";;;;");
-			Change change = new Change(ChangeType.ARG_ADDITION);
+			Change change = getNewChange(ChangeType.ARG_ADDITION);
 			change.argID = newArg.id;
 			change.propID = parentPropID;
 			// TODO this line not needed any longer as we aren't doing forward
@@ -450,7 +451,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 		Lock lock = Lock.getNodeLock(argID);
 		try {
 			lock.lock();
-			Change change = new Change(ChangeType.ARG_MODIFICATION);
+			Change change = getNewChange(ChangeType.ARG_MODIFICATION);
 			Argument arg = ofy.get(Argument.class, argID);
 			if (arg.content != null && arg.content.trim().equals(content)) {
 				throw new ServiceException(
@@ -496,6 +497,23 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 	public HttpServletRequest getHttpServletRequest() {
 		return getThreadLocalRequest();
+	}
+
+	/*
+	 * this sets a new Change's id; it's here (instead of in the Change class
+	 * where it belongs) because it references a class not on the client and
+	 * Changes are sent to the client.
+	 */
+	public Change getNewChange() {
+		Change change = new Change();
+		change.id = Monotonic.next(ofy, Change.class, "id");
+		return change;
+	}
+
+	public Change getNewChange(ChangeType changeType) {
+		Change change = getNewChange();
+		change.changeType = changeType;
+		return change;
 	}
 
 	@Override
@@ -876,7 +894,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 
 			/* only delete a proposition that is used in 1 or fewer arguments. */
 			if (query.count() == 0) {
-				Change change = new Change(ChangeType.PROP_DELETION);
+				Change change = getNewChange(ChangeType.PROP_DELETION);
 				change.propID = removeProp.id;
 				change.oldContent = removeProp.content;
 				change.propLinkCount = removeProp.linkCount;
@@ -890,7 +908,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			 * adding the link before deleting...]
 			 */
 			else if (query.count() == 1) {
-				Change change = new Change(ChangeType.PROP_DELETION);
+				Change change = getNewChange(ChangeType.PROP_DELETION);
 				change.propID = removeProp.id;
 				change.oldContent = removeProp.content;
 				change.propLinkCount = removeProp.linkCount;
@@ -909,7 +927,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 			 * argument where it is empty.
 			 */
 			else if (query.count() > 1) {
-				Change change = new Change(ChangeType.PROP_UNLINK);
+				Change change = getNewChange(ChangeType.PROP_UNLINK);
 				change.argID = parentArgID;
 				change.propID = removePropID;
 				change.argPropIndex = index;
@@ -923,7 +941,7 @@ public class ArgMapServiceImpl extends RemoteServiceServlet implements
 				saveVersionInfo(change);
 			}
 
-			Change change = new Change(ChangeType.PROP_LINK);
+			Change change = getNewChange(ChangeType.PROP_LINK);
 			change.argID = parentArgID;
 			change.propID = linkPropID;
 

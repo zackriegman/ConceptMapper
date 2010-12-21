@@ -1,7 +1,6 @@
 package org.argmap.client;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 import org.argmap.client.ArgMapService.NodeChangesMaps;
@@ -37,18 +36,6 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	public ViewNodeVer getChildViewNode(int i) {
 		assert false;
 		return null;
-	}
-
-	@Override
-	public Date getClosedDate() {
-		assert false;
-		return null;
-	}
-
-	@Override
-	public void setClosedDate(Date closedDate) {
-		assert false;
-
 	}
 
 	@Override
@@ -175,6 +162,17 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 
 	@Override
 	public void setTextAreaCursorPosition(int index) {
+		assert false;
+	}
+
+	@Override
+	public Long getChangeIDOnClose() {
+		assert false;
+		return null;
+	}
+
+	@Override
+	public void setChangeIDOnClose(Long changeIDOnClose) {
 		assert false;
 	}
 }
