@@ -22,7 +22,31 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /*
- * open root prop 'testing add' one level.  go to versions.  open up link children:  they are empty even though they should have text...
+ * open root prop 'testing add' one level.  go to versions. go back in time one step. 
+ * open up link children:  they are empty even though they should have text...
+ * 
+ * but if you open up reasoning for so the link show, and rather than open up the link at that point, you go to the point
+ * in time of the re-link, and then you open of the link, and then you go back to the point in time of the original link, the
+ * the children are shown correctly.
+ * 
+ * actually, if you do it the first way, so that the children are shown empty when they should have text, and then
+ * you go forward in time to the point where the children have been deleted and different children have been added, and then you
+ * go backwards in time back to where they should have text, they will at that point have text.
+ * 
+ * doesn't seem to be limited to links.  deleted nodes in general sometimes do not seem to be restored with their text.  See 'simple tree',
+ * goto to versions mode with tree closed, open one level, goto latest change where first arg has child, open arg, child should have text but
+ * doesn't.
+ * 
+ * OK, I have a theory about what is going on here.  When a node is opened (or when it is loaded) the
+ * program zooms the node's children to the right time.  However (!) a child that was deleted has 
+ * no content until the undelete is processed.  The undelete change lives in the parent that was just opened,
+ * not in the child.  However, the program zooms the children of the open node, based on the children's
+ * changes.  When I used to generate an extra modification change for each deletion, there was a modification
+ * that belonged to the child that would give the child node its content at the time of deletion.  But
+ * when I eliminated that modification (because it clutters up the change list without serving a purpose)
+ * the deleted nodes were left contentless.  One simple way to address this would be to populate nodes
+ * with their content at the time of deletion when they are added to the tree, based on their parent's delete
+ * event.
  */
 /*
  * when a root proposition is first added, program suggest using it instead (as a link) of itself!

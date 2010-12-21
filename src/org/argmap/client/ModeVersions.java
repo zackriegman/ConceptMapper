@@ -968,8 +968,10 @@ public class ModeVersions extends ResizeComposite implements
 				(ViewNodeVer) viewNodeVer.getOldestAncestor(),
 				new TimePeriods());
 
-		zoomToCurrentDateAndReloadChangeList(viewNodeVer, viewChanges,
+		zoomToCurrentChangeAndReloadChangeList(viewNodeVer, viewChanges,
 				viewChanges.lastKey());
+		// zoomToCurrentChangeAndReloadChangeList(viewNodeVer, viewChanges,
+		// Long.MAX_VALUE);
 	}
 
 	@Override
@@ -1015,7 +1017,7 @@ public class ModeVersions extends ResizeComposite implements
 			SortedMultiMap<Long, ViewChange> subTreeChanges = new SortedMultiMap<Long, ViewChange>();
 			recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, log);
 
-			zoomToCurrentDateAndReloadChangeList(viewNodeVer, subTreeChanges,
+			zoomToCurrentChangeAndReloadChangeList(viewNodeVer, subTreeChanges,
 					viewNodeVer.getChangeIDOnClose());
 
 		}
@@ -1023,16 +1025,9 @@ public class ModeVersions extends ResizeComposite implements
 		logTreeWithChanges();
 	}
 
-	public void zoomToCurrentDateAndReloadChangeList(ViewNodeVer viewNodeVer,
+	public void zoomToCurrentChangeAndReloadChangeList(ViewNodeVer viewNodeVer,
 			SortedMultiMap<Long, ViewChange> subTreeChanges, Long startChangeID) {
-		/*
-		 * this line must come before travelFromDateToDate() because that method
-		 * resets the tree to open of added nodes that should be open. But this
-		 * line must come after recursiveGetViewChanges, I think, because that
-		 * method depends on the opened node not yet have a positive isOpen()
-		 * value... actually that doesn't seem to be true anymore...so this
-		 * could probably be moved to the beginning.
-		 */
+
 		viewNodeVer.setOpen(true);
 
 		travelFromChangeToChange(startChangeID, currentChangeID, subTreeChanges);
@@ -1150,7 +1145,8 @@ public class ModeVersions extends ResizeComposite implements
 			Long newChangeID, SortedMultiMap<Long, ViewChange> changes) {
 		Log log = Log.getLog("tm.ttd");
 		if (newChangeID < currentChangeID) {
-			log.log("traveling back to date:" + newChangeID);
+			log.log("traveling back to Change.id:" + newChangeID
+					+ "; from Change.id:" + currentChangeID);
 			/*
 			 * here newChangeID is the ID of teh change that the user clicked
 			 * on, and is highlighted. Therefore we do not want to process
@@ -1194,10 +1190,13 @@ public class ModeVersions extends ResizeComposite implements
 			 * moveTreeForwards(changes.subMap(currentDate, false, newDate,
 			 * true).values());
 			 */
-			log.log("traveling forward to date:" + newChangeID);
+			log.log("traveling forward to Change.id:" + newChangeID
+					+ "; from Change.id:" + currentChangeID);
 			moveTreeForwards(changes.valuesSublist(currentChangeID, false,
 					newChangeID, true), log);
 		}
+		log.logln("ALL CHANGES IN PASSED MAP:");
+		log.logln(changes.firstValues());
 		this.currentChangeID = newChangeID;
 		treeClone.resetState();
 		log.finish();
@@ -1205,7 +1204,7 @@ public class ModeVersions extends ResizeComposite implements
 
 	private void moveTreeForwards(
 			Collection<List<ViewChange>> changesToProcess, Log log) {
-		log.log("----re-doing changes----");
+		log.logln("----re-doing changes----");
 		for (List<ViewChange> changeList : changesToProcess) {
 			for (ViewChange vC : changeList) {
 				log.log("processing: " + vC.change);
