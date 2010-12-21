@@ -466,9 +466,16 @@ public class ModeVersions extends ResizeComposite implements
 				ViewNodeVer child = viewNode.getChildViewNode(i);
 				recursivePrepAndBuild(child, timeMachineMap, changesMaps, log);
 			}
-		} else {
+		}
+		/*
+		 * for nodes that are not open there are only dummy nodes. For nodes
+		 * that currently exist (are not deleted) the dummy nodes are already
+		 * created when ModeEdit cloned the tree. For deleted nodes we have to
+		 * create the dummy nodes now.
+		 */
+		else {
 			for (Long id : nodeChanges.deletedChildIDs) {
-				viewNode.addDeletedItem(new ViewDummyVer(id));
+				viewNode.addDeletedItem(viewNode.createDummyChild(id));
 			}
 			for (int i = 0; i < viewNode.getChildCount(); i++) {
 				/*
@@ -892,7 +899,8 @@ public class ModeVersions extends ResizeComposite implements
 			 * null.
 			 */
 			for (Long childDummyID : childNode.childIDs) {
-				ViewNode childDummy = new ViewDummyVer(childDummyID);
+				ViewNode childDummy = (ViewNode) child
+						.createDummyChild(childDummyID);
 				child.addItem(childDummy);
 			}
 		}
@@ -902,7 +910,7 @@ public class ModeVersions extends ResizeComposite implements
 		 * the deleted children.
 		 */
 		for (Long deletedID : deletedGrandChildIDs) {
-			ViewNodeVer childDummy = new ViewDummyVer(deletedID);
+			ViewNodeVer childDummy = child.createDummyChild(deletedID);
 			child.addDeletedItem(childDummy);
 		}
 

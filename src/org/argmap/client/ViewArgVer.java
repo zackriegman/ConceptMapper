@@ -51,17 +51,22 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 	// }
 
 	@Override
-	public ViewNode createChild() {
+	public ViewPropVer createChild() {
 		return new ViewPropVer();
 	}
 
 	@Override
-	public ViewNodeVer createChild(Node node) {
+	public ViewPropVer createDummyChild(Long nodeID) {
+		return (ViewPropVer) super.createDummyChild(nodeID);
+	}
+
+	@Override
+	public ViewPropVer createChild(Node node) {
 		return new ViewPropVer((Proposition) node);
 	}
 
 	@Override
-	public ViewNodeVer createChild(Long nodeID) {
+	public ViewPropVer createChild(Long nodeID) {
 		return new ViewPropVer(nodeID);
 	}
 
@@ -70,12 +75,6 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 		deletedViews.put(viewNodeVer.getNodeID(), viewNodeVer);
 
 	}
-
-	/*
-	 * @Override public ViewNodeVer createDeletedDummyView(Long id) {
-	 * ViewDummyVer deletedView = new ViewDummyVer(id); deletedViews.put(id,
-	 * deletedView ); return deletedView; }
-	 */
 
 	public List<ViewChange> getViewChangeList() {
 		return viewChanges;

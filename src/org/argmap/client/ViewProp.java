@@ -4,6 +4,7 @@ import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 public abstract class ViewProp extends ViewNode {
 
@@ -47,6 +48,11 @@ public abstract class ViewProp extends ViewNode {
 		// textArea.init();
 		focusPanel = new FocusPanel(mainPanel);
 		this.setWidget(focusPanel);
+	}
+
+	@Override
+	public Widget getMainWidget() {
+		return focusPanel;
 	}
 
 	public void setNodeLink(boolean link) {
@@ -147,6 +153,14 @@ public abstract class ViewProp extends ViewNode {
 			return proposition.id;
 		} else
 			return null;
+	}
+
+	@Override
+	public void setNodeID(Long id) {
+		if (proposition == null) {
+			proposition = new Proposition();
+		}
+		proposition.id = id;
 	}
 
 	public Argument parentArgument() {

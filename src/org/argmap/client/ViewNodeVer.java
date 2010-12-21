@@ -29,6 +29,8 @@ public interface ViewNodeVer {
 
 	public ViewNodeVer createChild(Long nodeID);
 
+	public ViewNodeVer createDummyChild(Long nodeID);
+
 	public void remove();
 
 	public boolean getState();

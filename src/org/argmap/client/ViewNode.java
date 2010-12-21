@@ -5,9 +5,12 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.user.client.ui.TreeItem;
+import com.google.gwt.user.client.ui.Widget;
 
 public abstract class ViewNode extends TreeItem {
 	public abstract Long getNodeID();
+
+	public abstract void setNodeID(Long id);
 
 	private boolean isOpen = true;
 
@@ -40,6 +43,16 @@ public abstract class ViewNode extends TreeItem {
 					+ " because it is not a child node");
 		}
 	}
+
+	public void setDummy(boolean dummy) {
+		if (dummy) {
+			setText("loading from server...");
+		} else {
+			setWidget(getMainWidget());
+		}
+	}
+
+	public abstract Widget getMainWidget();
 
 	public ViewNode removeChildAt(int index) {
 		ViewNode child = getChild(index);
@@ -100,6 +113,13 @@ public abstract class ViewNode extends TreeItem {
 	}
 
 	public abstract ViewNode createChild();
+
+	public ViewNode createDummyChild(Long id) {
+		ViewNode child = createChild();
+		child.setDummy(true);
+		child.setNodeID(id);
+		return child;
+	}
 
 	public abstract void setNode(Node node);
 

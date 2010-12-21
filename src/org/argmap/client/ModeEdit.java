@@ -942,7 +942,8 @@ public class ModeEdit extends ResizeComposite implements KeyUpHandler,
 			if (realViewNode.getState()) {
 				cloneViewNode.addItem(recursiveTreeClone(realChild, log));
 			} else {
-				cloneViewNode.addItem(new ViewDummyVer(realChild.getNodeID()));
+				cloneViewNode.addItem(cloneViewNode.createDummyChild(realChild
+						.getNodeID()));
 			}
 		}
 		log.unindent();

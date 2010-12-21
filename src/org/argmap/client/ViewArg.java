@@ -5,6 +5,7 @@ import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
 
 public abstract class ViewArg extends ViewNode {
 	private static final String PRO_LABEL_WIDTH = "7.5em";
@@ -133,6 +134,11 @@ public abstract class ViewArg extends ViewNode {
 		setWidget(focusPanel);
 	}
 
+	@Override
+	public Widget getMainWidget() {
+		return focusPanel;
+	}
+
 	public void setPro(boolean pro) {
 		if (argument != null) {
 			argument.pro = pro;
@@ -156,8 +162,17 @@ public abstract class ViewArg extends ViewNode {
 	public Long getNodeID() {
 		if (argument != null) {
 			return argument.id;
-		} else
+		} else {
 			return null;
+		}
+	}
+
+	@Override
+	public void setNodeID(Long id) {
+		if (argument == null) {
+			argument = new Argument();
+		}
+		argument.id = id;
 	}
 
 	public void setArgTitle(String title) {

@@ -49,6 +49,25 @@ import com.google.gwt.user.client.ui.Widget;
  * event.
  * 
  * Make sure to also think about other info contained in delete events such as negation for props and pro/con for args?
+ * 
+ * ok, so I decided that the best approach is to make dummy nodes actual nodes that merely display
+ * "loading from server", and remove the ViewDummyVer class.  I've done this.
+ * 
+ * Now I have to remove the code that tests a node to make sure that it is not a dummy before before operating on it
+ * when moving the tree backwards.  That way the negated, pro/con, content and all other info will already be loaded
+ * into the dummy nodes.
+ * 
+ * I'll also want to convert dummy nodes into real nodes, thereby preserving the info that will not be loaded into them,
+ * instead of replacing them with real nodes.
+ * 
+ * And while I'm at it, I'll want to make ModeVersions.mergeLoadedNode() use the integrated iterator in ViewNodeVer to clean things up
+ * a little bit.
+ * 
+ * And I'll also want to transition ModeEdit to the new dummy node approach.
+ */
+
+/*
+ * get rid of ViewDummyVer
  */
 /*
  * when a root proposition is first added, program suggest using it instead (as a link) of itself!

@@ -5,8 +5,16 @@ import java.util.List;
 
 import org.argmap.client.ArgMapService.NodeChangesMaps;
 
+import com.google.gwt.user.client.ui.Widget;
+
 public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	Long nodeID;
+
+	@Override
+	public ViewArgVer createDummyChild(Long id) {
+		assert false;
+		return null;
+	}
 
 	public ViewDummyVer(Long nodeID) {
 		super();
@@ -174,5 +182,17 @@ public class ViewDummyVer extends ViewNode implements ViewNodeVer {
 	@Override
 	public void setChangeIDOnClose(Long changeIDOnClose) {
 		assert false;
+	}
+
+	@Override
+	public Widget getMainWidget() {
+		assert false;
+		return null;
+	}
+
+	@Override
+	public void setNodeID(Long id) {
+		// TODO Auto-generated method stub
+
 	}
 }
