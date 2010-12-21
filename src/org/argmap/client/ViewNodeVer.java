@@ -37,6 +37,8 @@ public interface ViewNodeVer {
 
 	public Long getNodeID();
 
+	public void setNode(Node node);
+
 	public Long getChangeIDOnClose();
 
 	public void setChangeIDOnClose(Long changeIDOnClose);
@@ -44,6 +46,8 @@ public interface ViewNodeVer {
 	public boolean isOpen();
 
 	public void setOpen(boolean open);
+
+	public void setDummy(boolean dummy);
 
 	public NodeChanges chooseNodeChanges(NodeChangesMaps changesMaps);
 

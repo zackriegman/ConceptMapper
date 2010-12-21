@@ -442,8 +442,13 @@ public class ModeVersions extends ResizeComposite implements
 					NodeChanges linkNodeChanges = changesMaps.propChanges
 							.get(id);
 					Node node = changesMaps.unlinkedLinks.get(id);
-					ViewNodeVer deletedView = createChildWithDummiesAndLoadChanges(
-							viewNode, node, id, linkNodeChanges, timeMachineMap);
+					// ViewNodeVer deletedView =
+					// createChildWithDummiesAndLoadChanges_DELETE_ME(
+					// viewNode, node, id, linkNodeChanges, timeMachineMap);
+					ViewNodeVer deletedView = viewNode.createChild(id);
+					convertToRealAddDummyChildrenAndLoadChanges(deletedView,
+							node, linkNodeChanges, timeMachineMap);
+
 					viewNode.addDeletedItem(deletedView);
 				}
 
@@ -863,20 +868,57 @@ public class ModeVersions extends ResizeComposite implements
 		}
 	}
 
-	public ViewNodeVer createChildWithDummiesAndLoadChanges(
+	public ViewNodeVer createChildWithDummiesAndLoadChanges_DELETE_ME(
 			ViewNodeVer parentView, Node childNode, Long childID,
 			NodeChanges childChanges,
 			SortedMultiMap<Long, ViewChange> viewChanges) {
 
-		ViewNodeVer child = createChildWithDummies(parentView, childNode,
-				childID, childChanges.deletedChildIDs);
+		ViewNodeVer child = createChildWithDummies_DELETE_ME(parentView,
+				childNode, childID, childChanges.deletedChildIDs);
 
 		loadChangesIntoNodeAndMap(child, childChanges.changes, viewChanges);
 
 		return child;
 	}
 
-	public ViewNodeVer createChildWithDummies(ViewNodeVer parentView,
+	public void convertToRealAddDummyChildrenAndLoadChanges(ViewNodeVer child,
+			Node node, NodeChanges childChanges,
+			SortedMultiMap<Long, ViewChange> viewChanges) {
+		/* convert to real */
+		child.setDummy(false);
+
+		/*
+		 * the node will equal null, when the node didn't exist on the server,
+		 * because it has been deleted. In that case there will be no existing
+		 * child nodes to generate, and we don't need to set the node's content
+		 * with a setNode().
+		 */
+		if (node != null) {
+			child.setNode(node);
+
+			for (Long childDummyID : node.childIDs) {
+				ViewNode childDummy = (ViewNode) child
+						.createDummyChild(childDummyID);
+				child.addItem(childDummy);
+			}
+		}
+		for (Long deletedID : childChanges.deletedChildIDs) {
+			ViewNodeVer childDummy = child.createDummyChild(deletedID);
+			child.addDeletedItem(childDummy);
+		}
+
+		child.setLoaded(false);
+
+		/*
+		 * must set this before calling loadChangesIntoNodeAndMap() because that
+		 * method's behavior changes based on getOpen()
+		 */
+		child.setOpen(false);
+
+		loadChangesIntoNodeAndMap(child, childChanges.changes, viewChanges);
+	}
+
+	public ViewNodeVer createChildWithDummies_DELETE_ME(ViewNodeVer parentView,
 			Node childNode, Long childID, List<Long> deletedGrandChildIDs) {
 		ViewNodeVer child;
 
@@ -947,6 +989,32 @@ public class ModeVersions extends ResizeComposite implements
 
 		SortedMultiMap<Long, ViewChange> viewChanges = new SortedMultiMap<Long, ViewChange>();
 
+		for (ViewNodeVer child : new ViewNodeVer.CombinedViewIterator(
+				viewNodeVer)) {
+			NodeWithChanges nodeWithChanges = nodesWithChanges.get(child
+					.getNodeID());
+			convertToRealAddDummyChildrenAndLoadChanges(child,
+					nodeWithChanges.node, nodeWithChanges.nodeChanges,
+					viewChanges);
+		}
+
+		viewNodeVer.setLoaded(true);
+
+		recursiveHideLinkedSubtreesDuringUnlinkedPeriods(
+				(ViewNodeVer) viewNodeVer.getOldestAncestor(),
+				new TimePeriods());
+
+		zoomToCurrentChangeAndReloadChangeList(viewNodeVer, viewChanges,
+				viewChanges.lastKey());
+		// zoomToCurrentChangeAndReloadChangeList(viewNodeVer, viewChanges,
+		// Long.MAX_VALUE);
+	}
+
+	public void mergeLoadedNodes_DELETE_ME(ViewNodeVer viewNodeVer,
+			Map<Long, NodeWithChanges> nodesWithChanges) {
+
+		SortedMultiMap<Long, ViewChange> viewChanges = new SortedMultiMap<Long, ViewChange>();
+
 		/*
 		 * for the deleted views: get the dummys to convert to reals
 		 */
@@ -958,9 +1026,10 @@ public class ModeVersions extends ResizeComposite implements
 		for (ViewNodeVer deletedView : deletedViewList) {
 			Long deletedID = deletedView.getNodeID();
 			NodeWithChanges nodeWithChanges = nodesWithChanges.get(deletedID);
-			viewNodeVer.addDeletedItem(createChildWithDummiesAndLoadChanges(
-					viewNodeVer, nodeWithChanges.node, deletedID,
-					nodeWithChanges.nodeChanges, viewChanges));
+			viewNodeVer
+					.addDeletedItem(createChildWithDummiesAndLoadChanges_DELETE_ME(
+							viewNodeVer, nodeWithChanges.node, deletedID,
+							nodeWithChanges.nodeChanges, viewChanges));
 		}
 
 		/*
@@ -978,7 +1047,7 @@ public class ModeVersions extends ResizeComposite implements
 		for (Long id : dummyIDs) {
 			NodeWithChanges nodeWithChanges = nodesWithChanges.get(id);
 			viewNodeVer
-					.addItem((ViewNode) createChildWithDummiesAndLoadChanges(
+					.addItem((ViewNode) createChildWithDummiesAndLoadChanges_DELETE_ME(
 							viewNodeVer, nodeWithChanges.node, id,
 							nodeWithChanges.nodeChanges, viewChanges));
 		}
@@ -1305,10 +1374,9 @@ public class ModeVersions extends ResizeComposite implements
 
 					ViewNode viewNode = argView
 							.getChild(vC.change.argPropIndex);
-					if (viewNode instanceof ViewPropVer) {
-						((ViewPropVer) viewNode)
-								.setNegated(vC.change.propNegated);
-					}
+					// if (viewNode instanceof ViewPropVer) {
+					((ViewPropVer) viewNode).setNegated(vC.change.propNegated);
+					// }
 					break;
 				}
 				case PROP_DELETION: {
@@ -1322,14 +1390,12 @@ public class ModeVersions extends ResizeComposite implements
 					 * node (in which case we don't need to set the content
 					 * anyway...)
 					 */
-					if (viewNode instanceof ViewPropVer) {
-						log.logln("SETTING CONTENT ON UNDO OF PROP DELETION:"
-								+ vC.change.oldContent);
-						((ViewPropVer) viewNode)
-								.setContent(vC.change.oldContent);
-						((ViewPropVer) viewNode)
-								.setNegated(vC.change.propNegated);
-					}
+					// if (viewNode instanceof ViewPropVer) {
+					log.logln("SETTING CONTENT ON UNDO OF PROP DELETION:"
+							+ vC.change.oldContent);
+					((ViewPropVer) viewNode).setContent(vC.change.oldContent);
+					((ViewPropVer) viewNode).setNegated(vC.change.propNegated);
+					// }
 					break;
 				}
 				case PROP_LINK:
@@ -1372,11 +1438,11 @@ public class ModeVersions extends ResizeComposite implements
 					 * node (in which case we don't need to set the content
 					 * anyway...)
 					 */
-					if (deletedView instanceof ViewArgVer) {
-						ViewArg viewArgVer = (ViewArg) deletedView;
-						viewArgVer.setPro(vC.change.argPro);
-						viewArgVer.setArgTitle(vC.change.oldContent);
-					}
+					// if (deletedView instanceof ViewArgVer) {
+					ViewArg viewArgVer = (ViewArg) deletedView;
+					viewArgVer.setPro(vC.change.argPro);
+					viewArgVer.setArgTitle(vC.change.oldContent);
+					// }
 					break;
 				}
 				case ARG_MODIFICATION: {
