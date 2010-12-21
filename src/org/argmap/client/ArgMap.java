@@ -47,6 +47,8 @@ import com.google.gwt.user.client.ui.Widget;
  * the deleted nodes were left contentless.  One simple way to address this would be to populate nodes
  * with their content at the time of deletion when they are added to the tree, based on their parent's delete
  * event.
+ * 
+ * Make sure to also think about other info contained in delete events such as negation for props and pro/con for args?
  */
 /*
  * when a root proposition is first added, program suggest using it instead (as a link) of itself!
@@ -73,12 +75,6 @@ import com.google.gwt.user.client.ui.Widget;
 //TODO: do some basic testing of versioning of deleted top level nodes
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
 /*TODO: track down exceptions in ModeVersion (unrelated to circular linking)*/
-/*TODO: a proposition tree begins at time A.  At time C a pre-existing node is linked into the proposition tree.
- * The user browses to a time B between times A and C.  At that time the linked node is not present.
- * However the linked node is open in the tree(as a deleted node, so its changes are displayed in the change list).
- * The result is that there are changes that the user can scroll past that have no apparent effect on the tree
- * very confusing... so only a the changes post dating the linked nodes linking should be added to the change list?
- */
 /*TODO: versions mode: update link coloring depending on whether a proposition is currently a link?
  * to do this properly it seems like for each proposition, I need to included in the changes sent to the client
  * unlinks which lower the link count to less than or equal to one, and links which raise the link
@@ -94,11 +90,11 @@ import com.google.gwt.user.client.ui.Widget;
 
 //TODO: add 'real' example arguments for demonstration (for instance my argument about legalizing unauthorized access)
 
+//TODO: implement reversions and batch reversions
 //TODO: implement email updates of changes
 //TODO: implement email invitations to participate in an particular argument
 //TODO: implement facebook integration?  see [http://code.google.com/p/batchfb/] and the facebook API
 //TODO: implement scoring algorithm
-//TODO: implement reversions and batch reversions
 //TODO: compose more/edit help tips
 
 //TODO: often times conflict dialog is not displayed and edits are silently overwritten...

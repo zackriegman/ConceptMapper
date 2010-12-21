@@ -920,6 +920,19 @@ public class ModeVersions extends ResizeComposite implements
 	 * current point in time), and when the node is opened, the client converts
 	 * the dummy nodes into real nodes with actual content which the user can
 	 * view.
+	 * 
+	 * Why have the dummy nodes? The dummy nodes are manipulated as if they were
+	 * real nodes as the tree moves through time. So, for instance, they are
+	 * moved from the deleted list to the existing list, so when we load the
+	 * real nodes from the server we know which ones to create as deleted, and
+	 * which ones to create a existing.
+	 * 
+	 * The dummy nodes will also keep track of other information that exists in
+	 * the parents change history but that is relevant to reconstructing the
+	 * children. For instance, when a node is deleted, the information needed to
+	 * reconstruct the initial version of it is in the deletion event which is
+	 * in the parents change history. Arg deletions have pro/con flag, and
+	 * content, and prop deletions have negation flag, and content.
 	 */
 	public void mergeLoadedNodes(ViewNodeVer viewNodeVer,
 			Map<Long, NodeWithChanges> nodesWithChanges) {
