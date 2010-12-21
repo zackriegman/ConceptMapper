@@ -1,8 +1,8 @@
-<!-- Indices written at Tue, 21 Dec 2010 17:42:35 UTC -->
+<!-- Indices written at Tue, 21 Dec 2010 18:01:29 UTC -->
 
 <datastore-indexes>
 
-    <!-- Used 4 times in query history -->
+    <!-- Used 8 times in query history -->
     <datastore-index kind="Proposition" ancestor="false" source="auto">
         <property name="root" direction="asc"/>
         <property name="created" direction="desc"/>
