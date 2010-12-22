@@ -28,15 +28,17 @@ public class ViewArgVer extends ViewArg implements ViewNodeVer {
 		textBox.setReadOnly(true);
 	}
 
-	public void removeAndSaveChildView(Long id) {
-		ViewNodeVer viewNode = (ViewNodeVer) removeChildWithID(id);
+	public ViewPropVer removeAndSaveChildView(Long id) {
+		ViewPropVer viewNode = (ViewPropVer) removeChildWithID(id);
 		deletedViews.put(id, viewNode);
+		return viewNode;
 	}
 
-	public void reviveDeletedView(Long id, int index) {
-		ViewNode viewNode = (ViewNode) deletedViews.remove(id);
+	public ViewPropVer reviveDeletedView(Long id, int index) {
+		ViewPropVer viewNode = (ViewPropVer) deletedViews.remove(id);
 		assert viewNode != null;
 		insertItem(index, viewNode);
+		return viewNode;
 	}
 
 	// public ViewPropVer createDeletedView(Long id) {

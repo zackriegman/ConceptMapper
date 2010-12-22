@@ -135,6 +135,22 @@ public class ModeVersions extends ResizeComposite implements
 	 * shown. Note however, that it is important that the changes exist on the
 	 * client so that when a link is added, removed, edited, and re-added, those
 	 * edits show up on the re-add.
+	 * 
+	 * 3. Negation of propositions. Negation is a little bit of a special case
+	 * because it is the only property of a ViewNode that is determined by how
+	 * the parent ViewNode (and parent Node) links to it (and its Node), not by
+	 * the content of it's Node itself. When a link is added and remove, the
+	 * negation flag is restored when we moved backwards through the tree, based
+	 * on the change. When a ViewNode is first cloned from the ModeEdit tree the
+	 * negation flag is copied from it. However, what happens when a users
+	 * starts in ModeVersions with a closed tree, and opens branches leading to
+	 * a negated ViewNode. In that case there is no deletion event to set the
+	 * negation status of the ViewNode, and there was no original node in the
+	 * ModeEditTree from which it was cloned on which to base the negation
+	 * status. Instead, the negation status is set in
+	 * ViewArg.createDummyChild(), where the ViewArg looks up the negation
+	 * status of the Proposition in its Argument, and sets the status of the
+	 * returned view prop accordingly.
 	 */
 
 	private final ListBox versionList = new ListBox();
@@ -162,6 +178,7 @@ public class ModeVersions extends ResizeComposite implements
 	private Map<ViewChange, String> mapArgTitle;
 	private Map<ViewChange, Integer> mapPropIndex;
 	private Map<ViewChange, Integer> mapArgIndex;
+	private Map<ViewChange, Boolean> mapPropNegated;
 
 	/*
 	 * A ViewChange contains a pointer to a ViewNodeVer and a Change object, as
@@ -296,6 +313,7 @@ public class ModeVersions extends ResizeComposite implements
 						mapArgTitle = new HashMap<ViewChange, String>();
 						mapArgIndex = new HashMap<ViewChange, Integer>();
 						mapPropIndex = new HashMap<ViewChange, Integer>();
+						mapPropNegated = new HashMap<ViewChange, Boolean>();
 						currentChangeID = timeMachineMap.lastKey();
 						// mainTM = new TimeMachine(timeMachineMap, treeClone);
 
@@ -868,18 +886,18 @@ public class ModeVersions extends ResizeComposite implements
 		}
 	}
 
-	public ViewNodeVer createChildWithDummiesAndLoadChanges_DELETE_ME(
-			ViewNodeVer parentView, Node childNode, Long childID,
-			NodeChanges childChanges,
-			SortedMultiMap<Long, ViewChange> viewChanges) {
-
-		ViewNodeVer child = createChildWithDummies_DELETE_ME(parentView,
-				childNode, childID, childChanges.deletedChildIDs);
-
-		loadChangesIntoNodeAndMap(child, childChanges.changes, viewChanges);
-
-		return child;
-	}
+	// public ViewNodeVer createChildWithDummiesAndLoadChanges_DELETE_ME(
+	// ViewNodeVer parentView, Node childNode, Long childID,
+	// NodeChanges childChanges,
+	// SortedMultiMap<Long, ViewChange> viewChanges) {
+	//
+	// ViewNodeVer child = createChildWithDummies_DELETE_ME(parentView,
+	// childNode, childID, childChanges.deletedChildIDs);
+	//
+	// loadChangesIntoNodeAndMap(child, childChanges.changes, viewChanges);
+	//
+	// return child;
+	// }
 
 	public void convertToRealAddDummyChildrenAndLoadChanges(ViewNodeVer child,
 			Node node, NodeChanges childChanges,
@@ -918,48 +936,49 @@ public class ModeVersions extends ResizeComposite implements
 		loadChangesIntoNodeAndMap(child, childChanges.changes, viewChanges);
 	}
 
-	public ViewNodeVer createChildWithDummies_DELETE_ME(ViewNodeVer parentView,
-			Node childNode, Long childID, List<Long> deletedGrandChildIDs) {
-		ViewNodeVer child;
-
-		/*
-		 * childNode will be null where the child is currently deleted and
-		 * therefore the server does not have a currently existing copy of the
-		 * child node. In that case the child node needs to be regenerated
-		 * entirely from the change history, and a blank node can be used to
-		 * start with.
-		 */
-		if (childNode == null) {
-			child = parentView.createChild(childID);
-		} else {
-			child = parentView.createChild(childNode);
-			/*
-			 * only an undeleted node will have existing children to process
-			 * because a node can only be deleted after its children are
-			 * deleted. Therefore the following for loop creating dummies for
-			 * existing children is only need when childNode does not equal
-			 * null.
-			 */
-			for (Long childDummyID : childNode.childIDs) {
-				ViewNode childDummy = (ViewNode) child
-						.createDummyChild(childDummyID);
-				child.addItem(childDummy);
-			}
-		}
-
-		/*
-		 * for both deleted and undeleted nodes, we need to create dummies for
-		 * the deleted children.
-		 */
-		for (Long deletedID : deletedGrandChildIDs) {
-			ViewNodeVer childDummy = child.createDummyChild(deletedID);
-			child.addDeletedItem(childDummy);
-		}
-
-		child.setLoaded(false);
-		child.setOpen(false);
-		return child;
-	}
+	// public ViewNodeVer createChildWithDummies_DELETE_ME(ViewNodeVer
+	// parentView,
+	// Node childNode, Long childID, List<Long> deletedGrandChildIDs) {
+	// ViewNodeVer child;
+	//
+	// /*
+	// * childNode will be null where the child is currently deleted and
+	// * therefore the server does not have a currently existing copy of the
+	// * child node. In that case the child node needs to be regenerated
+	// * entirely from the change history, and a blank node can be used to
+	// * start with.
+	// */
+	// if (childNode == null) {
+	// child = parentView.createChild(childID);
+	// } else {
+	// child = parentView.createChild(childNode);
+	// /*
+	// * only an undeleted node will have existing children to process
+	// * because a node can only be deleted after its children are
+	// * deleted. Therefore the following for loop creating dummies for
+	// * existing children is only need when childNode does not equal
+	// * null.
+	// */
+	// for (Long childDummyID : childNode.childIDs) {
+	// ViewNode childDummy = (ViewNode) child
+	// .createDummyChild(childDummyID);
+	// child.addItem(childDummy);
+	// }
+	// }
+	//
+	// /*
+	// * for both deleted and undeleted nodes, we need to create dummies for
+	// * the deleted children.
+	// */
+	// for (Long deletedID : deletedGrandChildIDs) {
+	// ViewNodeVer childDummy = child.createDummyChild(deletedID);
+	// child.addDeletedItem(childDummy);
+	// }
+	//
+	// child.setLoaded(false);
+	// child.setOpen(false);
+	// return child;
+	// }
 
 	/*
 	 * called in the call back in onOpen(); when a node is opened the program
@@ -1010,59 +1029,60 @@ public class ModeVersions extends ResizeComposite implements
 		// Long.MAX_VALUE);
 	}
 
-	public void mergeLoadedNodes_DELETE_ME(ViewNodeVer viewNodeVer,
-			Map<Long, NodeWithChanges> nodesWithChanges) {
-
-		SortedMultiMap<Long, ViewChange> viewChanges = new SortedMultiMap<Long, ViewChange>();
-
-		/*
-		 * for the deleted views: get the dummys to convert to reals
-		 */
-		List<ViewNodeVer> deletedViewList = new ArrayList<ViewNodeVer>(
-				viewNodeVer.getDeletedViewList());
-		/* remove the dummys */
-		viewNodeVer.clearDeletedViews();
-		/* for each dummy create a real and append it to the node */
-		for (ViewNodeVer deletedView : deletedViewList) {
-			Long deletedID = deletedView.getNodeID();
-			NodeWithChanges nodeWithChanges = nodesWithChanges.get(deletedID);
-			viewNodeVer
-					.addDeletedItem(createChildWithDummiesAndLoadChanges_DELETE_ME(
-							viewNodeVer, nodeWithChanges.node, deletedID,
-							nodeWithChanges.nodeChanges, viewChanges));
-		}
-
-		/*
-		 * for the existing views: get the dummys to convert to reals while
-		 * removing dummys
-		 */
-		List<Long> dummyIDs = new ArrayList<Long>();
-		while (viewNodeVer.getChildCount() > 0) {
-			ViewNodeVer child = viewNodeVer.getChildViewNode(0);
-			dummyIDs.add(child.getNodeID());
-			child.remove();
-		}
-
-		/* for each dummy create a real and append it to the node */
-		for (Long id : dummyIDs) {
-			NodeWithChanges nodeWithChanges = nodesWithChanges.get(id);
-			viewNodeVer
-					.addItem((ViewNode) createChildWithDummiesAndLoadChanges_DELETE_ME(
-							viewNodeVer, nodeWithChanges.node, id,
-							nodeWithChanges.nodeChanges, viewChanges));
-		}
-
-		viewNodeVer.setLoaded(true);
-
-		recursiveHideLinkedSubtreesDuringUnlinkedPeriods(
-				(ViewNodeVer) viewNodeVer.getOldestAncestor(),
-				new TimePeriods());
-
-		zoomToCurrentChangeAndReloadChangeList(viewNodeVer, viewChanges,
-				viewChanges.lastKey());
-		// zoomToCurrentChangeAndReloadChangeList(viewNodeVer, viewChanges,
-		// Long.MAX_VALUE);
-	}
+	// public void mergeLoadedNodes_DELETE_ME(ViewNodeVer viewNodeVer,
+	// Map<Long, NodeWithChanges> nodesWithChanges) {
+	//
+	// SortedMultiMap<Long, ViewChange> viewChanges = new SortedMultiMap<Long,
+	// ViewChange>();
+	//
+	// /*
+	// * for the deleted views: get the dummys to convert to reals
+	// */
+	// List<ViewNodeVer> deletedViewList = new ArrayList<ViewNodeVer>(
+	// viewNodeVer.getDeletedViewList());
+	// /* remove the dummys */
+	// viewNodeVer.clearDeletedViews();
+	// /* for each dummy create a real and append it to the node */
+	// for (ViewNodeVer deletedView : deletedViewList) {
+	// Long deletedID = deletedView.getNodeID();
+	// NodeWithChanges nodeWithChanges = nodesWithChanges.get(deletedID);
+	// viewNodeVer
+	// .addDeletedItem(createChildWithDummiesAndLoadChanges_DELETE_ME(
+	// viewNodeVer, nodeWithChanges.node, deletedID,
+	// nodeWithChanges.nodeChanges, viewChanges));
+	// }
+	//
+	// /*
+	// * for the existing views: get the dummys to convert to reals while
+	// * removing dummys
+	// */
+	// List<Long> dummyIDs = new ArrayList<Long>();
+	// while (viewNodeVer.getChildCount() > 0) {
+	// ViewNodeVer child = viewNodeVer.getChildViewNode(0);
+	// dummyIDs.add(child.getNodeID());
+	// child.remove();
+	// }
+	//
+	// /* for each dummy create a real and append it to the node */
+	// for (Long id : dummyIDs) {
+	// NodeWithChanges nodeWithChanges = nodesWithChanges.get(id);
+	// viewNodeVer
+	// .addItem((ViewNode) createChildWithDummiesAndLoadChanges_DELETE_ME(
+	// viewNodeVer, nodeWithChanges.node, id,
+	// nodeWithChanges.nodeChanges, viewChanges));
+	// }
+	//
+	// viewNodeVer.setLoaded(true);
+	//
+	// recursiveHideLinkedSubtreesDuringUnlinkedPeriods(
+	// (ViewNodeVer) viewNodeVer.getOldestAncestor(),
+	// new TimePeriods());
+	//
+	// zoomToCurrentChangeAndReloadChangeList(viewNodeVer, viewChanges,
+	// viewChanges.lastKey());
+	// // zoomToCurrentChangeAndReloadChangeList(viewNodeVer, viewChanges,
+	// // Long.MAX_VALUE);
+	// }
 
 	@Override
 	public void onOpen(OpenEvent<TreeItem> event) {
@@ -1308,8 +1328,11 @@ public class ModeVersions extends ResizeComposite implements
 				case PROP_LINK:
 				case PROP_ADDITION: {
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
-					argView.reviveDeletedView(vC.change.propID,
-							mapPropIndex.get(vC));
+					ViewPropVer viewProp = argView.reviveDeletedView(
+							vC.change.propID, mapPropIndex.get(vC));
+					if (vC.change.changeType == ChangeType.PROP_LINK) {
+						viewProp.setNegated(mapPropNegated.get(vC));
+					}
 					break;
 				}
 				case PROP_MODIFICATION: {
@@ -1380,10 +1403,10 @@ public class ModeVersions extends ResizeComposite implements
 					break;
 				}
 				case PROP_DELETION: {
-					ViewArgVer argView = (ViewArgVer) vC.viewNode;
-					argView.reviveDeletedView(vC.change.propID,
+					ViewArgVer viewArg = (ViewArgVer) vC.viewNode;
+					viewArg.reviveDeletedView(vC.change.propID,
 							vC.change.argPropIndex);
-					ViewNode viewNode = argView
+					ViewNode viewNode = viewArg
 							.getChild(vC.change.argPropIndex);
 					/*
 					 * need to check before cast because this might be a dummy
@@ -1403,7 +1426,11 @@ public class ModeVersions extends ResizeComposite implements
 					ViewArgVer argView = (ViewArgVer) vC.viewNode;
 					int index = argView.indexOfChildWithID(vC.change.propID);
 					mapPropIndex.put(vC, index);
-					argView.removeAndSaveChildView(vC.change.propID);
+					ViewPropVer viewProp = argView
+							.removeAndSaveChildView(vC.change.propID);
+					if (vC.change.changeType == ChangeType.PROP_LINK) {
+						mapPropNegated.put(vC, viewProp.getNegated());
+					}
 					break;
 				}
 				case PROP_MODIFICATION: {

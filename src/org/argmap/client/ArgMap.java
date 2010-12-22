@@ -34,7 +34,10 @@ import com.google.gwt.user.client.ui.Widget;
  * Regardless, as far as negation is concerned, if there is only one copy, I can't depend on it to have the right negated value when
  * it is re-added to the tree for the first time.
  */
-//TODO: test opening negated links in versions mode (probably won't work!!!)
+/*TODO: test opening negated links in versions mode (probably won't work!!!); also make sure to
+ * test adding a link as negated, removing it, adding at not negated, (and the reverse order) and see if
+ * versions mode gets it right.
+ */
 
 /*TODO: client throws an exception when removing a link and re-adding it (at least if you make a single change to the link in the interim
  * I haven't tested other scenarios yet) */

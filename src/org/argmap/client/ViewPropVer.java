@@ -35,9 +35,10 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 		return cloneView;
 	}
 
-	public void removeAndSaveChildView(Long id) {
-		ViewNodeVer viewNode = (ViewNodeVer) removeChildWithID(id);
+	public ViewArgVer removeAndSaveChildView(Long id) {
+		ViewArgVer viewNode = (ViewArgVer) removeChildWithID(id);
 		deletedViews.put(id, viewNode);
+		return viewNode;
 	}
 
 	public void reviveDeletedView(Long id, int index) {

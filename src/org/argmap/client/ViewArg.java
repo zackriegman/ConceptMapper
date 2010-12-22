@@ -101,6 +101,15 @@ public abstract class ViewArg extends ViewNode {
 		return argView;
 	}
 
+	@Override
+	public ViewProp createDummyChild(Long childID) {
+		ViewProp child = (ViewProp) super.createDummyChild(childID);
+		Log.log("va.cdc", "creating child with id: " + childID
+				+ "; and negated:" + argument.negatedChildIDs.contains(childID));
+		child.setNegated(argument.negatedChildIDs.contains(childID));
+		return child;
+	}
+
 	private final void initialize() {
 		label = new Label();
 		label.addStyleName("argLabel");
