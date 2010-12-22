@@ -21,7 +21,6 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-//TODO: do some basic testing of versioning of deleted top level nodes
 /* TODO transition ModeEdit to the new dummy node approach and get rid of ViewDummyVer */
 
 /* TODO: ModeVersions: for some reason child nodes of a deleted and re-added link are not showing up in the first attachement of the node
