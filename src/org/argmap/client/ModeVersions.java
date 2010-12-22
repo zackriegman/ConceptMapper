@@ -154,7 +154,7 @@ public class ModeVersions extends ResizeComposite implements
 	 */
 
 	private final ListBox versionList = new ListBox();
-	private final ModeEdit editMode;
+	private final ArgMap argMap;
 	private ArgTree treeClone = null;
 	private final ScrollPanel treePanel = new ScrollPanel();
 	private final int LIST_WIDTH = 20;
@@ -207,13 +207,13 @@ public class ModeVersions extends ResizeComposite implements
 	 */
 	private static Date now = new Date();
 
-	public ModeVersions(ModeEdit editModePair) {
+	public ModeVersions(ArgMap argMap) {
 		super();
 
 		/************************************
 		 * setup the history browsing panel *
 		 ************************************/
-		this.editMode = editModePair;
+		this.argMap = argMap;
 		DockLayoutPanel historyPanel = new DockLayoutPanel(Unit.EM);
 
 		historyPanel.addWest(versionList, LIST_WIDTH);
@@ -274,7 +274,7 @@ public class ModeVersions extends ResizeComposite implements
 		}
 		List<Proposition> props = new ArrayList<Proposition>();
 		List<Argument> args = new ArrayList<Argument>();
-		editMode.getOpenPropsAndArgs(props, args);
+		argMap.getModeEdit().getOpenPropsAndArgs(props, args);
 		ServerComm.getChanges(props, args,
 				new ServerComm.LocalCallback<NodeChangesMaps>() {
 
@@ -296,12 +296,17 @@ public class ModeVersions extends ResizeComposite implements
 						 * the call back just keep calling something like wait()
 						 * until it finds that the clone is finished?
 						 */
-						editMode.buildTreeCloneOfOpenNodes(treeClone);
+						argMap.getModeEdit().buildTreeCloneOfOpenNodes(
+								treeClone);
 
 						treePanel.add(treeClone);
 
 						timeMachineMap = prepTreeWithDeletedNodesAndChangesAndBuildTimeMachineMap(
 								treeClone, changesMaps);
+
+						if (ifTimeMachineMapIsEmptyShowMessageAndReturnToModeEdit()) {
+							return;
+						}
 
 						if (Log.on) {
 							Log treeLog = Log.getLog("vm.dv.tree");
@@ -325,13 +330,27 @@ public class ModeVersions extends ResizeComposite implements
 						 * TODO what is this onChange() called for? get rid of
 						 * it?
 						 */
-						onChange(null);
+						// onChange(null);
 						treeClone.resetState();
 						logTreeWithChanges();
 						log.finish();
 					}
 				});
 
+	}
+
+	private boolean ifTimeMachineMapIsEmptyShowMessageAndReturnToModeEdit() {
+		if (timeMachineMap.isEmpty()) {
+			argMap.gotoModeEdit();
+			new MessageDialog(
+					"Selection Has No History",
+					"The server reports that the nodes you have selected have no change history, because no one has "
+							+ "ever edited them.  History viewing tab has exited.")
+					.centerAndShow();
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	/*
@@ -377,6 +396,10 @@ public class ModeVersions extends ResizeComposite implements
 
 						timeMachineMap = prepTreeWithDeletedNodesAndChangesAndBuildTimeMachineMap(
 								treeClone, changes.nodeChangesMaps);
+
+						if (ifTimeMachineMapIsEmptyShowMessageAndReturnToModeEdit()) {
+							return;
+						}
 
 						mapPropContent = new HashMap<ViewChange, String>();
 						mapArgTitle = new HashMap<ViewChange, String>();
@@ -1023,8 +1046,11 @@ public class ModeVersions extends ResizeComposite implements
 				(ViewNodeVer) viewNodeVer.getOldestAncestor(),
 				new TimePeriods());
 
-		zoomToCurrentChangeAndReloadChangeList(viewNodeVer, viewChanges,
-				viewChanges.lastKey());
+		if (!viewChanges.isEmpty()) {
+			zoomToCurrentChangeAndMergeChangeMaps(viewNodeVer, viewChanges, viewChanges.lastKey());
+		}
+
+		reloadChangeListAfterOpen(viewNodeVer);
 		// zoomToCurrentChangeAndReloadChangeList(viewNodeVer, viewChanges,
 		// Long.MAX_VALUE);
 	}
@@ -1127,23 +1153,23 @@ public class ModeVersions extends ResizeComposite implements
 			SortedMultiMap<Long, ViewChange> subTreeChanges = new SortedMultiMap<Long, ViewChange>();
 			recursiveGetViewChanges(viewNodeVer, subTreeChanges, true, log);
 
-			zoomToCurrentChangeAndReloadChangeList(viewNodeVer, subTreeChanges,
+			zoomToCurrentChangeAndMergeChangeMaps(viewNodeVer, subTreeChanges,
 					viewNodeVer.getChangeIDOnClose());
+			reloadChangeListAfterOpen(viewNodeVer);
 
 		}
 		log.finish();
 		logTreeWithChanges();
 	}
 
-	public void zoomToCurrentChangeAndReloadChangeList(ViewNodeVer viewNodeVer,
+	public void zoomToCurrentChangeAndMergeChangeMaps(ViewNodeVer viewNodeVer,
 			SortedMultiMap<Long, ViewChange> subTreeChanges, Long startChangeID) {
-
-		viewNodeVer.setOpen(true);
-
 		travelFromChangeToChange(startChangeID, currentChangeID, subTreeChanges);
-
 		timeMachineMap.putAll(subTreeChanges);
+	}
 
+	public void reloadChangeListAfterOpen(ViewNodeVer viewNodeVer) {
+		viewNodeVer.setOpen(true);
 		for (ViewChange viewChange : viewNodeVer.getViewChangeHideList()) {
 			viewChange.hidden = false;
 		}
@@ -1254,7 +1280,8 @@ public class ModeVersions extends ResizeComposite implements
 	public void travelFromChangeToChange(Long currentChangeID,
 			Long newChangeID, SortedMultiMap<Long, ViewChange> changes) {
 		Log log = Log.getLog("tm.ttd");
-		if (newChangeID < currentChangeID) {
+		int comparison = newChangeID.compareTo(currentChangeID);
+		if (comparison < 0) {
 			log.log("traveling back to Change.id:" + newChangeID
 					+ "; from Change.id:" + currentChangeID);
 			/*
@@ -1283,7 +1310,7 @@ public class ModeVersions extends ResizeComposite implements
 					newChangeID, false, currentChangeID, true);
 			Collections.reverse(reverseList);
 			moveTreeBackwards(reverseList, log);
-		} else if (newChangeID > currentChangeID) {
+		} else if (comparison > 0) {
 			/*
 			 * the current tree shows the tree after the change highlighted was
 			 * made. currentDate corresponds to the change higlighted. To move

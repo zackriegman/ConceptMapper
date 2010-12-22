@@ -44,4 +44,9 @@ public class MessageDialog extends DialogBox {
 		});
 		dialogContents.add(closeButton);
 	}
+
+	public void centerAndShow() {
+		center();
+		show();
+	}
 }

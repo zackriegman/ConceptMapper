@@ -41,11 +41,12 @@ public class ViewPropVer extends ViewProp implements ViewNodeVer {
 		return viewNode;
 	}
 
-	public void reviveDeletedView(Long id, int index) {
+	public ViewArgVer reviveDeletedView(Long id, int index) {
 		// GWT.log("reviveDeletedView( " + id + ", " + index + " );" );
-		ViewNode viewNode = (ViewNode) deletedViews.remove(id);
+		ViewArgVer viewNode = (ViewArgVer) deletedViews.remove(id);
 		assert viewNode != null;
 		insertItem(index, viewNode);
+		return viewNode;
 	}
 
 	// public ViewArgVer createDeletedView(Long id) {

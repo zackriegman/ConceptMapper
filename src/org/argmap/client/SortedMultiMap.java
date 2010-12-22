@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-
 public class SortedMultiMap<K, V> {
 	private final SortedMap<K, List<V>> map = new TreeMap<K, List<V>>();
 
@@ -27,29 +26,29 @@ public class SortedMultiMap<K, V> {
 		list.add(value);
 	}
 
-	
 	public void putAll(SortedMultiMap<K, V> otherMap) {
 		Set<Map.Entry<K, List<V>>> entries = otherMap.map.entrySet();
 		for (Map.Entry<K, List<V>> entry : entries) {
 			putList(entry.getKey(), entry.getValue());
 		}
 	}
-	
-	
-	public void removeAll( SortedMultiMap<K, V> otherMap ){
+
+	public void removeAll(SortedMultiMap<K, V> otherMap) {
 		Set<Map.Entry<K, List<V>>> entries = otherMap.map.entrySet();
 		for (Map.Entry<K, List<V>> entry : entries) {
 			removeList(entry.getKey(), entry.getValue());
 		}
 	}
-	
+
 	private void removeList(K key, List<V> values) {
 		List<V> list = map.get(key);
-		if( list == null ){
-			throw new RuntimeException("cannot remove value(s) from map because map does not contain the value(s) for key \""+key+"\"");
+		if (list == null) {
+			throw new RuntimeException(
+					"cannot remove value(s) from map because map does not contain the value(s) for key \""
+							+ key + "\"");
 		}
 		list.removeAll(values);
-		if( list.isEmpty() ){
+		if (list.isEmpty()) {
 			map.remove(key);
 		}
 	}
@@ -69,14 +68,15 @@ public class SortedMultiMap<K, V> {
 	public List<V> remove(K key) {
 		return map.remove(key);
 	}
-	
+
 	/*
-	 * this efficiently removes just the given object (rather than all the objects associated with that key
+	 * this efficiently removes just the given object (rather than all the
+	 * objects associated with that key
 	 */
-	public void remove( K key, V value ){
+	public void remove(K key, V value) {
 		List<V> list = map.get(key);
 		list.remove(value);
-		if(list.isEmpty()){
+		if (list.isEmpty()) {
 			map.remove(key);
 		}
 	}
@@ -84,8 +84,12 @@ public class SortedMultiMap<K, V> {
 	public K lastKey() {
 		return map.lastKey();
 	}
-	
-	public K firstKey(){
+
+	public boolean isEmpty() {
+		return map.isEmpty();
+	}
+
+	public K firstKey() {
 		return map.firstKey();
 	}
 
@@ -112,46 +116,25 @@ public class SortedMultiMap<K, V> {
 	}
 
 	/*
-	public static void test() {
-		StringBuilder sb = new StringBuilder();
-		SortedMultiMap<Integer, String> map = new SortedMultiMap<Integer, String>();
-		map.put(2, "two");
-		map.put(4, "four");
-		map.put(6, "six");
-		map.put(8, "eight");
-		map.put(10, "ten");
-		map.put(4, "four");
-		map.put(4, "four");
-		map.put(4, "four");
-		map.put(4, "four");
-
-		sb.append("SortedMultiMap.test():\n");
-		sb.append("\nTEST 0");
-		List<List<String>> subList = map.valuesSublist(4, true, 8, true);
-		for (List<String> list : subList) {
-			for (String string : list) {
-				sb.append("\n" + string);
-			}
-		}
-
-		sb.append("\nTEST 1");
-		subList = map.valuesSublist(4, false, 8, false);
-		for (List<String> list : subList) {
-			for (String string : list) {
-				sb.append("\n" + string);
-			}
-		}
-
-		sb.append("\nTEST 2");
-		subList = map.valuesSublist(3, true, 7, true);
-		for (List<String> list : subList) {
-			for (String string : list) {
-				sb.append("\n" + string);
-			}
-		}
-		GWT.log(sb.toString());
-	}
-	*/
+	 * public static void test() { StringBuilder sb = new StringBuilder();
+	 * SortedMultiMap<Integer, String> map = new SortedMultiMap<Integer,
+	 * String>(); map.put(2, "two"); map.put(4, "four"); map.put(6, "six");
+	 * map.put(8, "eight"); map.put(10, "ten"); map.put(4, "four"); map.put(4,
+	 * "four"); map.put(4, "four"); map.put(4, "four");
+	 * 
+	 * sb.append("SortedMultiMap.test():\n"); sb.append("\nTEST 0");
+	 * List<List<String>> subList = map.valuesSublist(4, true, 8, true); for
+	 * (List<String> list : subList) { for (String string : list) {
+	 * sb.append("\n" + string); } }
+	 * 
+	 * sb.append("\nTEST 1"); subList = map.valuesSublist(4, false, 8, false);
+	 * for (List<String> list : subList) { for (String string : list) {
+	 * sb.append("\n" + string); } }
+	 * 
+	 * sb.append("\nTEST 2"); subList = map.valuesSublist(3, true, 7, true); for
+	 * (List<String> list : subList) { for (String string : list) {
+	 * sb.append("\n" + string); } } GWT.log(sb.toString()); }
+	 */
 
 	/*
 	 * I was using NavigableMap, and it was really elegant and simple and
@@ -162,8 +145,8 @@ public class SortedMultiMap<K, V> {
 	 */
 	public List<List<V>> valuesSublist(K start, boolean startInclusive, K end,
 			boolean endInclusive) {
-		//StringBuilder sb = new StringBuilder();
-		//sb.append("valuesSublist(): START");
+		// StringBuilder sb = new StringBuilder();
+		// sb.append("valuesSublist(): START");
 		Set<Map.Entry<K, List<V>>> entries = map.entrySet();
 		Iterator<Map.Entry<K, List<V>>> iterator = entries.iterator();
 		Comparator<? super K> comparator = map.comparator();
@@ -171,7 +154,7 @@ public class SortedMultiMap<K, V> {
 		if (comparator == null) {
 			comparator = new Comparator<K>() {
 
-				@SuppressWarnings({ "unchecked", "rawtypes"  })
+				@SuppressWarnings({ "unchecked", "rawtypes" })
 				@Override
 				public int compare(K arg0, K arg1) {
 
@@ -196,58 +179,58 @@ public class SortedMultiMap<K, V> {
 
 		while (iterator.hasNext()) {
 			Map.Entry<K, List<V>> entry = iterator.next();
-			//sb.append("\n" + entry.toString() + ": ");
+			// sb.append("\n" + entry.toString() + ": ");
 			/*
 			 * see note above about sign... maybe this should be negative
 			 * instead of reversing my generic comparator... but I don't see why
-			 * either of them should be.  But if this class doesn't work
-			 * when an explicit comparator is given to the sorted list, try fiddling with
-			 * where the '-' is placed her, or above...
+			 * either of them should be. But if this class doesn't work when an
+			 * explicit comparator is given to the sorted list, try fiddling
+			 * with where the '-' is placed her, or above...
 			 */
 			int comparison = comparator.compare(start, entry.getKey());
 			if (comparison < 0) {
-				//sb.append("not added");
+				// sb.append("not added");
 				continue;
 			} else if (comparison == 0) {
 				if (startInclusive) {
 					returnList.add(entry.getValue());
-					//sb.append("added");
+					// sb.append("added");
 				} else {
-					//sb.append("not added");
+					// sb.append("not added");
 				}
 				break;
 			} else if (comparison > 0) {
 				returnList.add(entry.getValue());
-				//sb.append("added");
+				// sb.append("added");
 				break;
 			}
 		}
 
 		while (iterator.hasNext()) {
 			Map.Entry<K, List<V>> entry = iterator.next();
-			//sb.append("\n" + entry.toString() + ": ");
+			// sb.append("\n" + entry.toString() + ": ");
 			int comparison = comparator.compare(end, entry.getKey());
 			if (comparison < 0) {
 				returnList.add(entry.getValue());
-				//sb.append("added");
+				// sb.append("added");
 				continue;
 			} else if (comparison == 0) {
 				if (endInclusive) {
 					returnList.add(entry.getValue());
-					//sb.append("added");
-				} else{
-					//sb.append("not added");
+					// sb.append("added");
+				} else {
+					// sb.append("not added");
 				}
 				break;
 			} else if (comparison > 0) {
-				//sb.append("not added");
+				// sb.append("not added");
 				break;
 			}
-			//sb.append("end search");
+			// sb.append("end search");
 		}
 
-		//sb.append("\nvaluesSublist(): END");
-		//GWT.log(sb.toString());
+		// sb.append("\nvaluesSublist(): END");
+		// GWT.log(sb.toString());
 		return returnList;
 	}
 }

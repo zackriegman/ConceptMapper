@@ -21,31 +21,17 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+//TODO: do some basic testing of versioning of deleted top level nodes
+/* TODO transition ModeEdit to the new dummy node approach and get rid of ViewDummyVer */
+
 /* TODO: ModeVersions: for some reason child nodes of a deleted and re-added link are not showing up in the first attachement of the node
  * so you have to browse to a later point in time, and open up the link, and the go back in time, in order to open up the link node.  
  * (Not sure if the problem is confined to links or not.)
  */
-/*TODO: what happens in ModeVersions if I first link to a node as negated, then delete it, then link to it as non-negated and delete that
- * (or vice-versa)?  Nodes are stores by ID in the deletedNodes list. Since its stored in a hashmap, storing the same deleted node twice will
- * result in only one copy.  Will that work for storing the history?  One thing I want to work out below is only storing the history for a
- * link that is relevant to the time that it exists in the tree so there aren't a lot of extra changes in the change list.  Will having
- * only one copy complicate that?  If so maybe I could save in a list or a hashmap keyed on date instead of ID (or ID and date, or something)...
- * 
- * Regardless, as far as negation is concerned, if there is only one copy, I can't depend on it to have the right negated value when
- * it is re-added to the tree for the first time.
- */
-/*TODO: test opening negated links in versions mode (probably won't work!!!); also make sure to
- * test adding a link as negated, removing it, adding at not negated, (and the reverse order) and see if
- * versions mode gets it right.
- */
-
 /*TODO: client throws an exception when removing a link and re-adding it (at least if you make a single change to the link in the interim
  * I haven't tested other scenarios yet) */
-/* TODO transition ModeEdit to the new dummy node approach and get rid of ViewDummyVer */
-/* TODO when a root proposition is first added, program suggest using it instead (as a link) of itself! */
 //TODO: fix versions mode formating of links
-//TODO: versioning root node with no modifications/adds throws exception because of empty change list
-//TODO: do some basic testing of versioning of deleted top level nodes
+
 /*TODO: fix exceptions when opening circular links in versions mode and continue testings version mode's handling of circular linking*/
 /*TODO: track down exceptions in ModeVersion (unrelated to circular linking)*/
 /*TODO: versions mode: update link coloring depending on whether a proposition is currently a link?
@@ -58,7 +44,25 @@ import com.google.gwt.user.client.ui.Widget;
  * proposition it would update the props link status.  If it was an argument it would just do what it currently does.
  * This way the system would work for propositions whose link coloring is changed by a linking/unlinking not within
  * the tree being viewed by the user...
+ * 
+ * This seems to be related too: TO DO: ModeVersions:  undoing unlinks does not restore the link's yellow color if the link *currently* is not  
+ * linked to by more than one argument because the server sends the current proposition which
+ * indicates a link count of 1.  This could be addressed by having a proposition's link/unlink
+ * events also be owned by that proposition in VersionsMode, and hiding them probably (because
+ * they may be interesting only in regards to the color of the node because the unlink/link
+ * events may be with regards to arguments that are not currently opened) and treating
+ * them as only coloring events when moving forwards and backwards (thus in some cases there
+ * would be two link/unlink ViewChanges, one for the proposition whose link count is being updated
+ * and one for the argument which needs to either display or hide the linked proposition).  The forwards/backwards
+ * methods could distinguish between links/unlinks that were to be treated only as coloring events versus
+ * ones that would be treated as displaying/removing the linked proposition based on whether the ViewNodeVer
+ * object contained in the ViewChange object was a ViewPropVer or a ViewArgVer.  If it's a ViewArgVer
+ * it would display/remove the linked proposition.  If it's a ViewPropVer it would simply update the link
+ * count and change the color from yellow to white if it falls below 2, and vice versa.  This would require a
+ * change on the server to return the coloring events for a proposition, and would require changes on the client
+ * to insert the coloring events into the timeMachineMap and so forth.
  */
+/* TODO when a root proposition is first added, program suggest using it instead (as a link) of itself! */
 //TODO: comment the hell out of versions mode!!!!!!! someday I'll need to change it...
 
 //TODO: add 'real' example arguments for demonstration (for instance my argument about legalizing unauthorized access)
@@ -82,23 +86,6 @@ import com.google.gwt.user.client.ui.Widget;
 //TODO: try running speed tracer
 //TODO: make batch open icon visible, and open tree a few layers deep regardless of whether mouse over node is already loaded
 //TODO: batch open icon not visible/clickable on props that reach right screen edge
-/*TODO: ModeVersions:  undoing unlinks does not restore the link's yellow color if the link *currently* is not  
- * linked to by more than one argument because the server sends the current proposition which
- * indicates a link count of 1.  This could be addressed by having a proposition's link/unlink
- * events also be owned by that proposition in VersionsMode, and hiding them probably (because
- * they may be interesting only in regards to the color of the node because the unlink/link
- * events may be with regards to arguments that are not currently opened) and treating
- * them as only coloring events when moving forwards and backwards (thus in some cases there
- * would be two link/unlink ViewChanges, one for the proposition whose link count is being updated
- * and one for the argument which needs to either display or hide the linked proposition).  The forwards/backwards
- * methods could distinguish between links/unlinks that were to be treated only as coloring events versus
- * ones that would be treated as displaying/removing the linked proposition based on whether the ViewNodeVer
- * object contained in the ViewChange object was a ViewPropVer or a ViewArgVer.  If it's a ViewArgVer
- * it would display/remove the linked proposition.  If it's a ViewPropVer it would simply update the link
- * count and change the color from yellow to white if it falls below 2, and vice versa.  This would require a
- * change on the server to return the coloring events for a proposition, and would require changes on the client
- * to insert the coloring events into the timeMachineMap and so forth.
- */
 //TODO: figure out how to make server log more than info, warn and severe while in hosted mode...
 
 /*TODO: move changes from propID/argID to parentID/childID (this will make querying more efficient:  want
@@ -148,7 +135,7 @@ import com.google.gwt.user.client.ui.Widget;
 public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 		SelectionHandler<Integer> {
 
-	private ModeEdit editMode;
+	private ModeEdit modeEdit;
 
 	private DockLayoutPanel mainPanel;
 	private TabLayoutPanel modePanel;
@@ -156,7 +143,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 
 	private HTML messageArea;
 	private MultiMap<String, Message> messageMap;
-	private ModeVersions versionsMode;
+	private ModeVersions modeVersions;
 	private static ArgMap argMap;
 	private boolean loggedIn;
 
@@ -164,7 +151,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 		argMap = this;
 		messageArea = new HTML();
 		messageMap = new MultiMap<String, Message>();
-		editMode = new ModeEdit(this);
+		modeEdit = new ModeEdit(this);
 
 		GWT.runAsync(new AsyncRunCallback() {
 
@@ -175,7 +162,7 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 				loginPanel = new HorizontalPanel();
 
 				GWT.setUncaughtExceptionHandler(ArgMap.this);
-				modePanel.add(editMode, "Find And Collaborate");
+				modePanel.add(modeEdit, "Find And Collaborate");
 
 				modePanel.addSelectionHandler(ArgMap.this);
 
@@ -258,16 +245,20 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 		return argMap.loggedIn;
 	}
 
+	public void gotoModeEdit() {
+		modePanel.selectTab(modeEdit);
+	}
+
 	public void showVersions() {
 		if (!versionsIsDisplayed()) {
 			GWT.runAsync(new AsyncRunCallback() {
 
 				@Override
 				public void onSuccess() {
-					if (versionsMode == null) {
-						versionsMode = new ModeVersions(editMode);
+					if (modeVersions == null) {
+						modeVersions = new ModeVersions(ArgMap.this);
 					}
-					modePanel.insert(versionsMode, "History", 1);
+					modePanel.insert(modeVersions, "History", 1);
 				}
 			});
 		}
@@ -275,12 +266,12 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 
 	public void hideVersions() {
 		if (versionsIsDisplayed()) {
-			modePanel.remove(versionsMode);
+			modePanel.remove(modeVersions);
 		}
 	}
 
 	private boolean versionsIsDisplayed() {
-		if (modePanel.getWidgetIndex(versionsMode) == -1) {
+		if (modePanel.getWidgetIndex(modeVersions) == -1) {
 			return false;
 		} else {
 			return true;
@@ -410,14 +401,14 @@ public class ArgMap implements EntryPoint, UncaughtExceptionHandler,
 	}
 
 	public ModeEdit getModeEdit() {
-		return editMode;
+		return modeEdit;
 	}
 
 	@Override
 	public void onSelection(SelectionEvent<Integer> event) {
 		Widget widget = modePanel.getWidget(modePanel.getSelectedIndex());
-		if (widget == versionsMode) {
-			versionsMode.displayVersions();
+		if (widget == modeVersions) {
+			modeVersions.displayVersions();
 		}
 	}
 
